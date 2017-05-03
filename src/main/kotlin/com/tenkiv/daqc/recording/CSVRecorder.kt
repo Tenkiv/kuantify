@@ -27,7 +27,7 @@ class CSVRecorder( path: String,
     }
 
     private val onDataUpdate = object: UpdatableListener<DaqcValue> {
-        override fun onUpdate(data: Updatable<DaqcValue>) {
+        override fun onUpdate(updatedObject: Updatable<DaqcValue>) {
 
             fun writeValue(value: String){
                 outputStream.use {

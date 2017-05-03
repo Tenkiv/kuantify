@@ -1,3 +1,8 @@
+import com.tenkiv.daqc.DaqcValue
+import com.tenkiv.daqc.UpdatableListener
+import com.tenkiv.daqc.hardware.definitions.HardwareType
+import com.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
+import com.tenkiv.daqc.hardware.definitions.device.Device
 import io.kotlintest.specs.StringSpec
 import org.tenkiv.nexus.data.*
 import tec.uom.se.unit.Units.VOLT
@@ -17,7 +22,7 @@ class TriggerTest: StringSpec() {
 
             var completed = false
 
-            gibberingSensor.addTrigger({(it >= 3750.MILLIVOLT)}, {completed = true})
+            gibberingSensor.addTrigger({println(it);(it >= 3750.MILLIVOLT)}, {completed = true})
 
             Thread.sleep(10000)
 

@@ -7,19 +7,17 @@ import tec.uom.se.ComparableQuantity
 /**
  * Created by tenkiv on 4/4/17.
  */
-class Trigger(vararg triggerConditions: TriggerCondition<DaqcValue>, val triggerOnSimultaneousValues: Boolean = false, triggerFunction: () -> Unit){
-
-    //val typeTrigger = triggerConditions as? Array<TriggerCondition<Any>> ?: throw Exception()
+class Trigger<T: DaqcValue>(vararg triggerConditions: TriggerCondition<T>, val triggerOnSimultaneousValues: Boolean = false, triggerFunction: () -> Unit){
 
     init{
 
         triggerConditions.forEach {
 
-            val triggerProc = object : UpdatableListener<DaqcValue> {
+            val triggerProc = object : UpdatableListener<T> {
 
-                override fun onUpdate(data: Updatable<DaqcValue>) {
+                override fun onUpdate(updatedObject: Updatable<T>) {
 
-                    val currentVal = data.value
+                    val currentVal = updatedObject.value
 
                     it.lastValue = currentVal
 
@@ -27,7 +25,10 @@ class Trigger(vararg triggerConditions: TriggerCondition<DaqcValue>, val trigger
                         it.hasBeenReached = true
 
                         if (triggerOnSimultaneousValues) {
-                            triggerConditions.all { it.condition(it?.lastValue) }.apply { triggerFunction.invoke() }
+                            triggerConditions.all {
+                                val value = it.lastValue ?: return@all false
+                                it.condition(value)
+                            }.apply { triggerFunction.invoke() }
 
                             triggerConditions.forEach { it.input.listeners.remove(this) }
 

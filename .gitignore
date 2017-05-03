@@ -24,6 +24,7 @@
 hs_err_pid*
 ### Gradle template
 .gradle
+/gradle
 /build/
 
 # Ignore Gradle GUI config
@@ -39,4 +40,7 @@ gradle-app.setting
 # gradle/wrapper/gradle-wrapper.properties
 
 gradlew
+gradlew.bat
+
+.idea
 

@@ -20,7 +20,7 @@ abstract class Sensor<O: DaqcValue>(inputs: Collection<Input<DaqcValue>>): Input
 
     abstract val onDataReceived: UpdatableListener<DaqcValue>
 
-    open fun addTrigger(condition: (O) -> Boolean, function: () -> Unit): Trigger
+    open fun addTrigger(condition: (O) -> Boolean, function: () -> Unit): Trigger<O>
         { return Trigger(TriggerCondition(this, condition) , triggerFunction = function) }
 
 }

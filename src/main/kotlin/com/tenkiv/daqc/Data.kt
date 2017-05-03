@@ -22,6 +22,7 @@ interface UpdatableListener<T: DaqcValue>{ fun onUpdate(updatedObject: Updatable
 
 
 sealed class DaqcValue {
+
     data class Boolean(val isOn: kotlin.Boolean) : DaqcValue()
 
     class Quantity<Q : javax.measure.Quantity<Q>> private constructor(private val quantity: ComparableQuantity<Q>)
