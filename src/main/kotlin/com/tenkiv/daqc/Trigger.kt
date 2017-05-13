@@ -7,9 +7,18 @@ import tec.uom.se.ComparableQuantity
 /**
  * Created by tenkiv on 4/4/17.
  */
-class Trigger<T: DaqcValue>(vararg triggerConditions: TriggerCondition<T>, val triggerOnSimultaneousValues: Boolean = false, triggerFunction: () -> Unit){
+class Trigger<T: DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
+                            val triggerOnSimultaneousValues: Boolean = false,
+                            val triggerOnce: Boolean = true,
+                            triggerFunction: () -> Unit){
 
     init{
+
+        fun removeTriggerConditionListeners(listener: UpdatableListener<T>){
+            if(triggerOnce) {
+                triggerConditions.forEach { it.input.listeners.remove(listener) }
+            }
+        }
 
         triggerConditions.forEach {
 
@@ -30,12 +39,12 @@ class Trigger<T: DaqcValue>(vararg triggerConditions: TriggerCondition<T>, val t
                                 it.condition(value)
                             }.apply { triggerFunction.invoke() }
 
-                            triggerConditions.forEach { it.input.listeners.remove(this) }
+                            removeTriggerConditionListeners(this)
 
                         } else {
                             triggerConditions.all { it.hasBeenReached }.apply { triggerFunction.invoke() }
 
-                            triggerConditions.forEach { it.input.listeners.remove(this) }
+                            removeTriggerConditionListeners(this)
                         }
                     }
                 }
