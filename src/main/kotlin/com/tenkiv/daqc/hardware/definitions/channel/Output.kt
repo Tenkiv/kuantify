@@ -15,7 +15,7 @@ import javax.measure.quantity.Time
  */
 interface Output<T: DaqcValue>: Updatable<T> {
 
-    fun setState(state: T){
+    /*fun setState(state: T){
         value = state
-    }
+    }*/
 }

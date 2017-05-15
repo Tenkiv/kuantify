@@ -10,9 +10,10 @@ import javax.measure.quantity.Time
 /**
  * Created by tenkiv on 4/11/17.
  */
-class CSVRecorder(path: String, numberOfSamples: Int = -1,
-                  timeToRecord: Time?,
-                  vararg recordingObjects: RecordingObject): Recorder(timeToRecord, *recordingObjects) {
+class CSVRecorder(path: String,
+                  numberOfSamples: Int = -1,
+                  timeToRecord: Time? = null,
+                  recordingObjects: Map<Updatable<DaqcValue>,String>): Recorder(timeToRecord, recordingObjects) {
 
     val outputStream = FileOutputStream(path,true)
 
@@ -30,11 +31,12 @@ class CSVRecorder(path: String, numberOfSamples: Int = -1,
             }
 
             if(isFirstWrite){
-                recordingObjects.forEach { writeValue(it.name) }
+
+                recordingObjects.values.forEach(::writeValue)
                 outputStream.use { it.write("TIME\n".toByteArray()) }
             }
 
-            recordingObjects.forEach { writeValue(it.updatable.value.toString()) }
+            recordingObjects.keys.forEach { writeValue(it.value.toString()) }
             outputStream.use { it.write("${Instant.now().epochSecond}\n".toByteArray()) }
 
             sampleTally++

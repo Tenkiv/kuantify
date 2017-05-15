@@ -44,3 +44,6 @@ gradlew.bat
 
 .idea
 
+#Files generated when tests are run
+TestRecording.json
+

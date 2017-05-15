@@ -38,6 +38,9 @@ dependencies {
 
     //Kotlin Coroutines
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.14'
+
+    //JSON
+    compile 'com.beust:klaxon:0.30'
 }
 kotlin {
     experimental {

@@ -11,9 +11,9 @@ abstract class Controller<T: DaqcValue>(val commands: Map<String,ControllerComma
 
     override val listeners: MutableList<UpdatableListener<T>> = CopyOnWriteArrayList()
 
-    override fun setState(state: T) {
+    /*override fun setState(state: T) {
         super.setState(state)
-    }
+    }*/
 
     /*override fun setStateByOutputCommand(command: Output.OutputCommand) {
     }

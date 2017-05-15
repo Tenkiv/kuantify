@@ -14,7 +14,11 @@ abstract class Sensor<O: DaqcValue>(inputs: Collection<Input<DaqcValue>>): Input
 
     override val listeners: MutableList<UpdatableListener<O>> = CopyOnWriteArrayList()
 
-    override var value: O? = null
+    private var _value: O? = null
+
+    override var value: O?
+        get() = _value
+        set(value) { _value = value; listeners.forEach{ it.onUpdate(this) } }
 
     init { inputs.forEach {it.listeners.add(onDataReceived) } }
 
