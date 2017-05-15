@@ -13,9 +13,9 @@ import javax.measure.Quantity
  */
 interface Input<T: DaqcValue> : Updatable<T> {
 
-    fun onDataUpdate(data: Updatable<T>){
+    /*fun onDataUpdate(data: Updatable<T>){
         value = data.value
         listeners.forEach({ it.onUpdate(this) })
-    }
+    }*/
 
 }

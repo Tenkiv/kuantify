@@ -5,15 +5,14 @@ import com.tenkiv.daqc.UpdatableListener
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import java.io.FileOutputStream
 import java.time.Instant
+import javax.measure.quantity.Time
 
 /**
  * Created by tenkiv on 4/11/17.
  */
-class CSVRecorder( path: String,
-                  val numberOfSamples: Int = -1,
-                  vararg csvValues: Updatable<DaqcValue>){
-
-    val csvVal: Array<out Updatable<DaqcValue>> = csvValues
+class CSVRecorder(path: String, numberOfSamples: Int = -1,
+                  timeToRecord: Time?,
+                  vararg recordingObjects: RecordingObject): Recorder(timeToRecord, *recordingObjects) {
 
     val outputStream = FileOutputStream(path,true)
 
@@ -21,12 +20,7 @@ class CSVRecorder( path: String,
 
     var sampleTally = 0
 
-
-    init{
-        csvVal.forEach { it.listeners.add(onDataUpdate) }
-    }
-
-    private val onDataUpdate = object: UpdatableListener<DaqcValue> {
+    override val onDataUpdate = object: UpdatableListener<DaqcValue> {
         override fun onUpdate(updatedObject: Updatable<DaqcValue>) {
 
             fun writeValue(value: String){
@@ -36,11 +30,11 @@ class CSVRecorder( path: String,
             }
 
             if(isFirstWrite){
-                csvVal.forEach { writeValue(it.toString()) }
+                recordingObjects.forEach { writeValue(it.name) }
                 outputStream.use { it.write("TIME\n".toByteArray()) }
             }
 
-            csvVal.forEach { writeValue(it.value.toString()) }
+            recordingObjects.forEach { writeValue(it.updatable.value.toString()) }
             outputStream.use { it.write("${Instant.now().epochSecond}\n".toByteArray()) }
 
             sampleTally++
@@ -49,9 +43,5 @@ class CSVRecorder( path: String,
                 stop()
             }
         }
-    }
-
-    fun stop(){
-        csvVal.forEach { it.listeners.remove(onDataUpdate) }
     }
 }

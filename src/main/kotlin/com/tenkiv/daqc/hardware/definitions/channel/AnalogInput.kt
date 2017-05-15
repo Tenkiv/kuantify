@@ -16,6 +16,12 @@ abstract class AnalogInput: Input<DaqcValue.Quantity<ElectricPotential>>, Channe
 
     override val listeners: MutableList<UpdatableListener<DaqcValue.Quantity<ElectricPotential>>> = CopyOnWriteArrayList()
 
+    private var _value: DaqcValue.Quantity<ElectricPotential>? = null
+
+    override var value: DaqcValue.Quantity<ElectricPotential>?
+        get() = _value
+        set(value) { _value = value; listeners.forEach{ it.onUpdate(this) } }
+
     abstract fun setRate()
 
     abstract fun setGain()
