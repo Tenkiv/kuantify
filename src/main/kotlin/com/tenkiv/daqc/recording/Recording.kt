@@ -14,8 +14,8 @@ import javax.measure.quantity.Time
 /**
  * Created by tenkiv on 5/15/17.
  */
-abstract class Recorder(val timeToRecord: Time? = null,
-                        val recordingObjects: Map<Updatable<DaqcValue>,String>): Updatable<DaqcValue.Boolean> {
+abstract class Recorder<T: DaqcValue>(val timeToRecord: Time? = null,
+                        val recordingObjects: Map<Updatable<T>,String>): Updatable<DaqcValue.Boolean> {
 
     override val listeners: MutableList<UpdatableListener<DaqcValue.Boolean>> = CopyOnWriteArrayList()
 
@@ -26,7 +26,7 @@ abstract class Recorder(val timeToRecord: Time? = null,
         set(value) { _value = value; listeners.forEach{ it.onUpdate(this) } }
 
 
-    protected abstract val onDataUpdate: UpdatableListener<DaqcValue>
+    protected abstract val onDataUpdate: UpdatableListener<T>
 
     open fun start(){
 
@@ -48,9 +48,9 @@ abstract class Recorder(val timeToRecord: Time? = null,
     }
 }
 
-abstract class Writer(val path: String,
+abstract class Writer<T: DaqcValue>(val path: String,
                       timeToRecord: Time?,
-                      recordingObjects: Map<Updatable<DaqcValue>,String>): Recorder(timeToRecord, recordingObjects) {
+                      recordingObjects: Map<Updatable<T>,String>): Recorder<T>(timeToRecord, recordingObjects) {
 
     protected val fileWriter = BufferedWriter(FileWriter(path, true))
 
@@ -62,14 +62,4 @@ abstract class Writer(val path: String,
             fileWriter.flush()
         }
     }
-}
-
-data class RecordingObject(val name: String, val updatable: Updatable<DaqcValue>)
-
-fun MutableList<DaqcValue>.addValue(value: DaqcValue.Boolean){
-    this.add(value)
-}
-
-fun MutableList<DaqcValue>.addValue(value: DaqcValue.Quantity<*>){
-
 }

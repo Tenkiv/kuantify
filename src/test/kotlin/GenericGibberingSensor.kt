@@ -8,6 +8,7 @@ import com.tenkiv.daqc.hardware.definitions.channel.Input
 import com.tenkiv.daqc.hardware.definitions.device.Device
 import org.tenkiv.nexus.data.MILLIVOLT
 import org.tenkiv.nexus.data.VOLT
+import tec.uom.se.unit.MetricPrefix
 import tec.uom.se.unit.Units
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -18,7 +19,7 @@ import javax.measure.quantity.ElectricPotential
 /**
  * Created by tenkiv on 4/13/17.
  */
-class GibberingSensor: Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) {
+class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) {
 
     val random = Random()
 
@@ -28,6 +29,28 @@ class GibberingSensor: Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) {
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
                 value = DaqcValue.Quantity.of(random.nextInt(5), Units.VOLT)
+            }
+        },100,100)
+    }
+
+    override val onDataReceived: UpdatableListener<DaqcValue> = object : UpdatableListener<DaqcValue>{
+        override fun onUpdate(updatedObject: Updatable<DaqcValue>) {
+            //Never Called
+        }
+    }
+}
+
+class AnalogGibberingSensor: Sensor<DaqcValue.Quantity<ElectricPotential>>(emptyList<Input<DaqcValue>>()) {
+
+    val random = Random()
+
+    init {
+        val timer = Timer(false)
+
+        timer.scheduleAtFixedRate(object: TimerTask() {
+            override fun run() {
+                value = DaqcValue.Quantity.of(random.nextInt(5000), MetricPrefix.MILLI(Units.VOLT))
+                println("Value $value")
             }
         },100,100)
     }

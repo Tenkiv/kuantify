@@ -16,7 +16,7 @@ class TriggerTest: StringSpec() {
     init {
         "Trigger Test"{
 
-            val gibberingSensor = GibberingSensor()
+            val gibberingSensor = GenericGibberingSensor()
 
             var completed = false
 

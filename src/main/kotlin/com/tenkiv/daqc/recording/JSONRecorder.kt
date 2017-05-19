@@ -14,7 +14,7 @@ import javax.measure.quantity.Time
 class JSONRecorder(path: String,
                    jsonArraySize: Int = 1000,
                    timeToRecord: Time? = null,
-                   recordingObjects: Map<Updatable<DaqcValue>,String>) : Writer(path, timeToRecord, recordingObjects) {
+                   recordingObjects: Map<Updatable<DaqcValue>,String>) : Writer<DaqcValue>(path, timeToRecord, recordingObjects) {
 
     private var subJsonArray = JsonArray(emptyList<JsonObject>())
 
@@ -23,10 +23,8 @@ class JSONRecorder(path: String,
     override val onDataUpdate = object: UpdatableListener<DaqcValue>{
         override fun onUpdate(updatedObject: Updatable<DaqcValue>) {
 
-            println("Object Updated: ${updatedObject.value}")
-
             val jsonObj = mapOf(Pair(recordingObjects[updatedObject] ?: "null", updatedObject.value.toString()),
-                                Pair("Time",Instant.now().epochSecond))
+                                Pair("time",Instant.now().epochSecond))
 
             subJsonArray.add(JsonObject(jsonObj))
 

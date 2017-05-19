@@ -1,8 +1,7 @@
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
-import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.hardware.definitions.Updatable
+import com.tenkiv.daqc.recording.AnalogMemoryRecorder
 import com.tenkiv.daqc.recording.JSONRecorder
 import io.kotlintest.specs.StringSpec
 import java.io.File
@@ -14,12 +13,13 @@ class RecorderTest: StringSpec() {
     init{
         "JSON Recording Test"{
 
-            val gibberingSensor = GibberingSensor()
+            val gibberingSensor = GenericGibberingSensor()
 
             var completed = false
 
             val file = File("./TestRecording.json")
 
+            //No False Positives
             if(file.exists()){
                 file.delete()
             }
@@ -47,6 +47,29 @@ class RecorderTest: StringSpec() {
             }
 
             assert(completed)
+
+            // Cleanup
+            if(file.exists()){
+                file.delete()
+            }
+        }
+
+        "InMemory Recorder Test"{
+
+            val gibberingSensor = AnalogGibberingSensor()
+
+            val recorder = AnalogMemoryRecorder(gibberingSensor,10,"")
+
+            recorder.start()
+
+            Thread.sleep(10000)
+
+            recorder.stop()
+
+            println("Median "+recorder.median())
+
+            println("Avg "+recorder.average())
+
         }
     }
 }

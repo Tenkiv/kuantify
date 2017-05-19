@@ -3,18 +3,10 @@ package com.tenkiv.daqc
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.channel.Input
 import com.tenkiv.daqc.hardware.definitions.channel.Output
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.runBlocking
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities
-import tec.uom.se.unit.Units
-import java.lang.Thread.sleep
-import java.util.concurrent.TimeUnit
 import javax.measure.Quantity
 import javax.measure.Unit
-import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Time
 
@@ -85,6 +77,22 @@ data class SetDigitalOutputCommand(val output: Output<DaqcValue.Boolean>, val st
 
 data class DelayCommand(val delay: Quantity<Time>): ControllerCommand(){
     override val outputCommand: OutputCommand = OutputCommand.DELAY
+}
+
+class LimitedArrayList<T>(val maxSize: Int): ArrayList<T>() {
+
+    override fun add(element: T): Boolean{
+        val r = super.add(element)
+        println("Size: $size Max: $maxSize")
+        if (size > maxSize){ removeRange(0, size - maxSize) }
+        println("AS: $size")
+        forEach{ print("$it,")}
+        return r
+    }
+
+    fun youngest(): T = get(size - 1)
+
+    fun oldest(): T =  get(0)
 }
 
 

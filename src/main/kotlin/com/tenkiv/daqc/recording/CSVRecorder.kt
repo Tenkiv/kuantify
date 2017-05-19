@@ -13,7 +13,7 @@ import javax.measure.quantity.Time
 class CSVRecorder(path: String,
                   numberOfSamples: Int = -1,
                   timeToRecord: Time? = null,
-                  recordingObjects: Map<Updatable<DaqcValue>,String>): Recorder(timeToRecord, recordingObjects) {
+                  recordingObjects: Map<Updatable<DaqcValue>,String>): Recorder<DaqcValue>(timeToRecord, recordingObjects) {
 
     val outputStream = FileOutputStream(path,true)
 

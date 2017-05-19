@@ -3,6 +3,8 @@ package com.tenkiv.daqc
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.tekdaqc.hardware.AAnalogInput
 import tec.uom.se.ComparableQuantity
+import tec.uom.se.unit.MetricPrefix
+import tec.uom.se.unit.Units
 
 /**
  * Created by tenkiv on 4/4/17.
@@ -49,7 +51,6 @@ class Trigger<T: DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
                     }
                 }
             }
-
             it.input.listeners.add(triggerProc)
         }
     }
