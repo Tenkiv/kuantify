@@ -79,14 +79,11 @@ data class DelayCommand(val delay: Quantity<Time>): ControllerCommand(){
     override val outputCommand: OutputCommand = OutputCommand.DELAY
 }
 
-class LimitedArrayList<T>(val maxSize: Int): ArrayList<T>() {
+class BoundedFirstInFirstOutArrayList<T>(val maxSize: Int): ArrayList<T>() {
 
     override fun add(element: T): Boolean{
         val r = super.add(element)
-        println("Size: $size Max: $maxSize")
         if (size > maxSize){ removeRange(0, size - maxSize) }
-        println("AS: $size")
-        forEach{ print("$it,")}
         return r
     }
 

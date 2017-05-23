@@ -54,7 +54,6 @@ class AnalogGibberingSensor: Sensor<DaqcValue.Quantity<ElectricPotential>>(empty
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
                 value = DaqcValue.Quantity.of(random.nextInt(5000), MetricPrefix.MILLI(Units.VOLT))
-                println("Value $value")
             }
         },100,100)
     }

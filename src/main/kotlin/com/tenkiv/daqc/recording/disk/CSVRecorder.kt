@@ -32,7 +32,6 @@ class CSVRecorder(path: String,
             }
 
             if(isFirstWrite){
-
                 recordingObjects.values.forEach(::writeValue)
                 outputStream.use { it.write("TIME\n".toByteArray()) }
             }
