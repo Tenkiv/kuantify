@@ -48,18 +48,3 @@ abstract class Recorder<T: DaqcValue>(val timeToRecord: Time? = null,
     }
 }
 
-abstract class Writer<T: DaqcValue>(val path: String,
-                      timeToRecord: Time?,
-                      recordingObjects: Map<Updatable<T>,String>): Recorder<T>(timeToRecord, recordingObjects) {
-
-    protected val fileWriter = BufferedWriter(FileWriter(path, true))
-
-    protected val filePathContext = newSingleThreadContext("File Context $path")
-
-    open fun write(output: String){
-        launch(filePathContext){
-            fileWriter.append(output)
-            fileWriter.flush()
-        }
-    }
-}

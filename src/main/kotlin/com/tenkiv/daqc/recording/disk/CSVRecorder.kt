@@ -1,8 +1,9 @@
-package com.tenkiv.daqc.recording
+package com.tenkiv.daqc.recording.disk
 
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.UpdatableListener
 import com.tenkiv.daqc.hardware.definitions.Updatable
+import com.tenkiv.daqc.recording.Recorder
 import java.io.FileOutputStream
 import java.time.Instant
 import javax.measure.quantity.Time

@@ -23,9 +23,9 @@ class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) 
 
     val random = Random()
 
-    init {
-        val timer = Timer(false)
+    val timer = Timer(false)
 
+    init {
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
                 value = DaqcValue.Quantity.of(random.nextInt(5), Units.VOLT)
@@ -38,21 +38,29 @@ class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) 
             //Never Called
         }
     }
+
+    fun cancel(){
+        timer.cancel()
+    }
 }
 
 class AnalogGibberingSensor: Sensor<DaqcValue.Quantity<ElectricPotential>>(emptyList<Input<DaqcValue>>()) {
 
     val random = Random()
 
-    init {
-        val timer = Timer(false)
+    val timer = Timer(false)
 
+    init {
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
                 value = DaqcValue.Quantity.of(random.nextInt(5000), MetricPrefix.MILLI(Units.VOLT))
                 println("Value $value")
             }
         },100,100)
+    }
+
+    fun cancel(){
+        timer.cancel()
     }
 
     override val onDataReceived: UpdatableListener<DaqcValue> = object : UpdatableListener<DaqcValue>{

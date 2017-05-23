@@ -1,4 +1,4 @@
-package com.tenkiv.daqc.recording
+package com.tenkiv.daqc.recording.disk
 
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
@@ -20,11 +20,11 @@ class JSONRecorder(path: String,
 
     private var completeArray = JsonArray(emptyList<JsonArray<JsonObject>>())
 
-    override val onDataUpdate = object: UpdatableListener<DaqcValue>{
+    override val onDataUpdate = object: UpdatableListener<DaqcValue> {
         override fun onUpdate(updatedObject: Updatable<DaqcValue>) {
 
             val jsonObj = mapOf(Pair(recordingObjects[updatedObject] ?: "null", updatedObject.value.toString()),
-                                Pair("time",Instant.now().epochSecond))
+                                Pair("time", Instant.now().epochSecond))
 
             subJsonArray.add(JsonObject(jsonObj))
 
