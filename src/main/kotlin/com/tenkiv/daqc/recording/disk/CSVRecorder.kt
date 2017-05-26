@@ -22,28 +22,25 @@ class CSVRecorder(path: String,
 
     var sampleTally = 0
 
-    override val onDataUpdate = object: UpdatableListener<DaqcValue> {
-        override fun onUpdate(updatedObject: Updatable<DaqcValue>) {
-
-            fun writeValue(value: String){
-                outputStream.use {
-                    it.write("$value,".toByteArray())
-                }
+    override val onDataReceived: suspend (Updatable<DaqcValue>) -> Unit = {
+        fun writeValue(value: String){
+            outputStream.use {
+                it.write("$value,".toByteArray())
             }
+        }
 
-            if(isFirstWrite){
-                recordingObjects.values.forEach(::writeValue)
-                outputStream.use { it.write("TIME\n".toByteArray()) }
-            }
+        if(isFirstWrite){
+            recordingObjects.values.forEach(::writeValue)
+            outputStream.use { it.write("TIME\n".toByteArray()) }
+        }
 
-            recordingObjects.keys.forEach { writeValue(it.value.toString()) }
-            outputStream.use { it.write("${Instant.now().epochSecond}\n".toByteArray()) }
+        recordingObjects.keys.forEach { writeValue(it.value.toString()) }
+        outputStream.use { it.write("${Instant.now().epochSecond}\n".toByteArray()) }
 
-            sampleTally++
+        sampleTally++
 
-            if(sampleTally == numberOfSamples){
-                stop()
-            }
+        if(sampleTally == numberOfSamples){
+            stop()
         }
     }
 }

@@ -9,7 +9,12 @@ import java.util.*
 /**
  * Created by tenkiv on 5/22/17.
  */
-class PredicatbleSensor : Sensor<DaqcValue.Boolean>(emptyList<Input<DaqcValue>>()) {
+class PredicatbleSensor : Sensor<DaqcValue.Boolean>(emptyList<Input<DaqcValue.Boolean>>()) {
+
+    override val onDataReceived: suspend (Updatable<DaqcValue.Boolean>) -> Unit
+        //Never gets data. This is a fake sensor.
+        get() = { println("What on Earth happened here?") }
+
 
     var iteration = 0
 
@@ -37,9 +42,4 @@ class PredicatbleSensor : Sensor<DaqcValue.Boolean>(emptyList<Input<DaqcValue>>(
         },100,100)
     }
 
-    override val onDataReceived: UpdatableListener<DaqcValue> = object : UpdatableListener<DaqcValue> {
-        override fun onUpdate(updatedObject: Updatable<DaqcValue>) {
-            //Never Called
-        }
-    }
 }

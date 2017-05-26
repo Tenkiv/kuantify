@@ -2,6 +2,12 @@ package com.tenkiv.daqc
 
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.tekdaqc.hardware.AAnalogInput
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.channels.BroadcastChannel
+import kotlinx.coroutines.experimental.channels.Channel
+import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.launch
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.unit.MetricPrefix
 import tec.uom.se.unit.Units
@@ -14,21 +20,18 @@ class Trigger<T: DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
                             val triggerOnce: Boolean = true,
                             triggerFunction: () -> Unit){
 
+    val channelList: MutableList<SubscriptionReceiveChannel<Updatable<T>>> = ArrayList()
+
     init{
 
-        fun removeTriggerConditionListeners(listener: UpdatableListener<T>){
-            if(triggerOnce) {
-                triggerConditions.forEach { it.input.listeners.remove(listener) }
-            }
-        }
+        fun removeTriggerConditionListeners(){ if(triggerOnce) { channelList.forEach{ it.close() } } }
 
-        triggerConditions.forEach {
+        launch(CommonPool){
 
-            val triggerProc = object : UpdatableListener<T> {
+            triggerConditions.forEach {
+                channelList.add(it.input.broadcastChannel.consumeAndReturn({ update ->
 
-                override fun onUpdate(updatedObject: Updatable<T>) {
-
-                    val currentVal = updatedObject.value
+                    val currentVal = update.value
 
                     it.lastValue = currentVal
 
@@ -41,17 +44,16 @@ class Trigger<T: DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
                                 it.condition(value)
                             }.apply { triggerFunction.invoke() }
 
-                            removeTriggerConditionListeners(this)
+                            removeTriggerConditionListeners()
 
                         } else {
                             triggerConditions.all { it.hasBeenReached }.apply { triggerFunction.invoke() }
 
-                            removeTriggerConditionListeners(this)
+                            removeTriggerConditionListeners()
                         }
                     }
-                }
+                }))
             }
-            it.input.listeners.add(triggerProc)
         }
     }
 }

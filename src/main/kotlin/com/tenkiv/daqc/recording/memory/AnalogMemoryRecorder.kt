@@ -26,4 +26,6 @@ class AnalogMemoryRecorder(updatable: Updatable<DaqcValue.Quantity<ElectricPoten
             ((it.second ?: DaqcValue.Quantity.of(0, Units.VOLT)).quantity.value.toInt()) }
         return data[data.size/2]
     }
+
+
 }

@@ -9,7 +9,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 abstract class Controller<T: DaqcValue>(val commands: Map<String,ControllerCommand>): Output<T>{
 
-    override val listeners: MutableList<UpdatableListener<T>> = CopyOnWriteArrayList()
+    /*override val listeners: MutableList<UpdatableListener<T>> = CopyOnWriteArrayList()*/
 
     /*override fun setState(state: T) {
         super.setState(state)
@@ -53,7 +53,7 @@ abstract class Controller<T: DaqcValue>(val commands: Map<String,ControllerComma
     }*/
 }
 
-class BasicController(val map: Map<String,ControllerCommand>): Controller<DaqcValue.Boolean>(map){
+/*class BasicController(val map: Map<String,ControllerCommand>): Controller<DaqcValue.Boolean>(map){
 
     var _value: DaqcValue.Boolean? = DaqcValue.Boolean(false)
 
@@ -63,8 +63,9 @@ class BasicController(val map: Map<String,ControllerCommand>): Controller<DaqcVa
 
 
 
-}
+}*/
 
+/*
 class ControllerBuilder(){
 
     private val commandMap = HashMap<String,ControllerCommand>()
@@ -81,4 +82,4 @@ class ControllerBuilder(){
     }
 
 
-}
+}*/

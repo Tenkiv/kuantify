@@ -6,6 +6,9 @@ import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.Input
 import com.tenkiv.daqc.hardware.definitions.device.Device
+import kotlinx.coroutines.experimental.channels.BroadcastChannel
+import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.launch
 import org.tenkiv.nexus.data.MILLIVOLT
 import org.tenkiv.nexus.data.VOLT
 import tec.uom.se.unit.MetricPrefix
@@ -21,6 +24,10 @@ import javax.measure.quantity.ElectricPotential
  */
 class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) {
 
+    override val onDataReceived: suspend (Updatable<DaqcValue>) -> Unit
+        get() = {}
+
+
     val random = Random()
 
     val timer = Timer(false)
@@ -33,18 +40,15 @@ class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) 
         },100,100)
     }
 
-    override val onDataReceived: UpdatableListener<DaqcValue> = object : UpdatableListener<DaqcValue>{
-        override fun onUpdate(updatedObject: Updatable<DaqcValue>) {
-            //Never Called
-        }
-    }
-
     fun cancel(){
         timer.cancel()
     }
 }
 
-class AnalogGibberingSensor: Sensor<DaqcValue.Quantity<ElectricPotential>>(emptyList<Input<DaqcValue>>()) {
+class AnalogGibberingSensor: Sensor<DaqcValue.Quantity<ElectricPotential>>(emptyList<Input<DaqcValue.Quantity<ElectricPotential>>>()) {
+    override val onDataReceived: suspend (Updatable<DaqcValue.Quantity<ElectricPotential>>) -> Unit
+        get() = {}
+
 
     val random = Random()
 
@@ -60,11 +64,5 @@ class AnalogGibberingSensor: Sensor<DaqcValue.Quantity<ElectricPotential>>(empty
 
     fun cancel(){
         timer.cancel()
-    }
-
-    override val onDataReceived: UpdatableListener<DaqcValue> = object : UpdatableListener<DaqcValue>{
-        override fun onUpdate(updatedObject: Updatable<DaqcValue>) {
-            //Never Called
-        }
     }
 }

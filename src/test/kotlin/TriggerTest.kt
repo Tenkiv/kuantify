@@ -22,7 +22,7 @@ class TriggerTest: StringSpec() {
 
             var completed = false
 
-            gibberingSensor.addTrigger({println(it);(it as DaqcValue.Quantity<ElectricPotential> >= 3750.MILLIVOLT)}, {completed = true})
+            gibberingSensor.addTrigger({println("Triggered with value $it");(it as DaqcValue.Quantity<ElectricPotential> >= 3750.MILLIVOLT)}, {completed = true})
 
             Thread.sleep(10000)
 

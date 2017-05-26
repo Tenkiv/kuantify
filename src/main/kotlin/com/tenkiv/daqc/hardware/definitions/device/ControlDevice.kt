@@ -24,5 +24,4 @@ abstract class ControlDevice: Device {
 
     abstract fun hasDigitalOutputs(): Boolean
 
-
 }

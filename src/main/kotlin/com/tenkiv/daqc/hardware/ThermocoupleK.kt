@@ -13,9 +13,8 @@ import javax.measure.quantity.Temperature
  */
 class ThermocoupleK: Sensor<DaqcValue>(emptyList()) {
 
-    override val onDataReceived: UpdatableListener<DaqcValue> = object: UpdatableListener<DaqcValue>{
-        override fun onUpdate(updatedObject: Updatable<DaqcValue>) {
+    override val onDataReceived: suspend (Updatable<DaqcValue>) -> Unit
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
 
-        }
-    }
+
 }

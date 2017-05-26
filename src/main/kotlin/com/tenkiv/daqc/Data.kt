@@ -3,6 +3,11 @@ package com.tenkiv.daqc
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.channel.Input
 import com.tenkiv.daqc.hardware.definitions.channel.Output
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.channels.BroadcastChannel
+import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.run
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities
 import javax.measure.Quantity
@@ -22,7 +27,13 @@ data class TriggerCondition<T: DaqcValue>(val input: Input<T>, val condition: (T
     var hasBeenReached: Boolean = false
 }
 
-interface UpdatableListener<T: DaqcValue>{ fun onUpdate(updatedObject: Updatable<T>) }
+interface UpdatableListener<T: DaqcValue>{
+
+    val openSubChannels: MutableList<SubscriptionReceiveChannel<Updatable<T>>>
+
+    val onDataReceived: suspend (Updatable<T>) -> kotlin.Unit
+
+}
 
 
 sealed class DaqcValue {
@@ -90,6 +101,13 @@ class BoundedFirstInFirstOutArrayList<T>(val maxSize: Int): ArrayList<T>() {
     fun youngest(): T = get(size - 1)
 
     fun oldest(): T =  get(0)
+}
+
+suspend fun <T: DaqcValue> BroadcastChannel<Updatable<T>>
+        .consumeAndReturn(action: suspend (Updatable<T>) -> kotlin.Unit): SubscriptionReceiveChannel<Updatable<T>> {
+    val channel = open()
+    launch(CommonPool){ channel.use { channel -> for (x in channel) action(x) } }
+    return channel
 }
 
 
