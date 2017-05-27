@@ -4,21 +4,21 @@ import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import com.tenkiv.daqc.hardware.definitions.channel.Input
-import java.util.concurrent.CopyOnWriteArrayList
+import com.tenkiv.daqc.networking.SharingStatus
 
 /**
  * Created by tenkiv on 4/7/17.
  */
-abstract class  DataAquisitionDevice {
+interface  DataAquisitionDevice {
 
-    abstract fun getAnalogInputs(): List<AnalogInput>
+    val analogInputs: List<AnalogInput>
 
-    abstract fun getDigitalInputs(): List<DigitalInput>
+    val digitalInputs: List<DigitalInput>
 
-    abstract fun hasAnalogInputs(): Boolean
+    fun hasAnalogInputs(): Boolean
 
-    abstract fun hasDigitalInputs(): Boolean
+    fun hasDigitalInputs(): Boolean
 
-    protected val sharedInputs: MutableList<Input<DaqcValue>> = CopyOnWriteArrayList()
+    val sharedInputs: MutableMap<SharingStatus, Input<DaqcValue>>
 
 }

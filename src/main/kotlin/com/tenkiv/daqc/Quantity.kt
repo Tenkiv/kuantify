@@ -1,7 +1,6 @@
 package org.tenkiv.nexus.data
 
 
-import org.tenkiv.coral.ValueInstant
 import tec.uom.se.AbstractUnit
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.function.MultiplyConverter

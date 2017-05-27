@@ -1,15 +1,10 @@
 package com.tenkiv.daqc.hardware.definitions.channel
 
+import com.tenkiv.daqc.AnalogAccuracy
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.definitions.BasicUpdatable
 import com.tenkiv.daqc.hardware.definitions.Channel
-import com.tenkiv.daqc.hardware.definitions.Updatable
-import kotlinx.coroutines.experimental.channels.BroadcastChannel
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
-import kotlinx.coroutines.experimental.newSingleThreadContext
 import javax.measure.quantity.ElectricPotential
-import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Created by tenkiv on 3/18/17.
@@ -19,12 +14,8 @@ abstract class AnalogInput:
         Channel<DaqcValue.Quantity<ElectricPotential>>,
         BasicUpdatable<DaqcValue.Quantity<ElectricPotential>>() {
 
-    abstract fun setRate()
+    abstract fun setBuffer(state: Boolean)
 
-    abstract fun setGain()
-
-    abstract fun setBuffer()
-
-    abstract fun setAccuracy()
+    abstract fun setAccuracy(accuracy: AnalogAccuracy)
 
 }

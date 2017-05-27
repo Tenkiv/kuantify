@@ -1,16 +1,9 @@
 package com.tenkiv.daqc
 
 import com.tenkiv.daqc.hardware.definitions.Updatable
-import com.tenkiv.tekdaqc.hardware.AAnalogInput
 import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.channels.BroadcastChannel
-import kotlinx.coroutines.experimental.channels.Channel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
-import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
-import tec.uom.se.ComparableQuantity
-import tec.uom.se.unit.MetricPrefix
-import tec.uom.se.unit.Units
 
 /**
  * Created by tenkiv on 4/4/17.

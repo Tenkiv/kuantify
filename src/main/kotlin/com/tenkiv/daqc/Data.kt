@@ -7,7 +7,6 @@ import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.run
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities
 import javax.measure.Quantity
@@ -70,6 +69,12 @@ enum class OutputCommand{
 
 }
 
+enum class AnalogAccuracy{
+    FASTEST,
+    BALANCED,
+    PRECISE
+}
+
 abstract class ControllerCommand{
     abstract val outputCommand: OutputCommand
 }
@@ -78,7 +83,8 @@ data class PWMOutputCommand(val output: Output<DaqcValue.Boolean>, val pwmDutyCy
     override val outputCommand: OutputCommand  = OutputCommand.PULSE_WIDTH_MODULATE
 }
 
-data class SetAnalogOutputCommand(val output: Output<DaqcValue.Quantity<ElectricPotential>>, val volts: Quantity<ElectricPotential>): ControllerCommand(){
+data class SetAnalogOutputCommand(val output: Output<DaqcValue.Quantity<ElectricPotential>>,
+                                  val volts: Quantity<ElectricPotential>): ControllerCommand(){
     override val outputCommand: OutputCommand = OutputCommand.SET_VALUE
 }
 

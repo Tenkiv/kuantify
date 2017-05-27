@@ -3,7 +3,6 @@ package com.tenkiv.daqc.recording.disk
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.UpdatableListener
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import java.time.Instant
 import javax.measure.quantity.Time

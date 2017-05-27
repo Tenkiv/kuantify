@@ -1,13 +1,7 @@
 package com.tenkiv.daqc.hardware.definitions
 
 import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.UpdatableListener
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.newSingleThreadContext
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**

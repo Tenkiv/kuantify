@@ -1,27 +1,24 @@
 package com.tenkiv.daqc.hardware.definitions.device
 
 import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.Trigger
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogOutput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import com.tenkiv.daqc.hardware.definitions.channel.Output
 import com.tenkiv.daqc.networking.SharingStatus
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Created by tenkiv on 4/7/17.
  */
-abstract class ControlDevice: Device {
+interface ControlDevice: Device {
 
-    val getAnalogOutputs: List<AnalogOutput> = CopyOnWriteArrayList()
+    val analogOutputs: List<AnalogOutput>
 
-    val getDigitalOutputs: List<DigitalOutput> = CopyOnWriteArrayList()
+    val digitalOutputs: List<DigitalOutput>
 
-    protected val sharedOutputs: MutableMap<SharingStatus,Output<DaqcValue>> = ConcurrentHashMap()
+    fun hasAnalogOutputs(): Boolean
 
-    abstract fun hasAnalogOutputs(): Boolean
+    fun hasDigitalOutputs(): Boolean
 
-    abstract fun hasDigitalOutputs(): Boolean
+    val sharedOutputs: MutableMap<SharingStatus,Output<DaqcValue>>
 
 }
