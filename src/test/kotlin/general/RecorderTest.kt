@@ -1,16 +1,12 @@
+package general
+
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
-import com.beust.klaxon.Parser
-import com.tenkiv.daqc.recording.memory.AnalogMemoryRecorder
-import com.tenkiv.daqc.recording.disk.JSONRecorder
-import com.tenkiv.daqc.recording.memory.DigitalMemoryRecorder
-import io.kotlintest.specs.StringSpec
-import java.io.File
 
 /**
  * Created by tenkiv on 5/15/17.
  */
-class RecorderTest: StringSpec() {
+class RecorderTest: io.kotlintest.specs.StringSpec() {
     init{
         "JSON Recording Test"{
 
@@ -18,15 +14,15 @@ class RecorderTest: StringSpec() {
 
             var completed = false
 
-            val file = File("./TestRecording.json")
+            val file = java.io.File("./TestRecording.json")
 
             //No False Positives
             if(file.exists()){
                 file.delete()
             }
 
-            val recorder = JSONRecorder(file.path,
-                    recordingObjects = mapOf(Pair(gibberingSensor ,"Gibbering Sensor")))
+            val recorder = com.tenkiv.daqc.recording.disk.JSONRecorder(file.path,
+                    recordingObjects = mapOf(Pair(gibberingSensor, "Gibbering Sensor")))
 
             recorder.start()
 
@@ -37,7 +33,7 @@ class RecorderTest: StringSpec() {
             Thread.sleep(1000)
 
             try {
-                val json = Parser().parse(file.path) as JsonArray<JsonArray<JsonObject>>
+                val json = com.beust.klaxon.Parser().parse(file.path) as com.beust.klaxon.JsonArray<JsonArray<JsonObject>>
 
                 json.forEach(::println)
 
@@ -59,7 +55,7 @@ class RecorderTest: StringSpec() {
 
             val gibberingSensor = AnalogGibberingSensor()
 
-            val recorder = AnalogMemoryRecorder(gibberingSensor,10,"")
+            val recorder = com.tenkiv.daqc.recording.memory.AnalogMemoryRecorder(gibberingSensor, 10, "")
 
             recorder.start()
 
@@ -79,7 +75,7 @@ class RecorderTest: StringSpec() {
 
             val gibberingSensor = PredicatbleSensor()
 
-            val recorder = DigitalMemoryRecorder(gibberingSensor,10,"")
+            val recorder = com.tenkiv.daqc.recording.memory.DigitalMemoryRecorder(gibberingSensor, 10, "")
 
             recorder.start()
 

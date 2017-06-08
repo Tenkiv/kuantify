@@ -14,7 +14,7 @@ abstract class BasicUpdatable<T: DaqcValue>: Updatable<T> {
 
     var _value: T? = null
 
-    override var value: T?
+    override var latestValue: T?
         get() = _value
         set(value) { _value = value; launch(context){ broadcastChannel.send(this@BasicUpdatable) } }
 

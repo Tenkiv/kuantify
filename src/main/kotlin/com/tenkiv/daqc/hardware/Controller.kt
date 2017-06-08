@@ -42,7 +42,7 @@ abstract class Controller<T: DaqcValue>(val commands: Map<String,ControllerComma
             }
             Output.OutputCommand.DELAY -> {
                 val seconds = (command.getTriple().second as? DaqcValue.Quantity<*>).to(Units.SECOND)
-                delay(seconds.first!!.quantity.getValue().toLong(), TimeUnit.SECONDS)
+                delay(seconds.first!!.quantity.getLatestValue().toLong(), TimeUnit.SECONDS)
             }
             Output.OutputCommand.PULSE_WIDTH_MODULATE -> {
                 if(command is PWMOutputCommand){
@@ -57,9 +57,9 @@ abstract class Controller<T: DaqcValue>(val commands: Map<String,ControllerComma
 
     var _value: DaqcValue.Boolean? = DaqcValue.Boolean(false)
 
-    override var value: DaqcValue.Boolean?
+    override var latestValue: DaqcValue.Boolean?
         get() = _value
-        set(value) {_value = value}
+        set(latestValue) {_value = latestValue}
 
 
 

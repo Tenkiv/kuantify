@@ -26,7 +26,7 @@ data class TriggerCondition<T: DaqcValue>(val input: Input<T>, val condition: (T
     var hasBeenReached: Boolean = false
 }
 
-interface UpdatableListener<T: DaqcValue>{
+interface UpdatableListener<T>{
 
     val openSubChannels: MutableList<SubscriptionReceiveChannel<Updatable<T>>>
 
@@ -40,7 +40,7 @@ sealed class DaqcValue {
     data class Boolean(val isOn: kotlin.Boolean) : DaqcValue()
 
     // Quantity was private before. Why?
-    class Quantity<Q : javax.measure.Quantity<Q>> private constructor(val quantity: ComparableQuantity<Q>)
+    class Quantity<Q : javax.measure.Quantity<Q>> constructor(val quantity: ComparableQuantity<Q>)
         : DaqcValue(), ComparableQuantity<Q> by quantity {
 
         override fun equals(other: Any?): kotlin.Boolean {

@@ -20,7 +20,7 @@ class JSONRecorder(path: String,
     private var completeArray = JsonArray(emptyList<JsonArray<JsonObject>>())
 
     override val onDataReceived: suspend (Updatable<DaqcValue>) -> Unit = { updatedObject ->
-        val jsonObj = mapOf(Pair(recordingObjects[updatedObject] ?: "null", updatedObject.value.toString()),
+        val jsonObj = mapOf(Pair(recordingObjects[updatedObject] ?: "null", updatedObject.latestValue.toString()),
                 Pair("time", Instant.now().epochSecond))
 
         subJsonArray.add(JsonObject(jsonObj))

@@ -13,6 +13,6 @@ abstract class DigitalOutput: Output<DaqcValue.Boolean>,
 
     abstract val canPulseWidthModulate: Boolean
 
-    abstract fun pulseWidthModulate(dutyCycle: Float)
+    abstract fun pulseWidthModulate(dutyCycle: Int)
 
 }

@@ -35,12 +35,12 @@ abstract class Recorder<T: DaqcValue>(val timeToRecord: Time? = null,
 
         recordingObjects.keys.forEach { launch(context){ openSubChannels.add(it.broadcastChannel.consumeAndReturn(onDataReceived)) } }
 
-        value = DaqcValue.Boolean(true)
+        latestValue = DaqcValue.Boolean(true)
     }
 
     open fun stop(){
         openSubChannels.forEach { it.close() }
-        value = DaqcValue.Boolean(false)
+        latestValue = DaqcValue.Boolean(false)
     }
 }
 

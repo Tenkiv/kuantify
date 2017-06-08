@@ -6,6 +6,7 @@ import com.tenkiv.daqc.hardware.definitions.device.ControlDevice
 import com.tenkiv.daqc.hardware.definitions.device.DataAquisitionDevice
 import com.tenkiv.daqc.networking.NetworkProtocol
 import com.tenkiv.daqc.networking.SharingStatus
+import com.tenkiv.daqc.networking.UnsupportedConnectionProtocolException
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import java.net.InetAddress
 import java.util.concurrent.CopyOnWriteArrayList
@@ -21,9 +22,18 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc): ControlDevice, DataAquisitionDevice {
 
     override var networkSharingStatus: SharingStatus = SharingStatus.NONE
 
-    override fun connect(protocol: NetworkProtocol?) { }
+    override fun connect(protocol: NetworkProtocol?) {
+        when(protocol){
+            NetworkProtocol.TELNET, NetworkProtocol.TCP -> {
+                tekdaqc.connect(ATekdaqc.AnalogScale.ANALOG_SCALE_5V, ATekdaqc.CONNECTION_METHOD.ETHERNET)
+            }
+            else -> { throw UnsupportedConnectionProtocolException() }
+        }
+    }
 
-    override fun disconnect(protocol: NetworkProtocol?) { }
+    override fun disconnect(protocol: NetworkProtocol?) {
+        tekdaqc.disconnectCleanly()
+    }
 
     override val analogOutputs: List<AnalogOutput> = emptyList()
 
@@ -65,4 +75,8 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc): ControlDevice, DataAquisitionDevice {
         inputs.forEach { tDO.add(TekdaqcDigitalOutput(this,it)) }
         return tDO
     }
+
+    var analogScale: ATekdaqc.AnalogScale
+        get() = tekdaqc.analogInputScale
+        set(value) {tekdaqc.analogInputScale = value}
 }

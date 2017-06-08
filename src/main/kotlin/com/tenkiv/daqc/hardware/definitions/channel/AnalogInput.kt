@@ -4,6 +4,7 @@ import com.tenkiv.daqc.AnalogAccuracy
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.definitions.BasicUpdatable
 import com.tenkiv.daqc.hardware.definitions.Channel
+import javax.measure.Quantity
 import javax.measure.quantity.ElectricPotential
 
 /**

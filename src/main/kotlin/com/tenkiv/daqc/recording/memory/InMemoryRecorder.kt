@@ -17,5 +17,5 @@ abstract class InMemoryRecorder<T: DaqcValue>(val updatable: Updatable<T>, val m
         get() = ArrayList(_dataMap)
 
     override val onDataReceived: suspend (Updatable<T>) -> Unit
-        get() = { _dataMap.add(Pair(Instant.now(),it.value)) }
+        get() = { _dataMap.add(Pair(Instant.now(),it.latestValue)) }
 }

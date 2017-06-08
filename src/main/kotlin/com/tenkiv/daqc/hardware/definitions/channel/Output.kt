@@ -9,6 +9,6 @@ import com.tenkiv.daqc.hardware.definitions.Updatable
 interface Output<T: DaqcValue>: Updatable<T> {
 
     /*fun setState(state: T){
-        value = state
+        latestValue = state
     }*/
 }

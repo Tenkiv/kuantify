@@ -9,7 +9,7 @@ import com.tenkiv.daqc.hardware.definitions.Updatable
 interface Input<T: DaqcValue>: Updatable<T>{
 
     /*fun onDataUpdate(data: Updatable<T>){
-        value = data.value
+        latestValue = data.latestValue
         listeners.forEach({ it.onUpdate(this) })
     }*/
 

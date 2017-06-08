@@ -10,9 +10,13 @@ import com.tenkiv.daqc.hardware.definitions.device.Device
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData
 import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener
 import com.tenkiv.tekdaqc.communication.message.IVoltageListener
-import com.tenkiv.tekdaqc.communication.message.PLACEHOLDERMEASUREMENT
 import com.tenkiv.tekdaqc.hardware.AAnalogInput
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD
+import org.tenkiv.coral.ValueInstant
+import tec.uom.se.ComparableQuantity
+import tec.uom.se.unit.Units
+import javax.measure.Quantity
+import javax.measure.Unit
 import javax.measure.quantity.ElectricPotential
 
 /**
@@ -24,9 +28,10 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput): An
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.ANALOG_INPUT
     override val hardwareNumber: Int = input.channelNumber
-    override fun activate() { input.activate() }
-    override fun deactivate() { input.deactivate() }
+    override fun activate() { println("Trying activate");input.activate() }
+    override fun deactivate() { println("Trying deactivate");input.deactivate() }
 
+    init { input.addVoltageListener(this) }
 
     override fun setBuffer(state: Boolean) {
         if(state){
@@ -44,12 +49,13 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput): An
         }
     }
 
-    override fun onVoltageDataReceived(input: AAnalogInput?, measurement: PLACEHOLDERMEASUREMENT<ElectricPotential>) {
-        value = null
+    override fun onVoltageDataReceived(input: AAnalogInput, value: ValueInstant<ComparableQuantity<ElectricPotential>>) {
+        latestValue = DaqcValue.Quantity(value.value)
     }
 }
 
-class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekdaqc.hardware.DigitalInput): DigitalInput(), IDigitalChannelListener {
+class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekdaqc.hardware.DigitalInput):
+        DigitalInput(), IDigitalChannelListener {
 
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.DIGITAL_INPUT
@@ -58,12 +64,15 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     override fun activate() { input.activate() }
     override fun deactivate() { input.deactivate() }
 
+    init { input.addDigitalListener(this) }
+
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
-        value = DaqcValue.Boolean(data.state)
+        latestValue = DaqcValue.Boolean(data.state)
     }
 }
 
-class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput): DigitalOutput() {
+class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput):
+        DigitalOutput() {
 
     override val canPulseWidthModulate: Boolean = true
     override val device: Device = tekdaqc
@@ -72,7 +81,7 @@ class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tek
     override fun activate() { output.activate() }
     override fun deactivate() { output.deactivate() }
 
-    override fun pulseWidthModulate(dutyCycle: Float) {
-
+    override fun pulseWidthModulate(dutyCycle: Int) {
+        output.setPulseWidthModulation(dutyCycle)
     }
 }

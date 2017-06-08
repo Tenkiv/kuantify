@@ -33,7 +33,7 @@ class CSVRecorder(path: String,
             outputStream.use { it.write("TIME\n".toByteArray()) }
         }
 
-        recordingObjects.keys.forEach { writeValue(it.value.toString()) }
+        recordingObjects.keys.forEach { writeValue(it.latestValue.toString()) }
         outputStream.use { it.write("${Instant.now().epochSecond}\n".toByteArray()) }
 
         sampleTally++

@@ -18,3 +18,5 @@ enum class SharingStatus {
     READ_WRITE_ALL,
     CUSTOM
 }
+
+class UnsupportedConnectionProtocolException: Exception("Board unable to connect with supplied protocol.")

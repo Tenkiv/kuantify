@@ -7,12 +7,12 @@ import kotlin.coroutines.experimental.CoroutineContext
 /**
  * Created by tenkiv on 4/11/17.
  */
-interface Updatable<T: DaqcValue> {
+interface Updatable<T> {
 
     val context: CoroutineContext
 
     val broadcastChannel: BroadcastChannel<Updatable<T>>
 
-    var value: T?
+    var latestValue: T?
 
 }
