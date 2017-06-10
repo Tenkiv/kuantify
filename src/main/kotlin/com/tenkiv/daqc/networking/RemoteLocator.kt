@@ -23,14 +23,6 @@ abstract class RemoteLocator<T: List<Device>>: Updatable<T> {
 
     abstract fun stop()
 
-    override val context: CoroutineContext = newSingleThreadContext("RemoteDeviceLocator")
-
-    override val broadcastChannel: BroadcastChannel<Updatable<T>> = ConflatedBroadcastChannel(this)
-
-    protected var _value: T? = null
-
-    override var latestValue: T?
-        get() = _value
-        set(value) { println("Value "+value); _value = value; launch(context){ broadcastChannel.send(this@RemoteLocator) } }
+    override val broadcastChannel = ConflatedBroadcastChannel(activeDevices)
 
 }

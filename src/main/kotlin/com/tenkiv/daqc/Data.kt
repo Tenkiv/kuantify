@@ -28,9 +28,7 @@ data class TriggerCondition<T: DaqcValue>(val input: Input<T>, val condition: (T
 
 interface UpdatableListener<T>{
 
-    val openSubChannels: MutableList<SubscriptionReceiveChannel<Updatable<T>>>
-
-    val onDataReceived: suspend (Updatable<T>) -> kotlin.Unit
+    suspend fun onUpdate(updatable: Updatable<T>, value: T)
 
 }
 
@@ -99,9 +97,16 @@ data class DelayCommand(val delay: Quantity<Time>): ControllerCommand(){
 class BoundedFirstInFirstOutArrayList<T>(val maxSize: Int): ArrayList<T>() {
 
     override fun add(element: T): Boolean{
-        val r = super.add(element)
-        if (size > maxSize){ removeRange(0, size - maxSize) }
-        return r
+        try {
+            val r = super.add(element)
+            if (size > maxSize) {
+                removeRange(0, size - maxSize)
+            }
+            return r
+        }catch (e: Exception){
+            e.printStackTrace()
+            return false
+        }
     }
 
     fun youngest(): T = get(size - 1)
@@ -109,8 +114,8 @@ class BoundedFirstInFirstOutArrayList<T>(val maxSize: Int): ArrayList<T>() {
     fun oldest(): T =  get(0)
 }
 
-suspend fun <T: DaqcValue> BroadcastChannel<Updatable<T>>
-        .consumeAndReturn(action: suspend (Updatable<T>) -> kotlin.Unit): SubscriptionReceiveChannel<Updatable<T>> {
+suspend fun <T: DaqcValue> BroadcastChannel<T>
+        .consumeAndReturn(action: suspend (T) -> kotlin.Unit): SubscriptionReceiveChannel<T> {
     val channel = open()
     launch(CommonPool){ channel.use { channel -> for (x in channel) action(x) } }
     return channel

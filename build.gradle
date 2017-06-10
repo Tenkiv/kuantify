@@ -1,5 +1,5 @@
-group 'com.tenkiv'
-version '1.0'
+group 'com.tenkiv.daqc'
+version '0.0.0.2-SNAPSHOT'
 
 buildscript {
     ext.kotlin_version = '1.1.2'
@@ -16,6 +16,10 @@ apply plugin: 'java'
 apply plugin: 'kotlin'
 
 sourceCompatibility = 1.5
+
+def isReleaseBuild() {
+    return version.contains("SNAPSHOT") == false
+}
 
 repositories {
     mavenCentral()
@@ -44,6 +48,9 @@ dependencies {
     //JSON
     compile 'com.beust:klaxon:0.30'
 }
+
+apply from: 'maven_push.gradle'
+
 kotlin {
     experimental {
         coroutines "enable"

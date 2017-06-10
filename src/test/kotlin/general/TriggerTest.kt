@@ -1,5 +1,7 @@
 package general
 
+import com.tenkiv.daqc.DaqcValue
+import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.nexus.data.*
 import javax.measure.quantity.ElectricPotential
 

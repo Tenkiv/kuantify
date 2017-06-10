@@ -19,18 +19,18 @@ import kotlinx.coroutines.experimental.run
  */
 
 class TekdaqcTest: StringSpec(){
+
     init{
         "Tekdaqc Location Test"{
-
             var success = false
             val tekdaqcLocator = TekdaqcLocator()
 
             launch(CommonPool){
                 tekdaqcLocator.search()
-
                 tekdaqcLocator.broadcastChannel.consumeEach {
-                    it.latestValue?.forEach { board -> println(board.inetAddr); success = true }
+                    it.forEach { board -> println("Discovery Test Located: "+board.inetAddr); success = true }
                 }
+                tekdaqcLocator.broadcastChannel.close()
             }
 
             Thread.sleep(10000)
@@ -44,9 +44,9 @@ class TekdaqcTest: StringSpec(){
             launch(CommonPool){
 
                 tekdaqcLocator.broadcastChannel.consumeEach {
-                    println("Got Something: ${it.latestValue}")
-                    it.latestValue?.forEach {
-                        println("${it.tekdaqc.serialNumber}")
+                    println("Got Something: $it")
+                    it.forEach {
+                        println(it.tekdaqc.serialNumber)
                         if(it.tekdaqc.serialNumber == "00000000000000000000000000000017"){
                             executeBoardCommands(it)
                             tekdaqcLocator.stop()
@@ -92,12 +92,15 @@ class TekdaqcTest: StringSpec(){
             }
 
         })
+
+        launch(CommonPool) {
             board.analogInputs[0].broadcastChannel.consumeEach {
-                println("New Value: ${it.latestValue}")
+                println("New Value: $it")
             }
+        }
 
         board.analogInputs[0].activate()
 
-        board.tekdaqc.sample(0)
+        board.tekdaqc.sample(100)
     }
 }

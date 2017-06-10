@@ -13,7 +13,7 @@ class Trigger<T: DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
                             val triggerOnce: Boolean = true,
                             triggerFunction: () -> Unit){
 
-    val channelList: MutableList<SubscriptionReceiveChannel<Updatable<T>>> = ArrayList()
+    val channelList: MutableList<SubscriptionReceiveChannel<T>> = ArrayList()
 
     init{
 
@@ -24,7 +24,7 @@ class Trigger<T: DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
             triggerConditions.forEach {
                 channelList.add(it.input.broadcastChannel.consumeAndReturn({ update ->
 
-                    val currentVal = update.latestValue
+                    val currentVal = update
 
                     it.lastValue = currentVal
 

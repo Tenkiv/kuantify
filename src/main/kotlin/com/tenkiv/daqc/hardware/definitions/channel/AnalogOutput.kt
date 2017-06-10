@@ -1,8 +1,8 @@
 package com.tenkiv.daqc.hardware.definitions.channel
 
 import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.hardware.definitions.BasicUpdatable
 import com.tenkiv.daqc.hardware.definitions.Channel
+import com.tenkiv.daqc.hardware.definitions.Updatable
 import javax.measure.quantity.ElectricPotential
 
 /**
@@ -11,6 +11,6 @@ import javax.measure.quantity.ElectricPotential
 abstract class AnalogOutput:
         Output<DaqcValue.Quantity<ElectricPotential>>,
         Channel<DaqcValue.Quantity<ElectricPotential>>,
-        BasicUpdatable<DaqcValue.Quantity<ElectricPotential>>() {
+        Updatable<DaqcValue.Quantity<ElectricPotential>> {
 
 }

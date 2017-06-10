@@ -2,9 +2,8 @@ package com.tenkiv.daqc.hardware.definitions.channel
 
 import com.tenkiv.daqc.AnalogAccuracy
 import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.hardware.definitions.BasicUpdatable
 import com.tenkiv.daqc.hardware.definitions.Channel
-import javax.measure.Quantity
+import com.tenkiv.daqc.hardware.definitions.Updatable
 import javax.measure.quantity.ElectricPotential
 
 /**
@@ -13,7 +12,7 @@ import javax.measure.quantity.ElectricPotential
 abstract class AnalogInput:
         Input<DaqcValue.Quantity<ElectricPotential>>,
         Channel<DaqcValue.Quantity<ElectricPotential>>,
-        BasicUpdatable<DaqcValue.Quantity<ElectricPotential>>() {
+        Updatable<DaqcValue.Quantity<ElectricPotential>> {
 
     abstract fun setBuffer(state: Boolean)
 

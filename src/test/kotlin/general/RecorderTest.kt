@@ -2,11 +2,17 @@ package general
 
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
+import com.beust.klaxon.Parser
+import com.tenkiv.daqc.recording.disk.JSONRecorder
+import com.tenkiv.daqc.recording.memory.AnalogMemoryRecorder
+import com.tenkiv.daqc.recording.memory.DigitalMemoryRecorder
+import io.kotlintest.specs.StringSpec
+import java.io.File
 
 /**
  * Created by tenkiv on 5/15/17.
  */
-class RecorderTest: io.kotlintest.specs.StringSpec() {
+class RecorderTest: StringSpec() {
     init{
         "JSON Recording Test"{
 
@@ -14,14 +20,14 @@ class RecorderTest: io.kotlintest.specs.StringSpec() {
 
             var completed = false
 
-            val file = java.io.File("./TestRecording.json")
+            val file = File("./TestRecording.json")
 
             //No False Positives
             if(file.exists()){
                 file.delete()
             }
 
-            val recorder = com.tenkiv.daqc.recording.disk.JSONRecorder(file.path,
+            val recorder = JSONRecorder(file.path,
                     recordingObjects = mapOf(Pair(gibberingSensor, "Gibbering Sensor")))
 
             recorder.start()
@@ -33,14 +39,13 @@ class RecorderTest: io.kotlintest.specs.StringSpec() {
             Thread.sleep(1000)
 
             try {
-                val json = com.beust.klaxon.Parser().parse(file.path) as com.beust.klaxon.JsonArray<JsonArray<JsonObject>>
-
+                val json = Parser().parse(file.path) as JsonArray<JsonArray<JsonObject>>
                 json.forEach(::println)
-
                 completed = json[0].size > 0
 
             }catch (exception: Exception){
                 println("Almost certainly Failed.")
+                exception.printStackTrace()
             }
 
             assert(completed)
@@ -55,7 +60,7 @@ class RecorderTest: io.kotlintest.specs.StringSpec() {
 
             val gibberingSensor = AnalogGibberingSensor()
 
-            val recorder = com.tenkiv.daqc.recording.memory.AnalogMemoryRecorder(gibberingSensor, 10, "")
+            val recorder = AnalogMemoryRecorder(gibberingSensor, 10, "")
 
             recorder.start()
 
@@ -73,9 +78,9 @@ class RecorderTest: io.kotlintest.specs.StringSpec() {
 
         "Digital Memory Recorder Test"{
 
-            val gibberingSensor = PredicatbleSensor()
+            val gibberingSensor = PredictableSensor()
 
-            val recorder = com.tenkiv.daqc.recording.memory.DigitalMemoryRecorder(gibberingSensor, 10, "")
+            val recorder = DigitalMemoryRecorder(gibberingSensor, 10, "")
 
             recorder.start()
 

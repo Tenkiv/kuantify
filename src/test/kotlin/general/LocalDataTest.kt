@@ -6,7 +6,7 @@ import io.kotlintest.specs.StringSpec
 /**
  * Created by tenkiv on 5/31/17.
  */
-class LocalDataTest: io.kotlintest.specs.StringSpec() {
+class LocalDataTest: StringSpec() {
     init{
         "LocalDataBase Generation"{
 

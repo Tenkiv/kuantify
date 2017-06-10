@@ -6,7 +6,10 @@ import com.tenkiv.daqc.networking.RemoteLocator
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.locator.Locator
 import com.tenkiv.tekdaqc.locator.OnTekdaqcDiscovered
+import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
+import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.launch
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -17,25 +20,21 @@ class TekdaqcLocator: OnTekdaqcDiscovered, RemoteLocator<List<TekdaqcBoard>>() {
 
     override val activeDevices: List<TekdaqcBoard> = CopyOnWriteArrayList<TekdaqcBoard>()
 
+    override val broadcastChannel = ConflatedBroadcastChannel(activeDevices)
+
     init { Locator.instance.addLocatorListener(this) }
 
     override fun onTekdaqcResponse(tekdaqc: ATekdaqc) { }
 
     override fun onTekdaqcNoLongerLocated(tekdaqc: ATekdaqc) {
-        println("Tekdaqc Not Located")
         (activeDevices as? MutableList)?.removeIf { it.tekdaqc.serialNumber == tekdaqc.serialNumber }
-        latestValue = activeDevices
+        launch(CommonPool){broadcastChannel.send(activeDevices)}
     }
 
     override fun onTekdaqcFirstLocated(tekdaqc: ATekdaqc) {
-        println("Tekdaqc Located ${tekdaqc.serialNumber}")
         val board = TekdaqcBoard(tekdaqc)
-        println("Pre Active Devices? $activeDevices Board $board")
         (activeDevices as? MutableList)?.add(board)
-
-        println("Active Devices? $activeDevices Board $board")
-
-        latestValue = activeDevices
+        launch(CommonPool){broadcastChannel.send(activeDevices)}
     }
 
     override fun search() { Locator.instance.searchForTekdaqcs() }

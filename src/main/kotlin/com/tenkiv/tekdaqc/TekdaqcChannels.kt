@@ -12,6 +12,9 @@ import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener
 import com.tenkiv.tekdaqc.communication.message.IVoltageListener
 import com.tenkiv.tekdaqc.hardware.AAnalogInput
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.unit.Units
@@ -24,7 +27,7 @@ import javax.measure.quantity.ElectricPotential
  */
 
 class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput): AnalogInput(), IVoltageListener {
-
+    override val broadcastChannel = ConflatedBroadcastChannel<DaqcValue.Quantity<ElectricPotential>>()
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.ANALOG_INPUT
     override val hardwareNumber: Int = input.channelNumber
@@ -50,13 +53,13 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput): An
     }
 
     override fun onVoltageDataReceived(input: AAnalogInput, value: ValueInstant<ComparableQuantity<ElectricPotential>>) {
-        latestValue = DaqcValue.Quantity(value.value)
+        launch(CommonPool){broadcastChannel.send(DaqcValue.Quantity(value.value))}
     }
 }
 
 class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekdaqc.hardware.DigitalInput):
         DigitalInput(), IDigitalChannelListener {
-
+    override val broadcastChannel = ConflatedBroadcastChannel<DaqcValue.Boolean>()
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.DIGITAL_INPUT
     override val hardwareNumber: Int = input.channelNumber
@@ -67,7 +70,9 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     init { input.addDigitalListener(this) }
 
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
-        latestValue = DaqcValue.Boolean(data.state)
+        launch(CommonPool) {
+            broadcastChannel.send(DaqcValue.Boolean(data.state))
+        }
     }
 }
 
@@ -84,4 +89,6 @@ class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tek
     override fun pulseWidthModulate(dutyCycle: Int) {
         output.setPulseWidthModulation(dutyCycle)
     }
+
+    override val broadcastChannel = ConflatedBroadcastChannel<DaqcValue.Boolean>()
 }
