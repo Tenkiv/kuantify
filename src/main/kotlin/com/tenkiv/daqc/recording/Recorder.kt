@@ -1,5 +1,6 @@
 package com.tenkiv.daqc.recording
 
+import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.UpdatableListener
 import com.tenkiv.daqc.hardware.definitions.Updatable
@@ -23,19 +24,21 @@ abstract class Recorder<T: DaqcValue>(val timeToRecord: Time? = null,
     open fun start(){
 
         if(timeToRecord != null){
-            async(CommonPool){
+            async(DAQC_CONTEXT){
                 delay(timeToRecord.to(Units.SECOND).value.toLong(),TimeUnit.SECONDS)
                 stop()
             }
         }
 
-        recordingObjects.keys.forEach { launch(CommonPool){ it.broadcastChannel.consumeEach{value -> onUpdate(it,value)} } }
+        recordingObjects.keys.forEach {
+            launch(DAQC_CONTEXT){ it.broadcastChannel.consumeEach{value -> onUpdate(it,value)} }
+        }
 
-        launch(CommonPool){ broadcastChannel.send(DaqcValue.Boolean(true)) }
+        launch(DAQC_CONTEXT){ broadcastChannel.send(DaqcValue.Boolean(true)) }
     }
 
     open fun stop(){
-        launch(CommonPool){ broadcastChannel.send(DaqcValue.Boolean(false)) }
+        launch(DAQC_CONTEXT){ broadcastChannel.send(DaqcValue.Boolean(false)) }
     }
 }
 

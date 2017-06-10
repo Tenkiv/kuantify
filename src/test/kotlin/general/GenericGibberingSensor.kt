@@ -1,5 +1,6 @@
 package general
 
+import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.Sensor
 import com.tenkiv.daqc.hardware.definitions.Updatable
@@ -25,7 +26,7 @@ class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) 
     init {
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
-                launch(CommonPool){ broadcastChannel.send(DaqcValue.Quantity.of(random.nextInt(5), Units.VOLT)) }
+                launch(DAQC_CONTEXT){ broadcastChannel.send(DaqcValue.Quantity.of(random.nextInt(5), Units.VOLT)) }
             }
         },100,100)
     }
@@ -49,7 +50,7 @@ class AnalogGibberingSensor:
     init {
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
-                launch(CommonPool) {
+                launch(DAQC_CONTEXT) {
                     broadcastChannel.send(DaqcValue.Quantity.of(random.nextInt(5000), MetricPrefix.MILLI(Units.VOLT)))
                 }
             }

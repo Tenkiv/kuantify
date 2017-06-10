@@ -1,5 +1,6 @@
 package com.tenkiv.daqc
 
+import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
@@ -19,7 +20,7 @@ class Trigger<T: DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
 
         fun removeTriggerConditionListeners(){ if(triggerOnce) { channelList.forEach{ it.close() } } }
 
-        launch(CommonPool){
+        launch(DAQC_CONTEXT){
 
             triggerConditions.forEach {
                 channelList.add(it.input.broadcastChannel.consumeAndReturn({ update ->

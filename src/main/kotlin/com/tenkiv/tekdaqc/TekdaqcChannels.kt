@@ -1,5 +1,6 @@
 package com.tenkiv.tekdaqc
 
+import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.AnalogAccuracy
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.definitions.HardwareType
@@ -53,7 +54,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput): An
     }
 
     override fun onVoltageDataReceived(input: AAnalogInput, value: ValueInstant<ComparableQuantity<ElectricPotential>>) {
-        launch(CommonPool){broadcastChannel.send(DaqcValue.Quantity(value.value))}
+        launch(DAQC_CONTEXT){broadcastChannel.send(DaqcValue.Quantity(value.value))}
     }
 }
 
@@ -70,7 +71,7 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     init { input.addDigitalListener(this) }
 
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
-        launch(CommonPool) {
+        launch(DAQC_CONTEXT) {
             broadcastChannel.send(DaqcValue.Boolean(data.state))
         }
     }

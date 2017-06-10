@@ -1,5 +1,6 @@
 package com.tenkiv.daqc.hardware
 
+import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.*
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.channel.Input
@@ -14,7 +15,7 @@ import kotlinx.coroutines.experimental.launch
 abstract class Sensor<O: DaqcValue>(inputs: Collection<Input<O>>): Input<O>, Updatable<O>, UpdatableListener<O> {
 
     init {
-        launch(CommonPool){
+        launch(DAQC_CONTEXT){
             inputs.forEach { input -> input.broadcastChannel.consumeEach{ value -> onUpdate(input,value)} }
         }
     }

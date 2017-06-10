@@ -1,5 +1,6 @@
 package com.tenkiv.daqc
 
+import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.channel.Input
 import com.tenkiv.daqc.hardware.definitions.channel.Output
@@ -117,7 +118,7 @@ class BoundedFirstInFirstOutArrayList<T>(val maxSize: Int): ArrayList<T>() {
 suspend fun <T: DaqcValue> BroadcastChannel<T>
         .consumeAndReturn(action: suspend (T) -> kotlin.Unit): SubscriptionReceiveChannel<T> {
     val channel = open()
-    launch(CommonPool){ channel.use { channel -> for (x in channel) action(x) } }
+    launch(DAQC_CONTEXT){ channel.use { channel -> for (x in channel) action(x) } }
     return channel
 }
 
