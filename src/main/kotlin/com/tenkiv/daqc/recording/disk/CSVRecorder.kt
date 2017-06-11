@@ -1,5 +1,6 @@
 package com.tenkiv.daqc.recording.disk
 
+import com.tenkiv.daqc.BinState
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.recording.Recorder
@@ -16,7 +17,7 @@ class CSVRecorder(path: String,
                   timeToRecord: Time? = null,
                   recordingObjects: Map<Updatable<DaqcValue>, String>) : Recorder<DaqcValue>(timeToRecord, recordingObjects) {
 
-    override val broadcastChannel = ConflatedBroadcastChannel<DaqcValue.Boolean>()
+    override val broadcastChannel = ConflatedBroadcastChannel<BinState>()
 
     val outputStream = FileOutputStream(path, true)
 

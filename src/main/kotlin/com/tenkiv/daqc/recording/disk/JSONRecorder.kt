@@ -2,6 +2,7 @@ package com.tenkiv.daqc.recording.disk
 
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
+import com.tenkiv.daqc.BinState
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
@@ -16,7 +17,7 @@ class JSONRecorder(path: String,
                    timeToRecord: Time? = null,
                    recordingObjects: Map<Updatable<DaqcValue>, String>) : Writer<DaqcValue>(path, timeToRecord, recordingObjects) {
 
-    override val broadcastChannel = ConflatedBroadcastChannel<DaqcValue.Boolean>()
+    override val broadcastChannel = ConflatedBroadcastChannel<BinState>()
 
     suspend override fun onUpdate(updatable: Updatable<DaqcValue>, value: DaqcValue) {
         val jsonObj = mapOf(Pair(recordingObjects[updatable] ?: "null", value.toString()),
