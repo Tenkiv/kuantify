@@ -9,7 +9,7 @@ import javax.measure.quantity.ElectricPotential
 /**
  * Created by tenkiv on 3/18/17.
  */
-abstract class AnalogInput:
+abstract class AnalogInput :
         Input<DaqcValue.DaqcQuantity<ElectricPotential>>,
         Channel<DaqcValue.DaqcQuantity<ElectricPotential>>,
         Updatable<DaqcValue.DaqcQuantity<ElectricPotential>> {

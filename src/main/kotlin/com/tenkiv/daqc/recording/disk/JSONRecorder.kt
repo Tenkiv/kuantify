@@ -14,7 +14,7 @@ import javax.measure.quantity.Time
 class JSONRecorder(path: String,
                    val jsonArraySize: Int = 1000,
                    timeToRecord: Time? = null,
-                   recordingObjects: Map<Updatable<DaqcValue>,String>) : Writer<DaqcValue>(path, timeToRecord, recordingObjects) {
+                   recordingObjects: Map<Updatable<DaqcValue>, String>) : Writer<DaqcValue>(path, timeToRecord, recordingObjects) {
 
     override val broadcastChannel = ConflatedBroadcastChannel<DaqcValue.Boolean>()
 
@@ -24,7 +24,7 @@ class JSONRecorder(path: String,
 
         subJsonArray.add(JsonObject(jsonObj))
 
-        if(jsonArraySize <= subJsonArray.size){
+        if (jsonArraySize <= subJsonArray.size) {
             writeOutJSON()
         }
     }
@@ -38,7 +38,7 @@ class JSONRecorder(path: String,
         writeOutJSON()
     }
 
-    private fun writeOutJSON(){
+    private fun writeOutJSON() {
         completeArray.add(subJsonArray)
         subJsonArray = JsonArray(emptyList<JsonObject>())
         write(completeArray.toJsonString())

@@ -9,12 +9,16 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 private var _context: CoroutineContext? = null
 
-private fun getNewContext(): CoroutineContext{
+private fun getNewContext(): CoroutineContext {
     val context = newSingleThreadContext("Main Daqc Context")
     _context = context
     return context
 }
 
 var DAQC_CONTEXT: CoroutineContext
-    get() { return _context ?: getNewContext()}
-    set(value) { _context = value}
+    get() {
+        return _context ?: getNewContext()
+    }
+    set(value) {
+        _context = value
+    }

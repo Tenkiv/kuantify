@@ -12,16 +12,16 @@ import javax.measure.quantity.Time
 /**
  * Created by tenkiv on 5/22/17.
  */
-abstract class Writer<T: DaqcValue>(val path: String,
-                                    timeToRecord: Time?,
-                                    recordingObjects: Map<Updatable<T>,String>): Recorder<T>(timeToRecord, recordingObjects) {
+abstract class Writer<T : DaqcValue>(val path: String,
+                                     timeToRecord: Time?,
+                                     recordingObjects: Map<Updatable<T>, String>) : Recorder<T>(timeToRecord, recordingObjects) {
 
     protected val fileWriter = BufferedWriter(FileWriter(path, true))
 
     protected val filePathContext = newSingleThreadContext("File Context $path")
 
-    open fun write(output: String){
-        launch(filePathContext){
+    open fun write(output: String) {
+        launch(filePathContext) {
             fileWriter.append(output)
             fileWriter.flush()
         }

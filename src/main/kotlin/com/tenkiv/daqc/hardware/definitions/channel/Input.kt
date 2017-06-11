@@ -6,7 +6,7 @@ import com.tenkiv.daqc.hardware.definitions.Updatable
 /**
  * Created by tenkiv on 3/18/17.
  */
-interface Input<T: DaqcValue>: Updatable<T>{
+interface Input<T : DaqcValue> : Updatable<T> {
 
     /*fun onDataUpdate(data: Updatable<T>){
         latestValue = data.latestValue

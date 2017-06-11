@@ -7,7 +7,7 @@ import com.tenkiv.daqc.hardware.definitions.Updatable
 /**
  * Created by tenkiv on 3/18/17.
  */
-abstract class DigitalInput:
+abstract class DigitalInput :
         Input<DaqcValue.Boolean>,
         Channel<DaqcValue.Boolean>,
         Updatable<DaqcValue.Boolean> {

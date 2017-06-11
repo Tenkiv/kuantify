@@ -19,13 +19,13 @@ class DigitalMemoryRecorder(updatable: Updatable<BinState>,
                 trueSum++
             }
         }
-        return (trueSum.toDouble()/data.size.toDouble())
+        return (trueSum.toDouble() / data.size.toDouble())
     }
 
     fun median(): Pair<Instant, BinState?> {
         val data = dataMap.sortedByDescending {
             ((it.second == BinState.On))
         }
-        return data[data.size/2]
+        return data[data.size / 2]
     }
 }

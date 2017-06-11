@@ -14,24 +14,24 @@ import javax.measure.quantity.Time
 class CSVRecorder(path: String,
                   val numberOfSamples: Int = -1,
                   timeToRecord: Time? = null,
-                  recordingObjects: Map<Updatable<DaqcValue>,String>): Recorder<DaqcValue>(timeToRecord, recordingObjects) {
+                  recordingObjects: Map<Updatable<DaqcValue>, String>) : Recorder<DaqcValue>(timeToRecord, recordingObjects) {
 
     override val broadcastChannel = ConflatedBroadcastChannel<DaqcValue.Boolean>()
 
-    val outputStream = FileOutputStream(path,true)
+    val outputStream = FileOutputStream(path, true)
 
     var isFirstWrite = true
 
     var sampleTally = 0
 
     suspend override fun onUpdate(updatable: Updatable<DaqcValue>, value: DaqcValue) {
-        fun writeValue(value: String){
+        fun writeValue(value: String) {
             outputStream.use {
                 it.write("$value,".toByteArray())
             }
         }
 
-        if(isFirstWrite){
+        if (isFirstWrite) {
             recordingObjects.values.forEach(::writeValue)
             outputStream.use { it.write("TIME\n".toByteArray()) }
         }
@@ -41,7 +41,7 @@ class CSVRecorder(path: String,
 
         sampleTally++
 
-        if(sampleTally == numberOfSamples){
+        if (sampleTally == numberOfSamples) {
             stop()
         }
     }

@@ -14,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 /**
  * Created by tenkiv on 5/26/17.
  */
-class TekdaqcBoard(val tekdaqc: ATekdaqc): ControlDevice, DataAquisitionDevice {
+class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAquisitionDevice {
 
     override val inetAddr: InetAddress = InetAddress.getByName(tekdaqc.hostIP)
 
@@ -23,11 +23,13 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc): ControlDevice, DataAquisitionDevice {
     override var networkSharingStatus: SharingStatus = SharingStatus.NONE
 
     override fun connect(protocol: NetworkProtocol?) {
-        when(protocol){
+        when (protocol) {
             NetworkProtocol.TELNET, NetworkProtocol.TCP -> {
                 tekdaqc.connect(ATekdaqc.AnalogScale.ANALOG_SCALE_5V, ATekdaqc.CONNECTION_METHOD.ETHERNET)
             }
-            else -> { throw UnsupportedConnectionProtocolException() }
+            else -> {
+                throw UnsupportedConnectionProtocolException()
+            }
         }
     }
 
@@ -58,25 +60,27 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc): ControlDevice, DataAquisitionDevice {
 
     override fun hasDigitalInputs(): Boolean = true
 
-    private fun toDaqcAI(inputs: Collection<com.tenkiv.tekdaqc.hardware.AAnalogInput>): List<TekdaqcAnalogInput>{
+    private fun toDaqcAI(inputs: Collection<com.tenkiv.tekdaqc.hardware.AAnalogInput>): List<TekdaqcAnalogInput> {
         val tAI = ArrayList<TekdaqcAnalogInput>()
-        inputs.forEach { tAI.add(TekdaqcAnalogInput(this,it)) }
+        inputs.forEach { tAI.add(TekdaqcAnalogInput(this, it)) }
         return tAI
     }
 
-    private fun toDaqcDI(inputs: Collection<com.tenkiv.tekdaqc.hardware.DigitalInput>): List<TekdaqcDigitalInput>{
+    private fun toDaqcDI(inputs: Collection<com.tenkiv.tekdaqc.hardware.DigitalInput>): List<TekdaqcDigitalInput> {
         val tDI = ArrayList<TekdaqcDigitalInput>()
-        inputs.forEach { tDI.add(TekdaqcDigitalInput(this,it)) }
+        inputs.forEach { tDI.add(TekdaqcDigitalInput(this, it)) }
         return tDI
     }
 
-    private fun toDaqcDO(inputs: Collection<com.tenkiv.tekdaqc.hardware.DigitalOutput>): List<TekdaqcDigitalOutput>{
+    private fun toDaqcDO(inputs: Collection<com.tenkiv.tekdaqc.hardware.DigitalOutput>): List<TekdaqcDigitalOutput> {
         val tDO = ArrayList<TekdaqcDigitalOutput>()
-        inputs.forEach { tDO.add(TekdaqcDigitalOutput(this,it)) }
+        inputs.forEach { tDO.add(TekdaqcDigitalOutput(this, it)) }
         return tDO
     }
 
     var analogScale: ATekdaqc.AnalogScale
         get() = tekdaqc.analogInputScale
-        set(value) {tekdaqc.analogInputScale = value}
+        set(value) {
+            tekdaqc.analogInputScale = value
+        }
 }

@@ -1,26 +1,28 @@
 package com.tenkiv.daqc
 
 import com.tenkiv.DAQC_CONTEXT
-import com.tenkiv.daqc.hardware.definitions.Updatable
-import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.launch
 
 /**
  * Created by tenkiv on 4/4/17.
  */
-class Trigger<T: DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
-                            val triggerOnSimultaneousValues: Boolean = false,
-                            val triggerOnce: Boolean = true,
-                            triggerFunction: () -> Unit){
+class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
+                             val triggerOnSimultaneousValues: Boolean = false,
+                             val triggerOnce: Boolean = true,
+                             triggerFunction: () -> Unit) {
 
     val channelList: MutableList<SubscriptionReceiveChannel<T>> = ArrayList()
 
-    init{
+    init {
 
-        fun removeTriggerConditionListeners(){ if(triggerOnce) { channelList.forEach{ it.close() } } }
+        fun removeTriggerConditionListeners() {
+            if (triggerOnce) {
+                channelList.forEach { it.close() }
+            }
+        }
 
-        launch(DAQC_CONTEXT){
+        launch(DAQC_CONTEXT) {
 
             triggerConditions.forEach {
                 channelList.add(it.input.broadcastChannel.consumeAndReturn({ update ->

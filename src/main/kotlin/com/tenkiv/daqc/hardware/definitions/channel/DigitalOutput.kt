@@ -7,7 +7,7 @@ import com.tenkiv.daqc.hardware.definitions.Updatable
 /**
  * Created by tenkiv on 3/18/17.
  */
-abstract class DigitalOutput: Output<DaqcValue.Boolean>,
+abstract class DigitalOutput : Output<DaqcValue.Boolean>,
         Channel<DaqcValue.Boolean>,
         Updatable<DaqcValue.Boolean> {
 

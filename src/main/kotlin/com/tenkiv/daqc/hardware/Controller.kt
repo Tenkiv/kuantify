@@ -1,13 +1,13 @@
 package com.tenkiv.daqc.hardware
 
-import com.tenkiv.daqc.*
-import com.tenkiv.daqc.hardware.definitions.channel.*
-import java.util.concurrent.CopyOnWriteArrayList
+import com.tenkiv.daqc.ControllerCommand
+import com.tenkiv.daqc.DaqcValue
+import com.tenkiv.daqc.hardware.definitions.channel.Output
 
 /**
  * Created by tenkiv on 4/5/17.
  */
-abstract class Controller<T: DaqcValue>(val commands: Map<String,ControllerCommand>): Output<T>{
+abstract class Controller<T : DaqcValue>(val commands: Map<String, ControllerCommand>) : Output<T> {
 
     /*override val listeners: MutableList<UpdatableListener<T>> = CopyOnWriteArrayList()*/
 

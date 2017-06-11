@@ -9,7 +9,7 @@ import com.tenkiv.daqc.networking.SharingStatus
 /**
  * Created by tenkiv on 4/7/17.
  */
-interface ControlDevice: Device {
+interface ControlDevice : Device {
 
     val analogOutputs: List<AnalogOutput>
 
@@ -19,6 +19,6 @@ interface ControlDevice: Device {
 
     fun hasDigitalOutputs(): Boolean
 
-    val sharedOutputs: MutableMap<SharingStatus,Output<DaqcValue>>
+    val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>>
 
 }

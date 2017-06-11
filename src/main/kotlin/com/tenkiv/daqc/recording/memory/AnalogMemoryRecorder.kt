@@ -26,7 +26,7 @@ class AnalogMemoryRecorder(updatable: Updatable<DaqcValue.DaqcQuantity<ElectricP
         val data = dataMap.sortedByDescending {
             ((it.second ?: DaqcValue.DaqcQuantity.of(0, Units.VOLT)).value.toInt())
         }
-        return data[data.size/2]
+        return data[data.size / 2]
     }
 
 
