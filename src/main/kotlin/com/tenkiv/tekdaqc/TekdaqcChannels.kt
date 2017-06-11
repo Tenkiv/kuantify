@@ -13,14 +13,10 @@ import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener
 import com.tenkiv.tekdaqc.communication.message.IVoltageListener
 import com.tenkiv.tekdaqc.hardware.AAnalogInput
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD
-import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import tec.uom.se.ComparableQuantity
-import tec.uom.se.unit.Units
-import javax.measure.Quantity
-import javax.measure.Unit
 import javax.measure.quantity.ElectricPotential
 
 /**
@@ -28,7 +24,7 @@ import javax.measure.quantity.ElectricPotential
  */
 
 class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput): AnalogInput(), IVoltageListener {
-    override val broadcastChannel = ConflatedBroadcastChannel<DaqcValue.Quantity<ElectricPotential>>()
+    override val broadcastChannel = ConflatedBroadcastChannel<DaqcValue.DaqcQuantity<ElectricPotential>>()
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.ANALOG_INPUT
     override val hardwareNumber: Int = input.channelNumber
@@ -54,7 +50,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput): An
     }
 
     override fun onVoltageDataReceived(input: AAnalogInput, value: ValueInstant<ComparableQuantity<ElectricPotential>>) {
-        launch(DAQC_CONTEXT){broadcastChannel.send(DaqcValue.Quantity(value.value))}
+        launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcValue.DaqcQuantity(value.value)) }
     }
 }
 

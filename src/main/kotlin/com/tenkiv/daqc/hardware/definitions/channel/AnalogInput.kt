@@ -10,9 +10,9 @@ import javax.measure.quantity.ElectricPotential
  * Created by tenkiv on 3/18/17.
  */
 abstract class AnalogInput:
-        Input<DaqcValue.Quantity<ElectricPotential>>,
-        Channel<DaqcValue.Quantity<ElectricPotential>>,
-        Updatable<DaqcValue.Quantity<ElectricPotential>> {
+        Input<DaqcValue.DaqcQuantity<ElectricPotential>>,
+        Channel<DaqcValue.DaqcQuantity<ElectricPotential>>,
+        Updatable<DaqcValue.DaqcQuantity<ElectricPotential>> {
 
     abstract fun setBuffer(state: Boolean)
 

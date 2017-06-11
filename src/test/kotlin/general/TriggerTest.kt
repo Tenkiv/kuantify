@@ -1,8 +1,6 @@
 package general
 
-import com.tenkiv.daqc.DaqcValue
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import org.tenkiv.nexus.data.*
+import org.tenkiv.nexus.data.MILLIVOLT
 import javax.measure.quantity.ElectricPotential
 
 /**
@@ -20,7 +18,8 @@ class TriggerTest: io.kotlintest.specs.StringSpec() {
 
             gibberingSensor.addTrigger(
                     {println("Trying Trigger with latestValue $it");
-                        (it as com.tenkiv.daqc.DaqcValue.Quantity<ElectricPotential> >= 3750.MILLIVOLT)},
+                        (it as com.tenkiv.daqc.DaqcValue.DaqcQuantity<ElectricPotential> >= 3750.MILLIVOLT)
+                    },
                     {println("Trigger Fired");completed = true})
 
             Thread.sleep(10000)

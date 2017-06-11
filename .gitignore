@@ -47,3 +47,5 @@ gradlew.bat
 #Files generated when tests are run
 TestRecording.json
 
+/Daqc-Tools.iml
+/src/main/kotlin/com/tenkiv/Test.kt

@@ -9,8 +9,8 @@ import javax.measure.quantity.ElectricPotential
  * Created by tenkiv on 3/20/17.
  */
 abstract class AnalogOutput:
-        Output<DaqcValue.Quantity<ElectricPotential>>,
-        Channel<DaqcValue.Quantity<ElectricPotential>>,
-        Updatable<DaqcValue.Quantity<ElectricPotential>> {
+        Output<DaqcValue.DaqcQuantity<ElectricPotential>>,
+        Channel<DaqcValue.DaqcQuantity<ElectricPotential>>,
+        Updatable<DaqcValue.DaqcQuantity<ElectricPotential>> {
 
 }

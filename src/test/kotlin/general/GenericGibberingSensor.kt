@@ -5,7 +5,6 @@ import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.Sensor
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.channel.Input
-import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.launch
 import tec.uom.se.unit.MetricPrefix
 import tec.uom.se.unit.Units
@@ -26,7 +25,7 @@ class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) 
     init {
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
-                launch(DAQC_CONTEXT){ broadcastChannel.send(DaqcValue.Quantity.of(random.nextInt(5), Units.VOLT)) }
+                launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcValue.DaqcQuantity.of(random.nextInt(5), Units.VOLT)) }
             }
         },100,100)
     }
@@ -38,10 +37,11 @@ class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) 
 }
 
 class AnalogGibberingSensor:
-        Sensor<DaqcValue.Quantity<ElectricPotential>>(emptyList<Input<DaqcValue.Quantity<ElectricPotential>>>()) {
+        Sensor<DaqcValue.DaqcQuantity<ElectricPotential>>(emptyList<Input<DaqcValue.DaqcQuantity<ElectricPotential>>>()) {
 
-    suspend override fun onUpdate(updatable: Updatable<DaqcValue.Quantity<ElectricPotential>>,
-                                  value: DaqcValue.Quantity<ElectricPotential>) {}
+    suspend override fun onUpdate(updatable: Updatable<DaqcValue.DaqcQuantity<ElectricPotential>>,
+                                  value: DaqcValue.DaqcQuantity<ElectricPotential>) {
+    }
 
     val random = Random()
 
@@ -51,7 +51,7 @@ class AnalogGibberingSensor:
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
                 launch(DAQC_CONTEXT) {
-                    broadcastChannel.send(DaqcValue.Quantity.of(random.nextInt(5000), MetricPrefix.MILLI(Units.VOLT)))
+                    broadcastChannel.send(DaqcValue.DaqcQuantity.of(random.nextInt(5000), MetricPrefix.MILLI(Units.VOLT)))
                 }
             }
         },100,100)
