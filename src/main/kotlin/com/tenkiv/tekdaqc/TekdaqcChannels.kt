@@ -2,6 +2,8 @@ package com.tenkiv.tekdaqc
 
 import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.AnalogAccuracy
+import com.tenkiv.daqc.BinaryState
+import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.definitions.HardwareType
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
@@ -24,7 +26,7 @@ import javax.measure.quantity.ElectricPotential
  */
 
 class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : AnalogInput(), IVoltageListener {
-    override val broadcastChannel = ConflatedBroadcastChannel<DaqcValue.DaqcQuantity<ElectricPotential>>()
+    override val broadcastChannel = ConflatedBroadcastChannel<DaqcQuantity<ElectricPotential>>()
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.ANALOG_INPUT
     override val hardwareNumber: Int = input.channelNumber
@@ -63,13 +65,13 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
     }
 
     override fun onVoltageDataReceived(input: AAnalogInput, value: ValueInstant<ComparableQuantity<ElectricPotential>>) {
-        launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcValue.DaqcQuantity(value.value)) }
+        launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcQuantity.of(value.value)) }
     }
 }
 
 class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekdaqc.hardware.DigitalInput) :
         DigitalInput(), IDigitalChannelListener {
-    override val broadcastChannel = ConflatedBroadcastChannel<DaqcValue.Boolean>()
+    override val broadcastChannel = ConflatedBroadcastChannel<BinaryState>()
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.DIGITAL_INPUT
     override val hardwareNumber: Int = input.channelNumber
@@ -88,7 +90,10 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
 
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
         launch(DAQC_CONTEXT) {
-            broadcastChannel.send(DaqcValue.Boolean(data.state))
+            when(data.state){
+                true -> {broadcastChannel.send(BinaryState.On)}
+                false -> {broadcastChannel.send(BinaryState.Off)}
+            }
         }
     }
 }
@@ -112,5 +117,5 @@ class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tek
         output.setPulseWidthModulation(dutyCycle)
     }
 
-    override val broadcastChannel = ConflatedBroadcastChannel<DaqcValue.Boolean>()
+    override val broadcastChannel = ConflatedBroadcastChannel<BinaryState>()
 }

@@ -1,12 +1,14 @@
 package general
 
+import com.tenkiv.daqc.DaqcQuantity
+import io.kotlintest.specs.StringSpec
 import org.tenkiv.nexus.data.MILLIVOLT
 import javax.measure.quantity.ElectricPotential
 
 /**
  * Created by tenkiv on 4/13/17.
  */
-class TriggerTest: io.kotlintest.specs.StringSpec() {
+class TriggerTest: StringSpec() {
 
     init {
 
@@ -18,7 +20,7 @@ class TriggerTest: io.kotlintest.specs.StringSpec() {
 
             gibberingSensor.addTrigger(
                     {println("Trying Trigger with latestValue $it");
-                        (it as com.tenkiv.daqc.DaqcValue.DaqcQuantity<ElectricPotential> >= 3750.MILLIVOLT)
+                        (it as DaqcQuantity<ElectricPotential> >= 3750.MILLIVOLT)
                     },
                     {println("Trigger Fired");completed = true})
 

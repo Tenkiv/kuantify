@@ -7,6 +7,7 @@ import com.tenkiv.daqc.hardware.definitions.channel.Output
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.launch
+import org.tenkiv.coral.ValueInstant
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities
 import javax.measure.Quantity
@@ -35,11 +36,11 @@ interface UpdatableListener<T> {
 
 sealed class DaqcValue
 
-sealed class BinState : DaqcValue() {
+sealed class BinaryState : DaqcValue() {
 
-    object On : BinState()
+    object On : BinaryState()
 
-    object Off : BinState()
+    object Off : BinaryState()
 
 }
 
@@ -51,6 +52,12 @@ data class DaqcQuantity<Q : Quantity<Q>>(private val quantity: ComparableQuantit
     companion object {
         fun <Q : Quantity<Q>> of(value: Number, unit: Unit<Q>) =
                 DaqcQuantity(Quantities.getQuantity(value, unit))
+
+        fun <Q : Quantity<Q>> of(quantity: ComparableQuantity<Q>) =
+                DaqcQuantity(quantity)
+
+        fun <Q : Quantity<Q>> of(instant: ValueInstant<ComparableQuantity<Q>>) =
+                DaqcQuantity(instant.value)
     }
 }
 
@@ -72,7 +79,7 @@ abstract class ControllerCommand {
     abstract val outputCommand: OutputCommand
 }
 
-data class PWMOutputCommand(val output: Output<BinState>, val pwmDutyCycle: Float) : ControllerCommand() {
+data class PWMOutputCommand(val output: Output<BinaryState>, val pwmDutyCycle: Float) : ControllerCommand() {
     override val outputCommand: OutputCommand = OutputCommand.PULSE_WIDTH_MODULATE
 }
 
@@ -81,7 +88,7 @@ data class SetAnalogOutputCommand(val output: Output<DaqcQuantity<ElectricPotent
     override val outputCommand: OutputCommand = OutputCommand.SET_VALUE
 }
 
-data class SetDigitalOutputCommand(val output: Output<BinState>, val state: Boolean) : ControllerCommand() {
+data class SetDigitalOutputCommand(val output: Output<BinaryState>, val state: Boolean) : ControllerCommand() {
     override val outputCommand: OutputCommand = OutputCommand.SET_VALUE
 }
 

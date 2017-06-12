@@ -1,6 +1,7 @@
 package com.tenkiv.daqc.recording
 
 import com.tenkiv.DAQC_CONTEXT
+import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.UpdatableListener
 import com.tenkiv.daqc.hardware.definitions.Updatable
@@ -18,7 +19,7 @@ import javax.measure.quantity.Time
 abstract class Recorder<T : DaqcValue>(val timeToRecord: Time? = null,
                                        val recordingObjects: Map<Updatable<T>, String>) :
         UpdatableListener<T>,
-        Updatable<DaqcValue.Boolean> {
+        Updatable<BinaryState> {
 
     open fun start() {
 
@@ -33,11 +34,11 @@ abstract class Recorder<T : DaqcValue>(val timeToRecord: Time? = null,
             launch(DAQC_CONTEXT) { it.broadcastChannel.consumeEach { value -> onUpdate(it, value) } }
         }
 
-        launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcValue.Boolean(true)) }
+        launch(DAQC_CONTEXT) { broadcastChannel.send(BinaryState.On) }
     }
 
     open fun stop() {
-        launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcValue.Boolean(false)) }
+        launch(DAQC_CONTEXT) { broadcastChannel.send(BinaryState.Off) }
     }
 }
 

@@ -3,6 +3,7 @@ package general
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.recording.disk.JSONRecorder
 import com.tenkiv.daqc.recording.memory.AnalogMemoryRecorder
 import com.tenkiv.daqc.recording.memory.DigitalMemoryRecorder
@@ -89,7 +90,7 @@ class RecorderTest: StringSpec() {
             recorder.stop()
 
             println("Asserting Median is On")
-            assert(recorder.median().second!!.isOn)
+            assert(recorder.median().second!! == BinaryState.On)
             println("Median "+recorder.median())
 
             println("Asserting 80% on")

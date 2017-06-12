@@ -1,5 +1,6 @@
 package general
 
+import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.Sensor
 import com.tenkiv.daqc.hardware.definitions.Updatable
@@ -12,9 +13,9 @@ import java.util.*
 /**
  * Created by tenkiv on 5/22/17.
  */
-class PredictableSensor : Sensor<DaqcValue.Boolean>(emptyList<Input<DaqcValue.Boolean>>()) {
+class PredictableSensor : Sensor<BinaryState>(emptyList<Input<BinaryState>>()) {
 
-    suspend override fun onUpdate(updatable: Updatable<DaqcValue.Boolean>, value: DaqcValue.Boolean) {
+    suspend override fun onUpdate(updatable: Updatable<BinaryState>, value: BinaryState) {
         println("What on Earth happened here?")
     }
 
@@ -23,16 +24,16 @@ class PredictableSensor : Sensor<DaqcValue.Boolean>(emptyList<Input<DaqcValue.Bo
     var context = newSingleThreadContext("Sensor Context")
 
     var sendingOrder = arrayListOf(
-            DaqcValue.Boolean(true),
-            DaqcValue.Boolean(true),
-            DaqcValue.Boolean(true),
-            DaqcValue.Boolean(true),
-            DaqcValue.Boolean(true),
-            DaqcValue.Boolean(true),
-            DaqcValue.Boolean(true),
-            DaqcValue.Boolean(true),
-            DaqcValue.Boolean(false),
-            DaqcValue.Boolean(false))
+            BinaryState.On,
+            BinaryState.On,
+            BinaryState.On,
+            BinaryState.On,
+            BinaryState.On,
+            BinaryState.On,
+            BinaryState.On,
+            BinaryState.On,
+            BinaryState.Off,
+            BinaryState.Off)
 
     init {
         val timer = Timer(false)

@@ -1,6 +1,7 @@
 package general
 
 import com.tenkiv.DAQC_CONTEXT
+import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.Sensor
 import com.tenkiv.daqc.hardware.definitions.Updatable
@@ -25,7 +26,7 @@ class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) 
     init {
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
-                launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcValue.DaqcQuantity.of(random.nextInt(5), Units.VOLT)) }
+                launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcQuantity.of(random.nextInt(5), Units.VOLT)) }
             }
         },100,100)
     }
@@ -37,10 +38,10 @@ class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) 
 }
 
 class AnalogGibberingSensor:
-        Sensor<DaqcValue.DaqcQuantity<ElectricPotential>>(emptyList<Input<DaqcValue.DaqcQuantity<ElectricPotential>>>()) {
+        Sensor<DaqcQuantity<ElectricPotential>>(emptyList<Input<DaqcQuantity<ElectricPotential>>>()) {
 
-    suspend override fun onUpdate(updatable: Updatable<DaqcValue.DaqcQuantity<ElectricPotential>>,
-                                  value: DaqcValue.DaqcQuantity<ElectricPotential>) {
+    suspend override fun onUpdate(updatable: Updatable<DaqcQuantity<ElectricPotential>>,
+                                  value: DaqcQuantity<ElectricPotential>) {
     }
 
     val random = Random()
@@ -51,7 +52,7 @@ class AnalogGibberingSensor:
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
                 launch(DAQC_CONTEXT) {
-                    broadcastChannel.send(DaqcValue.DaqcQuantity.of(random.nextInt(5000), MetricPrefix.MILLI(Units.VOLT)))
+                    broadcastChannel.send(DaqcQuantity.of(random.nextInt(5000), MetricPrefix.MILLI(Units.VOLT)))
                 }
             }
         },100,100)
