@@ -284,33 +284,12 @@ val Number.year: ComparableQuantity<Time>
 val MetricPrefixedNumber.year: ComparableQuantity<Time>
     get() = number(YEAR.transform(prefix.converter))
 
-//TODO DEPRECATED
-
-val Number.degree_angle: ComparableQuantity<Angle>
-    get() = Quantities.getQuantity<Angle>(this, DEGREE_ANGLE)
-
-val MetricPrefixedNumber.degree_angle: ComparableQuantity<Angle>
-    get() = number(DEGREE_ANGLE.transform(prefix.converter))
-
-val Number.minute_angle: ComparableQuantity<Angle>
-    get() = Quantities.getQuantity<Angle>(this, MINUTE_ANGLE)
-
-val MetricPrefixedNumber.minute_angle: ComparableQuantity<Angle>
-    get() = number(MINUTE_ANGLE.transform(prefix.converter))
-
-val Number.second_angle: ComparableQuantity<Angle>
-    get() = Quantities.getQuantity<Angle>(this, SECOND_ANGLE)
-
-val MetricPrefixedNumber.second_angle: ComparableQuantity<Angle>
-    get() = number(SECOND_ANGLE.transform(prefix.converter))
-
-//TODO DEPRECATED
-
 val Number.litre: ComparableQuantity<Volume>
     get() = Quantities.getQuantity<Volume>(this, LITRE)
 
 val MetricPrefixedNumber.litre: ComparableQuantity<Volume>
     get() = number(LITRE.transform(prefix.converter))
+
 
 // All builtin prefixes
 val Number.zetta get() = MetricPrefixedNumber(this, ZETTA)
