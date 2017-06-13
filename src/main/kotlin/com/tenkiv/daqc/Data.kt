@@ -70,9 +70,12 @@ enum class OutputCommand {
 }
 
 enum class AnalogAccuracy {
-    FASTEST,
-    BALANCED,
-    PRECISE
+    ONE_TENTH_VOLT,
+    ONE_HUNDREDTH_VOLT,
+    ONE_THOUSANDTH_VOLT,
+    ONE_TEN_THOUSANDTH_VOLT,
+    ONE_HUNDRED_THOUSANDTH_VOLT,
+    ONE_MILLIONTH_VOLT
 }
 
 abstract class ControllerCommand {

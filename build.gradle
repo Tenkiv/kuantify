@@ -33,20 +33,26 @@ repositories {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+
+    //Units of Measurement Library until Java 9 release.
     compile "tec.uom:uom-se:1.0.4"
+
     compile "com.tenkiv.coral.jdk:core:0.11.4.0-SNAPSHOT"
-    compile 'com.couchbase.lite:couchbase-lite-java:1.4.0'
-    compile 'com.couchbase.lite:couchbase-lite-java-listener:1.4.0'
-    compile 'com.couchbase.lite:couchbase-lite-java-sqlcipher:1.4.0'
     testCompile 'io.kotlintest:kotlintest:1.3.5'
 
     //Kotlin Coroutines
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.15'
 
+    //Temp Tekdaqc Dependancy
     compile 'com.tenkiv.tekdaqc:shared-java-library:1.5.1.0-SNAPSHOT'
 
     //JSON
     compile 'com.beust:klaxon:0.30'
+
+    //Local Database Management and Syncing
+    compile 'com.couchbase.lite:couchbase-lite-java:1.4.0'
+    compile 'com.couchbase.lite:couchbase-lite-java-listener:1.4.0'
+    compile 'com.couchbase.lite:couchbase-lite-java-sqlcipher:1.4.0'
 }
 
 apply from: 'maven_push.gradle'

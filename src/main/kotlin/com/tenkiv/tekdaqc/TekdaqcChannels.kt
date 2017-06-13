@@ -52,15 +52,12 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
 
     override fun setAccuracy(accuracy: AnalogAccuracy) {
         when (accuracy) {
-            AnalogAccuracy.FASTEST -> {
-                input.rate = AAnalogInput.Rate.SPS_1000
-            }
-            AnalogAccuracy.BALANCED -> {
-                input.rate = AAnalogInput.Rate.SPS_100
-            }
-            AnalogAccuracy.PRECISE -> {
-                input.rate = AAnalogInput.Rate.SPS_2_5
-            }
+            AnalogAccuracy.ONE_TENTH_VOLT -> TODO()
+            AnalogAccuracy.ONE_HUNDREDTH_VOLT -> TODO()
+            AnalogAccuracy.ONE_THOUSANDTH_VOLT -> TODO()
+            AnalogAccuracy.ONE_TEN_THOUSANDTH_VOLT -> TODO()
+            AnalogAccuracy.ONE_HUNDRED_THOUSANDTH_VOLT -> TODO()
+            AnalogAccuracy.ONE_MILLIONTH_VOLT -> TODO()
         }
     }
 
