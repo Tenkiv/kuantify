@@ -1,23 +1,20 @@
-package org.tenkiv.nexus.data
+package com.tenkiv.daqc
 
 
-import com.tenkiv.daqc.DaqcQuantity
 import kotlinx.coroutines.experimental.channels.SendChannel
 import org.tenkiv.coral.ValueInstant
-import tec.uom.se.AbstractUnit
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.function.MultiplyConverter
 import tec.uom.se.quantity.Quantities
 import tec.uom.se.unit.AlternateUnit
 import tec.uom.se.unit.MetricPrefix
-import tec.uom.se.unit.MetricPrefix.HECTO
 import tec.uom.se.unit.MetricPrefix.KILO
 import tec.uom.se.unit.TransformedUnit
-import tec.uom.se.unit.Units
 import tec.uom.se.unit.Units.*
 import javax.measure.Quantity
 import javax.measure.Unit
-import javax.measure.quantity.*
+import javax.measure.quantity.Angle
+import javax.measure.quantity.Mass
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Quantity Type Aliases ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
@@ -31,62 +28,24 @@ typealias QuantMeasureSendChannel<Q> = SendChannel<ValueInstant<ComparableQuanti
 typealias ClosedQuantityRange<Q> = ClosedRange<ComparableQuantity<Q>>
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
-//   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Number Extension Properties ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
-//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
-val Number.kelvin: ComparableQuantity<Temperature>
-    get() = this(Units.KELVIN)
-
-val Number.celsius: ComparableQuantity<Temperature>
-    get() = this(Units.CELSIUS)
-
-val Number.degree: ComparableQuantity<Angle>
-    get() = this(org.tenkiv.nexus.data.DEGREE)
-
-val Number.pascal: ComparableQuantity<Pressure>
-    get() = this(Units.PASCAL)
-
-val Number.kilopascal: ComparableQuantity<Pressure>
-    get() = this(KILO(Units.PASCAL))
-
-val Number.hectopascal: ComparableQuantity<Pressure>
-    get() = this(HECTO(Units.PASCAL))
-
-val Number.volt: ComparableQuantity<ElectricPotential>
-    get() = this(Units.VOLT)
-
-val Number.millivolt: ComparableQuantity<ElectricPotential>
-    get() = this(MetricPrefix.MILLI(Units.VOLT))
-
-val Number.bar: ComparableQuantity<Pressure>
-    get() = this(Units.PASCAL.multiply(100000.0))
-
-val Number.wattPerSquareMetre: ComparableQuantity<Irradiance>
-    get() = this(org.tenkiv.nexus.data.WATT_PER_SQUARE_METRE)
-
-val Number.cubicMetresPerSecond: ComparableQuantity<FlowRate>
-    get() = this(org.tenkiv.nexus.data.CUBIC_METRES_PER_SECOND)
-
-val Number.second: ComparableQuantity<Time>
-    get() = this(Units.SECOND)
-
-val Number.minute: ComparableQuantity<Time>
-    get() = this(Units.MINUTE)
-
-val Number.hertz: ComparableQuantity<Frequency>
-    get() = this(Units.HERTZ)
-
-val Number.one: ComparableQuantity<Dimensionless>
-    get() = this(AbstractUnit.ONE)
-
-val Number.percent: ComparableQuantity<Dimensionless>
-    get() = this(Units.PERCENT)
-
-//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Additional Units ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 val CUBIC_METRES_PER_SECOND = AlternateUnit<FlowRate>(METRE.pow(3) / SECOND, "m\u00B3/s")
 val WATT_PER_SQUARE_METRE = AlternateUnit<Irradiance>(WATT / METRE.pow(2), "W/m\u00B2")
 val DEGREE = TransformedUnit<Angle>("deg", RADIAN, MultiplyConverter(Math.PI / 180))
+
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
+//   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Quantity Builder Extensions ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
+// All builtin units
+val Number.gram: ComparableQuantity<Mass>
+    get() = Quantities.getQuantity<Mass>(this, GRAM)
+
+val PrefixedNumber.gram: ComparableQuantity<Mass>
+    get() = number(GRAM.transform(prefix.converter))
+
+// All builtin prefixes
+val Number.kilo get() = PrefixedNumber(this, KILO)
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Number Extension Functions ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
@@ -220,5 +179,7 @@ interface Irradiance : Quantity<Irradiance>
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Other Classes & Interfaces ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
+data class PrefixedNumber(val number: Number, val prefix: MetricPrefix)
+
 class ValueOutOfRangeException(message: String? = null,
                                cause: Throwable? = null) : Throwable(message, cause)
