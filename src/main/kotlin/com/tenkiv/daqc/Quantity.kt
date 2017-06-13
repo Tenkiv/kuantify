@@ -1,7 +1,6 @@
 package com.tenkiv.daqc
 
 
-import com.sun.org.apache.bcel.internal.generic.NEW
 import kotlinx.coroutines.experimental.channels.SendChannel
 import org.tenkiv.coral.ValueInstant
 import tec.uom.se.ComparableQuantity
@@ -42,247 +41,247 @@ val DEGREE = TransformedUnit<Angle>("deg", RADIAN, MultiplyConverter(Math.PI / 1
 val Number.ampere: ComparableQuantity<ElectricCurrent>
     get() = Quantities.getQuantity<ElectricCurrent>(this, AMPERE)
 
-val PrefixedNumber.ampere: ComparableQuantity<ElectricCurrent>
+val MetricPrefixedNumber.ampere: ComparableQuantity<ElectricCurrent>
     get() = number(AMPERE.transform(prefix.converter))
 
 val Number.candela: ComparableQuantity<LuminousIntensity>
     get() = Quantities.getQuantity<LuminousIntensity>(this, CANDELA)
 
-val PrefixedNumber.candela: ComparableQuantity<LuminousIntensity>
+val MetricPrefixedNumber.candela: ComparableQuantity<LuminousIntensity>
     get() = number(CANDELA.transform(prefix.converter))
 
 val Number.kelvin: ComparableQuantity<Temperature>
     get() = Quantities.getQuantity<Temperature>(this, KELVIN)
 
-val PrefixedNumber.kelvin: ComparableQuantity<Temperature>
+val MetricPrefixedNumber.kelvin: ComparableQuantity<Temperature>
     get() = number(KELVIN.transform(prefix.converter))
 
 val Number.kilogram: ComparableQuantity<Mass>
     get() = Quantities.getQuantity<Mass>(this, KILOGRAM)
 
-val PrefixedNumber.kilogram: ComparableQuantity<Mass>
+val MetricPrefixedNumber.kilogram: ComparableQuantity<Mass>
     get() = number(KILOGRAM.transform(prefix.converter))
 
 val Number.gram: ComparableQuantity<Mass>
     get() = Quantities.getQuantity<Mass>(this, GRAM)
 
-val PrefixedNumber.gram: ComparableQuantity<Mass>
+val MetricPrefixedNumber.gram: ComparableQuantity<Mass>
     get() = number(GRAM.transform(prefix.converter))
 
 val Number.metre: ComparableQuantity<Length>
     get() = Quantities.getQuantity<Length>(this, METRE)
 
-val PrefixedNumber.metre: ComparableQuantity<Length>
+val MetricPrefixedNumber.metre: ComparableQuantity<Length>
     get() = number(METRE.transform(prefix.converter))
 
 val Number.mole: ComparableQuantity<AmountOfSubstance>
     get() = Quantities.getQuantity<AmountOfSubstance>(this, MOLE)
 
-val PrefixedNumber.mole: ComparableQuantity<AmountOfSubstance>
+val MetricPrefixedNumber.mole: ComparableQuantity<AmountOfSubstance>
     get() = number(MOLE.transform(prefix.converter))
 
 val Number.second: ComparableQuantity<Time>
     get() = Quantities.getQuantity<Time>(this, SECOND)
 
-val PrefixedNumber.second: ComparableQuantity<Time>
+val MetricPrefixedNumber.second: ComparableQuantity<Time>
     get() = number(SECOND.transform(prefix.converter))
 
 val Number.radian: ComparableQuantity<Angle>
     get() = Quantities.getQuantity<Angle>(this, RADIAN)
 
-val PrefixedNumber.radian: ComparableQuantity<Angle>
+val MetricPrefixedNumber.radian: ComparableQuantity<Angle>
     get() = number(RADIAN.transform(prefix.converter))
 
 val Number.steradian: ComparableQuantity<SolidAngle>
     get() = Quantities.getQuantity<SolidAngle>(this, STERADIAN)
 
-val PrefixedNumber.steradian: ComparableQuantity<SolidAngle>
+val MetricPrefixedNumber.steradian: ComparableQuantity<SolidAngle>
     get() = number(STERADIAN.transform(prefix.converter))
 
 val Number.hertz: ComparableQuantity<Frequency>
     get() = Quantities.getQuantity<Frequency>(this, HERTZ)
 
-val PrefixedNumber.hertz: ComparableQuantity<Frequency>
+val MetricPrefixedNumber.hertz: ComparableQuantity<Frequency>
     get() = number(HERTZ.transform(prefix.converter))
 
 val Number.newton: ComparableQuantity<Force>
     get() = Quantities.getQuantity<Force>(this, NEWTON)
 
-val PrefixedNumber.newton: ComparableQuantity<Force>
+val MetricPrefixedNumber.newton: ComparableQuantity<Force>
     get() = number(NEWTON.transform(prefix.converter))
 
 val Number.pascal: ComparableQuantity<Pressure>
     get() = Quantities.getQuantity<Pressure>(this, PASCAL)
 
-val PrefixedNumber.pascal: ComparableQuantity<Pressure>
+val MetricPrefixedNumber.pascal: ComparableQuantity<Pressure>
     get() = number(PASCAL.transform(prefix.converter))
 
 val Number.joule: ComparableQuantity<Energy>
     get() = Quantities.getQuantity<Energy>(this, JOULE)
 
-val PrefixedNumber.joule: ComparableQuantity<Energy>
+val MetricPrefixedNumber.joule: ComparableQuantity<Energy>
     get() = number(JOULE.transform(prefix.converter))
 
 val Number.watt: ComparableQuantity<Power>
     get() = Quantities.getQuantity<Power>(this, WATT)
 
-val PrefixedNumber.watt: ComparableQuantity<Power>
+val MetricPrefixedNumber.watt: ComparableQuantity<Power>
     get() = number(WATT.transform(prefix.converter))
 
 val Number.coulomb: ComparableQuantity<ElectricCharge>
     get() = Quantities.getQuantity<ElectricCharge>(this, COULOMB)
 
-val PrefixedNumber.coulomb: ComparableQuantity<ElectricCharge>
+val MetricPrefixedNumber.coulomb: ComparableQuantity<ElectricCharge>
     get() = number(COULOMB.transform(prefix.converter))
 
 val Number.volt: ComparableQuantity<ElectricPotential>
     get() = Quantities.getQuantity<ElectricPotential>(this, VOLT)
 
-val PrefixedNumber.volt: ComparableQuantity<ElectricPotential>
+val MetricPrefixedNumber.volt: ComparableQuantity<ElectricPotential>
     get() = number(VOLT.transform(prefix.converter))
 
 val Number.farad: ComparableQuantity<ElectricCapacitance>
     get() = Quantities.getQuantity<ElectricCapacitance>(this, FARAD)
 
-val PrefixedNumber.farad: ComparableQuantity<ElectricCapacitance>
+val MetricPrefixedNumber.farad: ComparableQuantity<ElectricCapacitance>
     get() = number(FARAD.transform(prefix.converter))
 
 val Number.ohm: ComparableQuantity<ElectricResistance>
     get() = Quantities.getQuantity<ElectricResistance>(this, OHM)
 
-val PrefixedNumber.ohm: ComparableQuantity<ElectricResistance>
+val MetricPrefixedNumber.ohm: ComparableQuantity<ElectricResistance>
     get() = number(OHM.transform(prefix.converter))
 
 val Number.siemens: ComparableQuantity<ElectricConductance>
     get() = Quantities.getQuantity<ElectricConductance>(this, SIEMENS)
 
-val PrefixedNumber.siemens: ComparableQuantity<ElectricConductance>
+val MetricPrefixedNumber.siemens: ComparableQuantity<ElectricConductance>
     get() = number(SIEMENS.transform(prefix.converter))
 
 val Number.weber: ComparableQuantity<MagneticFlux>
     get() = Quantities.getQuantity<MagneticFlux>(this, WEBER)
 
-val PrefixedNumber.weber: ComparableQuantity<MagneticFlux>
+val MetricPrefixedNumber.weber: ComparableQuantity<MagneticFlux>
     get() = number(WEBER.transform(prefix.converter))
 
 val Number.tesla: ComparableQuantity<MagneticFluxDensity>
     get() = Quantities.getQuantity<MagneticFluxDensity>(this, TESLA)
 
-val PrefixedNumber.tesla: ComparableQuantity<MagneticFluxDensity>
+val MetricPrefixedNumber.tesla: ComparableQuantity<MagneticFluxDensity>
     get() = number(TESLA.transform(prefix.converter))
 
 val Number.henry: ComparableQuantity<ElectricInductance>
     get() = Quantities.getQuantity<ElectricInductance>(this, HENRY)
 
-val PrefixedNumber.henry: ComparableQuantity<ElectricInductance>
+val MetricPrefixedNumber.henry: ComparableQuantity<ElectricInductance>
     get() = number(HENRY.transform(prefix.converter))
 
 val Number.celsius: ComparableQuantity<Temperature>
     get() = Quantities.getQuantity<Temperature>(this, CELSIUS)
 
-val PrefixedNumber.celsius: ComparableQuantity<Temperature>
+val MetricPrefixedNumber.celsius: ComparableQuantity<Temperature>
     get() = number(CELSIUS.transform(prefix.converter))
 
 val Number.lumen: ComparableQuantity<LuminousFlux>
     get() = Quantities.getQuantity<LuminousFlux>(this, LUMEN)
 
-val PrefixedNumber.lumen: ComparableQuantity<LuminousFlux>
+val MetricPrefixedNumber.lumen: ComparableQuantity<LuminousFlux>
     get() = number(LUMEN.transform(prefix.converter))
 
 val Number.lux: ComparableQuantity<Illuminance>
     get() = Quantities.getQuantity<Illuminance>(this, LUX)
 
-val PrefixedNumber.lux: ComparableQuantity<Illuminance>
+val MetricPrefixedNumber.lux: ComparableQuantity<Illuminance>
     get() = number(LUX.transform(prefix.converter))
 
 val Number.becquerel: ComparableQuantity<Radioactivity>
     get() = Quantities.getQuantity<Radioactivity>(this, BECQUEREL)
 
-val PrefixedNumber.becquerel: ComparableQuantity<Radioactivity>
+val MetricPrefixedNumber.becquerel: ComparableQuantity<Radioactivity>
     get() = number(BECQUEREL.transform(prefix.converter))
 
 val Number.grey: ComparableQuantity<RadiationDoseAbsorbed>
     get() = Quantities.getQuantity<RadiationDoseAbsorbed>(this, GRAY)
 
-val PrefixedNumber.grey: ComparableQuantity<RadiationDoseAbsorbed>
+val MetricPrefixedNumber.grey: ComparableQuantity<RadiationDoseAbsorbed>
     get() = number(GRAY.transform(prefix.converter))
 
 val Number.sievert: ComparableQuantity<RadiationDoseEffective>
     get() = Quantities.getQuantity<RadiationDoseEffective>(this, SIEVERT)
 
-val PrefixedNumber.sievert: ComparableQuantity<RadiationDoseEffective>
+val MetricPrefixedNumber.sievert: ComparableQuantity<RadiationDoseEffective>
     get() = number(SIEVERT.transform(prefix.converter))
 
 val Number.katal: ComparableQuantity<CatalyticActivity>
     get() = Quantities.getQuantity<CatalyticActivity>(this, KATAL)
 
-val PrefixedNumber.katal: ComparableQuantity<CatalyticActivity>
+val MetricPrefixedNumber.katal: ComparableQuantity<CatalyticActivity>
     get() = number(KATAL.transform(prefix.converter))
 
 val Number.metre_per_second: ComparableQuantity<Speed>
     get() = Quantities.getQuantity<Speed>(this, METRE_PER_SECOND)
 
-val PrefixedNumber.metre_per_second: ComparableQuantity<Speed>
+val MetricPrefixedNumber.metre_per_second: ComparableQuantity<Speed>
     get() = number(METRE_PER_SECOND.transform(prefix.converter))
 
 val Number.metre_per_square_second: ComparableQuantity<Acceleration>
     get() = Quantities.getQuantity<Acceleration>(this, METRE_PER_SQUARE_SECOND)
 
-val PrefixedNumber.metre_per_square_second: ComparableQuantity<Acceleration>
+val MetricPrefixedNumber.metre_per_square_second: ComparableQuantity<Acceleration>
     get() = number(METRE_PER_SQUARE_SECOND.transform(prefix.converter))
 
 val Number.square_metre: ComparableQuantity<Area>
     get() = Quantities.getQuantity<Area>(this, SQUARE_METRE)
 
-val PrefixedNumber.square_metre: ComparableQuantity<Area>
+val MetricPrefixedNumber.square_metre: ComparableQuantity<Area>
     get() = number(SQUARE_METRE.transform(prefix.converter))
 
 val Number.cubic_metre: ComparableQuantity<Volume>
     get() = Quantities.getQuantity<Volume>(this, CUBIC_METRE)
 
-val PrefixedNumber.cubic_metre: ComparableQuantity<Volume>
+val MetricPrefixedNumber.cubic_metre: ComparableQuantity<Volume>
     get() = number(CUBIC_METRE.transform(prefix.converter))
 
 val Number.kilometre_per_hour: ComparableQuantity<Speed>
     get() = Quantities.getQuantity<Speed>(this, KILOMETRE_PER_HOUR)
 
-val PrefixedNumber.kilometre_per_hour: ComparableQuantity<Speed>
+val MetricPrefixedNumber.kilometre_per_hour: ComparableQuantity<Speed>
     get() = number(KILOMETRE_PER_HOUR.transform(prefix.converter))
 
 val Number.percent: ComparableQuantity<Dimensionless>
     get() = Quantities.getQuantity<Dimensionless>(this, PERCENT)
 
-val PrefixedNumber.percent: ComparableQuantity<Dimensionless>
+val MetricPrefixedNumber.percent: ComparableQuantity<Dimensionless>
     get() = number(PERCENT.transform(prefix.converter))
 
 val Number.minute: ComparableQuantity<Time>
     get() = Quantities.getQuantity<Time>(this, MINUTE)
 
-val PrefixedNumber.minute: ComparableQuantity<Time>
+val MetricPrefixedNumber.minute: ComparableQuantity<Time>
     get() = number(MINUTE.transform(prefix.converter))
 
 val Number.hour: ComparableQuantity<Time>
     get() = Quantities.getQuantity<Time>(this, HOUR)
 
-val PrefixedNumber.hour: ComparableQuantity<Time>
+val MetricPrefixedNumber.hour: ComparableQuantity<Time>
     get() = number(HOUR.transform(prefix.converter))
 
 val Number.day: ComparableQuantity<Time>
     get() = Quantities.getQuantity<Time>(this, DAY)
 
-val PrefixedNumber.day: ComparableQuantity<Time>
+val MetricPrefixedNumber.day: ComparableQuantity<Time>
     get() = number(DAY.transform(prefix.converter))
 
 val Number.week: ComparableQuantity<Time>
     get() = Quantities.getQuantity<Time>(this, WEEK)
 
-val PrefixedNumber.week: ComparableQuantity<Time>
+val MetricPrefixedNumber.week: ComparableQuantity<Time>
     get() = number(WEEK.transform(prefix.converter))
 
 val Number.year: ComparableQuantity<Time>
     get() = Quantities.getQuantity<Time>(this, YEAR)
 
-val PrefixedNumber.year: ComparableQuantity<Time>
+val MetricPrefixedNumber.year: ComparableQuantity<Time>
     get() = number(YEAR.transform(prefix.converter))
 
 //TODO DEPRECATED
@@ -290,19 +289,19 @@ val PrefixedNumber.year: ComparableQuantity<Time>
 val Number.degree_angle: ComparableQuantity<Angle>
     get() = Quantities.getQuantity<Angle>(this, DEGREE_ANGLE)
 
-val PrefixedNumber.degree_angle: ComparableQuantity<Angle>
+val MetricPrefixedNumber.degree_angle: ComparableQuantity<Angle>
     get() = number(DEGREE_ANGLE.transform(prefix.converter))
 
 val Number.minute_angle: ComparableQuantity<Angle>
     get() = Quantities.getQuantity<Angle>(this, MINUTE_ANGLE)
 
-val PrefixedNumber.minute_angle: ComparableQuantity<Angle>
+val MetricPrefixedNumber.minute_angle: ComparableQuantity<Angle>
     get() = number(MINUTE_ANGLE.transform(prefix.converter))
 
 val Number.second_angle: ComparableQuantity<Angle>
     get() = Quantities.getQuantity<Angle>(this, SECOND_ANGLE)
 
-val PrefixedNumber.second_angle: ComparableQuantity<Angle>
+val MetricPrefixedNumber.second_angle: ComparableQuantity<Angle>
     get() = number(SECOND_ANGLE.transform(prefix.converter))
 
 //TODO DEPRECATED
@@ -310,47 +309,47 @@ val PrefixedNumber.second_angle: ComparableQuantity<Angle>
 val Number.litre: ComparableQuantity<Volume>
     get() = Quantities.getQuantity<Volume>(this, LITRE)
 
-val PrefixedNumber.litre: ComparableQuantity<Volume>
+val MetricPrefixedNumber.litre: ComparableQuantity<Volume>
     get() = number(LITRE.transform(prefix.converter))
 
 // All builtin prefixes
-val Number.zetta get() = PrefixedNumber(this, ZETTA)
+val Number.zetta get() = MetricPrefixedNumber(this, ZETTA)
 
-val Number.exa get() = PrefixedNumber(this, EXA)
+val Number.exa get() = MetricPrefixedNumber(this, EXA)
 
-val Number.peta get() = PrefixedNumber(this, PETA)
+val Number.peta get() = MetricPrefixedNumber(this, PETA)
 
-val Number.tera get() = PrefixedNumber(this, TERA)
+val Number.tera get() = MetricPrefixedNumber(this, TERA)
 
-val Number.giga get() = PrefixedNumber(this, GIGA)
+val Number.giga get() = MetricPrefixedNumber(this, GIGA)
 
-val Number.mega get() = PrefixedNumber(this, MEGA)
+val Number.mega get() = MetricPrefixedNumber(this, MEGA)
 
-val Number.kilo get() = PrefixedNumber(this, KILO)
+val Number.kilo get() = MetricPrefixedNumber(this, KILO)
 
-val Number.hecto get() = PrefixedNumber(this, HECTO)
+val Number.hecto get() = MetricPrefixedNumber(this, HECTO)
 
-val Number.deka get() = PrefixedNumber(this, DEKA)
+val Number.deka get() = MetricPrefixedNumber(this, DEKA)
 
-val Number.deci get() = PrefixedNumber(this, DECI)
+val Number.deci get() = MetricPrefixedNumber(this, DECI)
 
-val Number.centi get() = PrefixedNumber(this, CENTI)
+val Number.centi get() = MetricPrefixedNumber(this, CENTI)
 
-val Number.milli get() = PrefixedNumber(this, MILLI)
+val Number.milli get() = MetricPrefixedNumber(this, MILLI)
 
-val Number.micro get() = PrefixedNumber(this, MICRO)
+val Number.micro get() = MetricPrefixedNumber(this, MICRO)
 
-val Number.nano get() = PrefixedNumber(this, NANO)
+val Number.nano get() = MetricPrefixedNumber(this, NANO)
 
-val Number.pico get() = PrefixedNumber(this, PICO)
+val Number.pico get() = MetricPrefixedNumber(this, PICO)
 
-val Number.femto get() = PrefixedNumber(this, FEMTO)
+val Number.femto get() = MetricPrefixedNumber(this, FEMTO)
 
-val Number.atto get() = PrefixedNumber(this, ATTO)
+val Number.atto get() = MetricPrefixedNumber(this, ATTO)
 
-val Number.zepto get() = PrefixedNumber(this, ZEPTO)
+val Number.zepto get() = MetricPrefixedNumber(this, ZEPTO)
 
-val Number.yocto get() = PrefixedNumber(this, YOCTO)
+val Number.yocto get() = MetricPrefixedNumber(this, YOCTO)
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Number Extension Functions ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
@@ -484,7 +483,7 @@ interface Irradiance : Quantity<Irradiance>
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Other Classes & Interfaces ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
-data class PrefixedNumber(val number: Number, val prefix: MetricPrefix)
+data class MetricPrefixedNumber(val number: Number, val prefix: MetricPrefix)
 
 class ValueOutOfRangeException(message: String? = null,
                                cause: Throwable? = null) : Throwable(message, cause)
