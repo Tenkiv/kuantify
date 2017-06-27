@@ -12,15 +12,11 @@ class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
                              val triggerOnce: Boolean = true,
                              triggerFunction: () -> Unit) {
 
-    val channelList: MutableList<SubscriptionReceiveChannel<T>> = ArrayList()
+    private val channelList: MutableList<SubscriptionReceiveChannel<T>> = ArrayList()
+
+    fun stop() { if (triggerOnce) { channelList.forEach { it.close() } } }
 
     init {
-
-        fun removeTriggerConditionListeners() {
-            if (triggerOnce) {
-                channelList.forEach { it.close() }
-            }
-        }
 
         launch(DAQC_CONTEXT) {
 
@@ -31,7 +27,7 @@ class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
 
                     it.lastValue = currentVal
 
-                    if (currentVal != null && it.condition(currentVal)) {
+                    if (it.condition(currentVal)) {
                         it.hasBeenReached = true
 
                         if (triggerOnSimultaneousValues) {
@@ -40,12 +36,12 @@ class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
                                 it.condition(value)
                             }.apply { triggerFunction.invoke() }
 
-                            removeTriggerConditionListeners()
+                            stop()
 
                         } else {
                             triggerConditions.all { it.hasBeenReached }.apply { triggerFunction.invoke() }
 
-                            removeTriggerConditionListeners()
+                            stop()
                         }
                     }
                 }))
