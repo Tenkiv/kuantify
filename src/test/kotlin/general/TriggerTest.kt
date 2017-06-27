@@ -1,9 +1,9 @@
 package general
 
 import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.milli
-import com.tenkiv.daqc.volt
 import io.kotlintest.specs.StringSpec
+import org.tenkiv.physikal.core.milli
+import org.tenkiv.physikal.core.volt
 
 import javax.measure.quantity.ElectricPotential
 

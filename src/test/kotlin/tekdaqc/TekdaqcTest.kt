@@ -21,22 +21,6 @@ import kotlinx.coroutines.experimental.run
 class TekdaqcTest: StringSpec(){
 
     init{
-        "Tekdaqc Location Test"{
-            var success = false
-            val tekdaqcLocator = TekdaqcLocator()
-
-            launch(CommonPool){
-                tekdaqcLocator.search()
-                tekdaqcLocator.broadcastChannel.consumeEach {
-                    it.forEach { board -> println("Discovery Test Located: "+board.inetAddr); success = true }
-                }
-                tekdaqcLocator.broadcastChannel.close()
-            }
-
-            Thread.sleep(10000)
-
-            assert(success)
-        }
 
         "Crossover-Tekdaqc Test" {
             val tekdaqcLocator = TekdaqcLocator()
@@ -78,6 +62,7 @@ class TekdaqcTest: StringSpec(){
             }
 
             override fun onAnalogInputDataReceived(tekdaqc: ATekdaqc?, data: AnalogInputCountData?) {
+                println("Analog ${data?.data?.toString()}")
             }
 
             override fun onCommandDataMessageReceived(tekdaqc: ATekdaqc?, message: ABoardMessage?) {

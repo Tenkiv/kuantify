@@ -6,7 +6,7 @@ import com.tenkiv.daqc.hardware.definitions.device.ControlDevice
 import com.tenkiv.daqc.hardware.definitions.device.DataAquisitionDevice
 import com.tenkiv.daqc.networking.NetworkProtocol
 import com.tenkiv.daqc.networking.SharingStatus
-import com.tenkiv.daqc.networking.UnsupportedConnectionProtocolException
+import com.tenkiv.daqc.networking.UnsupportedProtocolException
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import java.net.InetAddress
 import java.util.concurrent.CopyOnWriteArrayList
@@ -28,7 +28,7 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAquisitionDevice 
                 tekdaqc.connect(ATekdaqc.AnalogScale.ANALOG_SCALE_5V, ATekdaqc.CONNECTION_METHOD.ETHERNET)
             }
             else -> {
-                throw UnsupportedConnectionProtocolException()
+                throw UnsupportedProtocolException()
             }
         }
     }
@@ -59,6 +59,11 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAquisitionDevice 
     override fun hasAnalogInputs(): Boolean = true
 
     override fun hasDigitalInputs(): Boolean = true
+
+    val is400vManditory: Boolean
+        get(){ return mandatory400Voltage }
+
+    internal var mandatory400Voltage: Boolean = false
 
     private fun toDaqcAI(inputs: Collection<com.tenkiv.tekdaqc.hardware.AAnalogInput>): List<TekdaqcAnalogInput> {
         val tAI = ArrayList<TekdaqcAnalogInput>()

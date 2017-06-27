@@ -4,6 +4,7 @@ import com.tenkiv.daqc.AnalogAccuracy
 import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.hardware.definitions.Channel
 import com.tenkiv.daqc.hardware.definitions.Updatable
+import tec.uom.se.ComparableQuantity
 import javax.measure.quantity.ElectricPotential
 
 /**
@@ -16,6 +17,7 @@ abstract class AnalogInput :
 
     abstract fun setBuffer(state: Boolean)
 
-    abstract fun setAccuracy(accuracy: AnalogAccuracy)
+    abstract fun setAccuracy(accuracy: AnalogAccuracy? = null,
+                             maxVoltage: ComparableQuantity<ElectricPotential>)
 
 }

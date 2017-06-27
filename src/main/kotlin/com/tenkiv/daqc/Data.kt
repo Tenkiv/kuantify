@@ -33,7 +33,6 @@ interface UpdatableListener<T> {
 
 }
 
-
 sealed class DaqcValue
 
 sealed class BinaryState : DaqcValue() {
@@ -65,17 +64,16 @@ data class DaqcQuantity<Q : Quantity<Q>>(private val quantity: ComparableQuantit
 enum class OutputCommand {
     SET_VALUE,
     DELAY,
-    PULSE_WIDTH_MODULATE,
-
+    PULSE_WIDTH_MODULATE
 }
 
 enum class AnalogAccuracy {
-    ONE_TENTH_VOLT,
-    ONE_HUNDREDTH_VOLT,
-    ONE_THOUSANDTH_VOLT,
-    ONE_TEN_THOUSANDTH_VOLT,
-    ONE_HUNDRED_THOUSANDTH_VOLT,
-    ONE_MILLIONTH_VOLT
+    DECIVOLT,
+    CENTIVOLT,
+    MILLIVOLT,
+    DECIMILLIVOLT,
+    CENTIMILLIVOLT,
+    MICROVOLT
 }
 
 abstract class ControllerCommand {
@@ -102,16 +100,11 @@ data class DelayCommand(val delay: Quantity<Time>) : ControllerCommand() {
 class BoundedFirstInFirstOutArrayList<T>(val maxSize: Int) : ArrayList<T>() {
 
     override fun add(element: T): Boolean {
-        try {
-            val r = super.add(element)
-            if (size > maxSize) {
+        val r = super.add(element)
+        if (size > maxSize) {
                 removeRange(0, size - maxSize)
-            }
-            return r
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return false
         }
+        return r
     }
 
     fun youngest(): T = get(size - 1)
