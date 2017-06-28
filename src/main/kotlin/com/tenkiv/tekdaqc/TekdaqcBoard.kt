@@ -3,7 +3,7 @@ package com.tenkiv.tekdaqc
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.definitions.channel.*
 import com.tenkiv.daqc.hardware.definitions.device.ControlDevice
-import com.tenkiv.daqc.hardware.definitions.device.DataAquisitionDevice
+import com.tenkiv.daqc.hardware.definitions.device.DataAcquisitionDevice
 import com.tenkiv.daqc.networking.NetworkProtocol
 import com.tenkiv.daqc.networking.SharingStatus
 import com.tenkiv.daqc.networking.UnsupportedProtocolException
@@ -14,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 /**
  * Created by tenkiv on 5/26/17.
  */
-class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAquisitionDevice {
+class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice {
 
     override val inetAddr: InetAddress = InetAddress.getByName(tekdaqc.hostIP)
 
