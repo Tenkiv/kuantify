@@ -26,7 +26,7 @@ class TriggerTest: StringSpec() {
                     },
                     {println("Trigger Fired");completed = true})
 
-            Thread.sleep(10000)
+            Thread.sleep(3000)
 
             assert(completed)
 

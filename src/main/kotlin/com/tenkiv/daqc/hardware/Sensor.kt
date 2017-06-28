@@ -16,6 +16,8 @@ import kotlinx.coroutines.experimental.launch
  */
 abstract class Sensor<O : DaqcValue>(inputs: Collection<Input<O>>) : Input<O>, Updatable<O>, UpdatableListener<O> {
 
+    constructor(input: Input<O>): this(listOf<Input<O>>(input))
+
     init {
         launch(DAQC_CONTEXT) {
             inputs.forEach { input -> input.broadcastChannel.consumeEach { value -> onUpdate(input, value) } }

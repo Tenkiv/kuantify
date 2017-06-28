@@ -9,7 +9,7 @@ import com.tenkiv.daqc.networking.SharingStatus
 /**
  * Created by tenkiv on 4/7/17.
  */
-interface DataAcquisitionDevice {
+interface DataAcquisitionDevice: Device{
 
     val analogInputs: List<AnalogInput>
 

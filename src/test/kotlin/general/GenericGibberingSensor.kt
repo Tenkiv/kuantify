@@ -7,6 +7,8 @@ import com.tenkiv.daqc.hardware.Sensor
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.channel.Input
 import kotlinx.coroutines.experimental.launch
+import org.tenkiv.physikal.core.milli
+import org.tenkiv.physikal.core.volt
 import tec.uom.se.unit.MetricPrefix
 import tec.uom.se.unit.Units
 import java.util.*
@@ -26,7 +28,7 @@ class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) 
     init {
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
-                launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcQuantity.of(random.nextInt(5), Units.VOLT)) }
+                launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcQuantity.of(random.nextInt(5000).milli.volt)) }
             }
         },100,100)
     }

@@ -5,6 +5,7 @@ import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.UpdatableListener
 import com.tenkiv.daqc.hardware.definitions.Updatable
+import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.delay
@@ -24,14 +25,14 @@ abstract class Recorder<T : DaqcValue>(val timeToRecord: Time? = null,
     open fun start() {
 
         if (timeToRecord != null) {
-            async(DAQC_CONTEXT) {
+            async(CommonPool) {
                 delay(timeToRecord.to(Units.SECOND).value.toLong(), TimeUnit.SECONDS)
                 stop()
             }
         }
 
         recordingObjects.keys.forEach {
-            launch(DAQC_CONTEXT) { it.broadcastChannel.consumeEach { value -> onUpdate(it, value) } }
+            launch(CommonPool) { it.broadcastChannel.consumeEach { value -> onUpdate(it, value) } }
         }
 
         launch(DAQC_CONTEXT) { broadcastChannel.send(BinaryState.On) }
