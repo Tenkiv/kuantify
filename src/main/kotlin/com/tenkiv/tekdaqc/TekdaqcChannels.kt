@@ -2,13 +2,16 @@ package com.tenkiv.tekdaqc
 
 import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.*
+import com.tenkiv.daqc.QuantityMeasurement
 import com.tenkiv.daqc.hardware.definitions.HardwareType
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import com.tenkiv.daqc.hardware.definitions.device.Device
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData
+import com.tenkiv.tekdaqc.communication.data_points.PWMInputData
 import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener
+import com.tenkiv.tekdaqc.communication.message.IPWMChannelListener
 import com.tenkiv.tekdaqc.communication.message.IVoltageListener
 import com.tenkiv.tekdaqc.hardware.AAnalogInput
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Gain as Gain
@@ -19,12 +22,12 @@ import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
-import org.tenkiv.physikal.core.nano
-import org.tenkiv.physikal.core.second
-import org.tenkiv.physikal.core.toDouble
-import org.tenkiv.physikal.core.tu
+import org.tenkiv.coral.at
+import org.tenkiv.coral.now
+import org.tenkiv.physikal.core.*
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.unit.Units.VOLT
+import java.time.Instant
 import javax.measure.quantity.ElectricPotential
 
 /**
@@ -32,7 +35,7 @@ import javax.measure.quantity.ElectricPotential
  */
 
 class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : AnalogInput(), IVoltageListener {
-    override val broadcastChannel = ConflatedBroadcastChannel<DaqcQuantity<ElectricPotential>>()
+    override val broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<ElectricPotential>>()
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.ANALOG_INPUT
     override val hardwareNumber: Int = input.channelNumber
@@ -60,6 +63,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
         var rate: AAnalogInput.Rate = AAnalogInput.Rate.SPS_2_5
 
         when (accuracy) {
+            // This may not be correct. Look over with Bill before release.
             AnalogAccuracy.DECIVOLT -> rate = AAnalogInput.Rate.SPS_1000
             AnalogAccuracy.CENTIVOLT -> rate = AAnalogInput.Rate.SPS_50 //60 DEPENDING ON LOCATION
             AnalogAccuracy.MILLIVOLT -> rate = AAnalogInput.Rate.SPS_15
@@ -136,32 +140,63 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
 
     override fun onVoltageDataReceived(input: AAnalogInput,
                                        value: ValueInstant<ComparableQuantity<ElectricPotential>>) {
-        launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcQuantity.of(value.value)) }
+        launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcQuantity.of(value.value).at(value.instant)) }
     }
 }
 
 class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekdaqc.hardware.DigitalInput) :
-        DigitalInput(), IDigitalChannelListener {
-    override val broadcastChannel = ConflatedBroadcastChannel<BinaryState>()
+        DigitalInput(), IDigitalChannelListener, IPWMChannelListener {
+
+    override var broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.DIGITAL_INPUT
     override val hardwareNumber: Int = input.channelNumber
-    override val canReadPulseWidthModulation: Boolean = true
 
-    override fun activate() { input.activate() }
+    var isPercentOn: Boolean = true
 
-    override fun deactivate() { input.deactivate() }
+    override fun activate() { input.deactivatePWM(); input.activate() }
 
-    init { input.addDigitalListener(this) }
+    override fun deactivate() { input.deactivatePWM(); input.deactivate() }
+
+    init { input.addDigitalListener(this); input.addPWMListener(this) }
+
+    override fun activateForTransitionCount() {
+        input.deactivate()
+        broadcastChannel.close()
+        broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
+        isPercentOn = false
+        input.activatePWM()
+    }
+
+    override fun activateForPercentageOn() {
+        input.deactivate()
+        broadcastChannel.close()
+        broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
+        isPercentOn = true
+        input.activatePWM()
+    }
 
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
         launch(DAQC_CONTEXT) {
             when(data.state){
-                true -> {broadcastChannel.send(BinaryState.On)}
-                false -> {broadcastChannel.send(BinaryState.Off)}
+                true -> {broadcastChannel.send(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))}
+                false -> {broadcastChannel.send(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))}
             }
         }
     }
+
+    override fun onPWMDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput, data: PWMInputData) {
+        launch(DAQC_CONTEXT) {
+            if(isPercentOn) {
+                broadcastChannel.send(ValueInstant.invoke(
+                        DaqcQuantity.of(data.percetageOn.percent), Instant.ofEpochMilli(data.timestamp)))
+            }else{
+               // broadcastChannel.send(ValueInstant.invoke(
+               //         DaqcQuantity.of(data.totalTransitions), Instant.ofEpochMilli(data.timestamp)))
+            }
+        }
+    }
+
 }
 
 class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :

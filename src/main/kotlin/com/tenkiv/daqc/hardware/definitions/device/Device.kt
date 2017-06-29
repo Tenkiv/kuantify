@@ -11,6 +11,8 @@ interface Device {
 
     val inetAddr: InetAddress
 
+    val serialNumber: String
+
     var isConnected: NetworkProtocol?
 
     var networkSharingStatus: SharingStatus

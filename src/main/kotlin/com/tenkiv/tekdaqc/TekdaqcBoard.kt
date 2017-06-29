@@ -17,9 +17,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice {
 
     override val inetAddr: InetAddress = InetAddress.getByName(tekdaqc.hostIP)
-
+    override val serialNumber: String = tekdaqc.serialNumber
     override var isConnected: NetworkProtocol? = null
-
     override var networkSharingStatus: SharingStatus = SharingStatus.NONE
 
     override fun connect(protocol: NetworkProtocol?) {
