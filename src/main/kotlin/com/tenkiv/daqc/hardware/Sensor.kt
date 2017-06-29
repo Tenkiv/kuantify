@@ -14,7 +14,7 @@ import kotlinx.coroutines.experimental.launch
 /**
  * Created by tenkiv on 4/17/17.
  */
-abstract class Sensor<O : DaqcValue>(inputs: Collection<Input<O>>) : Input<O>, Updatable<O>, UpdatableListener<O> {
+abstract class Sensor<O : DaqcValue, R: DaqcValue>(inputs: Collection<Input<O>>) : Input<R>, Updatable<R>, UpdatableListener<O> {
 
     constructor(input: Input<O>): this(listOf<Input<O>>(input))
 
@@ -24,9 +24,9 @@ abstract class Sensor<O : DaqcValue>(inputs: Collection<Input<O>>) : Input<O>, U
         }
     }
 
-    override val broadcastChannel: ConflatedBroadcastChannel<O> = ConflatedBroadcastChannel()
+    override val broadcastChannel: ConflatedBroadcastChannel<R> = ConflatedBroadcastChannel()
 
-    open fun addTrigger(condition: (O) -> Boolean, function: () -> Unit): Trigger<O> {
+    open fun addTrigger(condition: (R) -> Boolean, function: () -> Unit): Trigger<R> {
         return Trigger(TriggerCondition(this, condition), triggerFunction = function)
     }
 
