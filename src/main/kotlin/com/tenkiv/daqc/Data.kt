@@ -22,7 +22,7 @@ import javax.measure.quantity.Time
 
 data class ArffDataSetStub(val data: Int)
 
-data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (T) -> Boolean) {
+data class TriggerCondition<T : DaqcValue>(val input: Input<ValueInstant<T>>, val condition: (T) -> Boolean) {
     var lastValue: T? = null
     var hasBeenReached: Boolean = false
 }

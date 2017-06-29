@@ -3,7 +3,7 @@ package general
 import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.hardware.Sensor
+import com.tenkiv.daqc.hardware.SingleChannelAnalogSensor
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.channel.Input
 import kotlinx.coroutines.experimental.launch
@@ -17,7 +17,7 @@ import javax.measure.quantity.ElectricPotential
 /**
  * Created by tenkiv on 4/13/17.
  */
-class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) {
+class GenericGibberingSensor : SingleChannelAnalogSensor<DaqcValue>(emptyList<Input<DaqcValue>>()) {
 
     suspend override fun onUpdate(updatable: Updatable<DaqcValue>, value: DaqcValue) {}
 
@@ -40,7 +40,7 @@ class GenericGibberingSensor : Sensor<DaqcValue>(emptyList<Input<DaqcValue>>()) 
 }
 
 class AnalogGibberingSensor:
-        Sensor<DaqcQuantity<ElectricPotential>>(emptyList<Input<DaqcQuantity<ElectricPotential>>>()) {
+        SingleChannelAnalogSensor<DaqcQuantity<ElectricPotential>>(emptyList<Input<DaqcQuantity<ElectricPotential>>>()) {
 
     suspend override fun onUpdate(updatable: Updatable<DaqcQuantity<ElectricPotential>>,
                                   value: DaqcQuantity<ElectricPotential>) {

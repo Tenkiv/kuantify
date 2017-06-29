@@ -8,7 +8,6 @@ import com.tenkiv.daqc.hardware.definitions.Updatable
  */
 interface Output<T : DaqcValue> : Updatable<T> {
 
-    /*fun setState(state: T){
-        latestValue = state
-    }*/
+    suspend fun set(setting: T) = broadcastChannel.send(setting)
+
 }

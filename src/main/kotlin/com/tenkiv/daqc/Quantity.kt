@@ -1,19 +1,16 @@
 package com.tenkiv.daqc
 
 
-import kotlinx.coroutines.experimental.channels.SendChannel
 import org.tenkiv.coral.ValueInstant
 import tec.uom.se.ComparableQuantity
+import javax.measure.Quantity
 
 
-typealias QuantityMeasurement<Q> = ValueInstant<ComparableQuantity<Q>>
-
-typealias MeasurementSendChannel<E> = SendChannel<ValueInstant<E>>
-
-typealias QuantMeasureSendChannel<Q> = SendChannel<ValueInstant<ComparableQuantity<Q>>>
+typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
 
 typealias ClosedQuantityRange<Q> = ClosedRange<ComparableQuantity<Q>>
 
+fun <Q : Quantity<Q>> ComparableQuantity<Q>.asDaqcQuantity() = DaqcQuantity(this)
 
 
 class ValueOutOfRangeException(message: String? = null,

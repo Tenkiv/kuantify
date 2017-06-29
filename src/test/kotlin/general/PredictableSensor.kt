@@ -2,14 +2,11 @@ package general
 
 import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.hardware.Sensor
+import com.tenkiv.daqc.hardware.SingleChannelAnalogSensor
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.channel.Input
-import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.newSingleThreadContext
-import org.tenkiv.physikal.core.micro
 import org.tenkiv.physikal.core.volt
 import java.util.*
 import javax.measure.quantity.ElectricPotential
@@ -17,7 +14,7 @@ import javax.measure.quantity.ElectricPotential
 /**
  * Created by tenkiv on 5/22/17.
  */
-class PredictableDigitalSensor : Sensor<BinaryState>(emptyList<Input<BinaryState>>()) {
+class PredictableDigitalSensor : SingleChannelAnalogSensor<BinaryState>(emptyList<Input<BinaryState>>()) {
 
     suspend override fun onUpdate(updatable: Updatable<BinaryState>, value: BinaryState) {
         println("What on Earth happened here?")
@@ -58,7 +55,7 @@ class PredictableDigitalSensor : Sensor<BinaryState>(emptyList<Input<BinaryState
 
 }
 
-class PredictableAnalogSensor : Sensor<DaqcQuantity<ElectricPotential>>(emptyList<Input<DaqcQuantity<ElectricPotential>>>()) {
+class PredictableAnalogSensor : SingleChannelAnalogSensor<DaqcQuantity<ElectricPotential>>(emptyList<Input<DaqcQuantity<ElectricPotential>>>()) {
 
     suspend override fun onUpdate(updatable: Updatable<DaqcQuantity<ElectricPotential>>, value: DaqcQuantity<ElectricPotential>) {
         println("What on Earth happened here?")
