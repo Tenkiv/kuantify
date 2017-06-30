@@ -28,6 +28,7 @@ import org.tenkiv.physikal.core.*
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.unit.Units.VOLT
 import java.time.Instant
+import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.ElectricPotential
 
 /**
@@ -214,12 +215,10 @@ class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tek
         output.deactivate()
     }
 
-    override fun pulseWidthModulate(dutyCycle: Int) {
-        output.setPulseWidthModulation(dutyCycle)
+    override fun pulseWidthModulate(percent: ComparableQuantity<Dimensionless>) {
+        output.setPulseWidthModulation(percent)
     }
 
     override val broadcastChannel = ConflatedBroadcastChannel<BinaryState>()
-
-
 
 }
