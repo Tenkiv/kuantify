@@ -4,6 +4,7 @@ import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.hardware.definitions.Channel
 import tec.uom.se.ComparableQuantity
 import javax.measure.quantity.Dimensionless
+import javax.measure.quantity.Frequency
 
 /**
  * Created by tenkiv on 3/18/17.
@@ -14,5 +15,7 @@ abstract class DigitalOutput : Output<BinaryState>,
     abstract val canPulseWidthModulate: Boolean
 
     abstract fun pulseWidthModulate(percent: ComparableQuantity<Dimensionless>)
+
+    abstract fun setTransitionFrequency(freq: ComparableQuantity<Frequency>)
 
 }

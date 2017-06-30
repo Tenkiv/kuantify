@@ -19,17 +19,22 @@ import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate as Rate
 import com.tenkiv.tekdaqc.hardware.ATekdaqc.AnalogScale as Scale
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD
+import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.coral.now
 import org.tenkiv.physikal.core.*
 import tec.uom.se.ComparableQuantity
+import tec.uom.se.unit.Units.HERTZ
 import tec.uom.se.unit.Units.VOLT
 import java.time.Instant
+import java.util.concurrent.TimeUnit
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.ElectricPotential
+import javax.measure.quantity.Frequency
 
 /**
  * Created by tenkiv on 5/26/17.
@@ -207,16 +212,37 @@ class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tek
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.DIGITAL_OUTPUT
     override val hardwareNumber: Int = output.channelNumber
+
+    var frequencyJob: Job? = null
+
     override fun activate() {
+        frequencyJob?.cancel()
         output.activate()
     }
 
     override fun deactivate() {
+        frequencyJob?.cancel()
         output.deactivate()
     }
 
     override fun pulseWidthModulate(percent: ComparableQuantity<Dimensionless>) {
+        frequencyJob?.cancel()
         output.setPulseWidthModulation(percent)
+    }
+
+    override fun setTransitionFrequency(freq: ComparableQuantity<Frequency>) {
+        frequencyJob = launch(DAQC_CONTEXT){
+            val cycleSpeec = ((freq tu HERTZ)/2).toLong()
+            var isOn = false
+            while (true){
+                when {
+                    (isOn)->{output.deactivate()}
+                    (!isOn)->{output.activate()}
+                }
+                isOn = !isOn
+                delay(cycleSpeec,TimeUnit.SECONDS)
+            }
+        }
     }
 
     override val broadcastChannel = ConflatedBroadcastChannel<BinaryState>()
