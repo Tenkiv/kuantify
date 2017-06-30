@@ -12,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 /**
  * Created by tenkiv on 6/5/17.
  */
-class TekdaqcLocator : OnTekdaqcDiscovered, RemoteLocator<List<TekdaqcBoard>>() {
+class TekdaqcLocator: OnTekdaqcDiscovered, RemoteLocator<List<TekdaqcBoard>>() {
 
     override val activeDevices: List<TekdaqcBoard> = CopyOnWriteArrayList<TekdaqcBoard>()
 

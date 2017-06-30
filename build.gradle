@@ -56,6 +56,7 @@ dependencies {
     compile 'com.couchbase.lite:couchbase-lite-java:1.4.0'
     compile 'com.couchbase.lite:couchbase-lite-java-listener:1.4.0'
     compile 'com.couchbase.lite:couchbase-lite-java-sqlcipher:1.4.0'
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 }
 
 apply from: 'maven_push.gradle'

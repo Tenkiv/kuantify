@@ -8,6 +8,7 @@ import com.tenkiv.daqc.networking.NetworkProtocol
 import com.tenkiv.daqc.networking.SharingStatus
 import com.tenkiv.daqc.networking.UnsupportedProtocolException
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
+import org.tenkiv.coral.ValueInstant
 import java.net.InetAddress
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -49,7 +50,7 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice
 
     override val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>> = HashMap()
 
-    override val sharedInputs: MutableMap<SharingStatus, Input<DaqcValue>> = HashMap()
+    override val sharedInputs: MutableMap<SharingStatus, Input<ValueInstant<DaqcValue>>> = HashMap()
 
     override fun hasAnalogOutputs(): Boolean = false
 

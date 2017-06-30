@@ -15,8 +15,9 @@ typealias Measurement = ValueInstant<DaqcValue>
 typealias BinaryMeasurement = ValueInstant<BinaryState>
 
 object Daqc{
-    fun initiate(coroutineContext: CoroutineContext, someSettings: Settings): Locator{
-
+    fun initiate(coroutineContext: CoroutineContext = getNewContext()): Locator{
+        DAQC_CONTEXT = coroutineContext
+        return Locator()
     }
 }
 
@@ -29,9 +30,5 @@ private fun getNewContext(): CoroutineContext {
 }
 
 var DAQC_CONTEXT: CoroutineContext
-    get() {
-        return _context ?: getNewContext()
-    }
-    set(value) {
-        _context = value
-    }
+    get() { return _context ?: getNewContext() }
+    set(value) { _context = value }
