@@ -1,7 +1,9 @@
 package com.tenkiv.tekdaqc
 
+import com.tenkiv.AccuracySetting
 import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.*
+import com.tenkiv.daqc.QuantityMeasurement
 import com.tenkiv.daqc.hardware.definitions.HardwareType
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
@@ -18,6 +20,7 @@ import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
@@ -51,35 +54,39 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
 
     init { input.addVoltageListener(this) }
 
-    override fun setBuffer(state: Boolean) {
-        if (state) {
-            (input as? AnalogInput_RevD)?.bufferState = AnalogInput_RevD.BufferState.ENABLED
-        } else {
-            (input as? AnalogInput_RevD)?.bufferState = AnalogInput_RevD.BufferState.DISABLED
-        }
-    }
+    private var _buffer: Boolean = true
 
-    override fun setAccuracy(accuracy: AnalogAccuracy?, maxVoltage: ComparableQuantity<ElectricPotential>) {
+    override var buffer: Boolean
+            get()=_buffer
+            set(state: Boolean){
+                _buffer = state
+                if (state) { (input as? AnalogInput_RevD)?.bufferState = AnalogInput_RevD.BufferState.ENABLED }
+                else { (input as? AnalogInput_RevD)?.bufferState = AnalogInput_RevD.BufferState.DISABLED }
+            }
 
-        val requiredVoltageSettings = maxVoltageSettings(maxVoltage.tu(VOLT).toDouble())
+    var _accuracy: AccuracySetting = AccuracySetting(AnalogAccuracy.DECIVOLT, 2.5.volt)
 
-        var rate: AAnalogInput.Rate = AAnalogInput.Rate.SPS_2_5
+    override var accuracy: AccuracySetting
+            get() = _accuracy
+            set(value) {
+                val requiredVoltageSettings = maxVoltageSettings(value.second.tu(VOLT).toDouble())
 
-        when (accuracy) {
-            // This may not be correct. Look over with Bill before release.
-            AnalogAccuracy.DECIVOLT -> rate = AAnalogInput.Rate.SPS_1000
-            AnalogAccuracy.CENTIVOLT -> rate = AAnalogInput.Rate.SPS_50 //60 DEPENDING ON LOCATION
-            AnalogAccuracy.MILLIVOLT -> rate = AAnalogInput.Rate.SPS_15
-            AnalogAccuracy.DECIMILLIVOLT -> rate = AAnalogInput.Rate.SPS_10
-            AnalogAccuracy.CENTIMILLIVOLT -> rate = AAnalogInput.Rate.SPS_5
-            AnalogAccuracy.MICROVOLT -> rate = AAnalogInput.Rate.SPS_2_5
-        }
+                var rate: AAnalogInput.Rate = AAnalogInput.Rate.SPS_2_5
 
-        tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.rate = rate
-        tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.gain = requiredVoltageSettings.first
-        tekdaqc.tekdaqc.analogInputScale = requiredVoltageSettings.second
+                when (value.first) {
+                // This may not be correct. Look over with Bill before release.
+                    AnalogAccuracy.DECIVOLT -> rate = AAnalogInput.Rate.SPS_1000
+                    AnalogAccuracy.CENTIVOLT -> rate = AAnalogInput.Rate.SPS_50 //60 DEPENDING ON LOCATION
+                    AnalogAccuracy.MILLIVOLT -> rate = AAnalogInput.Rate.SPS_15
+                    AnalogAccuracy.DECIMILLIVOLT -> rate = AAnalogInput.Rate.SPS_10
+                    AnalogAccuracy.CENTIMILLIVOLT -> rate = AAnalogInput.Rate.SPS_5
+                    AnalogAccuracy.MICROVOLT -> rate = AAnalogInput.Rate.SPS_2_5
+                }
 
-    }
+                tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.rate = rate
+                tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.gain = requiredVoltageSettings.first
+                tekdaqc.tekdaqc.analogInputScale = requiredVoltageSettings.second
+            }
 
     fun maxVoltageSettings(voltage: Double): Pair<AAnalogInput.Gain,ATekdaqc.AnalogScale>{
 
@@ -150,31 +157,41 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
 class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekdaqc.hardware.DigitalInput) :
         DigitalInput(), IDigitalChannelListener, IPWMChannelListener {
 
-    override var broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
+    override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.DIGITAL_INPUT
     override val hardwareNumber: Int = input.channelNumber
 
-    var isPercentOn: Boolean = true
+    var isPercentOn: Boolean? = true
+
+    private fun rebroadcastToMain(value: ValueInstant<DaqcValue>){
+        launch(DAQC_CONTEXT) { broadcastChannel.send(value) }
+    }
 
     override fun activate() { input.deactivatePWM(); input.activate() }
 
     override fun deactivate() { input.deactivatePWM(); input.deactivate() }
 
-    init { input.addDigitalListener(this); input.addPWMListener(this) }
+    init {
+        input.addDigitalListener(this)
+        input.addPWMListener(this)
+        launch(DAQC_CONTEXT) { currentStateChannel.consumeEach { rebroadcastToMain(it) } }
+
+        }
+
+    override fun activateForCurrentState() {
+        activate()
+    }
 
     override fun activateForTransitionFrequency() {
         input.deactivate()
-        broadcastChannel.close()
-        broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
         isPercentOn = false
         input.activatePWM()
     }
 
-    override fun activateForPercentageOn() {
+    override fun activateForPwm(avgFrequency: ComparableQuantity<Frequency>) {
+        //TODO Use Average Frequency
         input.deactivate()
-        broadcastChannel.close()
-        broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
         isPercentOn = true
         input.activatePWM()
     }
@@ -182,24 +199,23 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
         launch(DAQC_CONTEXT) {
             when(data.state){
-                true -> {broadcastChannel.send(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))}
-                false -> {broadcastChannel.send(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))}
+                true -> {currentStateChannel.send(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))}
+                false -> {currentStateChannel.send(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))}
             }
         }
     }
 
     override fun onPWMDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput, data: PWMInputData) {
         launch(DAQC_CONTEXT) {
-            if(isPercentOn) {
-                broadcastChannel.send(ValueInstant.invoke(
-                        DaqcQuantity.of(data.percetageOn.percent), Instant.ofEpochMilli(data.timestamp)))
-            }else{
-               // broadcastChannel.send(ValueInstant.invoke(
-               //         DaqcQuantity.of(data.totalTransitions), Instant.ofEpochMilli(data.timestamp)))
-            }
+
+            percentOnChannel.send(ValueInstant.invoke(
+                    DaqcQuantity.of(data.percetageOn.percent), Instant.ofEpochMilli(data.timestamp)))
+
+            transitionFrequencyChannel.send(ValueInstant.invoke(
+                    //TODO This isn't accurate need time stamp val to calculate Hertz
+                    DaqcQuantity.of(data.totalTransitions.hertz), Instant.ofEpochMilli(data.timestamp)))
         }
     }
-
 }
 
 class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :
@@ -241,7 +257,5 @@ class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tek
             }
         }
     }
-
     override val broadcastChannel = ConflatedBroadcastChannel<BinaryState>()
-
 }

@@ -1,11 +1,14 @@
 package com.tenkiv
 
+import com.tenkiv.daqc.AnalogAccuracy
 import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.networking.Locator
 import kotlinx.coroutines.experimental.newSingleThreadContext
 import okhttp3.internal.framed.Settings
 import org.tenkiv.coral.ValueInstant
+import tec.uom.se.ComparableQuantity
+import javax.measure.quantity.ElectricPotential
 import kotlin.coroutines.experimental.CoroutineContext
 
 /**
@@ -13,6 +16,8 @@ import kotlin.coroutines.experimental.CoroutineContext
  */
 typealias Measurement = ValueInstant<DaqcValue>
 typealias BinaryMeasurement = ValueInstant<BinaryState>
+typealias AccuracySetting = Pair<AnalogAccuracy, ComparableQuantity<ElectricPotential>>
+
 
 object Daqc{
     fun initiate(coroutineContext: CoroutineContext = getNewContext()): Locator{

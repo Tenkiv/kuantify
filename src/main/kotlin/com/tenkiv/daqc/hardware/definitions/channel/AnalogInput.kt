@@ -1,5 +1,6 @@
 package com.tenkiv.daqc.hardware.definitions.channel
 
+import com.tenkiv.AccuracySetting
 import com.tenkiv.daqc.AnalogAccuracy
 import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.QuantityMeasurement
@@ -14,9 +15,8 @@ abstract class AnalogInput :
         Input<QuantityMeasurement<ElectricPotential>>,
         Channel<DaqcQuantity<ElectricPotential>> {
 
-    abstract fun setBuffer(state: Boolean)
+    abstract val buffer: Boolean
 
-    abstract fun setAccuracy(accuracy: AnalogAccuracy? = null,
-                             maxVoltage: ComparableQuantity<ElectricPotential>)
+    abstract val accuracy: AccuracySetting
 
 }
