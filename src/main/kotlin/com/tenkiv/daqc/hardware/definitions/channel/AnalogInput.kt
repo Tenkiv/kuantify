@@ -12,7 +12,7 @@ abstract class AnalogInput :
 
     abstract var buffer: Boolean
 
-    abstract var maxAllowableError: ComparableQuantity<ElectricPotential>
+    abstract var maxAcceptableError: ComparableQuantity<ElectricPotential>
 
     abstract var maxElectricPotential: ComparableQuantity<ElectricPotential>
 

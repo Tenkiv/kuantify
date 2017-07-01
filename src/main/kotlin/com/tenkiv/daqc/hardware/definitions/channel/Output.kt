@@ -4,6 +4,6 @@ import com.tenkiv.daqc.DaqcValue
 
 interface Output<in T : DaqcValue> {
 
-    suspend fun setOutput(setting: T)
+    fun setOutput(setting: T)
 
 }

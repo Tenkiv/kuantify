@@ -11,14 +11,17 @@ import javax.measure.Quantity
 import javax.measure.quantity.ElectricPotential
 
 
-abstract class SingleChannelAnalogSensor<Q : Quantity<Q>>(private val analogInput: AnalogInput,
-                                                          maximumEp: ComparableQuantity<ElectricPotential>) :
-        Input<QuantityMeasurement<Q>> {
+abstract class SingleChannelAnalogSensor<Q : Quantity<Q>>(
+        private val analogInput: AnalogInput,
+        maximumEp: ComparableQuantity<ElectricPotential>,
+        acceptableError: ComparableQuantity<ElectricPotential>
+) : Input<QuantityMeasurement<Q>> {
 
     override val broadcastChannel: ConflatedBroadcastChannel<QuantityMeasurement<Q>> = ConflatedBroadcastChannel()
 
     init {
-        analogInput.maxAllowableError = maximumEp
+        analogInput.maxElectricPotential = maximumEp
+        analogInput.maxAcceptableError = acceptableError
         analogInput.openNewCoroutineListener { measurement ->
             processNewMeasurement(convertInput(measurement.value) at measurement.instant)
         }

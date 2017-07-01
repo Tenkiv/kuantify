@@ -29,7 +29,7 @@ class EmptyAnalogInput: AnalogInput(){
     override var buffer: Boolean
         get() = TODO("not implemented")
         set(value) {}
-    override var maxAllowableError: ComparableQuantity<ElectricPotential>
+    override var maxAcceptableError: ComparableQuantity<ElectricPotential>
         get() = TODO("not implemented")
         set(value) {}
     override var maxElectricPotential: ComparableQuantity<ElectricPotential>

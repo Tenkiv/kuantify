@@ -1,8 +1,10 @@
 package com.tenkiv.tekdaqc
 
 import com.tenkiv.DAQC_CONTEXT
-import com.tenkiv.daqc.*
-import com.tenkiv.daqc.hardware.definitions.HardwareType
+import com.tenkiv.daqc.BinaryState
+import com.tenkiv.daqc.DaqcQuantity
+import com.tenkiv.daqc.DaqcValue
+import com.tenkiv.daqc.QuantityMeasurement
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
@@ -67,7 +69,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
 
     private var _maxAllowableError: ComparableQuantity<ElectricPotential> = 1.micro.volt
 
-    override var maxAllowableError: ComparableQuantity<ElectricPotential>
+    override var maxAcceptableError: ComparableQuantity<ElectricPotential>
             get() = _maxAllowableError
             set(value) {_maxAllowableError = value; recalculateState() }
 
@@ -76,7 +78,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
         val rate = getFastestRateForAccuracy(
                 voltageSettings.first,
                 voltageSettings.second,
-                maxAllowableError,
+                maxAcceptableError,
                 tekdaqc.lineFrequency)
 
         tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.rate = rate
