@@ -5,9 +5,7 @@ import com.tenkiv.daqc.hardware.definitions.Channel
 import tec.uom.se.ComparableQuantity
 import javax.measure.quantity.Dimensionless
 
-/**
- * Created by tenkiv on 3/18/17.
- */
+
 abstract class DigitalOutput : Output<BinaryState>,
         Channel<BinaryState> {
 
