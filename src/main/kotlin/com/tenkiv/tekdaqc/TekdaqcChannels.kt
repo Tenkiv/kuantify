@@ -240,12 +240,12 @@ class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tek
         output.deactivate()
     }
 
-    override fun pulseWidthModulate(percent: ComparableQuantity<Dimensionless>) {
+    override fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>) {
         frequencyJob?.cancel()
         output.setPulseWidthModulation(percent)
     }
 
-    override fun sustainTransitionFrequency(freq: ComparableQuantity<Frequency>) {
+    override fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>) {
         frequencyJob = launch(DAQC_CONTEXT){
             val cycleSpeec = ((freq tu HERTZ)/2).toLong()
             var isOn = false
