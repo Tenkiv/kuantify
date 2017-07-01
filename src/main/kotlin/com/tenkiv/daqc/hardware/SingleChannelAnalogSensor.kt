@@ -11,7 +11,7 @@ import javax.measure.Quantity
 import javax.measure.quantity.ElectricPotential
 
 
-abstract class SingleChannelAnalogSensor<Q : Quantity<Q>>(analogInput: AnalogInput,
+abstract class SingleChannelAnalogSensor<Q : Quantity<Q>>(private val analogInput: AnalogInput,
                                                           maximumEp: ComparableQuantity<ElectricPotential>) :
         Input<QuantityMeasurement<Q>> {
 
@@ -19,7 +19,6 @@ abstract class SingleChannelAnalogSensor<Q : Quantity<Q>>(analogInput: AnalogInp
 
     init {
         analogInput.maxAllowableError = maximumEp
-        analogInput.activate()
         analogInput.openNewCoroutineListener { measurement ->
             processNewMeasurement(convertInput(measurement.value) at measurement.instant)
         }
@@ -27,4 +26,7 @@ abstract class SingleChannelAnalogSensor<Q : Quantity<Q>>(analogInput: AnalogInp
 
     abstract protected fun convertInput(ep: ComparableQuantity<ElectricPotential>): DaqcQuantity<Q>
 
+    override fun activate() = analogInput.activate()
+
+    override fun deactivate() = analogInput.deactivate()
 }
