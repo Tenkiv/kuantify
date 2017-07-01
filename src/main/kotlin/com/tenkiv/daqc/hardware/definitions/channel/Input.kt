@@ -8,4 +8,8 @@ interface Input<T : ValueInstant<DaqcValue>> : Updatable<T> {
 
     suspend fun processNewMeasurement(measurement: T) = broadcastChannel.send(measurement)
 
+    fun activate()
+
+    fun deactivate()
+
 }

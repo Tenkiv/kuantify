@@ -8,7 +8,7 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 /**
  * Created by zjuhasz on 6/28/17.
  */
-class ActivationSensor(digitalInput: DigitalInput) : Input<BinaryMeasurement> {
+class BinaryStateSensor(digitalInput: DigitalInput) : Input<BinaryMeasurement> {
 
     override val broadcastChannel: ConflatedBroadcastChannel<BinaryMeasurement> = ConflatedBroadcastChannel()
 

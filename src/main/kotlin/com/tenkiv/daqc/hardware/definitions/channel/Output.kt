@@ -1,10 +1,12 @@
 package com.tenkiv.daqc.hardware.definitions.channel
 
 import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.hardware.definitions.Updatable
+import kotlinx.coroutines.experimental.channels.SendChannel
 
-interface Output<T : DaqcValue> : Updatable<T> {
+interface Output<in T : DaqcValue> {
 
-    suspend fun set(setting: T) = broadcastChannel.send(setting)
+    val commandChannel: SendChannel<T>
+
+    suspend fun setOutput(setting: T) = commandChannel.send(setting)
 
 }

@@ -1,11 +1,9 @@
 package com.tenkiv.daqc.hardware.definitions.channel
 
 import com.tenkiv.AccuracySetting
-import com.tenkiv.daqc.AnalogAccuracy
 import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.QuantityMeasurement
-import com.tenkiv.daqc.hardware.definitions.Channel
-import tec.uom.se.ComparableQuantity
+import com.tenkiv.daqc.hardware.definitions.DaqcChannel
 import javax.measure.quantity.ElectricPotential
 
 /**
@@ -13,7 +11,7 @@ import javax.measure.quantity.ElectricPotential
  */
 abstract class AnalogInput :
         Input<QuantityMeasurement<ElectricPotential>>,
-        Channel<DaqcQuantity<ElectricPotential>> {
+        DaqcChannel<DaqcQuantity<ElectricPotential>> {
 
     abstract val buffer: Boolean
 

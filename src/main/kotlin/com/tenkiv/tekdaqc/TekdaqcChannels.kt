@@ -2,10 +2,7 @@ package com.tenkiv.tekdaqc
 
 import com.tenkiv.AccuracySetting
 import com.tenkiv.DAQC_CONTEXT
-import com.tenkiv.daqc.AnalogAccuracy
-import com.tenkiv.daqc.BinaryState
-import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.DaqcValue
+import com.tenkiv.daqc.*
 import com.tenkiv.daqc.hardware.definitions.HardwareType
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
