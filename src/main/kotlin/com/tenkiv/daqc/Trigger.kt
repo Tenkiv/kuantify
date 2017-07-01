@@ -2,7 +2,9 @@ package com.tenkiv.daqc
 
 import com.tenkiv.DAQC_CONTEXT
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
+import org.tenkiv.coral.ValueInstant
 
 /**
  * Created by tenkiv on 4/4/17.
@@ -12,7 +14,7 @@ class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
                              val triggerOnce: Boolean = true,
                              triggerFunction: () -> Unit) {
 
-    private val channelList: MutableList<SubscriptionReceiveChannel<T>> = ArrayList()
+    private val channelList: MutableList<SubscriptionReceiveChannel<ValueInstant<T>>> = ArrayList()
 
     fun stop() { if (triggerOnce) { channelList.forEach { it.close() } } }
 
@@ -21,13 +23,13 @@ class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
         launch(DAQC_CONTEXT) {
 
             triggerConditions.forEach {
-                channelList.add(it.input.broadcastChannel.consumeAndReturn({ update ->
+                val success = channelList.add(it.input.broadcastChannel.consumeAndReturn({ update ->
 
                     val currentVal = update
 
-                    it.lastValue = currentVal
+                    it.lastValue = currentVal.value
 
-                    if (it.condition(currentVal)) {
+                    if (it.condition(currentVal.value)) {
                         it.hasBeenReached = true
 
                         if (triggerOnSimultaneousValues) {

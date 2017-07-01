@@ -73,14 +73,14 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
                 var rate: AAnalogInput.Rate = AAnalogInput.Rate.SPS_2_5
 
                 when (value.first) {
-                // This may not be correct. Look over with Bill before release.
-                    AnalogAccuracy.DECIVOLT -> rate = AAnalogInput.Rate.SPS_1000
-                    AnalogAccuracy.CENTIVOLT -> rate = AAnalogInput.Rate.SPS_50 //60 DEPENDING ON LOCATION
-                    AnalogAccuracy.MILLIVOLT -> rate = AAnalogInput.Rate.SPS_15
-                    AnalogAccuracy.DECIMILLIVOLT -> rate = AAnalogInput.Rate.SPS_10
-                    AnalogAccuracy.CENTIMILLIVOLT -> rate = AAnalogInput.Rate.SPS_5
+                    AnalogAccuracy.DECIVOLT -> rate = AAnalogInput.Rate.SPS_2000
+                    AnalogAccuracy.CENTIVOLT -> rate = AAnalogInput.Rate.SPS_2000
+                    AnalogAccuracy.MILLIVOLT -> rate = AAnalogInput.Rate.SPS_1000
+                    AnalogAccuracy.DECIMILLIVOLT -> rate = AAnalogInput.Rate.SPS_500
+                    AnalogAccuracy.CENTIMILLIVOLT -> rate = AAnalogInput.Rate.SPS_100
                     AnalogAccuracy.MICROVOLT -> rate = AAnalogInput.Rate.SPS_2_5
-                    AnalogAccuracy.MICROVOLT -> rate = AAnalogInput.Rate.SPS_2_5
+                    AnalogAccuracy.DECIMICROVOLT -> rate = AAnalogInput.Rate.SPS_2_5
+                    AnalogAccuracy.CENTIMICROVOLT -> rate = AAnalogInput.Rate.SPS_2_5
                 }
 
                 tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.rate = rate

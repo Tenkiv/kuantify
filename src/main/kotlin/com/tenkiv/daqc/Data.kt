@@ -4,6 +4,8 @@ import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.channel.Input
 import com.tenkiv.daqc.hardware.definitions.channel.Output
+import com.tenkiv.tekdaqc.hardware.AAnalogInput
+import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.launch
@@ -73,7 +75,9 @@ enum class AnalogAccuracy {
     MILLIVOLT,
     DECIMILLIVOLT,
     CENTIMILLIVOLT,
-    MICROVOLT
+    MICROVOLT,
+    DECIMICROVOLT,
+    CENTIMICROVOLT
 }
 
 abstract class ControllerCommand {
@@ -112,7 +116,7 @@ class BoundedFirstInFirstOutArrayList<T>(val maxSize: Int) : ArrayList<T>() {
     fun oldest(): T = get(0)
 }
 
-suspend fun <T : DaqcValue> BroadcastChannel<T>.consumeAndReturn(action: suspend (T) -> kotlin.Unit): SubscriptionReceiveChannel<T> {
+suspend fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(action: suspend (T) -> kotlin.Unit): SubscriptionReceiveChannel<T> {
     val channel = open()
     launch(DAQC_CONTEXT) { channel.use { channel -> for (x in channel) action(x) } }
     return channel
