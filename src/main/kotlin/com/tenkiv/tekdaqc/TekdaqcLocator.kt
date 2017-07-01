@@ -26,13 +26,13 @@ class TekdaqcLocator: OnTekdaqcDiscovered, RemoteLocator<List<TekdaqcBoard>>() {
 
     override fun onTekdaqcNoLongerLocated(tekdaqc: ATekdaqc) {
         (activeDevices as? MutableList)?.removeIf { it.tekdaqc.serialNumber == tekdaqc.serialNumber }
-        launch(CommonPool) { broadcastChannel.send(activeDevices) }
+        broadcastChannel.offer(activeDevices)
     }
 
     override fun onTekdaqcFirstLocated(tekdaqc: ATekdaqc) {
         val board = TekdaqcBoard(tekdaqc)
         (activeDevices as? MutableList)?.add(board)
-        launch(CommonPool) { broadcastChannel.send(activeDevices) }
+        broadcastChannel.offer(activeDevices)
     }
 
     override fun search() {

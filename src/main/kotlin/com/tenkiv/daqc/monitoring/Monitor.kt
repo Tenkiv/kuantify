@@ -7,9 +7,7 @@ import com.tenkiv.daqc.hardware.SingleChannelAnalogSensor
 /**
  * Created by tenkiv on 3/20/17.
  */
-abstract class Monitor<I : DaqcValue, O : DaqcValue, D>(val requiredSensors: Array<SingleChannelAnalogSensor<I>>,
-                                                        val requiredControllers: Array<Controller<O>>,
-                                                        var desiredValue: D,
+abstract class Monitor<I : DaqcValue, O : DaqcValue, D>(var desiredValue: D,
                                                         val previousDataSet: ArffDataSetStub = ArffDataSetStub(0)) {
 
 

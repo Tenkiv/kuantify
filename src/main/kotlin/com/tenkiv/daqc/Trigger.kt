@@ -5,9 +5,6 @@ import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 
-/**
- * Created by tenkiv on 4/4/17.
- */
 class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
                              val triggerOnSimultaneousValues: Boolean = false,
                              val triggerOnce: Boolean = true,
@@ -18,9 +15,7 @@ class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
     fun stop() { if (triggerOnce) { channelList.forEach { it.close() } } }
 
     init {
-
         launch(DAQC_CONTEXT) {
-
             triggerConditions.forEach {
                 channelList.add(it.input.broadcastChannel.consumeAndReturn({ update ->
 

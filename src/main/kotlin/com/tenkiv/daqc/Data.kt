@@ -15,6 +15,7 @@ import tec.uom.se.quantity.Quantities
 import javax.measure.Quantity
 import javax.measure.Unit
 import javax.measure.quantity.ElectricPotential
+import javax.measure.quantity.Frequency
 import javax.measure.quantity.Time
 
 
@@ -69,15 +70,12 @@ enum class OutputCommand {
     PULSE_WIDTH_MODULATE
 }
 
-enum class AnalogAccuracy {
-    DECIVOLT,
-    CENTIVOLT,
-    MILLIVOLT,
-    DECIMILLIVOLT,
-    CENTIMILLIVOLT,
-    MICROVOLT,
-    DECIMICROVOLT,
-    CENTIMICROVOLT
+sealed class LineNoiseFrequency {
+
+    object Ignore : LineNoiseFrequency()
+
+    data class AccountFor(val frequency: ComparableQuantity<Frequency>) : LineNoiseFrequency()
+
 }
 
 abstract class ControllerCommand {
@@ -118,7 +116,7 @@ class BoundedFirstInFirstOutArrayList<T>(val maxSize: Int) : ArrayList<T>() {
 
 suspend fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(action: suspend (T) -> kotlin.Unit): SubscriptionReceiveChannel<T> {
     val channel = open()
-    launch(DAQC_CONTEXT) { channel.use { channel -> for (x in channel) action(x) } }
+    channel.use { channel -> for (x in channel) action(x) }
     return channel
 }
 

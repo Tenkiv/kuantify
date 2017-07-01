@@ -1,9 +1,13 @@
 package com.tenkiv.tekdaqc
 
+import com.tenkiv.daqc.LineNoiseFrequency
+import com.tenkiv.daqc.ValueOutOfRangeException
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Gain
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate
-import org.tenkiv.physikal.core.micro
-import org.tenkiv.physikal.core.volt
+import com.tenkiv.tekdaqc.hardware.ATekdaqc.AnalogScale
+import org.tenkiv.physikal.core.*
+import tec.uom.se.ComparableQuantity
+import tec.uom.se.unit.Units.HERTZ
 import javax.measure.Quantity
 import javax.measure.quantity.ElectricPotential
 
@@ -13,7 +17,7 @@ import javax.measure.quantity.ElectricPotential
 val analogNoiseLookupTable =
         mapOf(
                 Pair(Gain.X1,
-                        mapOf<Rate, Quantity<ElectricPotential>>(
+                        mapOf(
                             Pair(Rate.SPS_2_5,.3.micro.volt),
                                 Pair(Rate.SPS_5,.4.micro.volt),
                                 Pair(Rate.SPS_10,.4.micro.volt),
@@ -30,7 +34,7 @@ val analogNoiseLookupTable =
                                 Pair(Rate.SPS_7500,8.micro.volt)
                                 )),
                 Pair(Gain.X2,
-                        mapOf<Rate, Quantity<ElectricPotential>>(
+                        mapOf(
                                 Pair(Rate.SPS_2_5,.2.micro.volt),
                                 Pair(Rate.SPS_5,.3.micro.volt),
                                 Pair(Rate.SPS_10,.3.micro.volt),
@@ -47,7 +51,7 @@ val analogNoiseLookupTable =
                                 Pair(Rate.SPS_7500,5.micro.volt)
                         )),
                 Pair(Gain.X4,
-                        mapOf<Rate, Quantity<ElectricPotential>>(
+                        mapOf(
                                 Pair(Rate.SPS_2_5,.15.micro.volt),
                                 Pair(Rate.SPS_5,.15.micro.volt),
                                 Pair(Rate.SPS_10,.2.micro.volt),
@@ -64,7 +68,7 @@ val analogNoiseLookupTable =
                                 Pair(Rate.SPS_7500,4.micro.volt)
                         )),
                 Pair(Gain.X8,
-                        mapOf<Rate, Quantity<ElectricPotential>>(
+                        mapOf(
                                 Pair(Rate.SPS_2_5,.1.micro.volt),
                                 Pair(Rate.SPS_5,.1.micro.volt),
                                 Pair(Rate.SPS_10,.15.micro.volt),
@@ -81,7 +85,7 @@ val analogNoiseLookupTable =
                                 Pair(Rate.SPS_7500,3.micro.volt)
                         )),
                 Pair(Gain.X16,
-                        mapOf<Rate, Quantity<ElectricPotential>>(
+                        mapOf(
                                 Pair(Rate.SPS_2_5,.06.micro.volt),
                                 Pair(Rate.SPS_5,.08.micro.volt),
                                 Pair(Rate.SPS_10,.1.micro.volt),
@@ -98,7 +102,7 @@ val analogNoiseLookupTable =
                                 Pair(Rate.SPS_7500,2.micro.volt)
                         )),
                 Pair(Gain.X32,
-                        mapOf<Rate, Quantity<ElectricPotential>>(
+                        mapOf(
                                 Pair(Rate.SPS_2_5,.05.micro.volt),
                                 Pair(Rate.SPS_5,.06.micro.volt),
                                 Pair(Rate.SPS_10,.07.micro.volt),
@@ -115,7 +119,7 @@ val analogNoiseLookupTable =
                                 Pair(Rate.SPS_7500,1.5.micro.volt)
                         )),
                 Pair(Gain.X64,
-                        mapOf<Rate, Quantity<ElectricPotential>>(
+                        mapOf(
                                 Pair(Rate.SPS_2_5,.05.micro.volt),
                                 Pair(Rate.SPS_5,.06.micro.volt),
                                 Pair(Rate.SPS_10,.07.micro.volt),
@@ -132,3 +136,34 @@ val analogNoiseLookupTable =
                                 Pair(Rate.SPS_7500,1.3.micro.volt)
                         ))
         )
+
+fun getFastestRateForAccuracy(
+        gain: Gain,
+        analogScale: AnalogScale,
+        maximumError: ComparableQuantity<ElectricPotential>,
+        lineFrequency: LineNoiseFrequency): Rate{
+
+    val scaler = if(analogScale == AnalogScale.ANALOG_SCALE_400V){ 80 } else { 1 }
+
+    val acceptableRates = analogNoiseLookupTable[gain]?.filter { it.value < (maximumError * scaler) }
+
+    if(acceptableRates == null || acceptableRates.isEmpty()){
+        throw ValueOutOfRangeException("No Possible Rates for Demanded Accuracy and Max Voltage")
+    }else{
+        val list = if(lineFrequency is LineNoiseFrequency.AccountFor) {
+            acceptableRates.keys.filter {
+                it.rate.toFloat().approxDivisibleBy((lineFrequency.frequency tu HERTZ).toFloat())
+            }
+        }else{
+            acceptableRates.keys
+        }
+
+        return list.sortedByDescending { it.rate.toFloat() }.first()
+    }
+}
+
+fun Float.approxDivisibleBy(number: Float): Boolean{
+    val mod = (this%number)
+    if(mod > 0){ mod * -1}
+    return (mod <= .01f)
+}

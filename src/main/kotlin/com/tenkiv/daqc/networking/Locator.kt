@@ -37,7 +37,7 @@ class Locator internal constructor() : Updatable<Device> {
 
         devices.filter { !(currentDevices[devices.first()::class]?.containsValue(it) ?: return@filter false) }
                 .forEach { currentDevices.putIfAbsent(it::class,HashMap())?.putIfAbsent(it.serialNumber,it)
-                    launch(DAQC_CONTEXT){ broadcastChannel.send(it) } }
+                    broadcastChannel.offer(it) }
 
         devices.filter { awaitedDeviceMap[it::class]?.contains(it.serialNumber) ?: return@filter false }
                 .forEach {
@@ -55,7 +55,7 @@ class Locator internal constructor() : Updatable<Device> {
 
         val potentialDevice = currentDevices[deviceType]?.get(serialNumber)
 
-        if(potentialDevice != null){ launch(DAQC_CONTEXT){ channel.send(potentialDevice) }; return channel }
+        if(potentialDevice != null){ channel.offer(potentialDevice) ; return channel }
 
         awaitedDeviceMap.putIfAbsent(deviceType,HashMap())?.putIfAbsent(serialNumber,channel)
 

@@ -1,6 +1,5 @@
 package com.tenkiv.tekdaqc
 
-import com.tenkiv.AccuracySetting
 import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.*
 import com.tenkiv.daqc.hardware.definitions.HardwareType
@@ -22,6 +21,7 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.physikal.core.*
@@ -39,7 +39,6 @@ import com.tenkiv.tekdaqc.hardware.ATekdaqc.AnalogScale as Scale
 class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : AnalogInput(), IVoltageListener {
     override val broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<ElectricPotential>>()
     override val device: Device = tekdaqc
-    override val hardwareType: HardwareType = HardwareType.ANALOG_INPUT
     override val hardwareNumber: Int = input.channelNumber
 
     val analogInputSwitchingTime = 4.nano.second
@@ -60,24 +59,17 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
                 else { (input as? AnalogInput_RevD)?.bufferState = AnalogInput_RevD.BufferState.DISABLED }
             }
 
-    var _accuracy: AccuracySetting = AccuracySetting(AnalogAccuracy.DECIVOLT, 2.5.volt)
+    var _accuracy: ComparableQuantity<ElectricPotential> = 1.micro.volt
 
-    override var accuracy: AccuracySetting
+    override var accuracy: ComparableQuantity<ElectricPotential>
             get() = _accuracy
             set(value) {
-                val requiredVoltageSettings = maxVoltageSettings(value.second.tu(VOLT).toDouble())
+                val requiredVoltageSettings = maxVoltageSettings(value.tu(VOLT).toDouble())
 
                 var rate: AAnalogInput.Rate = AAnalogInput.Rate.SPS_2_5
 
-                when (value.first) {
-                    AnalogAccuracy.DECIVOLT -> rate = AAnalogInput.Rate.SPS_2000
-                    AnalogAccuracy.CENTIVOLT -> rate = AAnalogInput.Rate.SPS_2000
-                    AnalogAccuracy.MILLIVOLT -> rate = AAnalogInput.Rate.SPS_1000
-                    AnalogAccuracy.DECIMILLIVOLT -> rate = AAnalogInput.Rate.SPS_500
-                    AnalogAccuracy.CENTIMILLIVOLT -> rate = AAnalogInput.Rate.SPS_100
-                    AnalogAccuracy.MICROVOLT -> rate = AAnalogInput.Rate.SPS_2_5
-                    AnalogAccuracy.DECIMICROVOLT -> rate = AAnalogInput.Rate.SPS_2_5
-                    AnalogAccuracy.CENTIMICROVOLT -> rate = AAnalogInput.Rate.SPS_2_5
+                when (value) {
+
                 }
 
                 tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.rate = rate
@@ -147,7 +139,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
 
     override fun onVoltageDataReceived(input: AAnalogInput,
                                        value: ValueInstant<ComparableQuantity<ElectricPotential>>) {
-        launch(DAQC_CONTEXT) { broadcastChannel.send(DaqcQuantity.of(value.value).at(value.instant)) }
+        broadcastChannel.offer(DaqcQuantity.of(value.value).at(value.instant))
     }
 }
 
@@ -156,13 +148,12 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
 
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
     override val device: Device = tekdaqc
-    override val hardwareType: HardwareType = HardwareType.DIGITAL_INPUT
     override val hardwareNumber: Int = input.channelNumber
 
     var isPercentOn: Boolean? = true
 
-    private fun rebroadcastToMain(value: ValueInstant<DaqcValue>){
-        launch(DAQC_CONTEXT) { broadcastChannel.send(value) }
+    private suspend fun rebroadcastToMain(value: ValueInstant<DaqcValue>){
+        broadcastChannel.send(value)
     }
 
     override fun activate() { input.deactivatePWM(); input.activate() }
@@ -195,7 +186,7 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     }
 
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
-        launch(DAQC_CONTEXT) {
+        runBlocking {
             when(data.state){
                 true -> {currentStateBroadcastChannel.send(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))}
                 false -> {currentStateBroadcastChannel.send(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))}
@@ -204,15 +195,13 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     }
 
     override fun onPWMDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput, data: PWMInputData) {
-        launch(DAQC_CONTEXT) {
 
-            pwmBroadcastChannel.send(ValueInstant.invoke(
+            pwmBroadcastChannel.offer(ValueInstant.invoke(
                     DaqcQuantity.of(data.percetageOn.percent), Instant.ofEpochMilli(data.timestamp)))
 
-            transitionFrequencyBroadcastChannel.send(ValueInstant.invoke(
+            transitionFrequencyBroadcastChannel.offer(ValueInstant.invoke(
                     //TODO This isn't accurate need time stamp val to calculate Hertz
                     DaqcQuantity.of(data.totalTransitions.hertz), Instant.ofEpochMilli(data.timestamp)))
-        }
     }
 }
 
@@ -222,20 +211,9 @@ class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tek
     override val pwmIsSimulated: Boolean = false
     override val transitionFrequencyIsSimulated: Boolean = false
     override val device: Device = tekdaqc
-    override val hardwareType: HardwareType = HardwareType.DIGITAL_OUTPUT
     override val hardwareNumber: Int = output.channelNumber
 
     var frequencyJob: Job? = null
-
-    override fun activate() {
-        frequencyJob?.cancel()
-        output.activate()
-    }
-
-    override fun deactivate() {
-        frequencyJob?.cancel()
-        output.deactivate()
-    }
 
     override fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>) {
         frequencyJob?.cancel()
@@ -256,5 +234,4 @@ class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tek
             }
         }
     }
-    override val broadcastChannel = ConflatedBroadcastChannel<BinaryState>()
 }

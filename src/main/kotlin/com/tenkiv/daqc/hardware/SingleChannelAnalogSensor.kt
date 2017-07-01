@@ -18,7 +18,7 @@ abstract class SingleChannelAnalogSensor<Q : Quantity<Q>>(analogInput: AnalogInp
     override val broadcastChannel: ConflatedBroadcastChannel<QuantityMeasurement<Q>> = ConflatedBroadcastChannel()
 
     init {
-        analogInput.setAccuracy(maxVoltage = maximumEp)
+        analogInput.accuracy = maximumEp
         analogInput.activate()
         analogInput.openNewCoroutineListener { measurement ->
             processNewMeasurement(convertInput(measurement.value) at measurement.instant)
