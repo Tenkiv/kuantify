@@ -1,5 +1,6 @@
 package com.tenkiv.daqc.hardware.definitions.device
 
+import com.tenkiv.daqc.LineNoiseFrequency
 import com.tenkiv.daqc.networking.NetworkProtocol
 import com.tenkiv.daqc.networking.SharingStatus
 import java.net.InetAddress
@@ -14,7 +15,7 @@ interface Device {
 
     var networkSharingStatus: SharingStatus
 
-    fun connect(protocol: NetworkProtocol?)
+    fun connect(lineFrequency: LineNoiseFrequency, protocol: NetworkProtocol?)
 
     fun disconnect(protocol: NetworkProtocol?)
 }

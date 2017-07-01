@@ -15,9 +15,7 @@ class TekdaqcLocator: OnTekdaqcDiscovered, RemoteLocator<List<TekdaqcBoard>>() {
 
     override val broadcastChannel = ConflatedBroadcastChannel(activeDevices)
 
-    init {
-        Locator.instance.addLocatorListener(this)
-    }
+    init { Locator.instance.addLocatorListener(this) }
 
     override fun onTekdaqcResponse(tekdaqc: ATekdaqc) {}
 

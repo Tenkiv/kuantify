@@ -8,7 +8,6 @@ import com.tenkiv.tekdaqc.hardware.ATekdaqc.AnalogScale
 import org.tenkiv.physikal.core.*
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.unit.Units.HERTZ
-import javax.measure.Quantity
 import javax.measure.quantity.ElectricPotential
 
 /**

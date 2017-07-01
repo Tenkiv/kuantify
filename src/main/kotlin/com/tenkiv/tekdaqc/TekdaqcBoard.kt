@@ -1,6 +1,7 @@
 package com.tenkiv.tekdaqc
 
 import com.tenkiv.daqc.DaqcValue
+import com.tenkiv.daqc.LineNoiseFrequency
 import com.tenkiv.daqc.hardware.definitions.channel.*
 import com.tenkiv.daqc.hardware.definitions.device.ControlDevice
 import com.tenkiv.daqc.hardware.definitions.device.DataAcquisitionDevice
@@ -9,6 +10,7 @@ import com.tenkiv.daqc.networking.SharingStatus
 import com.tenkiv.daqc.networking.UnsupportedProtocolException
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.physikal.core.hertz
 import java.net.InetAddress
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -19,7 +21,12 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice
     override var isConnected: NetworkProtocol? = null
     override var networkSharingStatus: SharingStatus = SharingStatus.NONE
 
-    override fun connect(protocol: NetworkProtocol?) {
+    var lineFrequency: LineNoiseFrequency = LineNoiseFrequency.AccountFor(50.hertz)
+
+    override fun connect(lineFrequency: LineNoiseFrequency, protocol: NetworkProtocol?) {
+
+        this.lineFrequency = lineFrequency
+
         when (protocol) {
             NetworkProtocol.TELNET, NetworkProtocol.TCP -> {
                 tekdaqc.connect(ATekdaqc.AnalogScale.ANALOG_SCALE_5V, ATekdaqc.CONNECTION_METHOD.ETHERNET)

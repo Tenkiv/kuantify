@@ -7,7 +7,6 @@ import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import com.tenkiv.daqc.hardware.definitions.device.Device
-import com.tenkiv.lineFrequency
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData
 import com.tenkiv.tekdaqc.communication.data_points.PWMInputData
 import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener
@@ -78,7 +77,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
                 voltageSettings.first,
                 voltageSettings.second,
                 maxAllowableError,
-                lineFrequency)
+                tekdaqc.lineFrequency)
 
         tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.rate = rate
         tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.gain = voltageSettings.first
