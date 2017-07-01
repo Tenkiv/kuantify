@@ -2,7 +2,10 @@ package com.tenkiv.tekdaqc
 
 import com.tenkiv.AccuracySetting
 import com.tenkiv.DAQC_CONTEXT
-import com.tenkiv.daqc.*
+import com.tenkiv.daqc.AnalogAccuracy
+import com.tenkiv.daqc.BinaryState
+import com.tenkiv.daqc.DaqcQuantity
+import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.definitions.HardwareType
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
@@ -35,9 +38,6 @@ import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency
 import com.tenkiv.tekdaqc.hardware.ATekdaqc.AnalogScale as Scale
 
-/**
- * Created by tenkiv on 5/26/17.
- */
 
 class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : AnalogInput(), IVoltageListener {
     override val broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<ElectricPotential>>()
