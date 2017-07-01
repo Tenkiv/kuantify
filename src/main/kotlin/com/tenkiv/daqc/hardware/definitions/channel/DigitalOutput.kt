@@ -1,8 +1,8 @@
 package com.tenkiv.daqc.hardware.definitions.channel
 
 import com.tenkiv.daqc.BinaryState
+import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.hardware.definitions.Channel
-import tec.uom.se.ComparableQuantity
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
 
@@ -14,8 +14,8 @@ abstract class DigitalOutput : Output<BinaryState>,
 
     abstract val transitionFrequencyIsSimulated: Boolean
 
-    abstract fun pulseWidthModulate(percent: ComparableQuantity<Dimensionless>)
+    abstract fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>)
 
-    abstract fun setTransitionFrequency(freq: ComparableQuantity<Frequency>)
+    abstract fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>)
 
 }

@@ -3,7 +3,6 @@ package com.tenkiv.tekdaqc
 import com.tenkiv.AccuracySetting
 import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.*
-import com.tenkiv.daqc.QuantityMeasurement
 import com.tenkiv.daqc.hardware.definitions.HardwareType
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
@@ -246,7 +245,7 @@ class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tek
         output.setPulseWidthModulation(percent)
     }
 
-    override fun setTransitionFrequency(freq: ComparableQuantity<Frequency>) {
+    override fun sustainTransitionFrequency(freq: ComparableQuantity<Frequency>) {
         frequencyJob = launch(DAQC_CONTEXT){
             val cycleSpeec = ((freq tu HERTZ)/2).toLong()
             var isOn = false
