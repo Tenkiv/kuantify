@@ -1,6 +1,7 @@
 package com.tenkiv.daqc.hardware.definitions.channel
 
 import com.tenkiv.daqc.BinaryState
+import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.definitions.Channel
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
@@ -13,16 +14,15 @@ abstract class DigitalInput :
         Input<ValueInstant<DaqcValue>>,
         Channel<DaqcValue> {
 
-    val transitionFrequencyBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<ComparableQuantity<Frequency>>>()
+    val transitionFrequencyBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<Frequency>>>()
 
-    val pwmBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<ComparableQuantity<Dimensionless>>>()
+    val pwmBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<Dimensionless>>>()
 
     val currentStateBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<BinaryState>>()
 
-
     abstract fun activateForTransitionFrequency()
 
-    abstract fun activateForPwm(avgFrequency: ComparableQuantity<Frequency>)
+    abstract fun activateForPwm(avgFrequency: DaqcQuantity<Frequency>)
 
     open fun activateForCurrentState() = activate()
 }

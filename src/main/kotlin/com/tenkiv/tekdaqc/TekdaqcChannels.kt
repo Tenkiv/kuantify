@@ -3,6 +3,7 @@ package com.tenkiv.tekdaqc
 import com.tenkiv.AccuracySetting
 import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.*
+import com.tenkiv.daqc.QuantityMeasurement
 import com.tenkiv.daqc.hardware.definitions.HardwareType
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
@@ -80,6 +81,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
                     AnalogAccuracy.DECIMILLIVOLT -> rate = AAnalogInput.Rate.SPS_10
                     AnalogAccuracy.CENTIMILLIVOLT -> rate = AAnalogInput.Rate.SPS_5
                     AnalogAccuracy.MICROVOLT -> rate = AAnalogInput.Rate.SPS_2_5
+                    AnalogAccuracy.MICROVOLT -> rate = AAnalogInput.Rate.SPS_2_5
                 }
 
                 tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.rate = rate
@@ -118,11 +120,11 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
                 gain = Gain.X32
                 scale = Scale.ANALOG_SCALE_400V
                 tekdaqc.mandatory400Voltage = true}
-            ((voltage <= 6.25 && voltage > 5) || (voltage <= 6.25 && tekdaqc.mandatory400Voltage)) -> {
+            ((voltage <= 6.25 && voltage > 3.5) || (voltage <= 6.25 && tekdaqc.mandatory400Voltage)) -> {
                 gain = Gain.X64
                 scale = Scale.ANALOG_SCALE_400V
                 tekdaqc.mandatory400Voltage = true}
-            (voltage <= 5 && voltage > 2.5 && !tekdaqc.mandatory400Voltage) -> {
+            (voltage <= 3.5 && voltage > 2.5 && !tekdaqc.mandatory400Voltage) -> {
                 gain = Gain.X1
                 scale = Scale.ANALOG_SCALE_5V}
             (voltage <= 2.5 && voltage > 1.25 && !tekdaqc.mandatory400Voltage) -> {
@@ -175,7 +177,8 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
         input.addDigitalListener(this)
         input.addPWMListener(this)
         launch(DAQC_CONTEXT) { currentStateBroadcastChannel.consumeEach { rebroadcastToMain(it) } }
-
+        launch(DAQC_CONTEXT) { pwmBroadcastChannel.consumeEach { rebroadcastToMain(it) } }
+        launch(DAQC_CONTEXT) { transitionFrequencyBroadcastChannel.consumeEach { rebroadcastToMain(it) } }
         }
 
     override fun activateForCurrentState() {
@@ -188,7 +191,7 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
         input.activatePWM()
     }
 
-    override fun activateForPwm(avgFrequency: ComparableQuantity<Frequency>) {
+    override fun activateForPwm(avgFrequency: DaqcQuantity<Frequency>) {
         //TODO Use Average Frequency
         input.deactivate()
         isPercentOn = true
@@ -198,12 +201,8 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
         launch(DAQC_CONTEXT) {
             when(data.state){
-                true -> {
-                    currentStateBroadcastChannel.send(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))
-                }
-                false -> {
-                    currentStateBroadcastChannel.send(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))
-                }
+                true -> {currentStateBroadcastChannel.send(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))}
+                false -> {currentStateBroadcastChannel.send(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))}
             }
         }
     }
@@ -224,7 +223,8 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
 class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :
         DigitalOutput() {
 
-    override val pwmIsSimulated: Boolean = true
+    override val pwmIsSimulated: Boolean = false
+    override val transitionFrequencyIsSimulated: Boolean = false
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.DIGITAL_OUTPUT
     override val hardwareNumber: Int = output.channelNumber
