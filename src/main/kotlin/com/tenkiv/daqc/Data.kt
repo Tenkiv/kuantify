@@ -18,14 +18,9 @@ import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency
 import javax.measure.quantity.Time
 
-
-/**
- * Created by tenkiv on 3/20/17.
- */
-
 data class ArffDataSetStub(val data: Int)
 
-data class TriggerCondition<T : DaqcValue>(val input: Input<ValueInstant<T>>, val condition: (T) -> Boolean) {
+data class TriggerCondition<T : ValueInstant<DaqcValue>>(val input: Input<T>, val condition: (T) -> Boolean) {
     var lastValue: T? = null
     var hasBeenReached: Boolean = false
 }

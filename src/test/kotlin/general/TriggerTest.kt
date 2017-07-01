@@ -7,9 +7,6 @@ import org.tenkiv.physikal.core.volt
 
 import javax.measure.quantity.ElectricPotential
 
-/**
- * Created by tenkiv on 4/13/17.
- */
 class TriggerTest: StringSpec() {
 
     init {

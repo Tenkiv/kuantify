@@ -7,6 +7,7 @@ import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import com.tenkiv.daqc.hardware.definitions.device.Device
+import com.tenkiv.lineFrequency
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData
 import com.tenkiv.tekdaqc.communication.data_points.PWMInputData
 import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener
@@ -59,23 +60,32 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
                 else { (input as? AnalogInput_RevD)?.bufferState = AnalogInput_RevD.BufferState.DISABLED }
             }
 
-    var _accuracy: ComparableQuantity<ElectricPotential> = 1.micro.volt
+    private var _maxElectricPotential: ComparableQuantity<ElectricPotential> = 3.volt
 
-    override var accuracy: ComparableQuantity<ElectricPotential>
-            get() = _accuracy
-            set(value) {
-                val requiredVoltageSettings = maxVoltageSettings(value.tu(VOLT).toDouble())
+    override var maxElectricPotential: ComparableQuantity<ElectricPotential>
+        get() = _maxElectricPotential
+        set(value) {_maxElectricPotential = value; recalculateState() }
 
-                var rate: AAnalogInput.Rate = AAnalogInput.Rate.SPS_2_5
+    private var _maxAllowableError: ComparableQuantity<ElectricPotential> = 1.micro.volt
 
-                when (value) {
+    override var maxAllowableError: ComparableQuantity<ElectricPotential>
+            get() = _maxAllowableError
+            set(value) {_maxAllowableError = value; recalculateState() }
 
-                }
+    fun recalculateState(){
+        val voltageSettings = maxVoltageSettings(maxElectricPotential.tu(VOLT).toDouble())
+        val rate = getFastestRateForAccuracy(
+                voltageSettings.first,
+                voltageSettings.second,
+                maxAllowableError,
+                lineFrequency)
 
-                tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.rate = rate
-                tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.gain = requiredVoltageSettings.first
-                tekdaqc.tekdaqc.analogInputScale = requiredVoltageSettings.second
-            }
+        tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.rate = rate
+        tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.gain = voltageSettings.first
+        tekdaqc.tekdaqc.analogInputScale = voltageSettings.second
+
+        //TODO Println Notice of Status Change or Jumper Requirements
+    }
 
     fun maxVoltageSettings(voltage: Double): Pair<AAnalogInput.Gain,ATekdaqc.AnalogScale>{
 

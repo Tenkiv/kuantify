@@ -9,9 +9,7 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import java.time.Instant
 import javax.measure.quantity.Time
 
-/**
- * Created by tenkiv on 5/15/17.
- */
+
 class JSONRecorder(path: String,
                    val jsonArraySize: Int = 1000,
                    timeToRecord: Time? = null,

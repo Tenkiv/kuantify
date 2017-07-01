@@ -1,8 +1,5 @@
 package com.tenkiv.daqc.networking
 
-/**
- * Created by tenkiv on 4/7/17.
- */
 enum class NetworkProtocol {
     UDP,
     TCP,

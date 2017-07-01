@@ -12,9 +12,6 @@ import org.tenkiv.coral.ValueInstant
 import java.net.InetAddress
 import java.util.concurrent.CopyOnWriteArrayList
 
-/**
- * Created by tenkiv on 5/26/17.
- */
 class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice {
 
     override val inetAddr: InetAddress = InetAddress.getByName(tekdaqc.hostIP)

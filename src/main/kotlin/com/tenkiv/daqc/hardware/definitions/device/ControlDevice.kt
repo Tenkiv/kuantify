@@ -6,9 +6,6 @@ import com.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import com.tenkiv.daqc.hardware.definitions.channel.Output
 import com.tenkiv.daqc.networking.SharingStatus
 
-/**
- * Created by tenkiv on 4/7/17.
- */
 interface ControlDevice : Device {
 
     val analogOutputs: List<AnalogOutput>

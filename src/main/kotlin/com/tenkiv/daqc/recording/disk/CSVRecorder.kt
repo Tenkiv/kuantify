@@ -14,9 +14,7 @@ import java.io.FileOutputStream
 import java.time.Instant
 import javax.measure.quantity.Time
 
-/**
- * Created by tenkiv on 4/11/17.
- */
+
 class CSVRecorder(path: String,
                   val numberOfSamples: Int = -1,
                   timeToRecord: Time? = null,

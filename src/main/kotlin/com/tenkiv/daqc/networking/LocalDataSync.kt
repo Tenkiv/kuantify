@@ -7,9 +7,6 @@ import com.couchbase.lite.listener.LiteListener
 import com.couchbase.lite.listener.LiteServer
 import java.net.URL
 
-/**
- * Created by tenkiv on 5/31/17.
- */
 class LocalDataSync {
     val context = JavaContext()
     val manager = Manager(context, Manager.DEFAULT_OPTIONS)

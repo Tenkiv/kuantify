@@ -8,9 +8,6 @@ import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import kotlin.reflect.KClass
 
-/**
- * Created by tenkiv on 6/28/17.
- */
 class Locator internal constructor() : Updatable<Device> {
 
     override val broadcastChannel: ConflatedBroadcastChannel<Device> = ConflatedBroadcastChannel()

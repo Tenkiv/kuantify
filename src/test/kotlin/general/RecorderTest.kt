@@ -16,9 +16,6 @@ import org.tenkiv.physikal.core.qeq
 import org.tenkiv.physikal.core.volt
 import java.io.File
 
-/**
- * Created by tenkiv on 5/15/17.
- */
 class RecorderTest: StringSpec() {
     init{
         "JSON Recording Test"{

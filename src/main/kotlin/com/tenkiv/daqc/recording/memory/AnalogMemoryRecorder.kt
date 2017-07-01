@@ -6,9 +6,6 @@ import tec.uom.se.unit.Units
 import java.time.Instant
 import javax.measure.quantity.ElectricPotential
 
-/**
- * Created by tenkiv on 5/22/17.
- */
 class AnalogMemoryRecorder(updatable: Updatable<DaqcQuantity<ElectricPotential>>,
                            maximumSize: Int,
                            name: String) :

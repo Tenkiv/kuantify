@@ -7,14 +7,14 @@ import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.channel.Input
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.newSingleThreadContext
+import org.tenkiv.coral.at
 import org.tenkiv.physikal.core.volt
+import tec.uom.se.ComparableQuantity
+import java.time.Instant
 import java.util.*
 import javax.measure.quantity.ElectricPotential
 
-/**
- * Created by tenkiv on 5/22/17.
- */
-class PredictableDigitalSensor : SingleChannelAnalogSensor<BinaryState>(emptyList<Input<BinaryState>>()) {
+class PredictableDigitalSensor : SingleChannelAnalogSensor<BinaryState>(EmptyDigitalInput()) {
 
     suspend override fun onUpdate(updatable: Updatable<BinaryState>, value: BinaryState) {
         println("What on Earth happened here?")
@@ -55,10 +55,13 @@ class PredictableDigitalSensor : SingleChannelAnalogSensor<BinaryState>(emptyLis
 
 }
 
-class PredictableAnalogSensor : SingleChannelAnalogSensor<DaqcQuantity<ElectricPotential>>(emptyList<Input<DaqcQuantity<ElectricPotential>>>()) {
+class PredictableAnalogSensor : SingleChannelAnalogSensor<ElectricPotential>(EmptyAnalogInput(),3.volt) {
+    override fun activate() {}
 
-    suspend override fun onUpdate(updatable: Updatable<DaqcQuantity<ElectricPotential>>, value: DaqcQuantity<ElectricPotential>) {
-        println("What on Earth happened here?")
+    override fun deactivate() {}
+
+    override fun convertInput(ep: ComparableQuantity<ElectricPotential>): DaqcQuantity<ElectricPotential> {
+        return DaqcQuantity.Companion.of(2000.volt)
     }
 
     var iteration = 0
@@ -84,7 +87,7 @@ class PredictableAnalogSensor : SingleChannelAnalogSensor<DaqcQuantity<ElectricP
             override fun run() {
                 launch(context) {
                     if (iteration < sendingOrder.size) {
-                        broadcastChannel.send(sendingOrder[iteration])
+                        broadcastChannel.send(sendingOrder[iteration].at(Instant.now()))
                         iteration++
                     } else {
                         timer.cancel()

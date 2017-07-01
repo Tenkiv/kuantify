@@ -14,10 +14,6 @@ import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.run
 
-/**
- * Created by tenkiv on 6/5/17.
- */
-
 class TekdaqcTest: StringSpec(){
 
     init{

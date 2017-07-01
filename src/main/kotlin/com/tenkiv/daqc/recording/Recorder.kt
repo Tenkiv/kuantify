@@ -14,9 +14,6 @@ import tec.uom.se.unit.Units
 import java.util.concurrent.TimeUnit
 import javax.measure.quantity.Time
 
-/**
- * Created by tenkiv on 5/15/17.
- */
 abstract class Recorder<T : DaqcValue>(val timeToRecord: Time? = null,
                                        val recordingObjects: Map<Updatable<T>, String>) :
         UpdatableListener<T>,

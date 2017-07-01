@@ -1,8 +1,5 @@
 package com.tenkiv.daqc.monitoring
 
-/**
- * Created by tenkiv on 5/16/17.
- */
 class PIDController(val Kp: Double, val Ki: Double, val Kd: Double) {
     var error: Double = 0.0
     var previousError: Double = 0.0

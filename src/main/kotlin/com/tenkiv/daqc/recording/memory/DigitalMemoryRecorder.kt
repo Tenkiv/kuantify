@@ -4,9 +4,6 @@ import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import java.time.Instant
 
-/**
- * Created by tenkiv on 5/22/17.
- */
 class DigitalMemoryRecorder(updatable: Updatable<BinaryState>,
                             maximumSize: Int,
                             name: String) : InMemoryRecorder<BinaryState>(updatable, maximumSize, name) {

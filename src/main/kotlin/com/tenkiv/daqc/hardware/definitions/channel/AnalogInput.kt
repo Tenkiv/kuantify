@@ -6,15 +6,14 @@ import com.tenkiv.daqc.hardware.definitions.DaqcChannel
 import tec.uom.se.ComparableQuantity
 import javax.measure.quantity.ElectricPotential
 
-/**
- * Created by tenkiv on 3/18/17.
- */
 abstract class AnalogInput :
         Input<QuantityMeasurement<ElectricPotential>>,
         DaqcChannel<DaqcQuantity<ElectricPotential>> {
 
     abstract var buffer: Boolean
 
-    abstract var accuracy: ComparableQuantity<ElectricPotential>
+    abstract var maxAllowableError: ComparableQuantity<ElectricPotential>
+
+    abstract var maxElectricPotential: ComparableQuantity<ElectricPotential>
 
 }

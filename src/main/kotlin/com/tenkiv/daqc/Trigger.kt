@@ -5,12 +5,12 @@ import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 
-class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
+class Trigger<T : ValueInstant<DaqcValue>>(vararg triggerConditions: TriggerCondition<T>,
                              val triggerOnSimultaneousValues: Boolean = false,
                              val triggerOnce: Boolean = true,
                              triggerFunction: () -> Unit) {
 
-    private val channelList: MutableList<SubscriptionReceiveChannel<ValueInstant<T>>> = ArrayList()
+    private val channelList: MutableList<SubscriptionReceiveChannel<T>> = ArrayList()
 
     fun stop() { if (triggerOnce) { channelList.forEach { it.close() } } }
 
@@ -21,9 +21,9 @@ class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
 
                     val currentVal = update
 
-                    it.lastValue = currentVal.value
+                    it.lastValue = currentVal
 
-                    if (it.condition(currentVal.value)) {
+                    if (it.condition(currentVal)) {
                         it.hasBeenReached = true
 
                         if (triggerOnSimultaneousValues) {
