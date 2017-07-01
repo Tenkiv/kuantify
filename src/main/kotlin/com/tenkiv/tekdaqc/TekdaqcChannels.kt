@@ -2,7 +2,6 @@ package com.tenkiv.tekdaqc
 
 import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.*
-import com.tenkiv.daqc.QuantityMeasurement
 import com.tenkiv.daqc.hardware.definitions.HardwareType
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
@@ -14,9 +13,7 @@ import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener
 import com.tenkiv.tekdaqc.communication.message.IPWMChannelListener
 import com.tenkiv.tekdaqc.communication.message.IVoltageListener
 import com.tenkiv.tekdaqc.hardware.AAnalogInput
-import com.tenkiv.tekdaqc.hardware.AAnalogInput.Gain as Gain
-import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate as Rate
-import com.tenkiv.tekdaqc.hardware.ATekdaqc.AnalogScale as Scale
+import com.tenkiv.tekdaqc.hardware.AAnalogInput.Gain
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD
 import kotlinx.coroutines.experimental.Job
@@ -25,7 +22,6 @@ import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.coral.now
 import org.tenkiv.physikal.core.*
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.unit.Units.HERTZ
@@ -35,6 +31,7 @@ import java.util.concurrent.TimeUnit
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency
+import com.tenkiv.tekdaqc.hardware.ATekdaqc.AnalogScale as Scale
 
 /**
  * Created by tenkiv on 5/26/17.
@@ -166,7 +163,7 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
 
     init { input.addDigitalListener(this); input.addPWMListener(this) }
 
-    override fun activateForTransitionCount() {
+    override fun activateForTransitionFrequency() {
         input.deactivate()
         broadcastChannel.close()
         broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
