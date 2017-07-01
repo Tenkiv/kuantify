@@ -13,11 +13,11 @@ abstract class DigitalInput :
         Input<ValueInstant<DaqcValue>>,
         Channel<DaqcValue> {
 
-    val transitionFrequencyChannel = ConflatedBroadcastChannel<ValueInstant<ComparableQuantity<Frequency>>>()
+    val transitionFrequencyBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<ComparableQuantity<Frequency>>>()
 
-    val percentOnChannel = ConflatedBroadcastChannel<ValueInstant<ComparableQuantity<Dimensionless>>>()
+    val pwmBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<ComparableQuantity<Dimensionless>>>()
 
-    val currentStateChannel = ConflatedBroadcastChannel<ValueInstant<BinaryState>>()
+    val currentStateBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<BinaryState>>()
 
 
     abstract fun activateForTransitionFrequency()

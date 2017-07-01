@@ -10,7 +10,9 @@ import javax.measure.quantity.Frequency
 abstract class DigitalOutput : Output<BinaryState>,
         Channel<BinaryState> {
 
-    abstract val canPulseWidthModulate: Boolean
+    abstract val pwmIsSimulated: Boolean
+
+    abstract val transitionFrequencyIsSimulated: Boolean
 
     abstract fun pulseWidthModulate(percent: ComparableQuantity<Dimensionless>)
 

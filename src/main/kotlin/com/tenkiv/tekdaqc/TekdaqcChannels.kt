@@ -3,7 +3,6 @@ package com.tenkiv.tekdaqc
 import com.tenkiv.AccuracySetting
 import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.*
-import com.tenkiv.daqc.QuantityMeasurement
 import com.tenkiv.daqc.hardware.definitions.HardwareType
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
@@ -175,7 +174,7 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     init {
         input.addDigitalListener(this)
         input.addPWMListener(this)
-        launch(DAQC_CONTEXT) { currentStateChannel.consumeEach { rebroadcastToMain(it) } }
+        launch(DAQC_CONTEXT) { currentStateBroadcastChannel.consumeEach { rebroadcastToMain(it) } }
 
         }
 
@@ -199,8 +198,12 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
         launch(DAQC_CONTEXT) {
             when(data.state){
-                true -> {currentStateChannel.send(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))}
-                false -> {currentStateChannel.send(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))}
+                true -> {
+                    currentStateBroadcastChannel.send(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))
+                }
+                false -> {
+                    currentStateBroadcastChannel.send(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))
+                }
             }
         }
     }
@@ -208,10 +211,10 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     override fun onPWMDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput, data: PWMInputData) {
         launch(DAQC_CONTEXT) {
 
-            percentOnChannel.send(ValueInstant.invoke(
+            pwmBroadcastChannel.send(ValueInstant.invoke(
                     DaqcQuantity.of(data.percetageOn.percent), Instant.ofEpochMilli(data.timestamp)))
 
-            transitionFrequencyChannel.send(ValueInstant.invoke(
+            transitionFrequencyBroadcastChannel.send(ValueInstant.invoke(
                     //TODO This isn't accurate need time stamp val to calculate Hertz
                     DaqcQuantity.of(data.totalTransitions.hertz), Instant.ofEpochMilli(data.timestamp)))
         }
@@ -221,7 +224,7 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
 class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :
         DigitalOutput() {
 
-    override val canPulseWidthModulate: Boolean = true
+    override val pwmIsSimulated: Boolean = true
     override val device: Device = tekdaqc
     override val hardwareType: HardwareType = HardwareType.DIGITAL_OUTPUT
     override val hardwareNumber: Int = output.channelNumber
