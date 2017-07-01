@@ -2,7 +2,6 @@ package com.tenkiv.daqc
 
 import com.tenkiv.DAQC_CONTEXT
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
-import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 
@@ -23,7 +22,7 @@ class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
         launch(DAQC_CONTEXT) {
 
             triggerConditions.forEach {
-                val success = channelList.add(it.input.broadcastChannel.consumeAndReturn({ update ->
+                channelList.add(it.input.broadcastChannel.consumeAndReturn({ update ->
 
                     val currentVal = update
 
