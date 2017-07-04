@@ -1,5 +1,6 @@
 package tekdaqc
 
+import com.tenkiv.daqc.LineNoiseFrequency
 import com.tenkiv.daqc.networking.NetworkProtocol
 import com.tenkiv.tekdaqc.TekdaqcBoard
 import com.tenkiv.tekdaqc.TekdaqcLocator
@@ -13,6 +14,7 @@ import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.run
+import org.tenkiv.physikal.core.hertz
 
 class TekdaqcTest: StringSpec(){
 
@@ -44,7 +46,7 @@ class TekdaqcTest: StringSpec(){
 
     suspend fun executeBoardCommands(board: TekdaqcBoard){
         println("Executing Board Commands")
-        board.connect(NetworkProtocol.TELNET)
+        board.connect(LineNoiseFrequency.AccountFor(60.hertz),NetworkProtocol.TELNET)
 
         board.tekdaqc.addListener(object: IMessageListener{
             override fun onDigitalInputDataReceived(tekdaqc: ATekdaqc?, data: DigitalInputData?) {}

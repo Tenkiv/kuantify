@@ -16,7 +16,7 @@ import java.util.*
 import javax.measure.quantity.ElectricPotential
 
 
-class GenericGibberingSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt) {
+class GenericGibberingSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt, 3.milli.volt) {
 
     val random = Random()
 
@@ -45,7 +45,7 @@ class GenericGibberingSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInpu
 }
 
 class AnalogGibberingSensor:
-        ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt) {
+        ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt, 3.milli.volt) {
 
     val random = Random()
 

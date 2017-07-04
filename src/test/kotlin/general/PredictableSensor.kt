@@ -7,54 +7,14 @@ import com.tenkiv.daqc.hardware.definitions.Updatable
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.at
+import org.tenkiv.physikal.core.milli
 import org.tenkiv.physikal.core.volt
 import tec.uom.se.ComparableQuantity
 import java.time.Instant
 import java.util.*
 import javax.measure.quantity.ElectricPotential
 
-class PredictableDigitalSensor : ScAnalogSensor<BinaryState>(EmptyDigitalInput()) {
-
-    suspend override fun onUpdate(updatable: Updatable<BinaryState>, value: BinaryState) {
-        println("What on Earth happened here?")
-    }
-
-    var iteration = 0
-
-    var context = newSingleThreadContext("Sensor Context")
-
-    var sendingOrder = arrayListOf(
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.Off,
-            BinaryState.Off)
-
-    init {
-        val timer = Timer(false)
-        // Just a very hacky way of simulating an input. Needs to be thread safe to be predictable.
-        timer.scheduleAtFixedRate(object: TimerTask() {
-            override fun run() {
-                launch(context) {
-                    if (iteration < sendingOrder.size) {
-                        broadcastChannel.send(sendingOrder[iteration])
-                        iteration++
-                    } else {
-                        timer.cancel()
-                    }
-                }
-            }
-        },100,100)
-    }
-
-}
-
-class PredictableAnalogSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt) {
+class PredictableAnalogSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(false), 3.volt, 3.milli.volt) {
     override fun activate() {}
 
     override fun deactivate() {}

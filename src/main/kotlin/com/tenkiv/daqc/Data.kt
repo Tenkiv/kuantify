@@ -42,9 +42,9 @@ sealed class DaqcValue{
             throw Exception("Placeholder Exception")
         }
 
-        inline fun <reified Q: Quantity<Q>>quantityFromString(input: String): DaqcQuantity<Q>?{
+        inline fun <reified Q: Quantity<Q>>quantityFromString(input: String): DaqcQuantity<Q>{
             val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType<Q>()
-            if(quant != null){ return DaqcQuantity.of(quant) }else{ return null }
+            if(quant != null){ return DaqcQuantity.of(quant) }else{ throw Exception("Placeholder Exception") }
         }
     }
 }

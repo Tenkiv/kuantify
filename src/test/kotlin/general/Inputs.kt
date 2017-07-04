@@ -15,7 +15,7 @@ import javax.measure.quantity.Frequency
 /**
  * Created by tenkiv on 7/1/17.
  */
-class EmptyAnalogInput: AnalogInput(){
+class EmptyAnalogInput(override val isActivated: Boolean) : AnalogInput(){
     override val device: Device get() = TODO("not implemented")
     override val hardwareNumber: Int get() = TODO("not implemented")
 
@@ -37,7 +37,7 @@ class EmptyAnalogInput: AnalogInput(){
         set(value) {}
 }
 
-class EmptyDigitalInput: DigitalInput(){
+class EmptyDigitalInput(override val isActivated: Boolean) : DigitalInput(){
     override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<DaqcValue>>
         get() = TODO("not implemented")
 
