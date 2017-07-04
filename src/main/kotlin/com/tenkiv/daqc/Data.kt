@@ -10,8 +10,10 @@ import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.physikal.core.asType
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities
+import tec.uom.se.unit.Units
 import javax.measure.Quantity
 import javax.measure.Unit
 import javax.measure.quantity.ElectricPotential
@@ -31,7 +33,21 @@ interface UpdatableListener<T> {
 
 }
 
-sealed class DaqcValue
+sealed class DaqcValue{
+    companion object {
+
+        inline fun binaryFromString(input: String): DaqcValue?{
+            if (input == BinaryState.On.toString()){ return BinaryState.On }
+            if (input == BinaryState.On.toString()){ return BinaryState.Off }
+            throw Exception("Placeholder Exception")
+        }
+
+        inline fun <reified Q: Quantity<Q>>quantityFromString(input: String): DaqcQuantity<Q>?{
+            val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType<Q>()
+            if(quant != null){ return DaqcQuantity.of(quant) }else{ return null }
+        }
+    }
+}
 
 sealed class BinaryState : DaqcValue() {
 

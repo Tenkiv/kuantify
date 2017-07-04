@@ -216,7 +216,7 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     }
 }
 
-class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :
+class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :
         DigitalOutput() {
 
     override val pwmIsSimulated: Boolean = false
@@ -224,7 +224,15 @@ class TekdaqcDigitalOutput(val tekdaqc: TekdaqcBoard, val output: com.tenkiv.tek
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = output.channelNumber
 
-    var frequencyJob: Job? = null
+    private var frequencyJob: Job? = null
+
+    override fun setOutput(setting: BinaryState) {
+        frequencyJob?.cancel()
+        when(setting){
+            BinaryState.On -> { output.activate() }
+            BinaryState.Off -> { output.deactivate() }
+        }
+    }
 
     override fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>) {
         frequencyJob?.cancel()

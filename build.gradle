@@ -50,7 +50,9 @@ dependencies {
     compile 'com.tenkiv.tekdaqc:shared-java-library:1.5.1.0-SNAPSHOT'
 
     //JSON
-    compile 'com.beust:klaxon:0.30'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.8.7'
+    compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.7'
+    compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.7'
 
     //Local Database Management and Syncing
     compile 'com.couchbase.lite:couchbase-lite-java:1.4.0'

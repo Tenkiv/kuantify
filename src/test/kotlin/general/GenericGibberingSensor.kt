@@ -12,6 +12,7 @@ import com.tenkiv.daqc.hardware.definitions.device.Device
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.at
+import org.tenkiv.physikal.core.micro
 import org.tenkiv.physikal.core.milli
 import org.tenkiv.physikal.core.volt
 import tec.uom.se.ComparableQuantity
@@ -23,7 +24,7 @@ import javax.measure.quantity.ElectricPotential
 
 
 
-class GenericGibberingSensor : SingleChannelAnalogSensor<ElectricPotential>(EmptyAnalogInput(),3.volt) {
+class GenericGibberingSensor : SingleChannelAnalogSensor<ElectricPotential>(EmptyAnalogInput(),3.micro.volt,3.micro.volt) {
 
     val random = Random()
 
@@ -52,7 +53,7 @@ class GenericGibberingSensor : SingleChannelAnalogSensor<ElectricPotential>(Empt
 }
 
 class AnalogGibberingSensor:
-        SingleChannelAnalogSensor<ElectricPotential>(EmptyAnalogInput(),3.volt) {
+        SingleChannelAnalogSensor<ElectricPotential>(EmptyAnalogInput(),3.micro.volt,3.micro.volt) {
 
     val random = Random()
 

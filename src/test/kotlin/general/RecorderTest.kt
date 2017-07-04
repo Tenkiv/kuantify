@@ -6,15 +6,21 @@ import com.beust.klaxon.Parser
 import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.DaqcQuantity
+import com.tenkiv.daqc.DaqcValue
+import com.tenkiv.daqc.QuantityMeasurement
+import com.tenkiv.daqc.hardware.definitions.Updatable
+import com.tenkiv.daqc.hardware.definitions.channel.Input
 import com.tenkiv.daqc.recording.disk.CSVRecorder
 import com.tenkiv.daqc.recording.disk.JSONRecorder
 import com.tenkiv.daqc.recording.memory.AnalogMemoryRecorder
 import com.tenkiv.daqc.recording.memory.DigitalMemoryRecorder
 import io.kotlintest.specs.StringSpec
 import kotlinx.coroutines.experimental.launch
+import org.tenkiv.coral.ValueInstant
 import org.tenkiv.physikal.core.qeq
 import org.tenkiv.physikal.core.volt
 import java.io.File
+import javax.measure.quantity.ElectricPotential
 
 class RecorderTest: StringSpec() {
     init{
@@ -27,9 +33,9 @@ class RecorderTest: StringSpec() {
             val file = File("./TestRecording.json")
 
             // No False Positives
-            if(file.exists()){
-                file.delete()
-            }
+            if(file.exists()){ file.delete() }
+
+            val testSen: Updatable<QuantityMeasurement<ElectricPotential>> = gibberingSensor
 
             val recorder = JSONRecorder(file.path,
                     recordingObjects = mapOf(Pair(gibberingSensor, "Gibbering Sensor")))
