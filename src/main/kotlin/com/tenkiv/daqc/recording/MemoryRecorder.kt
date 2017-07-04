@@ -2,8 +2,12 @@ package com.tenkiv.daqc.recording
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonToken
-import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.hardware.definitions.Updatable
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.newSingleThreadContext
+import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.experimental.sync.withLock
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import java.io.*
@@ -14,17 +18,25 @@ open class MemoryRecorder<T>(val samplesInMemory: Int = 10,
                                              val dataDeserializer: (String) -> T,
                                              val updatable: Updatable<ValueInstant<T>>) {
 
-    init { updatable.openNewCoroutineListener(DAQC_CONTEXT,{cache(it)}) }
-
     private val fileWriter = BufferedWriter(FileWriter(fileName, true))
     private val jsonFactory = JsonFactory()
     private val jsonWriter = jsonFactory.createGenerator(fileWriter)
     private val jsonParser = jsonFactory.createParser(File(fileName))
+    private val fileMutex = Mutex()
 
     private val VALUE = "value"
     private val TIME = "time"
 
+    private val context = newSingleThreadContext("Recorder IO Context")
+
     private val currentBlock = ArrayList<ValueInstant<T>>()
+
+    private var listenJob: Job? = null
+
+    init {
+        launch(context){ fileMutex.withLock { jsonWriter.writeStartArray() } }
+        listenJob = updatable.openNewCoroutineListener(context,{cache(it)})
+    }
 
     private suspend fun cache(value: ValueInstant<T>): Unit {
         if(currentBlock.size >= samplesInMemory){
@@ -35,14 +47,25 @@ open class MemoryRecorder<T>(val samplesInMemory: Int = 10,
         }
     }
 
-    private fun writeOut(entry: List<ValueInstant<T>>){
-        entry.forEach {
-            jsonWriter.writeStartObject()
-            jsonWriter.writeStringField(VALUE,it.value.toString())
-            jsonWriter.writeNumberField(TIME,it.instant.toEpochMilli())
-            jsonWriter.writeEndObject()
+    private suspend fun writeOut(entry: List<ValueInstant<T>>) {
+        fileMutex.withLock {
+            entry.forEach {
+                jsonWriter.writeStartObject()
+                jsonWriter.writeStringField(VALUE, it.value.toString())
+                jsonWriter.writeNumberField(TIME, it.instant.toEpochMilli())
+                jsonWriter.writeEndObject()
+            }
+            fileWriter.flush()
         }
-        fileWriter.flush()
+    }
+
+    fun stop(){
+        listenJob?.cancel()
+        launch(context) {
+            fileMutex.withLock {
+                jsonWriter.writeEndArray()
+            }
+        }
     }
 
     fun getDataForTime(start: Instant, end: Instant): List<ValueInstant<T>>{
