@@ -6,7 +6,7 @@ import com.tenkiv.daqc.hardware.definitions.channel.Input
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 
 
-abstract class SingleChannelDigitalSensor(digitalInput: DigitalInput) : Input<BinaryMeasurement> {
+abstract class ScDigitalSensor(digitalInput: DigitalInput) : Input<BinaryMeasurement> {
 
     override val broadcastChannel: ConflatedBroadcastChannel<BinaryMeasurement> = ConflatedBroadcastChannel()
 

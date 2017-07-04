@@ -2,14 +2,7 @@ package general
 
 import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.QuantityMeasurement
-import com.tenkiv.daqc.hardware.SingleChannelAnalogSensor
-import com.tenkiv.daqc.hardware.definitions.Updatable
-import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
-import com.tenkiv.daqc.hardware.definitions.channel.Input
-import com.tenkiv.daqc.hardware.definitions.device.Device
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import com.tenkiv.daqc.hardware.ScAnalogSensor
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.at
 import org.tenkiv.physikal.core.micro
@@ -23,8 +16,7 @@ import java.util.*
 import javax.measure.quantity.ElectricPotential
 
 
-
-class GenericGibberingSensor : SingleChannelAnalogSensor<ElectricPotential>(EmptyAnalogInput(),3.micro.volt,3.micro.volt) {
+class GenericGibberingSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt) {
 
     val random = Random()
 
@@ -53,7 +45,7 @@ class GenericGibberingSensor : SingleChannelAnalogSensor<ElectricPotential>(Empt
 }
 
 class AnalogGibberingSensor:
-        SingleChannelAnalogSensor<ElectricPotential>(EmptyAnalogInput(),3.micro.volt,3.micro.volt) {
+        ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt) {
 
     val random = Random()
 
