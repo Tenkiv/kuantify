@@ -2,9 +2,8 @@ package general
 
 import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.hardware.SingleChannelAnalogSensor
+import com.tenkiv.daqc.hardware.ScAnalogSensor
 import com.tenkiv.daqc.hardware.definitions.Updatable
-import com.tenkiv.daqc.hardware.definitions.channel.Input
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.at
@@ -14,7 +13,7 @@ import java.time.Instant
 import java.util.*
 import javax.measure.quantity.ElectricPotential
 
-class PredictableDigitalSensor : SingleChannelAnalogSensor<BinaryState>(EmptyDigitalInput()) {
+class PredictableDigitalSensor : ScAnalogSensor<BinaryState>(EmptyDigitalInput()) {
 
     suspend override fun onUpdate(updatable: Updatable<BinaryState>, value: BinaryState) {
         println("What on Earth happened here?")
@@ -55,7 +54,7 @@ class PredictableDigitalSensor : SingleChannelAnalogSensor<BinaryState>(EmptyDig
 
 }
 
-class PredictableAnalogSensor : SingleChannelAnalogSensor<ElectricPotential>(EmptyAnalogInput(),3.volt) {
+class PredictableAnalogSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt) {
     override fun activate() {}
 
     override fun deactivate() {}

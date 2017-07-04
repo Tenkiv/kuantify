@@ -11,6 +11,6 @@ interface Updatable<T> {
     val broadcastChannel: ConflatedBroadcastChannel<T>
 
     fun openNewCoroutineListener(context: CoroutineContext = DAQC_CONTEXT, onUpdate: suspend (T) -> Unit) =
-            launch(context) { broadcastChannel.open().consumeEach { onUpdate(it) } }
+            launch(context) { broadcastChannel.consumeEach { onUpdate(it) } }
 
 }

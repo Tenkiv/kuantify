@@ -10,6 +10,8 @@ interface Input<T : ValueInstant<DaqcValue>> : Updatable<T> {
 
     suspend fun processNewMeasurement(measurement: T) = broadcastChannel.send(measurement)
 
+    val isActivated: Boolean
+
     fun activate()
 
     fun deactivate()

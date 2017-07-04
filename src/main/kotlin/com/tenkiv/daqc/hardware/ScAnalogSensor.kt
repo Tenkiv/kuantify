@@ -4,6 +4,7 @@ import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.QuantityMeasurement
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.Input
+import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.at
 import tec.uom.se.ComparableQuantity
@@ -11,18 +12,20 @@ import javax.measure.Quantity
 import javax.measure.quantity.ElectricPotential
 
 
-abstract class SingleChannelAnalogSensor<Q : Quantity<Q>>(
-        private val analogInput: AnalogInput,
+abstract class ScAnalogSensor<Q : Quantity<Q>>(
+        val analogInput: AnalogInput,
         maximumEp: ComparableQuantity<ElectricPotential>,
         acceptableError: ComparableQuantity<ElectricPotential>
 ) : Input<QuantityMeasurement<Q>> {
 
     override val broadcastChannel: ConflatedBroadcastChannel<QuantityMeasurement<Q>> = ConflatedBroadcastChannel()
 
+    override val isActivated get() = analogInput.isActivated
+
     init {
         analogInput.maxElectricPotential = maximumEp
         analogInput.maxAcceptableError = acceptableError
-        analogInput.openNewCoroutineListener { measurement ->
+        analogInput.openNewCoroutineListener(CommonPool) { measurement ->
             processNewMeasurement(convertInput(measurement.value) at measurement.instant)
         }
     }
