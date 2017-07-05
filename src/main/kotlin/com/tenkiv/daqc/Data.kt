@@ -6,6 +6,7 @@ import com.tenkiv.daqc.hardware.definitions.channel.Input
 import com.tenkiv.daqc.hardware.definitions.channel.Output
 import com.tenkiv.tekdaqc.hardware.AAnalogInput
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
+import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.launch
@@ -125,9 +126,11 @@ class BoundedFirstInFirstOutArrayList<T>(val maxSize: Int) : ArrayList<T>() {
     fun oldest(): T = get(0)
 }
 
-suspend fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(action: suspend (T) -> kotlin.Unit): SubscriptionReceiveChannel<T> {
+fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(action: suspend (T) -> kotlin.Unit): SubscriptionReceiveChannel<T> {
     val channel = open()
-    channel.use { channel -> for (x in channel) action(x) }
+    launch(CommonPool) {
+        channel.use { channel -> for (x in channel) action(x) }
+    }
     return channel
 }
 

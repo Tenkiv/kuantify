@@ -10,10 +10,12 @@ import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import java.io.*
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileWriter
 import java.time.Instant
 
-open class MemoryRecorder<T>(val samplesInMemory: Int = 10,
+open class MemoryRecorder<T>(val samplesInMemory: Int = 10000,
                                              val fileName: String = "TempFile.json",
                                              val dataDeserializer: (String) -> T,
                                              val updatable: Updatable<ValueInstant<T>>) {
@@ -62,8 +64,11 @@ open class MemoryRecorder<T>(val samplesInMemory: Int = 10,
     fun stop(){
         listenJob?.cancel()
         launch(context) {
+            writeOut(currentBlock)
             fileMutex.withLock {
                 jsonWriter.writeEndArray()
+                jsonWriter.flush()
+                jsonWriter.close()
             }
         }
     }
@@ -76,20 +81,23 @@ open class MemoryRecorder<T>(val samplesInMemory: Int = 10,
             if(jsonParser.currentToken() == JsonToken.START_ARRAY){
                 var shouldTake: Boolean = false
                 var lastInstant: Instant = Instant.now()
-                while (jsonParser.nextValue() != JsonToken.END_ARRAY) {
-                    if(jsonParser.currentName != null && jsonParser.currentName == TIME) {
-                        lastInstant = Instant.ofEpochMilli(jsonParser.valueAsLong)
-                        if(lastInstant.isBefore(end) && lastInstant.isAfter(start)){
-                            shouldTake = true
+                    if(jsonParser.currentToken() == JsonToken.START_ARRAY) {
+                        while (jsonParser.nextValue() != JsonToken.END_ARRAY) {
+                            if (jsonParser.currentName != null && jsonParser.currentName == TIME) {
+                                lastInstant = Instant.ofEpochMilli(jsonParser.valueAsLong)
+                                if (lastInstant.isBefore(end) && lastInstant.isAfter(start)) {
+                                    shouldTake = true
+                                }
+                            } else if (jsonParser.currentName != null && jsonParser.currentName == VALUE) {
+                                if (shouldTake) {
+                                    shouldTake = false
+                                    val value = dataDeserializer(jsonParser.valueAsString)
+                                    typedList.add(value.at(lastInstant))
+                                }
+                            }
                         }
-                    }else if(jsonParser.currentName != null && jsonParser.currentName == VALUE) {
-                        if(shouldTake){
-                            shouldTake = false
-                            val value = dataDeserializer(jsonParser.valueAsString)
-                            typedList.add(value.at(lastInstant))
-                        }
+                        return typedList
                     }
-                }
             }
         }
         return typedList

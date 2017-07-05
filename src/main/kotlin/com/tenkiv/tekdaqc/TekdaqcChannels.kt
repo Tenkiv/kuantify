@@ -43,6 +43,9 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = input.channelNumber
 
+    override val isActivated: Boolean
+        get() = input.isActivated
+
     val analogInputSwitchingTime = 4.nano.second
 
     override fun activate() { println("Trying activate");input.activate() }
@@ -157,6 +160,9 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
 class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekdaqc.hardware.DigitalInput) :
         DigitalInput(), IDigitalChannelListener, IPWMChannelListener {
 
+    override val isActivated: Boolean
+        get() = false
+
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = input.channelNumber
@@ -219,6 +225,8 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
 class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :
         DigitalOutput() {
 
+    override val broadcastChannel: ConflatedBroadcastChannel<DaqcValue> = ConflatedBroadcastChannel()
+
     override val pwmIsSimulated: Boolean = false
     override val transitionFrequencyIsSimulated: Boolean = false
     override val device: Device = tekdaqc
@@ -232,11 +240,13 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc
             BinaryState.On -> { output.activate() }
             BinaryState.Off -> { output.deactivate() }
         }
+        broadcastChannel.offer(setting)
     }
 
     override fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>) {
         frequencyJob?.cancel()
         output.setPulseWidthModulation(percent)
+        broadcastChannel.offer(percent)
     }
 
     override fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>) {
@@ -252,5 +262,6 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc
                 delay(cycleSpeec,TimeUnit.SECONDS)
             }
         }
+        broadcastChannel.offer(freq)
     }
 }

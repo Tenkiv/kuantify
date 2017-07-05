@@ -1,11 +1,9 @@
 package general
 
-import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.hardware.ScAnalogSensor
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.CommonPool
 import org.tenkiv.coral.at
-import org.tenkiv.physikal.core.micro
 import org.tenkiv.physikal.core.milli
 import org.tenkiv.physikal.core.volt
 import tec.uom.se.ComparableQuantity
@@ -54,10 +52,9 @@ class AnalogGibberingSensor:
     init {
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
-                launch(DAQC_CONTEXT) {
-                    broadcastChannel.send(
+                broadcastChannel.offer(
                             DaqcQuantity.of(random.nextInt(5000), MetricPrefix.MILLI(Units.VOLT)).at(Instant.now()))
-                }
+
             }
         },100,100)
     }

@@ -1,22 +1,32 @@
 package general
 
-import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.BinaryState
-import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.QuantityMeasurement
-import com.tenkiv.daqc.hardware.definitions.Updatable
-import com.tenkiv.daqc.hardware.definitions.channel.Input
+import com.tenkiv.daqc.recording.MemoryRecorder
 import io.kotlintest.specs.StringSpec
-import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
-import org.tenkiv.physikal.core.qeq
-import org.tenkiv.physikal.core.volt
-import java.io.File
-import javax.measure.quantity.ElectricPotential
+import java.time.Instant
 
 class RecorderTest: StringSpec() {
     init{
+
+        "Memory Recorder Test"{
+
+            val deserailzer: (String) -> BinaryState = {
+                if(it == BinaryState.On.toString()){
+                    BinaryState.On
+                }else{
+                    BinaryState.Off}
+            }
+            val memoryRecorder = MemoryRecorder(1000,
+                                                "testJson.json",
+                                                deserailzer,
+                                                PredictableDigitalSensor())
+            Thread.sleep(5000)
+            memoryRecorder.stop()
+            println(memoryRecorder.getDataForTime(Instant.MIN, Instant.MAX))
+        }
+
+
         "JSON Recording Test"{
 
             /*val gibberingSensor = GenericGibberingSensor()
