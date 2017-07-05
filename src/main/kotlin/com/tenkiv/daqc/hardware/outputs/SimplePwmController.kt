@@ -1,7 +1,8 @@
-package com.tenkiv.daqc.hardware
+package com.tenkiv.daqc.hardware.outputs
 
 import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
+import com.tenkiv.daqc.hardware.outputs.ScPwmController
 import javax.measure.quantity.Dimensionless
 
 

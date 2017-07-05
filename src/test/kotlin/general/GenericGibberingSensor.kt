@@ -1,8 +1,7 @@
 package general
 
 import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.hardware.ScAnalogSensor
-import kotlinx.coroutines.experimental.CommonPool
+import com.tenkiv.daqc.hardware.inputs.ScAnalogSensor
 import org.tenkiv.coral.at
 import org.tenkiv.physikal.core.milli
 import org.tenkiv.physikal.core.volt

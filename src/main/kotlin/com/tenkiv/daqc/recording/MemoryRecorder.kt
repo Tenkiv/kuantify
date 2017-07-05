@@ -76,8 +76,8 @@ open class MemoryRecorder<T>(val samplesInMemory: Int = 10000,
     fun getDataForTime(start: Instant, end: Instant): List<ValueInstant<T>>{
         val typedList = ArrayList<ValueInstant<T>>(
                 currentBlock.filter { it.instant.isAfter(start) && it.instant.isBefore(end)})
-
-        while (!(jsonParser.nextValue() == JsonToken.END_ARRAY && jsonParser.currentName.isNullOrBlank())){
+        while (!(jsonParser.nextValue() == JsonToken.END_ARRAY &&
+                jsonParser.currentName.isNullOrBlank()) && jsonParser.currentToken != null){
             if(jsonParser.currentToken() == JsonToken.START_ARRAY){
                 var shouldTake: Boolean = false
                 var lastInstant: Instant = Instant.now()

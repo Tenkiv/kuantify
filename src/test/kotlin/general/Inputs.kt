@@ -16,6 +16,10 @@ import javax.measure.quantity.Frequency
  * Created by tenkiv on 7/1/17.
  */
 class EmptyAnalogInput : AnalogInput(){
+    override val device: Device
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    override val hardwareNumber: Int
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val isActive: Boolean
         get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
 

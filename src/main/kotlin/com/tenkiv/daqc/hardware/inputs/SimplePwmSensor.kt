@@ -1,4 +1,4 @@
-package com.tenkiv.daqc.hardware
+package com.tenkiv.daqc.hardware.inputs
 
 import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.QuantityMeasurement

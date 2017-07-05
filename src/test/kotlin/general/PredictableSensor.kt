@@ -2,9 +2,7 @@ package general
 
 import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.hardware.ScAnalogSensor
-import com.tenkiv.daqc.hardware.SimpleBinaryStateSensor
-import com.tenkiv.daqc.hardware.definitions.Updatable
+import com.tenkiv.daqc.hardware.inputs.ScAnalogSensor
 import com.tenkiv.daqc.hardware.definitions.channel.Input
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.launch
@@ -48,37 +46,26 @@ class PredictableAnalogSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInp
         // Just a very hacky way of simulating an input. Needs to be thread safe to be predictable.
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
-                launch(context) {
                     if (iteration < sendingOrder.size) {
-                        broadcastChannel.send(sendingOrder[iteration].at(Instant.now()))
+                        broadcastChannel.offer(sendingOrder[iteration].at(Instant.now()))
                         iteration++
                     } else {
                         timer.cancel()
                     }
-                }
+
             }
         },100,100)
     }
 }
 
 class PredictableDigitalSensor: Input<ValueInstant<BinaryState>>{
-    override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<BinaryState>>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override val isActive: Boolean
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<BinaryState>> = ConflatedBroadcastChannel()
+    override val isActive: Boolean = true
 
-    override fun activate() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun activate() {}
 
-    override fun deactivate() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-
+    override fun deactivate() {}
     var iteration = 0
-
-    var context = newSingleThreadContext("Sensor Context")
 
     var sendingOrder = arrayListOf(
             BinaryState.On,
@@ -97,14 +84,13 @@ class PredictableDigitalSensor: Input<ValueInstant<BinaryState>>{
         // Just a very hacky way of simulating an input. Needs to be thread safe to be predictable.
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
-                launch(context) {
                     if (iteration < sendingOrder.size) {
-                        broadcastChannel.send(sendingOrder[iteration].at(Instant.now()))
+                        broadcastChannel.offer(sendingOrder[iteration].at(Instant.now()))
                         iteration++
                     } else {
                         timer.cancel()
                     }
-                }
+
             }
         },100,100)
     }

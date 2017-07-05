@@ -1,4 +1,4 @@
-package com.tenkiv.daqc.hardware
+package com.tenkiv.daqc.hardware.inputs
 
 import com.tenkiv.BinaryMeasurement
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput

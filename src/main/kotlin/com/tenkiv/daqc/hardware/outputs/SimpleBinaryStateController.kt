@@ -1,4 +1,4 @@
-package com.tenkiv.daqc.hardware
+package com.tenkiv.daqc.hardware.outputs
 
 import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.hardware.definitions.Updatable
@@ -8,6 +8,10 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 
 class SimpleBinaryStateController(val digitalOutput: DigitalOutput,
                                   val inverted: Boolean = false) : Output<BinaryState>, Updatable<BinaryState> {
+
+    override val isActive: Boolean = digitalOutput.isActive
+
+    override fun deactivate() = digitalOutput.deactivate()
 
     override val broadcastChannel: ConflatedBroadcastChannel<BinaryState> = ConflatedBroadcastChannel()
 
