@@ -35,6 +35,8 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice
                 throw UnsupportedProtocolException()
             }
         }
+
+        initializeBoard()
     }
 
     override fun disconnect(protocol: NetworkProtocol?) {
@@ -68,6 +70,12 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice
         get(){ return mandatory400Voltage }
 
     internal var mandatory400Voltage: Boolean = false
+
+    override fun initializeBoard() {
+        analogInputs.forEach { it.deactivate() }
+        digitalInputs.forEach { it.deactivate() }
+        digitalOutputs.forEach { it.deactivate() }
+    }
 
     private fun toDaqcAI(inputs: Collection<com.tenkiv.tekdaqc.hardware.AAnalogInput>): List<TekdaqcAnalogInput> {
         val tAI = ArrayList<TekdaqcAnalogInput>()

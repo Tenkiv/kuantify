@@ -159,19 +159,13 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = input.channelNumber
+    private var currentState = DigitalStatus.DEACTIVATED
 
-    var isPercentOn: Boolean? = true
+    override val isActiveForBinaryState: Boolean = (currentState == DigitalStatus.ACTIVATED_STATE)
+    override val isActiveForPwm: Boolean = (currentState == DigitalStatus.ACTIVATED_PWM)
+    override val isActiveForTransitionFrequency: Boolean = (currentState == DigitalStatus.ACTIVATED_FREQUENCY)
 
-    private suspend fun rebroadcastToMain(value: ValueInstant<DaqcValue>){
-        broadcastChannel.send(value)
-    }
-
-    override val isActiveForBinaryState: Boolean
-        get() = TODO("not implemented")
-    override val isActiveForPwm: Boolean
-        get() = TODO("not implemented")
-    override val isActiveForTransitionFrequency: Boolean
-        get() = TODO("not implemented")
+    private suspend fun rebroadcastToMain(value: ValueInstant<DaqcValue>){ broadcastChannel.send(value) }
 
     override fun activate() { input.deactivatePWM(); input.activate() }
 
@@ -185,20 +179,17 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
         launch(DAQC_CONTEXT) { transitionFrequencyBroadcastChannel.consumeEach { rebroadcastToMain(it) } }
         }
 
-    override fun activateForCurrentState() {
-        activate()
-    }
+    override fun activateForCurrentState() { activate(); currentState = DigitalStatus.ACTIVATED_STATE }
 
     override fun activateForTransitionFrequency() {
         input.deactivate()
-        isPercentOn = false
+        currentState = DigitalStatus.ACTIVATED_STATE; currentState = DigitalStatus.ACTIVATED_FREQUENCY
         input.activatePWM()
     }
 
     override fun activateForPwm(avgFrequency: DaqcQuantity<Frequency>) {
-        //TODO Use Average Frequency
         input.deactivate()
-        isPercentOn = true
+        currentState = DigitalStatus.ACTIVATED_PWM
         input.activatePWM()
     }
 
@@ -230,18 +221,18 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc
     override val transitionFrequencyIsSimulated: Boolean = false
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = output.channelNumber
-    private var currentState = OutputState.DEACTIVATED
-    override val isActiveForBinaryState: Boolean = (currentState == OutputState.ACTIVATED_STATE)
-    override val isActiveForPwm: Boolean = (currentState == OutputState.ACTIVATED_PWM)
-    override val isActiveForTransitionFrequency: Boolean = (currentState == OutputState.ACTIVATED_FREQUENCY)
+    private var currentState = DigitalStatus.DEACTIVATED
+    override val isActiveForBinaryState: Boolean = (currentState == DigitalStatus.ACTIVATED_STATE)
+    override val isActiveForPwm: Boolean = (currentState == DigitalStatus.ACTIVATED_PWM)
+    override val isActiveForTransitionFrequency: Boolean = (currentState == DigitalStatus.ACTIVATED_FREQUENCY)
 
     private var frequencyJob: Job? = null
 
     override fun setOutput(setting: BinaryState) {
         frequencyJob?.cancel()
         when(setting){
-            BinaryState.On -> { output.activate(); currentState=OutputState.ACTIVATED_STATE }
-            BinaryState.Off -> { output.deactivate(); currentState=OutputState.DEACTIVATED }
+            BinaryState.On -> { output.activate(); currentState= DigitalStatus.ACTIVATED_STATE }
+            BinaryState.Off -> { output.deactivate(); currentState= DigitalStatus.DEACTIVATED }
         }
         broadcastChannel.offer(setting)
     }
@@ -249,12 +240,12 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc
     override fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>) {
         frequencyJob?.cancel()
         output.setPulseWidthModulation(percent)
-        currentState=OutputState.ACTIVATED_PWM
+        currentState= DigitalStatus.ACTIVATED_PWM
         broadcastChannel.offer(percent)
     }
 
     override fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>) {
-        currentState=OutputState.ACTIVATED_FREQUENCY
+        currentState= DigitalStatus.ACTIVATED_FREQUENCY
         frequencyJob = launch(DAQC_CONTEXT){
             val cycleSpeec = ((freq tu HERTZ)/2).toLong()
             var isOn = false

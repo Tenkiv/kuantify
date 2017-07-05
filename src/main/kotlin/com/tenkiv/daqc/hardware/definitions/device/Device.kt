@@ -18,4 +18,6 @@ interface Device {
     fun connect(lineFrequency: LineNoiseFrequency, protocol: NetworkProtocol?)
 
     fun disconnect(protocol: NetworkProtocol?)
+
+    fun initializeBoard()
 }
