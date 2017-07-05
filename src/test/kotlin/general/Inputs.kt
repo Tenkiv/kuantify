@@ -15,9 +15,9 @@ import javax.measure.quantity.Frequency
 /**
  * Created by tenkiv on 7/1/17.
  */
-class EmptyAnalogInput(override val isActivated: Boolean) : AnalogInput(){
-    override val device: Device get() = TODO("not implemented")
-    override val hardwareNumber: Int get() = TODO("not implemented")
+class EmptyAnalogInput : AnalogInput(){
+    override val isActive: Boolean
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
 
     override fun activate() {}
 
@@ -37,7 +37,14 @@ class EmptyAnalogInput(override val isActivated: Boolean) : AnalogInput(){
         set(value) {}
 }
 
-class EmptyDigitalInput(override val isActivated: Boolean) : DigitalInput(){
+class EmptyDigitalInput : DigitalInput(){
+
+    override val isActiveForBinaryState: Boolean
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    override val isActiveForPwm: Boolean
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    override val isActiveForTransitionFrequency: Boolean
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<DaqcValue>>
         get() = TODO("not implemented")
 

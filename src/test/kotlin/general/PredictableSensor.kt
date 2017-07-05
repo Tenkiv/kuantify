@@ -3,10 +3,13 @@ package general
 import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.hardware.ScAnalogSensor
-import com.tenkiv.daqc.hardware.ScDigitalSensor
+import com.tenkiv.daqc.hardware.SimpleBinaryStateSensor
 import com.tenkiv.daqc.hardware.definitions.Updatable
+import com.tenkiv.daqc.hardware.definitions.channel.Input
+import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.newSingleThreadContext
+import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.physikal.core.milli
 import org.tenkiv.physikal.core.volt
@@ -15,7 +18,7 @@ import java.time.Instant
 import java.util.*
 import javax.measure.quantity.ElectricPotential
 
-class PredictableAnalogSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(false), 3.volt, 3.milli.volt) {
+class PredictableAnalogSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt, 3.milli.volt) {
     override fun activate() {}
 
     override fun deactivate() {}
@@ -58,12 +61,20 @@ class PredictableAnalogSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInp
     }
 }
 
-class PredictableDigitalSensor: ScDigitalSensor(EmptyDigitalInput(false)){
-    override val isActivated: Boolean = true
+class PredictableDigitalSensor: Input<ValueInstant<BinaryState>>{
+    override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<BinaryState>>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    override val isActive: Boolean
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
 
-    override fun activate() {}
+    override fun activate() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
-    override fun deactivate() {}
+    override fun deactivate() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
 
     var iteration = 0
 
