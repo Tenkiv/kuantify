@@ -10,13 +10,13 @@ interface Input<T : ValueInstant<DaqcValue>> : Updatable<T> {
 
     suspend fun processNewMeasurement(measurement: T) = broadcastChannel.send(measurement)
 
-    val isActivated: Boolean
+    val isActive: Boolean
 
     fun activate()
 
     fun deactivate()
 
-    fun addTrigger(condition: (T) -> Boolean, onTrigger: () -> Unit): Trigger<T>{
-        return Trigger(TriggerCondition(this@Input,condition), triggerFunction = onTrigger)
+    fun addTrigger(condition: (T) -> Boolean, onTrigger: () -> Unit): Trigger<T> {
+        return Trigger(TriggerCondition(this@Input, condition), triggerFunction = onTrigger)
     }
 }

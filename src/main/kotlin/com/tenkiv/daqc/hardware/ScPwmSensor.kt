@@ -10,25 +10,26 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.at
 import tec.uom.se.ComparableQuantity
 import javax.measure.Quantity
+import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
 
-
-abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: DigitalInput) :
+abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput,
+                                            val avgFrequency: DaqcQuantity<Frequency>) :
         Input<QuantityMeasurement<Q>> {
 
     override val broadcastChannel: ConflatedBroadcastChannel<QuantityMeasurement<Q>> = ConflatedBroadcastChannel()
 
-    override val isActive get() = digitalInput.isActiveForTransitionFrequency
+    override val isActive get() = digitalInput.isActiveForPwm
 
     init {
-        digitalInput.transitionFrequencyBroadcastChannel.openNewCoroutineListener(CommonPool) {
+        digitalInput.pwmBroadcastChannel.openNewCoroutineListener(CommonPool) {
             processNewMeasurement(convertInput(it.value) at it.instant)
         }
     }
 
-    override fun activate() = digitalInput.activateForTransitionFrequency()
+    override fun activate() = digitalInput.activateForPwm(avgFrequency)
 
     override fun deactivate() = digitalInput.deactivate()
 
-    protected abstract fun convertInput(frequency: ComparableQuantity<Frequency>): DaqcQuantity<Q>
+    protected abstract fun convertInput(percentOn: ComparableQuantity<Dimensionless>): DaqcQuantity<Q>
 }

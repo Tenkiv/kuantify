@@ -34,18 +34,26 @@ interface UpdatableListener<T> {
 
 }
 
-sealed class DaqcValue{
+sealed class DaqcValue {
     companion object {
 
-        inline fun binaryFromString(input: String): DaqcValue?{
-            if (input == BinaryState.On.toString()){ return BinaryState.On }
-            if (input == BinaryState.On.toString()){ return BinaryState.Off }
+        inline fun binaryFromString(input: String): DaqcValue? {
+            if (input == BinaryState.On.toString()) {
+                return BinaryState.On
+            }
+            if (input == BinaryState.On.toString()) {
+                return BinaryState.Off
+            }
             throw Exception("Placeholder Exception")
         }
 
-        inline fun <reified Q: Quantity<Q>>quantityFromString(input: String): DaqcQuantity<Q>{
+        inline fun <reified Q : Quantity<Q>> quantityFromString(input: String): DaqcQuantity<Q> {
             val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType<Q>()
-            if(quant != null){ return DaqcQuantity.of(quant) }else{ throw Exception("Placeholder Exception") }
+            if (quant != null) {
+                return DaqcQuantity.of(quant)
+            } else {
+                throw Exception("Placeholder Exception")
+            }
         }
     }
 }
@@ -116,7 +124,7 @@ class BoundedFirstInFirstOutArrayList<T>(val maxSize: Int) : ArrayList<T>() {
     override fun add(element: T): Boolean {
         val r = super.add(element)
         if (size > maxSize) {
-                removeRange(0, size - maxSize)
+            removeRange(0, size - maxSize)
         }
         return r
     }

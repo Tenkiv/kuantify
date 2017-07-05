@@ -20,7 +20,7 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
 
     override val broadcastChannel: ConflatedBroadcastChannel<QuantityMeasurement<Q>> = ConflatedBroadcastChannel()
 
-    override val isActivated get() = analogInput.isActivated
+    override val isActive get() = analogInput.isActive
 
     init {
         analogInput.maxElectricPotential = maximumEp

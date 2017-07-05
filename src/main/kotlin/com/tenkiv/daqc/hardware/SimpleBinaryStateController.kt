@@ -6,8 +6,8 @@ import com.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import com.tenkiv.daqc.hardware.definitions.channel.Output
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 
-class ScBinaryStateController(val digitalOutput: DigitalOutput,
-                              val inverted: Boolean = false) : Output<BinaryState>, Updatable<BinaryState> {
+class SimpleBinaryStateController(val digitalOutput: DigitalOutput,
+                                  val inverted: Boolean = false) : Output<BinaryState>, Updatable<BinaryState> {
 
     override val broadcastChannel: ConflatedBroadcastChannel<BinaryState> = ConflatedBroadcastChannel()
 
