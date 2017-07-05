@@ -1,10 +1,7 @@
 package com.tenkiv.tekdaqc
 
 import com.tenkiv.DAQC_CONTEXT
-import com.tenkiv.daqc.BinaryState
-import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.QuantityMeasurement
+import com.tenkiv.daqc.*
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
@@ -39,12 +36,11 @@ import com.tenkiv.tekdaqc.hardware.ATekdaqc.AnalogScale as Scale
 
 
 class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : AnalogInput(), IVoltageListener {
+    override val isActive: Boolean = input.isActivated
     override val broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<ElectricPotential>>()
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = input.channelNumber
 
-    override val isActivated: Boolean
-        get() = input.isActivated
 
     val analogInputSwitchingTime = 4.nano.second
 
@@ -160,9 +156,6 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
 class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekdaqc.hardware.DigitalInput) :
         DigitalInput(), IDigitalChannelListener, IPWMChannelListener {
 
-    override val isActivated: Boolean
-        get() = false
-
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = input.channelNumber
@@ -172,6 +165,13 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     private suspend fun rebroadcastToMain(value: ValueInstant<DaqcValue>){
         broadcastChannel.send(value)
     }
+
+    override val isActiveForBinaryState: Boolean
+        get() = TODO("not implemented")
+    override val isActiveForPwm: Boolean
+        get() = TODO("not implemented")
+    override val isActiveForTransitionFrequency: Boolean
+        get() = TODO("not implemented")
 
     override fun activate() { input.deactivatePWM(); input.activate() }
 
@@ -226,19 +226,22 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc
         DigitalOutput() {
 
     override val broadcastChannel: ConflatedBroadcastChannel<DaqcValue> = ConflatedBroadcastChannel()
-
     override val pwmIsSimulated: Boolean = false
     override val transitionFrequencyIsSimulated: Boolean = false
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = output.channelNumber
+    private var currentState = OutputState.DEACTIVATED
+    override val isActiveForBinaryState: Boolean = (currentState == OutputState.ACTIVATED_STATE)
+    override val isActiveForPwm: Boolean = (currentState == OutputState.ACTIVATED_PWM)
+    override val isActiveForTransitionFrequency: Boolean = (currentState == OutputState.ACTIVATED_FREQUENCY)
 
     private var frequencyJob: Job? = null
 
     override fun setOutput(setting: BinaryState) {
         frequencyJob?.cancel()
         when(setting){
-            BinaryState.On -> { output.activate() }
-            BinaryState.Off -> { output.deactivate() }
+            BinaryState.On -> { output.activate(); currentState=OutputState.ACTIVATED_STATE }
+            BinaryState.Off -> { output.deactivate(); currentState=OutputState.DEACTIVATED }
         }
         broadcastChannel.offer(setting)
     }
@@ -246,10 +249,12 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc
     override fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>) {
         frequencyJob?.cancel()
         output.setPulseWidthModulation(percent)
+        currentState=OutputState.ACTIVATED_PWM
         broadcastChannel.offer(percent)
     }
 
     override fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>) {
+        currentState=OutputState.ACTIVATED_FREQUENCY
         frequencyJob = launch(DAQC_CONTEXT){
             val cycleSpeec = ((freq tu HERTZ)/2).toLong()
             var isOn = false

@@ -142,4 +142,11 @@ fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(action: s
     return channel
 }
 
+enum class OutputState{
+    ACTIVATED_STATE,
+    ACTIVATED_FREQUENCY,
+    ACTIVATED_PWM,
+    DEACTIVATED
+}
+
 

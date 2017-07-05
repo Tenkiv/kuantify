@@ -8,7 +8,7 @@ import javax.measure.quantity.ElectricPotential
 
 abstract class AnalogInput :
         Input<QuantityMeasurement<ElectricPotential>>,
-        DaqcChannel<DaqcQuantity<ElectricPotential>> {
+        DaqcChannel {
 
     abstract var buffer: Boolean
 
