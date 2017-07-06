@@ -25,8 +25,7 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.physikal.core.*
 import tec.uom.se.ComparableQuantity
-import tec.uom.se.unit.Units.HERTZ
-import tec.uom.se.unit.Units.VOLT
+import tec.uom.se.unit.Units.*
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.measure.quantity.Dimensionless
@@ -41,6 +40,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = input.channelNumber
 
+    override val sampleRate: ComparableQuantity<Frequency> = calculateSampleRate()
 
     val analogInputSwitchingTime = 4.nano.second
 
@@ -71,6 +71,13 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
     override var maxAcceptableError: ComparableQuantity<ElectricPotential>
             get() = _maxAllowableError
             set(value) {_maxAllowableError = value; recalculateState() }
+
+    private fun calculateSampleRate(): ComparableQuantity<Frequency>{
+        if(!isActive){ return 0.hertz }
+        val activatedInputs = tekdaqc.analogInputs.filter { isActive }.size
+        val switchingTime = if(activatedInputs == 1){ 0.second }else{ analogInputSwitchingTime*activatedInputs }
+        return ((input.rate.rate.toDouble())/((switchingTime tu SECOND).toDouble())).hertz
+    }
 
     fun recalculateState(){
         val voltageSettings = maxVoltageSettings(maxElectricPotential.tu(VOLT).toDouble())
