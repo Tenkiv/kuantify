@@ -2,19 +2,17 @@ package com.tenkiv
 
 import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.LineNoiseFrequency
 import com.tenkiv.daqc.networking.Locator
 import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.unimut
-import org.tenkiv.physikal.core.hertz
 import kotlin.coroutines.experimental.CoroutineContext
 
 typealias Measurement = ValueInstant<DaqcValue>
 typealias BinaryMeasurement = ValueInstant<BinaryState>
 
 class Daqc(){
-    fun initiate(coroutineContext: CoroutineContext = getNewContext()): Locator{
+    fun initiate(coroutineContext: CoroutineContext = getNewContext(),
+                 createBoardSpecificContext: Boolean = false): Locator{
 
         DAQC_CONTEXT = coroutineContext
         return Locator()
@@ -32,3 +30,5 @@ private fun getNewContext(): CoroutineContext {
 var DAQC_CONTEXT: CoroutineContext
     get() { return _context ?: getNewContext() }
     set(value) { _context = value }
+
+data class LocatorParameters internal constructor(val boardSpecificContext:Boolean)

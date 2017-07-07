@@ -1,6 +1,7 @@
 package com.tenkiv.daqc.networking
 
 import com.tenkiv.DAQC_CONTEXT
+import com.tenkiv.LocatorParameters
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.device.Device
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
@@ -18,16 +19,15 @@ class Locator internal constructor() : Updatable<Device> {
 
     private val currentDevices = HashMap<KClass<*>,HashMap<String,Device>>()
 
-    fun <T: RemoteLocator<List<Device>>> addDeviceLocator(locator: KClass<T>){
-        if(!locatorList.any { it::class == locator }){
-            val instance = locator.objectInstance as? RemoteLocator<List<Device>> ?: throw NullPointerException()
-            locatorList.add(instance)
-            launch(DAQC_CONTEXT){ instance.broadcastChannel.consumeEach { broadcastNewDevices(it) } }
+    fun <T: RemoteLocator<List<Device>>> addDeviceLocator(locator: T){
+        if(!locatorList.any { it::class == locator::class }){
+            locatorList.add(locator)
+            launch(DAQC_CONTEXT){ locator.broadcastChannel.consumeEach { broadcastNewDevices(it) } }
         }
     }
 
-    fun <T: RemoteLocator<List<Device>>>removeDeviceLocator(locator: KClass<T>){
-        locatorList.removeIf { it::class == locator }
+    fun <T: RemoteLocator<List<Device>>>removeDeviceLocator(locator: T){
+        locatorList.removeIf { it == locator }
     }
 
     fun broadcastNewDevices(devices: List<Device>){
@@ -59,5 +59,7 @@ class Locator internal constructor() : Updatable<Device> {
         return channel
     }
 
-
+    fun createLocatorParameters(boardSpecificContext:Boolean): LocatorParameters{
+        return LocatorParameters(boardSpecificContext)
+    }
 }

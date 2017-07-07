@@ -44,9 +44,9 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
 
     val analogInputSwitchingTime = 4.nano.second
 
-    override fun activate() { println("Trying activate");input.activate() }
+    override fun activate() { input.activate() }
 
-    override fun deactivate() { println("Trying deactivate");input.deactivate() }
+    override fun deactivate() { input.deactivate() }
 
     init { input.addVoltageListener(this) }
 
@@ -54,7 +54,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
 
     override var buffer: Boolean
             get()=_buffer
-            set(state: Boolean){
+            set(state){
                 _buffer = state
                 if (state) { (input as? AnalogInput_RevD)?.bufferState = AnalogInput_RevD.BufferState.ENABLED }
                 else { (input as? AnalogInput_RevD)?.bufferState = AnalogInput_RevD.BufferState.DISABLED }

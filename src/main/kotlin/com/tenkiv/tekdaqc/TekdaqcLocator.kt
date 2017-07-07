@@ -1,5 +1,6 @@
 package com.tenkiv.tekdaqc
 
+import com.tenkiv.LocatorParameters
 import com.tenkiv.daqc.networking.RemoteLocator
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.locator.Locator
@@ -9,7 +10,7 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.launch
 import java.util.concurrent.CopyOnWriteArrayList
 
-class TekdaqcLocator: OnTekdaqcDiscovered, RemoteLocator<List<TekdaqcBoard>>() {
+class TekdaqcLocator(params: LocatorParameters) : OnTekdaqcDiscovered, RemoteLocator<List<TekdaqcBoard>>(params) {
 
     override val activeDevices: List<TekdaqcBoard> = CopyOnWriteArrayList<TekdaqcBoard>()
 

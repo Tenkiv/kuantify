@@ -27,8 +27,6 @@ class PredictableAnalogSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInp
 
     var iteration = 0
 
-    var context = newSingleThreadContext("Sensor Context")
-
     var sendingOrder = arrayListOf(
             DaqcQuantity.of(2.volt),
             DaqcQuantity.of(4.volt),
