@@ -7,9 +7,6 @@ import com.tenkiv.daqc.hardware.definitions.channel.Input
 import com.tenkiv.daqc.networking.SharingStatus
 import org.tenkiv.coral.ValueInstant
 
-/**
- * Created by tenkiv on 4/7/17.
- */
 interface DataAcquisitionDevice: Device{
 
     val analogInputs: List<AnalogInput>

@@ -1,11 +1,8 @@
 package com.tenkiv.daqc
 
-import com.tenkiv.DAQC_CONTEXT
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.channel.Input
 import com.tenkiv.daqc.hardware.definitions.channel.Output
-import com.tenkiv.tekdaqc.hardware.AAnalogInput
-import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
@@ -14,7 +11,6 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.physikal.core.asType
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities
-import tec.uom.se.unit.Units
 import javax.measure.Quantity
 import javax.measure.Unit
 import javax.measure.quantity.ElectricPotential

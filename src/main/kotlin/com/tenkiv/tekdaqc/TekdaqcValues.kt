@@ -10,9 +10,6 @@ import tec.uom.se.ComparableQuantity
 import tec.uom.se.unit.Units.HERTZ
 import javax.measure.quantity.ElectricPotential
 
-/**
- * Created by tenkiv on 6/30/17.
- */
 val analogNoiseLookupTable =
         mapOf(
                 Pair(Gain.X1,

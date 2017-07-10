@@ -1,7 +1,7 @@
 package com.tenkiv.daqc.hardware.inputs
 
+import com.tenkiv.QuantityMeasurement
 import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.QuantityMeasurement
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.Input
 import kotlinx.coroutines.experimental.CommonPool

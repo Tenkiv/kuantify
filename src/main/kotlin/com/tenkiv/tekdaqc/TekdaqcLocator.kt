@@ -1,22 +1,21 @@
 package com.tenkiv.tekdaqc
 
-import com.tenkiv.LocatorParameters
 import com.tenkiv.daqc.networking.RemoteLocator
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.locator.Locator
 import com.tenkiv.tekdaqc.locator.OnTekdaqcDiscovered
-import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.launch
 import java.util.concurrent.CopyOnWriteArrayList
 
-class TekdaqcLocator(params: LocatorParameters) : OnTekdaqcDiscovered, RemoteLocator<List<TekdaqcBoard>>(params) {
+class TekdaqcLocator : OnTekdaqcDiscovered, RemoteLocator<List<TekdaqcBoard>>() {
 
     override val activeDevices: List<TekdaqcBoard> = CopyOnWriteArrayList<TekdaqcBoard>()
 
     override val broadcastChannel = ConflatedBroadcastChannel(activeDevices)
 
-    init { Locator.instance.addLocatorListener(this) }
+    init {
+        Locator.instance.addLocatorListener(this)
+    }
 
     override fun onTekdaqcResponse(tekdaqc: ATekdaqc) {}
 
