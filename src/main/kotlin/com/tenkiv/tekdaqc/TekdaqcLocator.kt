@@ -1,13 +1,13 @@
 package com.tenkiv.tekdaqc
 
-import com.tenkiv.daqc.networking.RemoteLocator
+import com.tenkiv.daqc.networking.DeviceLocator
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.locator.Locator
 import com.tenkiv.tekdaqc.locator.OnTekdaqcDiscovered
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import java.util.concurrent.CopyOnWriteArrayList
 
-class TekdaqcLocator : OnTekdaqcDiscovered, RemoteLocator<List<TekdaqcBoard>>() {
+class TekdaqcLocator : OnTekdaqcDiscovered, DeviceLocator<List<TekdaqcBoard>>() {
 
     override val activeDevices: List<TekdaqcBoard> = CopyOnWriteArrayList<TekdaqcBoard>()
 
