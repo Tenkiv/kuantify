@@ -1,15 +1,18 @@
 package com.tenkiv.daqc.networking
 
+import com.tenkiv.DeviceFound
+import com.tenkiv.LocatorUpdate
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.device.Device
 import com.tenkiv.daqc.lib.openNewCoroutineListener
 import com.tenkiv.daqcThreadContext
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.launch
+import java.util.concurrent.CopyOnWriteArrayList
 
-abstract class DeviceLocator<T : List<Device>> : Updatable<T> {
+abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate> {
 
-    abstract val activeDevices: T
+    val activeDevices = CopyOnWriteArrayList<T>()
 
     abstract fun search()
 
@@ -17,7 +20,7 @@ abstract class DeviceLocator<T : List<Device>> : Updatable<T> {
 
     protected val awaitedDeviceMap = HashMap<String, ConflatedBroadcastChannel<Device>>()
 
-    override val broadcastChannel = ConflatedBroadcastChannel(activeDevices)
+    override val broadcastChannel = ConflatedBroadcastChannel<LocatorUpdate>()
 
     fun awaitSpecificDevice(serialNumber: String): ConflatedBroadcastChannel<Device> {
 
@@ -31,14 +34,9 @@ abstract class DeviceLocator<T : List<Device>> : Updatable<T> {
             awaitedDeviceMap.put(serialNumber,channel)
 
             broadcastChannel.openNewCoroutineListener(daqcThreadContext,
-                    onReceive = {it.filter { awaitedDeviceMap.contains(it.serialNumber)}
-                            .forEach {
-                                launch(daqcThreadContext) {
-                                    awaitedDeviceMap[it.serialNumber]?.send(it)
-                                    awaitedDeviceMap[it.serialNumber]?.close()
-                                    awaitedDeviceMap.remove(it.serialNumber)
-                                }
-                            }})
+                    {if(it is DeviceFound<Device>){awaitedDeviceMap[it.device.serialNumber]?.send(it.device)
+                            awaitedDeviceMap[it.device.serialNumber]?.close()
+                            awaitedDeviceMap.remove(it.device.serialNumber)}})
 
             return channel
         }
