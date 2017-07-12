@@ -23,7 +23,7 @@ class ThermocoupleK(channel: AnalogInput, acceptableError: ComparableQuantity<Te
     /**
      * @throws ValueOutOfRangeException
      */
-    override fun convertInput(ep: DaqcQuantity<ElectricPotential>): DaqcQuantity<Temperature> {
+    override fun convertInput(ep: ComparableQuantity<ElectricPotential>): DaqcQuantity<Temperature> {
         val mv = ep.toDoubleIn(MILLI(VOLT))
 
         /**

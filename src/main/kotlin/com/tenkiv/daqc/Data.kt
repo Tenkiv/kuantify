@@ -88,9 +88,9 @@ enum class OutputCommand {
 
 sealed class LineNoiseFrequency {
 
-    object Ignore : LineNoiseFrequency()
-
     data class AccountFor(val frequency: ComparableQuantity<Frequency>) : LineNoiseFrequency()
+
+    object Ignore : LineNoiseFrequency()
 
 }
 

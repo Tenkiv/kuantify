@@ -12,9 +12,9 @@ interface ControlDevice : Device {
 
     val digitalOutputs: List<DigitalOutput>
 
-    fun hasAnalogOutputs(): Boolean
+    val hasAnalogOutputs: Boolean
 
-    fun hasDigitalOutputs(): Boolean
+    val hasDigitalOutputs: Boolean
 
     val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>>
 

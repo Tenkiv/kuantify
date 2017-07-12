@@ -12,7 +12,6 @@ import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.physikal.core.hertz
 import java.net.InetAddress
-import java.util.concurrent.CopyOnWriteArrayList
 
 class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice {
 
@@ -45,29 +44,25 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice
 
     override val analogOutputs: List<AnalogOutput> = emptyList()
 
-    override val digitalOutputs: List<DigitalOutput>
-            = CopyOnWriteArrayList<DigitalOutput>(toDaqcDO(tekdaqc.digitalOutputs.values))
+    override val digitalOutputs: List<DigitalOutput> = toDaqcDO(tekdaqc.digitalOutputs.values)
 
-    override val analogInputs: List<AnalogInput>
-            = CopyOnWriteArrayList<AnalogInput>(toDaqcAI(tekdaqc.analogInputs.values))
+    override val analogInputs: List<AnalogInput> = toDaqcAI(tekdaqc.analogInputs.values)
 
-    override val digitalInputs: List<DigitalInput>
-            = CopyOnWriteArrayList<DigitalInput>(toDaqcDI(tekdaqc.digitalInputs.values))
+    override val digitalInputs: List<DigitalInput> = toDaqcDI(tekdaqc.digitalInputs.values)
 
     override val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>> = HashMap()
 
     override val sharedInputs: MutableMap<SharingStatus, Input<ValueInstant<DaqcValue>>> = HashMap()
 
-    override fun hasAnalogOutputs(): Boolean = false
+    override val hasAnalogOutputs get() = false
 
-    override fun hasDigitalOutputs(): Boolean = true
+    override val hasDigitalOutputs get() = true
 
-    override fun hasAnalogInputs(): Boolean = true
+    override val hasAnalogInputs get() = true
 
-    override fun hasDigitalInputs(): Boolean = true
+    override val hasDigitalInputs get() = true
 
-    val is400vManditory: Boolean
-        get(){ return mandatory400Voltage }
+    val is400vManditory get() = mandatory400Voltage
 
     internal var mandatory400Voltage: Boolean = false
 

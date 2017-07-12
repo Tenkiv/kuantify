@@ -16,4 +16,4 @@ enum class SharingStatus {
     CUSTOM
 }
 
-class UnsupportedProtocolException : Exception("Board unable to connect with supplied protocol.")
+class UnsupportedProtocolException : Throwable("Board unable to connect with supplied protocol.")
