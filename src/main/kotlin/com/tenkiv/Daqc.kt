@@ -18,6 +18,6 @@ class DaqcException(message: String? = null, cause: Throwable? = null) : Throwab
 
 sealed class LocatorUpdate
 
-data class DeviceFound<out T: Device>(val device: T): LocatorUpdate()
+data class FoundDevice<out T : Device>(val device: T) : LocatorUpdate()
 
-data class DeviceLost<out T: Device>(val device: T): LocatorUpdate()
+data class LostDevice<out T : Device>(val device: T) : LocatorUpdate()

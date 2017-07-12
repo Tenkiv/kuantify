@@ -1,13 +1,12 @@
 package com.tenkiv.daqc.networking
 
-import com.tenkiv.DeviceFound
+import com.tenkiv.FoundDevice
 import com.tenkiv.LocatorUpdate
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.device.Device
 import com.tenkiv.daqc.lib.openNewCoroutineListener
 import com.tenkiv.daqcThreadContext
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.launch
 import java.util.concurrent.CopyOnWriteArrayList
 
 abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate> {
@@ -30,13 +29,16 @@ abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate> {
 
         if (potentialDevice != null) {
             channel.offer(potentialDevice); return channel
-        }else{
-            awaitedDeviceMap.put(serialNumber,channel)
+        } else {
+            awaitedDeviceMap.put(serialNumber, channel)
 
-            broadcastChannel.openNewCoroutineListener(daqcThreadContext,
-                    {if(it is DeviceFound<Device>){awaitedDeviceMap[it.device.serialNumber]?.send(it.device)
-                            awaitedDeviceMap[it.device.serialNumber]?.close()
-                            awaitedDeviceMap.remove(it.device.serialNumber)}})
+            broadcastChannel.openNewCoroutineListener(daqcThreadContext) {
+                if (it is FoundDevice<Device>) {
+                    awaitedDeviceMap[it.device.serialNumber]?.send(it.device)
+                    awaitedDeviceMap[it.device.serialNumber]?.close()
+                    awaitedDeviceMap.remove(it.device.serialNumber)
+                }
+            }
 
             return channel
         }
