@@ -54,7 +54,7 @@ dependencies {
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.7'
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.7'
 
-
+    compile 'com.opower:opower-parent:4.0.1'
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 }
 

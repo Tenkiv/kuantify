@@ -1,8 +1,8 @@
 package com.tenkiv.daqc.networking
 
-import com.tenkiv.DeviceFound
-import com.tenkiv.DeviceLost
+import com.tenkiv.FoundDevice
 import com.tenkiv.LocatorUpdate
+import com.tenkiv.LostDevice
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqc.hardware.definitions.device.Device
 import com.tenkiv.daqcThreadContext
@@ -11,7 +11,7 @@ import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import kotlin.reflect.KClass
 
-object Locator : Updatable<LocatorUpdate> {
+object Locator: Updatable<LocatorUpdate> {
 
     override val broadcastChannel: ConflatedBroadcastChannel<LocatorUpdate> = ConflatedBroadcastChannel()
 
@@ -32,10 +32,10 @@ object Locator : Updatable<LocatorUpdate> {
 
     private fun rebroadcast(device: LocatorUpdate) {
         when(device){
-            is DeviceFound<*> -> currentDevices.
+            is FoundDevice<*> -> currentDevices.
                     putIfAbsent(device.device::class,HashMap())?.
                     putIfAbsent(device.device.serialNumber, device.device)
-            is DeviceLost<*> -> currentDevices.
+            is LostDevice<*> -> currentDevices.
                     putIfAbsent(device.device::class,HashMap())?.
                     remove(device.device.serialNumber)
         }

@@ -145,4 +145,9 @@ enum class DigitalStatus {
     DEACTIVATED
 }
 
+enum class RecorderAction{
+    SEARCH,
+    DELETE
+}
+
 
