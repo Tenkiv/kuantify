@@ -2,13 +2,12 @@ package general
 
 import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.hardware.definitions.channel.Input
-import com.tenkiv.daqc.recording.MemoryRecorder
+import com.tenkiv.daqc.recording.Recorder
 import com.tenkiv.daqc.recording.StorageDuration
 import com.tenkiv.daqc.recording.StorageFrequency
 import com.tenkiv.daqcThreadContext
 
 import io.kotlintest.specs.StringSpec
-import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.runBlocking
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.secondsSpan
@@ -25,10 +24,10 @@ class RecorderTest: StringSpec() {
                 if(it == BinaryState.On.toString()){ BinaryState.On }else{ BinaryState.Off }
             }
 
-            //val memoryRecorder = MemoryRecorder(dataDeserializer = deserializer,
+            //val memoryRecorder = Recorder(dataDeserializer = deserializer,
             //        updatable = PredictableDigitalSensor())
 
-            val memoryRecorder = MemoryRecorder(StorageFrequency.All,
+            val memoryRecorder = Recorder(StorageFrequency.All,
                     StorageDuration.For(1L.secondsSpan),
                     StorageDuration.For(5L.secondsSpan),
                     deserializer,
@@ -50,7 +49,7 @@ class RecorderTest: StringSpec() {
                 if(it == BinaryState.On.toString()){ BinaryState.On }else{ BinaryState.Off }
             }
 
-            val memoryRecorder = MemoryRecorder(1000,
+            val memoryRecorder = Recorder(1000,
                                                 fileName,
                                                 deserializer,
                                                 PredictableDigitalSensor())

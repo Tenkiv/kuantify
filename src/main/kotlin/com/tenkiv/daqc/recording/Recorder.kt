@@ -1,32 +1,63 @@
 package com.tenkiv.daqc.recording
 
 import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonToken
-import com.tenkiv.daqc.RecorderAction
+import com.tenkiv.daqc.DaqcValue
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqcThreadContext
 import com.tenkiv.getMemoryRecorderUid
-import kotlinx.coroutines.experimental.CoroutineStart
 import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.channels.LinkedListChannel
-import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.nio.aWrite
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.coral.secondsSpan
 import java.io.File
-import java.io.FileWriter
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.channels.AsynchronousFileChannel
+import java.nio.charset.Charset
 import java.time.Duration
 import java.time.Instant
-import java.util.concurrent.TimeUnit
+import java.util.*
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
 
-open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFrequency.All,
-                             val memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-                             val diskDuration: StorageDuration = StorageDuration.Forever,
-                             val dataDeserializer: (String) -> T,
-                             val updatable: Updatable<ValueInstant<T>>) {
+fun <T> recorder(storageFrequency: StorageFrequency = StorageFrequency.All,
+                 memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+                 diskDuration: StorageDuration = StorageDuration.Forever,
+                 dataDeserializer: (String) -> T,
+                 updatable: Updatable<ValueInstant<T>>) = Recorder(storageFrequency,
+        memoryDuration,
+        diskDuration,
+        dataDeserializer,
+        updatable)
+
+fun <T : DaqcValue> daqcValueRecorder(storageFrequency: StorageFrequency = StorageFrequency.All,
+                                      memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+                                      diskDuration: StorageDuration = StorageDuration.Forever,
+                                      updatable: Updatable<ValueInstant<T>>) = Recorder(storageFrequency,
+        memoryDuration,
+        diskDuration,
+        { TODO("Use jackson or parsing here") },
+        updatable)
+
+fun <T> Updatable<ValueInstant<T>>.getRecorder(storageFrequency: StorageFrequency = StorageFrequency.All,
+                                               memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+                                               diskDuration: StorageDuration = StorageDuration.Forever,
+                                               dataDeserializer: (String) -> T): Recorder<T> = Recorder(storageFrequency,
+        memoryDuration,
+        diskDuration,
+        dataDeserializer,
+        this)
+
+
+open class Recorder<T> internal constructor(val storageFrequency: StorageFrequency = StorageFrequency.All,
+                                            val memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+                                            val diskDuration: StorageDuration = StorageDuration.Forever,
+                                            val dataDeserializer: (String) -> T,
+                                            val updatable: Updatable<ValueInstant<T>>) {
 
     val uid = getMemoryRecorderUid()
 
@@ -34,39 +65,49 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
 
     private var jsonFactory = JsonFactory()
 
-    private var fileWriter: JsonGenerator = getNewFileWriter()
+    //private var fileWriter: JsonGenerator = getNewFileWriter()
 
-    private var directory: File = File("").absoluteFile
+    private val fileChannel: AsynchronousFileChannel
 
-    private val jobList = ArrayList<Pair<RecorderAction,Job>>()
+    private var filePosition = 0L
+
+    //private val jobQueue = LinkedBlockingQueue<Pair<RecorderAction,() -> Unit>>()
+
+    //private val writeLock = ReentrantReadWriteLock()
+
+    //private val jobLock = ReentrantReadWriteLock()
+
+    private val executor = Executors.newSingleThreadExecutor()
 
     private var currentInterval: Long = 0L
 
     private val VALUE = "value"
     private val TIME = "time"
 
-    private fun getNewFileWriter(): JsonGenerator {
+    private fun getNewFileWriter(): AsynchronousFileChannel {
         val now = Instant.now()
         val file = File("tempStorage_${uid}_${now.toEpochMilli()}.json")
-        jsonFactory = JsonFactory()
-        val writer = jsonFactory.createGenerator(FileWriter(file))
-        writer.writeStartArray()
-        if(currentFilesMap.size != 0){
-            try {
-                if (!fileWriter.isClosed) {
+        val writer = AsynchronousFileChannel.open(file.toPath())
 
-                    try {
-                        fileWriter.writeEndArray()
-                        fileWriter.close()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+        //writeLock.write {
+        launch(daqcThreadContext) {
+            //TODO writeJsonBuffer("[")
         }
+        if (currentFilesMap.size != 0) {
+            if (fileChannel.isOpen) {
+                try {
+                    launch(daqcThreadContext) {
+                        //TODO writeJsonBuffer("]")
+                        fileChannel.force(true)
+                        fileChannel.close()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
+            }
+            }
+        //}
         currentFilesMap.put(now,file)
         return writer
     }
@@ -75,37 +116,32 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
 
     private var listenJob: Job
 
-    private var expirationJob: Job? = null
+    private val diskTimer = Timer()
+    private val diskExpirationTask: TimerTask = object : TimerTask() {
+        override fun run() {
+            //TODO fileChannel = getNewFileWriter()
+            checkFileAge()
+        }
+    }
+
+    private val memoryTimer = Timer()
+    private val memoryExpirationTask: TimerTask = object : TimerTask() {
+        override fun run() {
+            checkMemoryAge()
+        }
+    }
 
     init {
+        fileChannel = getNewFileWriter()
 
         if (diskDuration is StorageDuration.For) {
-            expirationJob = launch(daqcThreadContext) {
-                try {
-                    val delay = diskDuration.duration.toMillis() / 2
-                    while (true) {
-                        delay(delay, TimeUnit.MILLISECONDS)
-                        fileWriter = getNewFileWriter()
-                        checkFileAge()
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
+            val delay = diskDuration.duration.toMillis() / 2
+            diskTimer.scheduleAtFixedRate(diskExpirationTask, delay, delay)
         }
 
         if (memoryDuration is StorageDuration.For) {
-            expirationJob = launch(daqcThreadContext) {
-                try {
-                    val delay = memoryDuration.duration.toMillis() / 2
-                    while (true) {
-                        delay(delay, TimeUnit.MILLISECONDS)
-                        checkMemoryAge()
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
+            val delay = memoryDuration.duration.toMillis() / 2
+            memoryTimer.scheduleAtFixedRate(memoryExpirationTask, delay, delay)
         }
 
         if(memoryDuration != StorageDuration.Never) {
@@ -142,16 +178,11 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
         if(diskDuration is StorageDuration.For) {
             val now = Instant.now()
             currentFilesMap.iterator().forEach {
-                if (Duration.between(it.key,now)>diskDuration.duration){
-                    val job = launch(daqcThreadContext, CoroutineStart.LAZY) {
+                if (Duration.between(it.key, now) > diskDuration.duration) {
+                    launch(daqcThreadContext) {
                         currentFilesMap[it.key]?.delete()
                         currentFilesMap.remove(it.key)
                     }
-
-                    job.invokeOnCompletion { launch(daqcThreadContext){ pollJobs() } }
-
-                    jobList.add(Pair(RecorderAction.DELETE, job))
-                    launch(daqcThreadContext) { pollJobs() }
                 }
             }
         }
@@ -169,18 +200,12 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
         }
     }
 
-    private suspend fun pollJobs(){
-        jobList.removeIf { it.second.isCompleted }
-        if(jobList.size != 0){
-            val currentAction: RecorderAction = jobList[0].first
-            for((action,job) in jobList) {
-                if(action == currentAction && !job.isActive && !job.isCompleted){
-                    job.start()
-                }else if(action != currentAction){
-                    break
-                }
-            }
-        }
+    private fun pollJobs() {
+        /*if(jobQueue.size != 0){
+            val currentAction = jobQueue.poll()
+                jobLock.write { currentAction.second.invoke() }
+
+        }*///TODO()
     }
 
     private fun checkInterval(duration: Duration): Boolean{
@@ -215,38 +240,39 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
     }
 
     private fun writeOut(entry: ValueInstant<T>) {
-        try {
         if(diskDuration != StorageDuration.Never) {
-            fileWriter.writeStartObject()
-            fileWriter.writeNumberField(TIME, entry.instant.toEpochMilli())
-            fileWriter.writeStringField(VALUE, entry.value.toString())
-            fileWriter.writeEndObject()
-            fileWriter.flush()
-        }
-        } catch (e: Exception) {
-            e.printStackTrace()
+            launch(daqcThreadContext) {
+                //TODO writeJsonBuffer("{$TIME:${entry.instant.toEpochMilli()},$VALUE:${entry.value}}")
+            }
         }
     }
 
+    suspend fun writeJsonBuffer(string: String,
+                                fileChannel: AsynchronousFileChannel,
+                                filePosition: Long,
+                                charset: Charset = Charset.defaultCharset()): Long {
+        val buffer = ByteBuffer.wrap(string.toByteArray(charset))
+        fileChannel.aWrite(buffer, filePosition)
+        return (filePosition + string.length)
+    }
+
     fun stop(){
-        expirationJob?.cancel()
+        diskExpirationTask.cancel()
         listenJob.cancel()
+        writeOut(dataInMemory)
         launch(daqcThreadContext) {
-            writeOut(dataInMemory)
-            fileWriter.writeEndArray()
-            fileWriter.flush()
-            fileWriter.close()
+            //TODO writeJsonBuffer("]")
+            fileChannel.force(true)
+            fileChannel.close()
         }
     }
 
     fun getDataInMemory(): List<ValueInstant<T>> = dataInMemory
 
-    fun getDataForTime(start: Instant, end: Instant): LinkedListChannel<ValueInstant<T>> {
-        val channel = LinkedListChannel<ValueInstant<T>>()
-        val job = launch(daqcThreadContext, CoroutineStart.LAZY){
+    fun getDataForTime(start: Instant, end: Instant): Future<List<ValueInstant<T>>> {
+        val future: Future<List<ValueInstant<T>>> = executor.submit(Callable<List<ValueInstant<T>>> {
             val found = ArrayList<ValueInstant<T>>(
                     dataInMemory.filter { it.instant.isAfter(start) && it.instant.isBefore(end) })
-            //If its not pulling from memory its this line.
             if(!(dataInMemory.filter { it.instant.isAfter(end) }.isNotEmpty())) {
                 currentFilesMap.forEach {
                     try {
@@ -279,7 +305,7 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
                                             }
                                         }
                                     }
-                                    return@forEach
+                                    return@Callable found
                                 }
                             }
                         }
@@ -288,33 +314,9 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
                     }
                 }
             }
-            try {
-                found.forEach { channel.send(it) }
-            }finally {
-                channel.close()
-            }
-        }
-        job.invokeOnCompletion {
-            launch(daqcThreadContext) {
-                try {
-                    pollJobs()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-        jobList.add(Pair(RecorderAction.SEARCH,job))
+            return@Callable found
+        })
 
-        try {
-            return channel
-        } finally {
-            launch(daqcThreadContext) {
-                try {
-                    pollJobs()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
+        return future
     }
 }
