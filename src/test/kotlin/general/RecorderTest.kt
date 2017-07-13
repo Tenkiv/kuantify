@@ -30,11 +30,11 @@ class RecorderTest: StringSpec() {
 
             val memoryRecorder = MemoryRecorder(StorageFrequency.All,
                     StorageDuration.For(1L.secondsSpan),
-                    StorageDuration.Forever,
+                    StorageDuration.For(5L.secondsSpan),
                     deserializer,
-                    PredictableDigitalSensor())
+                    DigitalGibberingSensor())
 
-            Thread.sleep(5000)
+            Thread.sleep(50000)
 
             runBlocking{memoryRecorder.getDataForTime(Instant.MIN, Instant.MAX).consumeEach { println(it) }}
             //memoryRecorder.stop()

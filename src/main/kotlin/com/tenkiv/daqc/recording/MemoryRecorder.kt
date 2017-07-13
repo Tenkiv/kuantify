@@ -7,14 +7,13 @@ import com.tenkiv.daqc.RecorderAction
 import com.tenkiv.daqc.hardware.definitions.Updatable
 import com.tenkiv.daqcThreadContext
 import com.tenkiv.getMemoryRecorderUid
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.ArrayChannel
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.CoroutineStart
+import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.LinkedListChannel
-import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.coral.isOlderThan
 import org.tenkiv.coral.secondsSpan
 import java.io.File
 import java.io.FileWriter
@@ -22,8 +21,6 @@ import java.io.IOException
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.TimeUnit
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFrequency.All,
                              val memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
@@ -41,8 +38,6 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
 
     private var directory: File = File("").absoluteFile
 
-    private val oldestFileMutex = Mutex()
-
     private val jobList = ArrayList<Pair<RecorderAction,Job>>()
 
     private var currentInterval: Long = 0L
@@ -50,14 +45,26 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
     private val VALUE = "value"
     private val TIME = "time"
 
-    private fun getNewFileWriter(): JsonGenerator{
+    private fun getNewFileWriter(): JsonGenerator {
         val now = Instant.now()
         val file = File("tempStorage_${uid}_${now.toEpochMilli()}.json")
+        jsonFactory = JsonFactory()
         val writer = jsonFactory.createGenerator(FileWriter(file))
+        writer.writeStartArray()
         if(currentFilesMap.size != 0){
-            launch(daqcThreadContext) {
-                fileWriter.writeEndArray()
-                fileWriter.close()
+            try {
+                if (!fileWriter.isClosed) {
+
+                    try {
+                        fileWriter.writeEndArray()
+                        fileWriter.close()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
         currentFilesMap.put(now,file)
@@ -74,26 +81,33 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
 
         if (diskDuration is StorageDuration.For) {
             expirationJob = launch(daqcThreadContext) {
-                val delay = diskDuration.duration.toMillis() / 2
-                while (true) {
-                    delay(delay, TimeUnit.MILLISECONDS)
-                    fileWriter = getNewFileWriter()
-                    checkFileAge()
+                try {
+                    val delay = diskDuration.duration.toMillis() / 2
+                    while (true) {
+                        delay(delay, TimeUnit.MILLISECONDS)
+                        fileWriter = getNewFileWriter()
+                        checkFileAge()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
         }
 
         if (memoryDuration is StorageDuration.For) {
             expirationJob = launch(daqcThreadContext) {
-                val delay = memoryDuration.duration.toMillis() / 2
-                while (true) {
-                    delay(delay, TimeUnit.MILLISECONDS)
-                    checkMemoryAge()
+                try {
+                    val delay = memoryDuration.duration.toMillis() / 2
+                    while (true) {
+                        delay(delay, TimeUnit.MILLISECONDS)
+                        checkMemoryAge()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
         }
 
-        fileWriter.writeStartArray()
         if(memoryDuration != StorageDuration.Never) {
             listenJob = updatable.openNewCoroutineListener {
                         when (storageFrequency) {
@@ -115,7 +129,7 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
         }
     }
 
-    private suspend fun cachePerNumMeasurement(value: ValueInstant<T>, samples: Int) {
+    private fun cachePerNumMeasurement(value: ValueInstant<T>, samples: Int) {
         if(dataInMemory.size >= samples){
             writeOut(dataInMemory)
             dataInMemory.clear()
@@ -129,10 +143,15 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
             val now = Instant.now()
             currentFilesMap.iterator().forEach {
                 if (Duration.between(it.key,now)>diskDuration.duration){
-                    val job = launch(daqcThreadContext,CoroutineStart.LAZY){ currentFilesMap[it.key]?.delete() }
+                    val job = launch(daqcThreadContext, CoroutineStart.LAZY) {
+                        currentFilesMap[it.key]?.delete()
+                        currentFilesMap.remove(it.key)
+                    }
+
                     job.invokeOnCompletion { launch(daqcThreadContext){ pollJobs() } }
 
                     jobList.add(Pair(RecorderAction.DELETE, job))
+                    launch(daqcThreadContext) { pollJobs() }
                 }
             }
         }
@@ -182,26 +201,30 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
         }
     }
 
-    private suspend fun cacheAll(value: ValueInstant<T>){
+    private fun cacheAll(value: ValueInstant<T>) {
         dataInMemory.add(value)
         if(memoryDuration == StorageDuration.Forever && diskDuration != StorageDuration.Never){
             writeOut(value)
         }
     }
 
-    private suspend fun writeOut(entry: List<ValueInstant<T>>) {
+    private fun writeOut(entry: List<ValueInstant<T>>) {
         if(diskDuration != StorageDuration.Never) {
             entry.forEach { writeOut(it) }
         }
     }
 
-    private suspend fun writeOut(entry: ValueInstant<T>) {
+    private fun writeOut(entry: ValueInstant<T>) {
+        try {
         if(diskDuration != StorageDuration.Never) {
             fileWriter.writeStartObject()
             fileWriter.writeNumberField(TIME, entry.instant.toEpochMilli())
             fileWriter.writeStringField(VALUE, entry.value.toString())
             fileWriter.writeEndObject()
             fileWriter.flush()
+        }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -226,36 +249,42 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
             //If its not pulling from memory its this line.
             if(!(dataInMemory.filter { it.instant.isAfter(end) }.isNotEmpty())) {
                 currentFilesMap.forEach {
-                    val jsonParser = jsonFactory.createParser(it.value)
-                    while (!(jsonParser.nextValue() == JsonToken.END_ARRAY &&
-                            jsonParser.currentName.isNullOrBlank()) && jsonParser.currentToken != null) {
-                        if (jsonParser.currentToken() == JsonToken.START_ARRAY) {
-                            var shouldTake: Boolean = false
-                            var lastInstant: Instant = Instant.now()
+                    try {
+                        val jsonParser = jsonFactory.createParser(it.value)
+                        while (!(jsonParser.nextValue() == JsonToken.END_ARRAY &&
+                                jsonParser.currentName.isNullOrBlank()) && jsonParser.currentToken != null) {
                             if (jsonParser.currentToken() == JsonToken.START_ARRAY) {
-                                while (true) {
-                                    try {
-                                        if(jsonParser.nextValue() == JsonToken.END_ARRAY){ break }
-                                    }catch (endOfFileException: IOException){
-                                        //File isn't finished being written to. Break if fail
-                                        break
-                                    }
-                                    if (jsonParser.currentName != null && jsonParser.currentName == TIME) {
-                                        lastInstant = Instant.ofEpochMilli(jsonParser.valueAsLong)
-                                        if (lastInstant.isBefore(end) && lastInstant.isAfter(start)) {
-                                            shouldTake = true
+                                var shouldTake: Boolean = false
+                                var lastInstant: Instant = Instant.now()
+                                if (jsonParser.currentToken() == JsonToken.START_ARRAY) {
+                                    while (true) {
+                                        try {
+                                            if (jsonParser.nextValue() == JsonToken.END_ARRAY) {
+                                                break
+                                            }
+                                        } catch (endOfFileException: IOException) {
+                                            //File isn't finished being written to. Break if fail
+                                            break
                                         }
-                                    } else if (jsonParser.currentName != null && jsonParser.currentName == VALUE) {
-                                        if (shouldTake) {
-                                            shouldTake = false
-                                            val value = dataDeserializer(jsonParser.valueAsString)
-                                            found.add(value.at(lastInstant))
+                                        if (jsonParser.currentName != null && jsonParser.currentName == TIME) {
+                                            lastInstant = Instant.ofEpochMilli(jsonParser.valueAsLong)
+                                            if (lastInstant.isBefore(end) && lastInstant.isAfter(start)) {
+                                                shouldTake = true
+                                            }
+                                        } else if (jsonParser.currentName != null && jsonParser.currentName == VALUE) {
+                                            if (shouldTake) {
+                                                shouldTake = false
+                                                val value = dataDeserializer(jsonParser.valueAsString)
+                                                found.add(value.at(lastInstant))
+                                            }
                                         }
                                     }
+                                    return@forEach
                                 }
-                                return@forEach
                             }
                         }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
                 }
             }
@@ -265,13 +294,27 @@ open class MemoryRecorder<T>(val storageFrequency: StorageFrequency = StorageFre
                 channel.close()
             }
         }
-        job.invokeOnCompletion { launch(daqcThreadContext){ pollJobs() } }
+        job.invokeOnCompletion {
+            launch(daqcThreadContext) {
+                try {
+                    pollJobs()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
         jobList.add(Pair(RecorderAction.SEARCH,job))
 
         try {
             return channel
         } finally {
-            launch(daqcThreadContext){ pollJobs() }
+            launch(daqcThreadContext) {
+                try {
+                    pollJobs()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
     }
 }

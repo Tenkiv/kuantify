@@ -1,7 +1,11 @@
 package general
 
+import com.tenkiv.daqc.BinaryState
 import com.tenkiv.daqc.DaqcQuantity
+import com.tenkiv.daqc.hardware.definitions.channel.Input
 import com.tenkiv.daqc.hardware.inputs.ScAnalogSensor
+import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.physikal.core.milli
 import org.tenkiv.physikal.core.volt
@@ -13,7 +17,9 @@ import java.util.*
 import javax.measure.quantity.ElectricPotential
 
 
-class GenericGibberingSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt, 3.milli.volt) {
+class DigitalGibberingSensor : Input<ValueInstant<BinaryState>> {
+    override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<BinaryState>>()
+    override val isActive: Boolean = false
 
     val random = Random()
 
@@ -22,7 +28,7 @@ class GenericGibberingSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInpu
     init {
         timer.scheduleAtFixedRate(object: TimerTask() {
             override fun run() {
-                 broadcastChannel.offer(DaqcQuantity.of(random.nextInt(5000).milli.volt).at(Instant.now()))
+                broadcastChannel.offer(BinaryState.On.at(Instant.now()))
             }
         },100,100)
     }
@@ -30,10 +36,6 @@ class GenericGibberingSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInpu
     override fun activate() {}
 
     override fun deactivate() {}
-
-    override fun convertInput(ep: ComparableQuantity<ElectricPotential>): DaqcQuantity<ElectricPotential> {
-        return DaqcQuantity.Companion.of(random.nextInt(5000).milli.volt)
-    }
 
     fun cancel(){
         timer.cancel()
