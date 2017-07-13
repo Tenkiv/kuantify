@@ -20,7 +20,7 @@ class TekdaqcTest: StringSpec(){
 
     init{
 
-        "Crossover-Tekdaqc Test" {
+        /*"Crossover-Tekdaqc Test" {
             val tekdaqcLocator = TekdaqcLocator()
 
             launch(CommonPool){
@@ -41,7 +41,7 @@ class TekdaqcTest: StringSpec(){
             Thread.sleep(10000)
 
             assert(true)
-        }
+        }*/
     }
 
     suspend fun executeBoardCommands(board: TekdaqcBoard){

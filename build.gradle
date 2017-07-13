@@ -44,7 +44,7 @@ dependencies {
     compile "com.tenkiv.coral.jdk:core:0.11.4.0-SNAPSHOT"
 
     //Kotlin Coroutines
-    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.15'
+    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.16'
 
     //Temp Tekdaqc Dependancy
     compile 'com.tenkiv.tekdaqc:shared-java-library:1.5.1.0-SNAPSHOT'

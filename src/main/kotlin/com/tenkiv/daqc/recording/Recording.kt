@@ -7,6 +7,7 @@ import com.tenkiv.daqc.hardware.definitions.Updatable
 import javax.measure.Quantity
 
 
+/*
 inline fun <reified Q : Quantity<Q>> getDaqcValueRecorder(samplesInMemory: Int,
                                                           fileName: String,
                                                           updatable: Updatable<QuantityMeasurement<Q>>):
@@ -14,4 +15,4 @@ inline fun <reified Q : Quantity<Q>> getDaqcValueRecorder(samplesInMemory: Int,
 
     val fn: (String) -> DaqcQuantity<Q> = { serialized -> DaqcValue.quantityFromString<Q>(serialized) }
     return MemoryRecorder(samplesInMemory, fileName, fn, updatable)
-}
+}*/

@@ -1,6 +1,7 @@
 package com.tenkiv.daqc.hardware.definitions
 
 import com.tenkiv.daqcThreadContext
+import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
@@ -10,7 +11,7 @@ interface Updatable<T> {
 
     val broadcastChannel: ConflatedBroadcastChannel<T>
 
-    fun openNewCoroutineListener(context: CoroutineContext = daqcThreadContext, onUpdate: suspend (T) -> Unit) =
+    fun openNewCoroutineListener(context: CoroutineContext = daqcThreadContext, onUpdate: suspend (T) -> Unit): Job =
             launch(context) { broadcastChannel.consumeEach { onUpdate(it) } }
 
 }

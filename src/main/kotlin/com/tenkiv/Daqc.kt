@@ -15,6 +15,11 @@ internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 
 class DaqcException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)
 
+private var memRecorderUid = 0L
+
+internal fun getMemoryRecorderUid(): String{
+    return (memRecorderUid++).toString()
+}
 
 sealed class LocatorUpdate
 

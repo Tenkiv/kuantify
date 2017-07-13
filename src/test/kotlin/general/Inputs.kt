@@ -1,8 +1,8 @@
 package general
 
+import com.tenkiv.QuantityMeasurement
 import com.tenkiv.daqc.DaqcQuantity
 import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.QuantityMeasurement
 import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import com.tenkiv.daqc.hardware.definitions.device.Device

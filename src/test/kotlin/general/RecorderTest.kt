@@ -1,13 +1,17 @@
 package general
 
 import com.tenkiv.daqc.BinaryState
+import com.tenkiv.daqc.hardware.definitions.channel.Input
 import com.tenkiv.daqc.recording.MemoryRecorder
-import com.tenkiv.daqc.recording.getDaqcValueRecorder
+import com.tenkiv.daqc.recording.StorageDuration
+import com.tenkiv.daqc.recording.StorageFrequency
+import com.tenkiv.daqcThreadContext
+
 import io.kotlintest.specs.StringSpec
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.runBlocking
 import org.tenkiv.coral.ValueInstant
-import org.tenkiv.physikal.core.qeq
-import org.tenkiv.physikal.core.volt
-import java.io.File
+import org.tenkiv.coral.secondsSpan
 import java.time.Instant
 
 class RecorderTest: StringSpec() {
@@ -15,8 +19,28 @@ class RecorderTest: StringSpec() {
     val fileName = "TestJson.json"
 
     init{
+        "Memory Recorder Test"{
 
-        "Digital Memory Recorder Test"{
+            val deserializer: (String) -> BinaryState = {
+                if(it == BinaryState.On.toString()){ BinaryState.On }else{ BinaryState.Off }
+            }
+
+            //val memoryRecorder = MemoryRecorder(dataDeserializer = deserializer,
+            //        updatable = PredictableDigitalSensor())
+
+            val memoryRecorder = MemoryRecorder(StorageFrequency.All,
+                    StorageDuration.For(1L.secondsSpan),
+                    StorageDuration.Forever,
+                    deserializer,
+                    PredictableDigitalSensor())
+
+            Thread.sleep(5000)
+
+            runBlocking{memoryRecorder.getDataForTime(Instant.MIN, Instant.MAX).consumeEach { println(it) }}
+            //memoryRecorder.stop()
+        }
+
+        /*"Digital Memory Recorder Test"{
 
             if(File(fileName).exists()){
                 File(fileName).delete()
@@ -65,6 +89,12 @@ class RecorderTest: StringSpec() {
             if(File(fileName).exists()){
                 File(fileName).delete()
             }
+        }*/
+    }
+
+    class SomeClass(input: Input<ValueInstant<BinaryState>>){
+        init {
+            input.openNewCoroutineListener(daqcThreadContext) { println("$it") }
         }
     }
 }
