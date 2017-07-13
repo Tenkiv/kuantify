@@ -1,14 +1,12 @@
 package general
 
-import com.tenkiv.daqc.BinaryState
-import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.hardware.inputs.ScAnalogSensor
-import com.tenkiv.daqc.hardware.definitions.channel.Input
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
+import org.tenkiv.daqc.BinaryState
+import org.tenkiv.daqc.DaqcQuantity
+import org.tenkiv.daqc.hardware.definitions.channel.Input
+import org.tenkiv.daqc.hardware.inputs.ScAnalogSensor
 import org.tenkiv.physikal.core.milli
 import org.tenkiv.physikal.core.volt
 import tec.uom.se.ComparableQuantity
@@ -42,21 +40,21 @@ class PredictableAnalogSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInp
     init {
         val timer = Timer(false)
         // Just a very hacky way of simulating an input. Needs to be thread safe to be predictable.
-        timer.scheduleAtFixedRate(object: TimerTask() {
+        timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
-                    if (iteration < sendingOrder.size) {
-                        broadcastChannel.offer(sendingOrder[iteration].at(Instant.now()))
-                        iteration++
-                    } else {
-                        timer.cancel()
-                    }
+                if (iteration < sendingOrder.size) {
+                    broadcastChannel.offer(sendingOrder[iteration].at(Instant.now()))
+                    iteration++
+                } else {
+                    timer.cancel()
+                }
 
             }
-        },100,100)
+        }, 100, 100)
     }
 }
 
-class PredictableDigitalSensor: Input<ValueInstant<BinaryState>>{
+class PredictableDigitalSensor : Input<ValueInstant<BinaryState>> {
     override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<BinaryState>> = ConflatedBroadcastChannel()
     override val isActive: Boolean = true
 
@@ -80,17 +78,17 @@ class PredictableDigitalSensor: Input<ValueInstant<BinaryState>>{
     init {
         val timer = Timer(false)
         // Just a very hacky way of simulating an input. Needs to be thread safe to be predictable.
-        timer.scheduleAtFixedRate(object: TimerTask() {
+        timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
-                    if (iteration < sendingOrder.size) {
-                        broadcastChannel.offer(sendingOrder[iteration].at(Instant.now()))
-                        iteration++
-                    } else {
-                        timer.cancel()
-                    }
+                if (iteration < sendingOrder.size) {
+                    broadcastChannel.offer(sendingOrder[iteration].at(Instant.now()))
+                    iteration++
+                } else {
+                    timer.cancel()
+                }
 
             }
-        },100,100)
+        }, 100, 100)
     }
 
 }

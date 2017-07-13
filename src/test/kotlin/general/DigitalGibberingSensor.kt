@@ -1,12 +1,12 @@
 package general
 
-import com.tenkiv.daqc.BinaryState
-import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.hardware.definitions.channel.Input
-import com.tenkiv.daqc.hardware.inputs.ScAnalogSensor
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
+import org.tenkiv.daqc.BinaryState
+import org.tenkiv.daqc.DaqcQuantity
+import org.tenkiv.daqc.hardware.definitions.channel.Input
+import org.tenkiv.daqc.hardware.inputs.ScAnalogSensor
 import org.tenkiv.physikal.core.milli
 import org.tenkiv.physikal.core.volt
 import tec.uom.se.ComparableQuantity
@@ -26,24 +26,24 @@ class DigitalGibberingSensor : Input<ValueInstant<BinaryState>> {
     val timer = Timer(false)
 
     init {
-        timer.scheduleAtFixedRate(object: TimerTask() {
+        timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
                 broadcastChannel.offer(BinaryState.On.at(Instant.now()))
             }
-        },100,100)
+        }, 100, 100)
     }
 
     override fun activate() {}
 
     override fun deactivate() {}
 
-    fun cancel(){
+    fun cancel() {
         timer.cancel()
         broadcastChannel.close()
     }
 }
 
-class AnalogGibberingSensor:
+class AnalogGibberingSensor :
         ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt, 3.milli.volt) {
 
     val random = Random()
@@ -51,13 +51,13 @@ class AnalogGibberingSensor:
     val timer = Timer(false)
 
     init {
-        timer.scheduleAtFixedRate(object: TimerTask() {
+        timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
                 broadcastChannel.offer(
-                            DaqcQuantity.of(random.nextInt(5000), MetricPrefix.MILLI(Units.VOLT)).at(Instant.now()))
+                        DaqcQuantity.of(random.nextInt(5000), MetricPrefix.MILLI(Units.VOLT)).at(Instant.now()))
 
             }
-        },100,100)
+        }, 100, 100)
     }
 
     override fun activate() {}
@@ -68,7 +68,7 @@ class AnalogGibberingSensor:
         return DaqcQuantity.Companion.of(random.nextInt(5000).milli.volt)
     }
 
-    fun cancel(){
+    fun cancel() {
         timer.cancel()
         broadcastChannel.close()
     }

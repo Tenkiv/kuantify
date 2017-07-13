@@ -1,27 +1,30 @@
 package general
 
-import com.tenkiv.daqc.BinaryState
-import com.tenkiv.daqc.hardware.definitions.channel.Input
-import com.tenkiv.daqc.recording.Recorder
-import com.tenkiv.daqc.recording.StorageDuration
-import com.tenkiv.daqc.recording.StorageFrequency
-import com.tenkiv.daqcThreadContext
-
 import io.kotlintest.specs.StringSpec
 import kotlinx.coroutines.experimental.runBlocking
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.secondsSpan
+import org.tenkiv.daqc.BinaryState
+import org.tenkiv.daqc.hardware.definitions.channel.Input
+import org.tenkiv.daqc.recording.Recorder
+import org.tenkiv.daqc.recording.StorageDuration
+import org.tenkiv.daqc.recording.StorageFrequency
+import org.tenkiv.daqcThreadContext
 import java.time.Instant
 
-class RecorderTest: StringSpec() {
+class RecorderTest : StringSpec() {
 
     val fileName = "TestJson.json"
 
-    init{
+    init {
         "Memory Recorder Test"{
 
             val deserializer: (String) -> BinaryState = {
-                if(it == BinaryState.On.toString()){ BinaryState.On }else{ BinaryState.Off }
+                if (it == BinaryState.On.toString()) {
+                    BinaryState.On
+                } else {
+                    BinaryState.Off
+                }
             }
 
             //val memoryRecorder = Recorder(dataDeserializer = deserializer,
@@ -30,12 +33,12 @@ class RecorderTest: StringSpec() {
             val memoryRecorder = Recorder(StorageFrequency.All,
                     StorageDuration.For(1L.secondsSpan),
                     StorageDuration.For(5L.secondsSpan),
-                    deserializer,
-                    DigitalGibberingSensor())
+                    DigitalGibberingSensor(),
+                    deserializer)
 
             Thread.sleep(50000)
 
-            runBlocking{memoryRecorder.getDataForTime(Instant.MIN, Instant.MAX).consumeEach { println(it) }}
+            runBlocking { memoryRecorder.getDataInRange(Instant.MIN, Instant.MAX).consumeEach { println(it) } }
             //memoryRecorder.stop()
         }
 
@@ -56,7 +59,7 @@ class RecorderTest: StringSpec() {
             Thread.sleep(5000)
             memoryRecorder.stop()
 
-            val result = memoryRecorder.getDataForTime(Instant.MIN, Instant.MAX)
+            val result = memoryRecorder.getDataInRange(Instant.MIN, Instant.MAX)
 
             println("Digital recording size was ${result.size} and value was ${result[5].value}")
 
@@ -79,7 +82,7 @@ class RecorderTest: StringSpec() {
             Thread.sleep(5000)
             memoryRecorder.stop()
 
-            val result = memoryRecorder.getDataForTime(Instant.MIN, Instant.MAX)
+            val result = memoryRecorder.getDataInRange(Instant.MIN, Instant.MAX)
 
             println("Analog recording size was ${result.size} and value was ${result[5].value}")
 
@@ -91,7 +94,7 @@ class RecorderTest: StringSpec() {
         }*/
     }
 
-    class SomeClass(input: Input<ValueInstant<BinaryState>>){
+    class SomeClass(input: Input<ValueInstant<BinaryState>>) {
         init {
             input.openNewCoroutineListener(daqcThreadContext) { println("$it") }
         }

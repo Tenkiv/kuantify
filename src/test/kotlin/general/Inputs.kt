@@ -1,13 +1,13 @@
 package general
 
-import com.tenkiv.QuantityMeasurement
-import com.tenkiv.daqc.DaqcQuantity
-import com.tenkiv.daqc.DaqcValue
-import com.tenkiv.daqc.hardware.definitions.channel.AnalogInput
-import com.tenkiv.daqc.hardware.definitions.channel.DigitalInput
-import com.tenkiv.daqc.hardware.definitions.device.Device
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import org.tenkiv.QuantityMeasurement
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.daqc.DaqcQuantity
+import org.tenkiv.daqc.DaqcValue
+import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
+import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
+import org.tenkiv.daqc.hardware.definitions.device.Device
 import tec.uom.se.ComparableQuantity
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency
@@ -15,7 +15,7 @@ import javax.measure.quantity.Frequency
 /**
  * Created by tenkiv on 7/1/17.
  */
-class EmptyAnalogInput : AnalogInput(){
+class EmptyAnalogInput : AnalogInput() {
     override val sampleRate: ComparableQuantity<Frequency>
         get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val device: Device
@@ -43,7 +43,7 @@ class EmptyAnalogInput : AnalogInput(){
         set(value) {}
 }
 
-class EmptyDigitalInput : DigitalInput(){
+class EmptyDigitalInput : DigitalInput() {
 
     override val isActiveForBinaryState: Boolean
         get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
