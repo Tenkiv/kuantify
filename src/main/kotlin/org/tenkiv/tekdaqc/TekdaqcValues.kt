@@ -4,7 +4,7 @@ import com.tenkiv.tekdaqc.hardware.AAnalogInput.Gain
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate
 import com.tenkiv.tekdaqc.hardware.ATekdaqc.AnalogScale
 import org.tenkiv.daqc.LineNoiseFrequency
-import org.tenkiv.daqc.ValueOutOfRangeException
+import org.tenkiv.daqc.lib.ValueOutOfRangeException
 import org.tenkiv.physikal.core.*
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.unit.Units.HERTZ

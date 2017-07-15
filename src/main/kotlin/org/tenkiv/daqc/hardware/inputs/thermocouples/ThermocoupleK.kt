@@ -2,10 +2,10 @@ package org.tenkiv.daqc.hardware.inputs.thermocouples
 
 import org.tenkiv.coral.pow
 import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.ValueOutOfRangeException
-import org.tenkiv.daqc.asDaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.inputs.ScAnalogSensor
+import org.tenkiv.daqc.lib.ValueOutOfRangeException
+import org.tenkiv.daqc.toDaqcQuantity
 import org.tenkiv.physikal.core.*
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.unit.MetricPrefix.MILLI
@@ -47,7 +47,7 @@ class ThermocoupleK(channel: AnalogInput, acceptableError: ComparableQuantity<Te
                 (c6 * mv.pow(6.0)) +
                 (c7 * mv.pow(7.0)) +
                 (c8 * mv.pow(8.0)) +
-                (c9 * mv.pow(9.0))).celsius.asDaqcQuantity()
+                (c9 * mv.pow(9.0))).celsius.toDaqcQuantity()
 
         if (mv >= -5.891 && mv < 0)
             return calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0)
