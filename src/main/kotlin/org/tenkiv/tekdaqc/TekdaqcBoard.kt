@@ -50,7 +50,7 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice
 
     override val digitalInputs: List<DigitalInput> = toDaqcDI(tekdaqc.digitalInputs.values)
 
-    override val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>> = HashMap()
+    override val sharedOutputs: MutableMap<SharingStatus, OutputCore<DaqcValue>> = HashMap()
 
     override val sharedInputs: MutableMap<SharingStatus, Input<ValueInstant<DaqcValue>>> = HashMap()
 

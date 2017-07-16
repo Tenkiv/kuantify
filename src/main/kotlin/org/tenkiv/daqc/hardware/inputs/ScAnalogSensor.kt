@@ -6,7 +6,7 @@ import org.tenkiv.QuantityMeasurement
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
-import org.tenkiv.daqc.hardware.definitions.channel.Input
+import org.tenkiv.daqc.hardware.definitions.channel.QuantityInput
 import org.tenkiv.daqc.lib.ValueOutOfRangeException
 import tec.uom.se.ComparableQuantity
 import javax.measure.Quantity
@@ -17,7 +17,7 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
         val analogInput: AnalogInput,
         maximumEp: ComparableQuantity<ElectricPotential>,
         acceptableError: ComparableQuantity<ElectricPotential>
-) : Input<QuantityMeasurement<Q>> {
+) : QuantityInput<Q> {
 
     override val broadcastChannel: ConflatedBroadcastChannel<QuantityMeasurement<Q>> = ConflatedBroadcastChannel()
 

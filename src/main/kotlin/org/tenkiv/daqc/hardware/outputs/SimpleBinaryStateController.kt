@@ -1,19 +1,20 @@
 package org.tenkiv.daqc.hardware.outputs
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import org.tenkiv.BinaryStateMeasurement
+import org.tenkiv.coral.now
 import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.hardware.definitions.Updatable
+import org.tenkiv.daqc.hardware.definitions.channel.BinaryStateOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
-import org.tenkiv.daqc.hardware.definitions.channel.Output
 
 class SimpleBinaryStateController(val digitalOutput: DigitalOutput,
-                                  val inverted: Boolean = false) : Output<BinaryState>, Updatable<BinaryState> {
+                                  val inverted: Boolean = false) : BinaryStateOutput {
 
     override val isActive: Boolean = digitalOutput.isActive
 
     override fun deactivate() = digitalOutput.deactivate()
 
-    override val broadcastChannel: ConflatedBroadcastChannel<BinaryState> = ConflatedBroadcastChannel()
+    override val broadcastChannel: ConflatedBroadcastChannel<BinaryStateMeasurement> = ConflatedBroadcastChannel()
 
     override fun setOutput(setting: BinaryState) {
         if (!inverted)
@@ -23,7 +24,8 @@ class SimpleBinaryStateController(val digitalOutput: DigitalOutput,
                 BinaryState.On -> digitalOutput.setOutput(BinaryState.Off)
                 BinaryState.Off -> digitalOutput.setOutput(BinaryState.On)
             }
-        broadcastChannel.offer(setting)
+        //TODO Change this to broadcast new setting when the board confirms the setting was received.
+        broadcastChannel.offer(setting.now())
     }
 
 }

@@ -1,14 +1,15 @@
 package org.tenkiv.daqc.hardware.definitions.channel
 
 import org.tenkiv.coral.ValueInstant
-import org.tenkiv.daqc.DaqcValue
-import org.tenkiv.daqc.Trigger
-import org.tenkiv.daqc.TriggerCondition
+import org.tenkiv.daqc.*
 import org.tenkiv.daqc.hardware.definitions.Updatable
 
-interface Input<T : ValueInstant<DaqcValue>> : Updatable<T> {
+typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
+typealias BinaryStateInput = Input<BinaryState>
 
-    suspend fun sendNewMeasurement(measurement: T) = broadcastChannel.send(measurement)
+interface Input<T : DaqcValue> : Updatable<ValueInstant<T>> {
+
+    suspend fun sendNewMeasurement(measurement: ValueInstant<T>) = broadcastChannel.send(measurement)
 
     val isActive: Boolean
 
@@ -16,7 +17,7 @@ interface Input<T : ValueInstant<DaqcValue>> : Updatable<T> {
 
     fun deactivate()
 
-    fun addTrigger(condition: (T) -> Boolean, onTrigger: () -> Unit): Trigger<T> {
+    fun addTrigger(condition: (ValueInstant<T>) -> Boolean, onTrigger: () -> Unit): Trigger<T> {
         return Trigger(TriggerCondition(this@Input, condition), triggerFunction = onTrigger)
     }
 }

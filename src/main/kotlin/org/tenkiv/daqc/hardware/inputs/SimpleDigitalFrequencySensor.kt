@@ -1,11 +1,10 @@
 package org.tenkiv.daqc.hardware.inputs
 
-import org.tenkiv.QuantityMeasurement
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
-import org.tenkiv.daqc.hardware.definitions.channel.Input
+import org.tenkiv.daqc.hardware.definitions.channel.QuantityInput
 import javax.measure.quantity.Frequency
 
-class SimpleDigitalFrequencySensor(val digitalInput: DigitalInput) : Input<QuantityMeasurement<Frequency>> {
+class SimpleDigitalFrequencySensor(val digitalInput: DigitalInput) : QuantityInput<Frequency> {
 
     override val broadcastChannel get() = digitalInput.transitionFrequencyBroadcastChannel
 

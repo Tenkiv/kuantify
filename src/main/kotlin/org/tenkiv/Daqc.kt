@@ -7,15 +7,13 @@ import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.Updatable
-import org.tenkiv.daqc.hardware.definitions.channel.Input
 import org.tenkiv.daqc.hardware.definitions.device.Device
 import org.tenkiv.daqc.recording.Recorder
 
 
 typealias Measurement = ValueInstant<DaqcValue>
-typealias BinaryMeasurement = ValueInstant<BinaryState>
+typealias BinaryStateMeasurement = ValueInstant<BinaryState>
 typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
-typealias QuantityInput<Q> = Input<QuantityMeasurement<Q>>
 
 internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 

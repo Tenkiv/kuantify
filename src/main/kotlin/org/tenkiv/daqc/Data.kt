@@ -16,8 +16,8 @@ import javax.measure.quantity.Frequency
 
 data class ArffDataSetStub(val data: Int)
 
-data class TriggerCondition<T : ValueInstant<DaqcValue>>(val input: Input<T>, val condition: (T) -> Boolean) {
-    var lastValue: T? = null
+data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (ValueInstant<T>) -> Boolean) {
+    var lastValue: ValueInstant<T>? = null
     var hasBeenReached: Boolean = false
 }
 
