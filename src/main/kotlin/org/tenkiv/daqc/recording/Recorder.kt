@@ -81,7 +81,7 @@ open class Recorder<T> internal constructor(val storageFrequency: StorageFrequen
     //TODO: Change to implementation of a truly immutable list.
     val dataInMemory: List<ValueInstant<T>> get() = ArrayList(_dataInMemory)
 
-    val allData: Deferred<List<ValueInstant<T>>> get() = TODO("Implement")
+    val allData: Deferred<List<ValueInstant<T>>> get() = getDataInRange(Instant.MIN..Instant.MAX)
 
     private var listenJob: Job
 
@@ -231,16 +231,26 @@ open class Recorder<T> internal constructor(val storageFrequency: StorageFrequen
         fileChannel.aWrite(buffer, filePosition)
     }
 
-    fun stop() {
+    fun stop(deleteDiskData: Boolean = true) {
         diskRefreshJob?.cancel()
         memoryRefreshJob?.cancel()
         listenJob.cancel()
         writeOut(_dataInMemory)
         launch(daqcThreadContext) {
-            writeJsonBuffer("]", fileChannel)
-            fileChannel.force(true)
-            fileChannel.close()
-
+            if (!deleteDiskData) {
+                writeJsonBuffer("]", fileChannel)
+                fileChannel.force(true)
+                fileChannel.close()
+            } else {
+                fileChannel.close()
+                currentFilesMap.forEach {
+                    mutex.withLock {
+                        if (it.value.exists()) {
+                            it.value.delete()
+                        }
+                    }
+                }
+            }
         }
     }
 

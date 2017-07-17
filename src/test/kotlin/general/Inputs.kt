@@ -17,13 +17,13 @@ import javax.measure.quantity.Frequency
  */
 class EmptyAnalogInput : AnalogInput() {
     override val sampleRate: ComparableQuantity<Frequency>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = throw Exception("Empty Test Class Exception")
     override val device: Device
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = throw Exception("Empty Test Class Exception")
     override val hardwareNumber: Int
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = throw Exception("Empty Test Class Exception")
     override val isActive: Boolean
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = throw Exception("Empty Test Class Exception")
 
     override fun activate() {}
 
@@ -33,38 +33,38 @@ class EmptyAnalogInput : AnalogInput() {
     override fun deactivate() {}
 
     override var buffer: Boolean
-        get() = TODO("not implemented")
+        get() = throw Exception("Empty Test Class Exception")
         set(value) {}
     override var maxAcceptableError: ComparableQuantity<ElectricPotential>
-        get() = TODO("not implemented")
+        get() = throw Exception("Empty Test Class Exception")
         set(value) {}
     override var maxElectricPotential: ComparableQuantity<ElectricPotential>
-        get() = TODO("not implemented")
+        get() = throw Exception("Empty Test Class Exception")
         set(value) {}
 }
 
 class EmptyDigitalInput : DigitalInput() {
 
     override val isActiveForBinaryState: Boolean
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = throw Exception("Empty Test Class Exception")
     override val isActiveForPwm: Boolean
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = throw Exception("Empty Test Class Exception")
     override val isActiveForTransitionFrequency: Boolean
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = throw Exception("Empty Test Class Exception")
     override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<DaqcValue>>
-        get() = TODO("not implemented")
+        get() = throw Exception("Empty Test Class Exception")
 
     override fun activateForTransitionFrequency() {
-        TODO("not implemented")
+        throw Exception("Empty Test Class Exception")
     }
 
     override fun activateForPwm(avgFrequency: DaqcQuantity<Frequency>) {
-        TODO("not implemented")
+        throw Exception("Empty Test Class Exception")
     }
 
-    override val device: Device get() = TODO("not implemented")
+    override val device: Device get() = throw Exception("Empty Test Class Exception")
 
-    override val hardwareNumber: Int get() = TODO("not implemented")
+    override val hardwareNumber: Int get() = throw Exception("Empty Test Class Exception")
 
     override fun activate() {}
 
