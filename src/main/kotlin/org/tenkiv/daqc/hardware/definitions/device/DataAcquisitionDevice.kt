@@ -1,6 +1,6 @@
 package org.tenkiv.daqc.hardware.definitions.device
 
-import org.tenkiv.Measurement
+import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.hardware.definitions.channel.Input
@@ -16,6 +16,6 @@ interface DataAcquisitionDevice : Device {
 
     val hasDigitalInputs: Boolean
 
-    val sharedInputs: MutableMap<SharingStatus, Input<Measurement>>
+    val sharedInputs: MutableMap<SharingStatus, Input<DaqcValue>>
 
 }

@@ -1,7 +1,6 @@
 package org.tenkiv.tekdaqc
 
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
-import org.tenkiv.coral.ValueInstant
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.LineNoiseFrequency
 import org.tenkiv.daqc.hardware.definitions.channel.*
@@ -17,7 +16,8 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice
 
     override val inetAddr: InetAddress = InetAddress.getByName(tekdaqc.hostIP)
     override val serialNumber: String = tekdaqc.serialNumber
-    override var isConnected: NetworkProtocol? = null
+    override var isConnected = false
+    override var networkProtocol: NetworkProtocol = NetworkProtocol.TELNET
     override var networkSharingStatus: SharingStatus = SharingStatus.NONE
 
     var lineFrequency: LineNoiseFrequency = LineNoiseFrequency.AccountFor(50.hertz)
@@ -52,7 +52,9 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice
 
     override val sharedOutputs: MutableMap<SharingStatus, OutputCore<DaqcValue>> = HashMap()
 
-    override val sharedInputs: MutableMap<SharingStatus, Input<ValueInstant<DaqcValue>>> = HashMap()
+    //override val sharedInputs: MutableMap<SharingStatus, Input<ValueInstant<DaqcValue>>> = HashMap()
+
+    override val sharedInputs: MutableMap<SharingStatus, Input<DaqcValue>> = HashMap()
 
     override val hasAnalogOutputs get() = false
 

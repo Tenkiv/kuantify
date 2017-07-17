@@ -17,7 +17,7 @@ import java.util.*
 import javax.measure.quantity.ElectricPotential
 
 
-class DigitalGibberingSensor : Input<ValueInstant<BinaryState>> {
+class DigitalGibberingSensor : Input<BinaryState> {
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<BinaryState>>()
     override val isActive: Boolean = false
 
