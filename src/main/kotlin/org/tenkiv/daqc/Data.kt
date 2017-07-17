@@ -58,15 +58,12 @@ sealed class DaqcValue {
 sealed class BinaryState : DaqcValue() {
 
     object On : BinaryState() {
-        override fun toString(): String {
-            return "ON"
-        }
+        override fun toString() = "BinaryState.ON"
     }
 
     object Off : BinaryState() {
-        override fun toString(): String {
-            return "OFF"
-        }
+        override fun toString() = "BinaryState.OFF"
+
     }
 
 }
