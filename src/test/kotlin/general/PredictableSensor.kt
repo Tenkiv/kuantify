@@ -54,7 +54,7 @@ class PredictableAnalogSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInp
     }
 }
 
-class PredictableDigitalSensor : Input<ValueInstant<BinaryState>> {
+class PredictableDigitalSensor : Input<BinaryState> {
     override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<BinaryState>> = ConflatedBroadcastChannel()
     override val isActive: Boolean = true
 

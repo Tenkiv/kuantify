@@ -2,14 +2,11 @@ package general
 
 import io.kotlintest.specs.StringSpec
 import kotlinx.coroutines.experimental.runBlocking
-import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.secondsSpan
 import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.hardware.definitions.channel.Input
 import org.tenkiv.daqc.recording.Recorder
 import org.tenkiv.daqc.recording.StorageDuration
 import org.tenkiv.daqc.recording.StorageFrequency
-import org.tenkiv.daqcThreadContext
 import java.time.Instant
 
 class RecorderTest : StringSpec() {
@@ -32,14 +29,14 @@ class RecorderTest : StringSpec() {
 
             val memoryRecorder = Recorder(StorageFrequency.All,
                     StorageDuration.For(1L.secondsSpan),
-                    StorageDuration.For(5L.secondsSpan),
+                    StorageDuration.Forever,
                     DigitalGibberingSensor(),
                     deserializer)
 
-            Thread.sleep(50000)
+            Thread.sleep(15000)
 
-            runBlocking { memoryRecorder.getDataInRange(Instant.MIN, Instant.MAX).consumeEach { println(it) } }
-            //memoryRecorder.stop()
+            runBlocking { memoryRecorder.getDataInRange(Instant.MIN..Instant.MAX).await().forEach(::println) }
+            memoryRecorder.stop()
         }
 
         /*"Digital Memory Recorder Test"{
@@ -92,11 +89,5 @@ class RecorderTest : StringSpec() {
                 File(fileName).delete()
             }
         }*/
-    }
-
-    class SomeClass(input: Input<ValueInstant<BinaryState>>) {
-        init {
-            input.openNewCoroutineListener(daqcThreadContext) { println("$it") }
-        }
     }
 }

@@ -274,7 +274,7 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
 class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :
         DigitalOutput() {
 
-    override val broadcastChannel: ConflatedBroadcastChannel<DaqcValue> = ConflatedBroadcastChannel()
+    override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<DaqcValue>> = ConflatedBroadcastChannel()
     override val pwmIsSimulated: Boolean = false
     override val transitionFrequencyIsSimulated: Boolean = false
     override val device: Device = tekdaqc
@@ -296,14 +296,14 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc
                 output.deactivate(); currentState = DigitalStatus.DEACTIVATED
             }
         }
-        broadcastChannel.offer(setting)
+        broadcastChannel.offer(setting.at(Instant.now()))
     }
 
     override fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>) {
         frequencyJob?.cancel()
         output.setPulseWidthModulation(percent)
         currentState = DigitalStatus.ACTIVATED_PWM
-        broadcastChannel.offer(percent)
+        broadcastChannel.offer(percent.at(Instant.now()))
     }
 
     override fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>) {
@@ -324,6 +324,6 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc
                 delay(cycleSpeec, TimeUnit.SECONDS)
             }
         }
-        broadcastChannel.offer(freq)
+        broadcastChannel.offer(freq.at(Instant.now()))
     }
 }

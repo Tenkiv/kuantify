@@ -18,7 +18,7 @@ class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
 
     init {
         triggerConditions.forEach {
-            channelList.add(it.input.broadcastChannel.consumeAndReturn({ update ->
+            channelList.add(it.input.broadcastChannel.consumeAndReturn { update ->
                 val currentVal = update
 
                 it.lastValue = currentVal
@@ -39,7 +39,7 @@ class Trigger<T : DaqcValue>(vararg triggerConditions: TriggerCondition<T>,
                         triggerConditions.all { it.hasBeenReached }.apply { triggerFunction.invoke() }
                     }
                 }
-            }))
+            })
         }
     }
 }

@@ -1,20 +1,6 @@
 package tekdaqc
 
-import com.tenkiv.daqc.LineNoiseFrequency
-import com.tenkiv.daqc.networking.NetworkProtocol
-import com.tenkiv.tekdaqc.TekdaqcBoard
-import com.tenkiv.tekdaqc.TekdaqcLocator
-import com.tenkiv.tekdaqc.communication.data_points.AnalogInputCountData
-import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData
-import com.tenkiv.tekdaqc.communication.message.ABoardMessage
-import com.tenkiv.tekdaqc.communication.message.IMessageListener
-import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import io.kotlintest.specs.StringSpec
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.run
-import org.tenkiv.physikal.core.hertz
 
 class TekdaqcTest: StringSpec(){
 
@@ -44,7 +30,7 @@ class TekdaqcTest: StringSpec(){
         }*/
     }
 
-    suspend fun executeBoardCommands(board: TekdaqcBoard){
+    /*suspend fun executeBoardCommands(board: TekdaqcBoard){
         println("Executing Board Commands")
         board.connect(LineNoiseFrequency.AccountFor(60.hertz),NetworkProtocol.TELNET)
 
@@ -85,5 +71,5 @@ class TekdaqcTest: StringSpec(){
         board.analogInputs[0].activate()
 
         board.tekdaqc.sample(100)
-    }
+    }*/
 }

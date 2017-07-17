@@ -5,14 +5,18 @@ import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.coral.at
 import org.tenkiv.daqc.hardware.definitions.Updatable
 import org.tenkiv.daqc.hardware.definitions.channel.Input
 import org.tenkiv.physikal.core.asType
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities
+import java.time.Instant
+import java.util.zip.DataFormatException
 import javax.measure.Quantity
 import javax.measure.Unit
 import javax.measure.quantity.Frequency
+import kotlin.coroutines.experimental.CoroutineContext
 
 data class ArffDataSetStub(val data: Int)
 
@@ -30,14 +34,14 @@ interface UpdatableListener<T> {
 sealed class DaqcValue {
     companion object {
 
-        fun binaryFromString(input: String): DaqcValue? {
+        fun binaryFromString(input: String): DaqcValue {
             if (input == BinaryState.On.toString()) {
                 return BinaryState.On
             }
             if (input == BinaryState.Off.toString()) {
                 return BinaryState.Off
             }
-            throw Exception("Placeholder Exception")
+            throw DataFormatException("Data with BinaryState not found")
         }
 
         inline fun <reified Q : Quantity<Q>> quantityFromString(input: String): DaqcQuantity<Q> {
@@ -45,8 +49,7 @@ sealed class DaqcValue {
             if (quant != null) {
                 return DaqcQuantity.of(quant)
             } else {
-                //TODO: Placeholder exception
-                throw Exception("Placeholder Exception")
+                throw DataFormatException("Data with Quantity value not found")
             }
         }
     }
@@ -54,9 +57,17 @@ sealed class DaqcValue {
 
 sealed class BinaryState : DaqcValue() {
 
-    object On : BinaryState()
+    object On : BinaryState() {
+        override fun toString(): String {
+            return "ON"
+        }
+    }
 
-    object Off : BinaryState()
+    object Off : BinaryState() {
+        override fun toString(): String {
+            return "OFF"
+        }
+    }
 
 }
 
@@ -101,14 +112,14 @@ class BoundedFirstInFirstOutArrayList<T>(val maxSize: Int) : ArrayList<T>() {
     fun oldest(): T = get(0)
 }
 
-//TODO: Clean this up
-fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(action: suspend (T) -> kotlin.Unit):
+fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(context: CoroutineContext = CommonPool,
+                                                                       action: suspend (T) -> kotlin.Unit):
         SubscriptionReceiveChannel<T> {
-    val channel = open()
-    launch(CommonPool) {
-        channel.use { channel -> for (x in channel) action(x) }
+    val subChannel = open()
+    launch(context) {
+        subChannel.use { channel -> for (x in channel) action(x) }
     }
-    return channel
+    return subChannel
 }
 
 enum class DigitalStatus {
@@ -116,4 +127,13 @@ enum class DigitalStatus {
     ACTIVATED_FREQUENCY,
     ACTIVATED_PWM,
     DEACTIVATED
+}
+
+data class StoredData(val time: Long, val value: String) {
+    fun <T> getValueInstant(deserializer: (String) -> T): ValueInstant<T>
+            = try {
+        deserializer(value).at(Instant.ofEpochMilli(time))
+    } catch (e: Exception) {
+        throw e
+    }
 }
