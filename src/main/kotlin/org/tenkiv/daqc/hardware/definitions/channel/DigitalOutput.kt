@@ -2,12 +2,13 @@ package org.tenkiv.daqc.hardware.definitions.channel
 
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
+import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.DigitalDaqcChannel
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
 
 
-abstract class DigitalOutput : MultiOutput<BinaryState>,
+abstract class DigitalOutput : Output<BinaryState, DaqcValue>,
         DigitalDaqcChannel {
 
     abstract val pwmIsSimulated: Boolean
