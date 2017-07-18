@@ -17,13 +17,16 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput,
                                             val avgFrequency: DaqcQuantity<Frequency>) :
         QuantityInput<Q> {
 
-    override val broadcastChannel: ConflatedBroadcastChannel<QuantityMeasurement<Q>> = ConflatedBroadcastChannel()
+    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
+
+    override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+        get() = _broadcastChannel
 
     override val isActive get() = digitalInput.isActiveForPwm
 
     init {
         digitalInput.pwmBroadcastChannel.openNewCoroutineListener(CommonPool) {
-            sendNewMeasurement(convertInput(it.value) at it.instant)
+            _broadcastChannel.send(convertInput(it.value) at it.instant)
         }
     }
 

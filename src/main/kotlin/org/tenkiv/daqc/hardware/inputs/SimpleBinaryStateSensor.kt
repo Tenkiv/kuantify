@@ -5,7 +5,7 @@ import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 
 class SimpleBinaryStateSensor(val digitalInput: DigitalInput) : BinaryStateInput {
 
-    override val broadcastChannel get() = digitalInput.currentStateBroadcastChannel
+    override val broadcastChannel get() = digitalInput.broadcastChannel
 
     override val isActive get() = digitalInput.isActive
 

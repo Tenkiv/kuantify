@@ -19,7 +19,10 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
         acceptableError: ComparableQuantity<ElectricPotential>
 ) : QuantityInput<Q> {
 
-    override val broadcastChannel: ConflatedBroadcastChannel<QuantityMeasurement<Q>> = ConflatedBroadcastChannel()
+    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
+
+    override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+        get() = _broadcastChannel
 
     override val isActive get() = analogInput.isActive
 
@@ -28,7 +31,7 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
         analogInput.maxAcceptableError = acceptableError
         analogInput.openNewCoroutineListener(CommonPool) { measurement ->
             try {
-                sendNewMeasurement(convertInput(measurement.value) at measurement.instant)
+                _broadcastChannel.send(convertInput(measurement.value) at measurement.instant)
             } catch (e: ValueOutOfRangeException) {
                 System.err.println("Voltage out of acceptable range for sensor:\n" +
                         " $this \n" +

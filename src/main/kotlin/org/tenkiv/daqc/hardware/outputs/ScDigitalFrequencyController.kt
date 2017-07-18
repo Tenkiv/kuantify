@@ -5,24 +5,27 @@ import org.tenkiv.QuantityMeasurement
 import org.tenkiv.coral.now
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
-import org.tenkiv.daqc.hardware.definitions.channel.StandardQuantityOutput
+import org.tenkiv.daqc.hardware.definitions.channel.QuantityOutput
 import javax.measure.Quantity
 import javax.measure.quantity.Frequency
 
 abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput) :
-        StandardQuantityOutput<Q> {
+        QuantityOutput<Q> {
 
     override val isActive get() = digitalOutput.isActiveForTransitionFrequency
 
-    override val broadcastChannel: ConflatedBroadcastChannel<QuantityMeasurement<Q>> = ConflatedBroadcastChannel()
+    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
+
+    override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+        get() = _broadcastChannel
 
     override fun setOutput(setting: DaqcQuantity<Q>) {
         digitalOutput.sustainTransitionFrequency(convertOutput(setting))
         //TODO Change this to broadcast new setting when the board confirms the setting was received.
-        broadcastChannel.offer(setting.now())
+        _broadcastChannel.offer(setting.now())
     }
 
-    abstract fun convertOutput(setting: DaqcQuantity<Q>): DaqcQuantity<Frequency>
+    protected abstract fun convertOutput(setting: DaqcQuantity<Q>): DaqcQuantity<Frequency>
 
     override fun deactivate() = digitalOutput.deactivate()
 }

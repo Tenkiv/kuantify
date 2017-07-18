@@ -8,9 +8,9 @@ import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.Updatable
 import org.tenkiv.daqc.hardware.definitions.channel.BinaryStateInput
+import org.tenkiv.daqc.hardware.definitions.channel.BinaryStateOutput
 import org.tenkiv.daqc.hardware.definitions.channel.QuantityInput
-import org.tenkiv.daqc.hardware.definitions.channel.StandardBinaryStateOutput
-import org.tenkiv.daqc.hardware.definitions.channel.StandardQuantityOutput
+import org.tenkiv.daqc.hardware.definitions.channel.QuantityOutput
 import org.tenkiv.daqc.hardware.definitions.device.Device
 import org.tenkiv.daqc.recording.Recorder
 
@@ -21,8 +21,8 @@ typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
 
 typealias RecordedQuantityInput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityInput<Q>>
 typealias RecordedBinaryStateInput = RecordedUpdatable<BinaryState, BinaryStateInput>
-typealias RecordedStandardQuantityOutput<Q> = RecordedUpdatable<DaqcQuantity<Q>, StandardQuantityOutput<Q>>
-typealias RecordedStandardBinaryStateOutput = RecordedUpdatable<BinaryState, StandardBinaryStateOutput>
+typealias RecordedStandardQuantityOutput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityOutput<Q>>
+typealias RecordedStandardBinaryStateOutput = RecordedUpdatable<BinaryState, BinaryStateOutput>
 
 internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 

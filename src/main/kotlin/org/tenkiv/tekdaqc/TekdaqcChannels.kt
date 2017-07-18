@@ -226,7 +226,7 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     init {
         input.addDigitalListener(this)
         input.addPWMListener(this)
-        launch(daqcThreadContext) { currentStateBroadcastChannel.consumeEach { rebroadcastToMain(it) } }
+        launch(daqcThreadContext) { binaryStateBroadcastChannel.consumeEach { rebroadcastToMain(it) } }
         launch(daqcThreadContext) { pwmBroadcastChannel.consumeEach { rebroadcastToMain(it) } }
         launch(daqcThreadContext) { transitionFrequencyBroadcastChannel.consumeEach { rebroadcastToMain(it) } }
     }
@@ -251,10 +251,10 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
         runBlocking {
             when (data.state) {
                 true -> {
-                    currentStateBroadcastChannel.send(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))
+                    binaryStateBroadcastChannel.send(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))
                 }
                 false -> {
-                    currentStateBroadcastChannel.send(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))
+                    binaryStateBroadcastChannel.send(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))
                 }
             }
         }
