@@ -25,11 +25,12 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 
-open class Recorder<T> internal constructor(val storageFrequency: StorageFrequency = StorageFrequency.All,
-                                            val memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-                                            val diskDuration: StorageDuration = StorageDuration.Forever,
-                                            val updatable: Updatable<ValueInstant<T>>,
-                                            val dataDeserializer: (String) -> T) {
+open class Recorder<out T> internal constructor(val storageFrequency: StorageFrequency = StorageFrequency.All,
+                                                val memoryDuration: StorageDuration =
+                                                StorageDuration.For(30L.secondsSpan),
+                                                val diskDuration: StorageDuration = StorageDuration.Forever,
+                                                val updatable: Updatable<ValueInstant<T>>,
+                                                val dataDeserializer: (String) -> T) {
 
     val uid = getMemoryRecorderUid()
 
