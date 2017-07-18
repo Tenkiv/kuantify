@@ -20,8 +20,6 @@ abstract class DeviceLocator : Updatable<LocatorUpdate> {
 
     abstract fun stop()
 
-    protected val awaitedDeviceMap = HashMap<String, ConflatedBroadcastChannel<Device>>()
-
     override val broadcastChannel = ConflatedBroadcastChannel<LocatorUpdate>()
 
     suspend fun awaitSpecificDevice(serialNumber: String): Deferred<Device> {

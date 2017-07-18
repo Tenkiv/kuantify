@@ -5,7 +5,6 @@ import org.tenkiv.coral.secondsSpan
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.Updatable
 import java.time.Duration
-import java.time.Instant
 
 //TODO: Move default parameter values in recorder creation function to constants
 
@@ -49,8 +48,6 @@ fun <T : DaqcValue> Updatable<ValueInstant<T>>.createRecorder(storageFrequency: 
                 diskDuration,
                 this) { TODO("Use jackson or parsing here") }
 
-fun <T> List<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
-        TODO("Implement")
 
 sealed class StorageFrequency {
 
