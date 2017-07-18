@@ -2,9 +2,7 @@ package general
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.QuantityMeasurement
-import org.tenkiv.coral.ValueInstant
 import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.hardware.definitions.device.Device
@@ -50,8 +48,6 @@ class EmptyDigitalInput : DigitalInput() {
     override val isActiveForPwm: Boolean
         get() = throw Exception("Empty Test Class Exception")
     override val isActiveForTransitionFrequency: Boolean
-        get() = throw Exception("Empty Test Class Exception")
-    override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<DaqcValue>>
         get() = throw Exception("Empty Test Class Exception")
 
     override fun activateForTransitionFrequency() {

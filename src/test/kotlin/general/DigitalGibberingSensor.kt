@@ -6,10 +6,6 @@ import org.tenkiv.coral.at
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.Input
-import org.tenkiv.daqc.hardware.inputs.ScAnalogSensor
-import org.tenkiv.physikal.core.milli
-import org.tenkiv.physikal.core.volt
-import tec.uom.se.ComparableQuantity
 import tec.uom.se.unit.MetricPrefix
 import tec.uom.se.unit.Units
 import java.time.Instant
@@ -43,8 +39,10 @@ class DigitalGibberingSensor : Input<BinaryState> {
     }
 }
 
-class AnalogGibberingSensor :
-        ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt, 3.milli.volt) {
+class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
+    override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
+
+    override val isActive: Boolean = false
 
     val random = Random()
 
@@ -63,10 +61,6 @@ class AnalogGibberingSensor :
     override fun activate() {}
 
     override fun deactivate() {}
-
-    override fun convertInput(ep: ComparableQuantity<ElectricPotential>): DaqcQuantity<ElectricPotential> {
-        return DaqcQuantity.Companion.of(random.nextInt(5000).milli.volt)
-    }
 
     fun cancel() {
         timer.cancel()

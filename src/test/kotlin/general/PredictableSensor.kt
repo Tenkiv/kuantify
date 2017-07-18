@@ -6,22 +6,18 @@ import org.tenkiv.coral.at
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.Input
-import org.tenkiv.daqc.hardware.inputs.ScAnalogSensor
-import org.tenkiv.physikal.core.milli
 import org.tenkiv.physikal.core.volt
-import tec.uom.se.ComparableQuantity
 import java.time.Instant
 import java.util.*
 import javax.measure.quantity.ElectricPotential
 
-class PredictableAnalogSensor : ScAnalogSensor<ElectricPotential>(EmptyAnalogInput(), 3.volt, 3.milli.volt) {
+class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
+    override val isActive: Boolean = false
+    override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
+
     override fun activate() {}
 
     override fun deactivate() {}
-
-    override fun convertInput(ep: ComparableQuantity<ElectricPotential>): DaqcQuantity<ElectricPotential> {
-        return DaqcQuantity.Companion.of(2000.volt)
-    }
 
     var iteration = 0
 

@@ -11,16 +11,13 @@ import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
 import org.tenkiv.QuantityMeasurement
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.DigitalStatus
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
@@ -203,10 +200,9 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
     }
 }
 
-class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekdaqc.hardware.DigitalInput) :
+class TekdaqcDigitalInput(tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekdaqc.hardware.DigitalInput) :
         DigitalInput(), IDigitalChannelListener, IPWMChannelListener {
 
-    override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcValue>>()
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = input.channelNumber
     private var currentState = DigitalStatus.DEACTIVATED
@@ -214,10 +210,6 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     override val isActiveForBinaryState: Boolean = (currentState == DigitalStatus.ACTIVATED_STATE)
     override val isActiveForPwm: Boolean = (currentState == DigitalStatus.ACTIVATED_PWM)
     override val isActiveForTransitionFrequency: Boolean = (currentState == DigitalStatus.ACTIVATED_FREQUENCY)
-
-    private suspend fun rebroadcastToMain(value: ValueInstant<DaqcValue>) {
-        broadcastChannel.send(value)
-    }
 
     override fun activate() {
         input.deactivatePWM(); input.activate()
@@ -230,9 +222,6 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     init {
         input.addDigitalListener(this)
         input.addPWMListener(this)
-        launch(daqcThreadContext) { binaryStateBroadcastChannel.consumeEach { rebroadcastToMain(it) } }
-        launch(daqcThreadContext) { pwmBroadcastChannel.consumeEach { rebroadcastToMain(it) } }
-        launch(daqcThreadContext) { transitionFrequencyBroadcastChannel.consumeEach { rebroadcastToMain(it) } }
     }
 
     override fun activateForCurrentState() {
@@ -252,24 +241,24 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
     }
 
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
-        runBlocking {
+
             when (data.state) {
                 true -> {
-                    binaryStateBroadcastChannel.send(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))
+                    _binaryStateBroadcastChannel.offer(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))
                 }
                 false -> {
-                    binaryStateBroadcastChannel.send(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))
+                    _binaryStateBroadcastChannel.offer(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))
                 }
             }
-        }
+
     }
 
     override fun onPWMDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput, data: PWMInputData) {
 
-        pwmBroadcastChannel.offer(ValueInstant.invoke(
+        _pwmBroadcastChannel.offer(ValueInstant.invoke(
                 DaqcQuantity.of(data.percetageOn.percent), Instant.ofEpochMilli(data.timestamp)))
 
-        transitionFrequencyBroadcastChannel.offer(ValueInstant.invoke(
+        _transitionFrequencyBroadcastChannel.offer(ValueInstant.invoke(
                 //TODO This isn't accurate need time stamp val to calculate Hertz
                 DaqcQuantity.of(data.totalTransitions.hertz), Instant.ofEpochMilli(data.timestamp)))
     }
@@ -279,7 +268,6 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc
         DigitalOutput() {
 
     private var currentState = DigitalStatus.DEACTIVATED
-    override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<DaqcValue>> = ConflatedBroadcastChannel()
     override val pwmIsSimulated: Boolean = false
     override val transitionFrequencyIsSimulated: Boolean = false
     override val device: Device = tekdaqc
@@ -300,14 +288,14 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc
                 output.deactivate(); currentState = DigitalStatus.DEACTIVATED
             }
         }
-        broadcastChannel.offer(setting.at(Instant.now()))
+        _binaryStateBroadcastChannel.offer(setting.at(Instant.now()))
     }
 
     override fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>) {
         frequencyJob?.cancel()
         output.setPulseWidthModulation(percent)
         currentState = DigitalStatus.ACTIVATED_PWM
-        broadcastChannel.offer(percent.at(Instant.now()))
+        _pwmBroadcastChannel.offer(percent.at(Instant.now()))
     }
 
     override fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>) {
@@ -328,6 +316,6 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc
                 delay(cycleSpeec, TimeUnit.SECONDS)
             }
         }
-        broadcastChannel.offer(freq.at(Instant.now()))
+        _transitionFrequencyBroadcastChannel.offer(freq.at(Instant.now()))
     }
 }
