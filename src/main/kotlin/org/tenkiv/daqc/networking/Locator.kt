@@ -16,11 +16,11 @@ object Locator : Updatable<LocatorUpdate> {
 
     override val broadcastChannel: ConflatedBroadcastChannel<LocatorUpdate> = ConflatedBroadcastChannel()
 
-    private val locatorList = ArrayList<DeviceLocator<Device>>()
+    private val locatorList = ArrayList<DeviceLocator>()
 
     private val currentDevices = HashMap<KClass<*>, HashMap<String, Device>>()
 
-    fun <T : DeviceLocator<Device>> addDeviceLocator(locator: T) {
+    fun addDeviceLocator(locator: DeviceLocator) {
         if (!locatorList.any { it::class == locator::class }) {
             locatorList.add(locator)
             launch(CommonPool) { locator.broadcastChannel.consumeEach { rebroadcast(it) } }
@@ -29,16 +29,16 @@ object Locator : Updatable<LocatorUpdate> {
         }
     }
 
-    fun <T : DeviceLocator<Device>> removeDeviceLocator(locator: T) {
+    fun removeDeviceLocator(locator: DeviceLocator) {
         locatorList.removeIf { it == locator }
     }
 
     private fun rebroadcast(device: LocatorUpdate) {
         when (device) {
-            is FoundDevice<*> -> currentDevices.
+            is FoundDevice -> currentDevices.
                     putIfAbsent(device.device::class, HashMap())?.
                     putIfAbsent(device.device.serialNumber, device.device)
-            is LostDevice<*> -> currentDevices.
+            is LostDevice -> currentDevices.
                     putIfAbsent(device.device::class, HashMap())?.
                     remove(device.device.serialNumber)
         }

@@ -1,10 +1,16 @@
 package tekdaqc
 
 import io.kotlintest.specs.StringSpec
+import org.tenkiv.daqc.networking.Locator
+import org.tenkiv.tekdaqc.TekdaqcLocator
 
 class TekdaqcTest: StringSpec(){
 
     init{
+
+        val tekdaqcLoc = TekdaqcLocator()
+
+        Locator.addDeviceLocator(tekdaqcLoc)
 
         /*"Crossover-Tekdaqc Test" {
             val tekdaqcLocator = TekdaqcLocator()

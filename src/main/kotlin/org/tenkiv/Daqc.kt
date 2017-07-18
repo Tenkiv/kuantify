@@ -37,9 +37,9 @@ internal fun getMemoryRecorderUid(): String {
 
 sealed class LocatorUpdate
 
-data class FoundDevice<out T : Device>(val device: T) : LocatorUpdate()
+data class FoundDevice(val device: Device) : LocatorUpdate()
 
-data class LostDevice<out T : Device>(val device: T) : LocatorUpdate()
+data class LostDevice(val device: Device) : LocatorUpdate()
 
 
 class DaqcException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)

@@ -7,7 +7,7 @@ import org.tenkiv.FoundDevice
 import org.tenkiv.LostDevice
 import org.tenkiv.daqc.networking.DeviceLocator
 
-class TekdaqcLocator : OnTekdaqcDiscovered, DeviceLocator<TekdaqcBoard>() {
+class TekdaqcLocator : OnTekdaqcDiscovered, DeviceLocator() {
 
     init {
         Locator.instance.addLocatorListener(this)
@@ -16,11 +16,11 @@ class TekdaqcLocator : OnTekdaqcDiscovered, DeviceLocator<TekdaqcBoard>() {
     override fun onTekdaqcResponse(tekdaqc: ATekdaqc) {}
 
     override fun onTekdaqcNoLongerLocated(tekdaqc: ATekdaqc) {
-        val board = activeDevices.filter { it.tekdaqc.serialNumber == tekdaqc.serialNumber }.firstOrNull()
+        val board = activeDevices.filter { it.serialNumber == tekdaqc.serialNumber }.firstOrNull()
         if (board != null) {
             broadcastChannel.offer(LostDevice(board))
         }
-        activeDevices.removeIf { it.tekdaqc.serialNumber == tekdaqc.serialNumber }
+        activeDevices.removeIf { it.serialNumber == tekdaqc.serialNumber }
     }
 
     override fun onTekdaqcFirstLocated(tekdaqc: ATekdaqc) {
