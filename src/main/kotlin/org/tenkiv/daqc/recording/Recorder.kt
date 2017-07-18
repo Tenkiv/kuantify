@@ -1,6 +1,5 @@
 package org.tenkiv.daqc.recording
 
-import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -35,8 +34,6 @@ open class Recorder<T> internal constructor(val storageFrequency: StorageFrequen
     val uid = getMemoryRecorderUid()
 
     private val currentFilesMap = HashMap<Instant, File>()
-
-    private var jsonFactory = JsonFactory()
 
     private var perCountFrequencyCounter = 0
 
@@ -254,25 +251,51 @@ open class Recorder<T> internal constructor(val storageFrequency: StorageFrequen
         }
     }
 
+    fun getAllDataFromDisk(): Deferred<List<ValueInstant<T>>> = async(daqcThreadContext) { getDataFromDisk() }
 
-    fun getDataInRange(instantRange: ClosedRange<Instant>): Deferred<List<ValueInstant<T>>> {
-        val start = instantRange.start
-        val end = instantRange.endInclusive
+    fun getDataInRange(instantRange: ClosedRange<Instant>): Deferred<List<ValueInstant<T>>> =
+            async(daqcThreadContext) {
+                val start = instantRange.start
+                val end = instantRange.endInclusive
 
-        val def: Deferred<List<ValueInstant<T>>> = async(daqcThreadContext) {
-            val found = ArrayList<ValueInstant<T>>(
-                    _dataInMemory.filter { it.instant.isAfter(start) && it.instant.isBefore(end) })
-            if (!(_dataInMemory.filter { it.instant.isAfter(end) }.isNotEmpty())) {
-                currentFilesMap.forEach {
-                    mutex.withLock {
-                        found.addAll(readFromDisk(it.value))
-                    }
+                val filterFun: (ValueInstant<T>) -> Boolean = { it.instant.isAfter(start) && it.instant.isBefore(end) }
+
+                if (start.isBefore(Instant.now())) {
+                    throw IllegalArgumentException("Requested start time is in the future.")
                 }
+
+                val found = ArrayList<ValueInstant<T>>(_dataInMemory.filter(filterFun))
+
+                if (!(_dataInMemory.filter { it.instant.isAfter(end) }.isNotEmpty())) {
+                    return@async found
+                } else {
+                    getDataFromDisk(filterFun, found)
+                }
+
+                if (found.sortedBy { it.instant }.last().instant.isBefore(end)) {
+                    throw IllegalArgumentException("Last possible Instant is before last requested Instant")
+                }
+                return@async found
             }
-            return@async found
+
+    private suspend fun getDataFromDisk(filter: (ValueInstant<T>) -> Boolean = { true },
+                                        aggregatedList: MutableList<ValueInstant<T>> = ArrayList()):
+            List<ValueInstant<T>> {
+
+        currentFilesMap.toSortedMap().forEach {
+            mutex.withLock {
+                aggregatedList.addAll(readFromDisk(it.value, filter))
+            }
         }
-        return def
+        return aggregatedList
     }
+
+    fun getMatchingData(filter: (ValueInstant<T>) -> Boolean): Deferred<Collection<ValueInstant<T>>> =
+            async(daqcThreadContext) {
+                val found = ArrayList<ValueInstant<T>>(_dataInMemory.filter { filter(it) })
+                getDataFromDisk(filter, found)
+                return@async found
+            }
 
     companion object {
         private const val VALUE = "value"
@@ -289,7 +312,7 @@ open class Recorder<T> internal constructor(val storageFrequency: StorageFrequen
     private val ZERO_BYTE: Byte = 0
     private var zeroCount = 0
 
-    suspend fun readFromDisk(file: File): ArrayList<ValueInstant<T>> {
+    private suspend fun readFromDisk(file: File, filter: (ValueInstant<T>) -> Boolean = { true }): List<ValueInstant<T>> {
         val channel = AsynchronousFileChannel.open(file.toPath(),
                 StandardOpenOption.READ)
 
@@ -317,8 +340,11 @@ open class Recorder<T> internal constructor(val storageFrequency: StorageFrequen
 
                 if (!isInString && it == OBJECT_END) {
                     objectStart = false
-                    val value = jacksonMapper.readValue<StoredData>(currentObject.toByteArray())
-                    complyingObjects.add(value.getValueInstant(dataDeserializer))
+                    val value = jacksonMapper.readValue<StoredData>(currentObject.toByteArray()).
+                            getValueInstant(dataDeserializer)
+                    if (filter(value)) {
+                        complyingObjects.add(value)
+                    }
                     currentObject.clear()
                 }
 

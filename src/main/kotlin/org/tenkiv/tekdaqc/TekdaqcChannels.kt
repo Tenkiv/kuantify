@@ -112,9 +112,13 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
 
         tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.rate = rate
         tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.gain = voltageSettings.first
+
+        if (tekdaqc.tekdaqc.analogInputScale != voltageSettings.second) {
+            System.err.println("Tekdaqc Scale Updated. Jumper must be moved to ${voltageSettings.second}")
+        }
+
         tekdaqc.tekdaqc.analogInputScale = voltageSettings.second
 
-        //TODO Println Notice of Status Change or Jumper Requirements
     }
 
     fun maxVoltageSettings(voltage: Double): Pair<AAnalogInput.Gain, ATekdaqc.AnalogScale> {
@@ -274,12 +278,12 @@ class TekdaqcDigitalInput(val tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekda
 class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :
         DigitalOutput() {
 
+    private var currentState = DigitalStatus.DEACTIVATED
     override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<DaqcValue>> = ConflatedBroadcastChannel()
     override val pwmIsSimulated: Boolean = false
     override val transitionFrequencyIsSimulated: Boolean = false
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = output.channelNumber
-    private var currentState = DigitalStatus.DEACTIVATED
     override val isActiveForBinaryState: Boolean = (currentState == DigitalStatus.ACTIVATED_STATE)
     override val isActiveForPwm: Boolean = (currentState == DigitalStatus.ACTIVATED_PWM)
     override val isActiveForTransitionFrequency: Boolean = (currentState == DigitalStatus.ACTIVATED_FREQUENCY)
