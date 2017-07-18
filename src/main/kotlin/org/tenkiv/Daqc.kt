@@ -21,8 +21,8 @@ typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
 
 typealias RecordedQuantityInput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityInput<Q>>
 typealias RecordedBinaryStateInput = RecordedUpdatable<BinaryState, BinaryStateInput>
-typealias RecordedStandardQuantityOutput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityOutput<Q>>
-typealias RecordedStandardBinaryStateOutput = RecordedUpdatable<BinaryState, BinaryStateOutput>
+typealias RecordedQuantityOutput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityOutput<Q>>
+typealias RecordedBinaryStateOutput = RecordedUpdatable<BinaryState, BinaryStateOutput>
 
 internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 
