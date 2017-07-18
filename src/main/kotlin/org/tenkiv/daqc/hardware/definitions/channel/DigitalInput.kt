@@ -5,18 +5,18 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.BinaryStateMeasurement
 import org.tenkiv.Measurement
 import org.tenkiv.QuantityMeasurement
-import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.DigitalDaqcChannel
 import org.tenkiv.daqc.lib.openNewCoroutineListener
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
 
-abstract class DigitalInput : Input<BinaryState>, DigitalDaqcChannel {
+abstract class DigitalInput : BinaryStateInput, DigitalDaqcChannel {
 
     protected val _binaryStateBroadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
 
-    final override val broadcastChannel get() = _binaryStateBroadcastChannel
+    final override val broadcastChannel: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+        get() = _binaryStateBroadcastChannel
 
     protected val _transitionFrequencyBroadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Frequency>>()
 

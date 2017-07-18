@@ -18,7 +18,8 @@ abstract class DigitalOutput : BinaryStateOutput,
 
     protected val _binaryStateBroadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
 
-    final override val broadcastChannel get() = _binaryStateBroadcastChannel
+    final override val broadcastChannel: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+        get() = _binaryStateBroadcastChannel
 
     protected val _pwmBroadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Dimensionless>>()
 
