@@ -48,4 +48,4 @@ gradlew.bat
 TestRecording.json
 
 /Daqc-Tools.iml
-/src/main/kotlin/com/tenkiv/Test.kt
+/src/main/kotlin/org/tenkiv/Test.kt

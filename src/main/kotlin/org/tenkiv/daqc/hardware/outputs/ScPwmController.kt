@@ -5,12 +5,12 @@ import org.tenkiv.QuantityMeasurement
 import org.tenkiv.coral.now
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
-import org.tenkiv.daqc.hardware.definitions.channel.QuantityOutput
+import org.tenkiv.daqc.hardware.definitions.channel.StandardQuantityOutput
 import javax.measure.Quantity
 import javax.measure.quantity.Dimensionless
 
 abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput) :
-        QuantityOutput<Q> {
+        StandardQuantityOutput<Q> {
 
     override val isActive get() = digitalOutput.isActiveForPwm
 

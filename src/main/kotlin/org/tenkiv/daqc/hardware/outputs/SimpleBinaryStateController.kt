@@ -4,11 +4,11 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.BinaryStateMeasurement
 import org.tenkiv.coral.now
 import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.hardware.definitions.channel.BinaryStateOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
+import org.tenkiv.daqc.hardware.definitions.channel.StandardBinaryStateOutput
 
 class SimpleBinaryStateController(val digitalOutput: DigitalOutput,
-                                  val inverted: Boolean = false) : BinaryStateOutput {
+                                  val inverted: Boolean = false) : StandardBinaryStateOutput {
 
     override val isActive: Boolean = digitalOutput.isActive
 

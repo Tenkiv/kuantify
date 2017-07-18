@@ -4,7 +4,7 @@ import org.tenkiv.daqc.hardware.definitions.DaqcChannel
 import javax.measure.quantity.ElectricPotential
 
 abstract class AnalogOutput :
-        QuantityOutput<ElectricPotential>,
+        StandardQuantityOutput<ElectricPotential>,
         DaqcChannel {
 
 }
