@@ -12,14 +12,14 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 class TekdaqcLocator : OnTekdaqcDiscovered, DeviceLocator() {
 
-    private val _activeDevices = CopyOnWriteArrayList<TekdaqcBoard>()
+    private val _activeDevices = CopyOnWriteArrayList<TekdaqcDevice>()
 
-    override val activeDevices: List<TekdaqcBoard>
+    override val activeDevices: List<TekdaqcDevice>
         get() = _activeDevices
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<LocatorUpdate<TekdaqcBoard>>()
+    private val _broadcastChannel = ConflatedBroadcastChannel<LocatorUpdate<TekdaqcDevice>>()
 
-    override val broadcastChannel: ConflatedBroadcastChannel<out LocatorUpdate<TekdaqcBoard>>
+    override val broadcastChannel: ConflatedBroadcastChannel<out LocatorUpdate<TekdaqcDevice>>
         get() = _broadcastChannel
 
     init {
@@ -37,7 +37,7 @@ class TekdaqcLocator : OnTekdaqcDiscovered, DeviceLocator() {
     }
 
     override fun onTekdaqcFirstLocated(tekdaqc: ATekdaqc) {
-        val board = TekdaqcBoard(tekdaqc)
+        val board = TekdaqcDevice(tekdaqc)
         _activeDevices.add(board)
         _broadcastChannel.offer(FoundDevice(board))
     }

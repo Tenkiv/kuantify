@@ -10,9 +10,14 @@ import org.tenkiv.daqc.networking.NetworkProtocol
 import org.tenkiv.daqc.networking.SharingStatus
 import org.tenkiv.daqc.networking.UnsupportedProtocolException
 import org.tenkiv.physikal.core.hertz
+import org.tenkiv.physikal.core.tu
+import tec.uom.se.unit.MetricPrefix.MILLI
+import tec.uom.se.unit.Units.SECOND
 import java.net.InetAddress
+import javax.measure.Quantity
+import javax.measure.quantity.Time
 
-class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice {
+class TekdaqcDevice(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice {
 
     override val inetAddr: InetAddress = InetAddress.getByName(tekdaqc.hostIP)
     override val serialNumber: String = tekdaqc.serialNumber
@@ -40,6 +45,10 @@ class TekdaqcBoard(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice
 
     override fun disconnect(protocol: NetworkProtocol?) {
         tekdaqc.disconnectCleanly()
+    }
+
+    fun restoreBoard(millisTimeout: Quantity<Time>, reAddChannels: Boolean) {
+        tekdaqc.restoreTekdaqc((millisTimeout tu MILLI(SECOND)).value.toLong(), reAddChannels)
     }
 
     override val analogOutputs: List<AnalogOutput> = emptyList()

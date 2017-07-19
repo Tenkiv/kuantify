@@ -35,7 +35,7 @@ import javax.measure.quantity.Frequency
 import com.tenkiv.tekdaqc.hardware.ATekdaqc.AnalogScale as Scale
 
 
-class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : AnalogInput(), IVoltageListener {
+class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : AnalogInput(), IVoltageListener {
     override val isActive: Boolean = input.isActivated
     override val broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<ElectricPotential>>()
     override val device: Device = tekdaqc
@@ -200,7 +200,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcBoard, val input: AAnalogInput) : A
     }
 }
 
-class TekdaqcDigitalInput(tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekdaqc.hardware.DigitalInput) :
+class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.hardware.DigitalInput) :
         DigitalInput(), IDigitalChannelListener, IPWMChannelListener {
 
     override val device: Device = tekdaqc
@@ -264,7 +264,7 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcBoard, val input: com.tenkiv.tekdaqc.h
     }
 }
 
-class TekdaqcDigitalOutput(tekdaqc: TekdaqcBoard, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :
+class TekdaqcDigitalOutput(tekdaqc: TekdaqcDevice, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :
         DigitalOutput() {
 
     private var currentState = DigitalStatus.DEACTIVATED

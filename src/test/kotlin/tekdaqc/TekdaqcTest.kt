@@ -36,7 +36,7 @@ class TekdaqcTest: StringSpec(){
         }*/
     }
 
-    /*suspend fun executeBoardCommands(board: TekdaqcBoard){
+    /*suspend fun executeBoardCommands(board: TekdaqcDevice){
         println("Executing Board Commands")
         board.connect(LineNoiseFrequency.AccountFor(60.hertz),NetworkProtocol.TELNET)
 
