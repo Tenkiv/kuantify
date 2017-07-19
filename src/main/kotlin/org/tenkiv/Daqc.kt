@@ -24,11 +24,11 @@ internal fun getMemoryRecorderUid(): String {
     return (memRecorderUid++).toString()
 }
 
-sealed class LocatorUpdate
+sealed class LocatorUpdate<out T : Device>(val capturedDevice: T) : Device by capturedDevice
 
-data class FoundDevice(val device: Device) : LocatorUpdate()
+class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device)
 
-data class LostDevice(val device: Device) : LocatorUpdate()
+class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device)
 
 
 class DaqcException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)

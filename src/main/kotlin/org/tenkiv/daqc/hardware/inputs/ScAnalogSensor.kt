@@ -21,7 +21,7 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
 
-    override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    final override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
     override val isActive get() = analogInput.isActive

@@ -12,9 +12,12 @@ import org.tenkiv.daqc.hardware.definitions.device.Device
 import java.io.IOException
 import kotlin.reflect.KClass
 
-object Locator : Updatable<LocatorUpdate> {
+object Locator : Updatable<LocatorUpdate<*>> {
 
-    override val broadcastChannel: ConflatedBroadcastChannel<LocatorUpdate> = ConflatedBroadcastChannel()
+    private val _broadcastChannel = ConflatedBroadcastChannel<LocatorUpdate<*>>()
+
+    override val broadcastChannel: ConflatedBroadcastChannel<out LocatorUpdate<*>>
+        get() = _broadcastChannel
 
     private val locatorList = ArrayList<DeviceLocator>()
 
@@ -33,14 +36,14 @@ object Locator : Updatable<LocatorUpdate> {
         locatorList.removeIf { it == locator }
     }
 
-    private fun rebroadcast(device: LocatorUpdate) {
+    private fun rebroadcast(device: LocatorUpdate<*>) {
         when (device) {
             is FoundDevice -> currentDevices.
-                    putIfAbsent(device.device::class, HashMap())?.
-                    putIfAbsent(device.device.serialNumber, device.device)
+                    putIfAbsent(device.capturedDevice::class, HashMap())?.
+                    putIfAbsent(device.serialNumber, device.capturedDevice)
             is LostDevice -> currentDevices.
-                    putIfAbsent(device.device::class, HashMap())?.
-                    remove(device.device.serialNumber)
+                    putIfAbsent(device.capturedDevice::class, HashMap())?.
+                    remove(device.serialNumber)
         }
     }
 
