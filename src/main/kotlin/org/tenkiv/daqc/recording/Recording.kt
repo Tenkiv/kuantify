@@ -49,12 +49,13 @@ fun <T> Updatable<ValueInstant<T>>.createRecorder(storageFrequency: StorageFrequ
                 this,
                 dataDeserializer)
 
-inline fun <reified T : DaqcQuantity<T>> Updatable<ValueInstant<T>>.daqcQuantityRecorder(storageFrequency: StorageFrequency =
-                                                                                         StorageFrequency.All,
-                                                                                         memoryDuration: StorageDuration =
-                                                                                         StorageDuration.For(30L.secondsSpan),
-                                                                                         diskDuration: StorageDuration =
-                                                                                         StorageDuration.Forever): Recorder<DaqcQuantity<T>> =
+inline fun <reified T : DaqcQuantity<T>>
+        Updatable<ValueInstant<T>>.daqcQuantityRecorder(storageFrequency: StorageFrequency =
+                                                        StorageFrequency.All,
+                                                        memoryDuration: StorageDuration =
+                                                        StorageDuration.For(30L.secondsSpan),
+                                                        diskDuration: StorageDuration =
+                                                        StorageDuration.Forever): Recorder<DaqcQuantity<T>> =
         recorder(storageFrequency,
                 memoryDuration,
                 diskDuration,
@@ -67,12 +68,13 @@ fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(storageFrequency: 
                                                               dataDeserializer: (String) -> T) =
         RecordedUpdatable(this, this.createRecorder(storageFrequency, memoryDuration, diskDuration, dataDeserializer))
 
-inline fun <reified T : DaqcQuantity<T>, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(storageFrequency: StorageFrequency =
-                                                                                               StorageFrequency.All,
-                                                                                               memoryDuration: StorageDuration =
-                                                                                               StorageDuration.For(30L.secondsSpan),
-                                                                                               diskDuration: StorageDuration =
-                                                                                               StorageDuration.Forever) =
+inline fun <reified T : DaqcQuantity<T>, U : Updatable<ValueInstant<T>>>
+        U.pairWithNewRecorder(storageFrequency: StorageFrequency =
+                              StorageFrequency.All,
+                              memoryDuration: StorageDuration =
+                              StorageDuration.For(30L.secondsSpan),
+                              diskDuration: StorageDuration =
+                              StorageDuration.Forever) =
         RecordedUpdatable(this, daqcQuantityRecorder(storageFrequency, memoryDuration, diskDuration))
 
 fun <T> List<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>, shouldBeEncompasing: Boolean = false):
