@@ -29,7 +29,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
                                                 val memoryDuration: StorageDuration =
                                                 StorageDuration.For(30L.secondsSpan),
                                                 val diskDuration: StorageDuration = StorageDuration.Forever,
-                                                val updatable: Updatable<ValueInstant<T>>,
+                                                updatable: Updatable<ValueInstant<T>>,
                                                 val dataDeserializer: (String) -> T) {
 
     val uid = getMemoryRecorderUid()
@@ -254,6 +254,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
 
     fun getAllDataFromDisk(): Deferred<List<ValueInstant<T>>> = async(daqcThreadContext) { getDataFromDisk() }
 
+    //TODO: Make matching extension function for Collection<ValueInstant<T>>
     fun getDataInRange(instantRange: ClosedRange<Instant>): Deferred<List<ValueInstant<T>>> =
             async(daqcThreadContext) {
                 val start = instantRange.start
