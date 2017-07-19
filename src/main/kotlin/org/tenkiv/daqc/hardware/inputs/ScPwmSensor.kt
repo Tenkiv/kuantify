@@ -19,7 +19,7 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput,
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
 
-    override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    final override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
     override val isActive get() = digitalInput.isActiveForPwm

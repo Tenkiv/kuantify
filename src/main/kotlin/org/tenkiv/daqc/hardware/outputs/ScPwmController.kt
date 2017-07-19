@@ -16,7 +16,7 @@ abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
 
-    override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    final override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
     override fun setOutput(setting: DaqcQuantity<Q>) {
