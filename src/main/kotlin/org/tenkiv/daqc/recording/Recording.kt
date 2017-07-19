@@ -1,5 +1,6 @@
 package org.tenkiv.daqc.recording
 
+import org.tenkiv.BinaryStateMeasurement
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.secondsSpan
 import org.tenkiv.daqc.BinaryState
@@ -30,13 +31,16 @@ fun <T> recorder(storageFrequency: StorageFrequency = StorageFrequency.All,
         updatable,
         dataDeserializer)
 
-fun <T : BinaryState> binaryStateRecorder(storageFrequency: StorageFrequency = StorageFrequency.All,
-                                          memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-                                          diskDuration: StorageDuration = StorageDuration.Forever,
-                                          updatable: Updatable<ValueInstant<T>>) = Recorder(storageFrequency,
-        memoryDuration,
-        diskDuration,
-        updatable) { DaqcValue.binaryFromString(it) }
+fun Updatable<BinaryStateMeasurement>.binaryStateRecorder(storageFrequency: StorageFrequency =
+                                                          StorageFrequency.All,
+                                                          memoryDuration: StorageDuration =
+                                                          StorageDuration.For(30L.secondsSpan),
+                                                          diskDuration: StorageDuration =
+                                                          StorageDuration.Forever) =
+        Recorder(storageFrequency,
+                memoryDuration,
+                diskDuration,
+                this) { DaqcValue.binaryFromString(it) }
 
 fun <T> Updatable<ValueInstant<T>>.createRecorder(storageFrequency: StorageFrequency = StorageFrequency.All,
                                                   memoryDuration: StorageDuration =
@@ -68,13 +72,21 @@ fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(storageFrequency: 
                                                               dataDeserializer: (String) -> T) =
         RecordedUpdatable(this, this.createRecorder(storageFrequency, memoryDuration, diskDuration, dataDeserializer))
 
+fun <U : Updatable<BinaryStateMeasurement>> U.pairWithNewBinStateRecorder(storageFrequency: StorageFrequency =
+                                                                          StorageFrequency.All,
+                                                                          memoryDuration: StorageDuration =
+                                                                          StorageDuration.For(30L.secondsSpan),
+                                                                          diskDuration: StorageDuration =
+                                                                          StorageDuration.Forever) =
+        RecordedUpdatable(this, binaryStateRecorder(storageFrequency, memoryDuration, diskDuration))
+
 inline fun <reified T : DaqcQuantity<T>, U : Updatable<ValueInstant<T>>>
-        U.pairWithNewRecorder(storageFrequency: StorageFrequency =
-                              StorageFrequency.All,
-                              memoryDuration: StorageDuration =
-                              StorageDuration.For(30L.secondsSpan),
-                              diskDuration: StorageDuration =
-                              StorageDuration.Forever) =
+        U.pairWithNewQuantityRecorder(storageFrequency: StorageFrequency =
+                                      StorageFrequency.All,
+                                      memoryDuration: StorageDuration =
+                                      StorageDuration.For(30L.secondsSpan),
+                                      diskDuration: StorageDuration =
+                                      StorageDuration.Forever) =
         RecordedUpdatable(this, daqcQuantityRecorder(storageFrequency, memoryDuration, diskDuration))
 
 fun <T> List<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>, shouldBeEncompasing: Boolean = false):
