@@ -52,6 +52,16 @@ sealed class DaqcValue {
                 throw DataFormatException("Data with Quantity value not found")
             }
         }
+
+
+        inline fun <reified Q : DaqcQuantity<Q>> daqcQuantityFromString(input: String): DaqcQuantity<Q> {
+            val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType<Q>()
+            if (quant != null) {
+                return DaqcQuantity.of(quant)
+            } else {
+                throw DataFormatException("Data with Quantity value not found")
+            }
+        }
     }
 }
 

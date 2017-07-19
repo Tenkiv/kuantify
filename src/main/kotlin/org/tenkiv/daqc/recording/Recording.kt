@@ -11,6 +11,7 @@ import org.tenkiv.daqc.hardware.definitions.channel.BinaryStateOutput
 import org.tenkiv.daqc.hardware.definitions.channel.QuantityInput
 import org.tenkiv.daqc.hardware.definitions.channel.QuantityOutput
 import java.time.Duration
+import java.time.Instant
 
 
 typealias RecordedQuantityInput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityInput<Q>>
@@ -29,13 +30,13 @@ fun <T> recorder(storageFrequency: StorageFrequency = StorageFrequency.All,
         updatable,
         dataDeserializer)
 
-fun <T : DaqcValue> daqcValueRecorder(storageFrequency: StorageFrequency = StorageFrequency.All,
-                                      memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-                                      diskDuration: StorageDuration = StorageDuration.Forever,
-                                      updatable: Updatable<ValueInstant<T>>) = Recorder(storageFrequency,
+fun <T : BinaryState> binaryStateRecorder(storageFrequency: StorageFrequency = StorageFrequency.All,
+                                          memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+                                          diskDuration: StorageDuration = StorageDuration.Forever,
+                                          updatable: Updatable<ValueInstant<T>>) = Recorder(storageFrequency,
         memoryDuration,
         diskDuration,
-        updatable) { TODO("Use jackson or parsing here") }
+        updatable) { DaqcValue.binaryFromString(it) }
 
 fun <T> Updatable<ValueInstant<T>>.createRecorder(storageFrequency: StorageFrequency = StorageFrequency.All,
                                                   memoryDuration: StorageDuration =
@@ -48,16 +49,16 @@ fun <T> Updatable<ValueInstant<T>>.createRecorder(storageFrequency: StorageFrequ
                 this,
                 dataDeserializer)
 
-fun <T : DaqcValue> Updatable<ValueInstant<T>>.createRecorder(storageFrequency: StorageFrequency =
-                                                              StorageFrequency.All,
-                                                              memoryDuration: StorageDuration =
-                                                              StorageDuration.For(30L.secondsSpan),
-                                                              diskDuration: StorageDuration =
-                                                              StorageDuration.Forever): Recorder<T> =
-        Recorder(storageFrequency,
+inline fun <reified T : DaqcQuantity<T>> Updatable<ValueInstant<T>>.daqcQuantityRecorder(storageFrequency: StorageFrequency =
+                                                                                         StorageFrequency.All,
+                                                                                         memoryDuration: StorageDuration =
+                                                                                         StorageDuration.For(30L.secondsSpan),
+                                                                                         diskDuration: StorageDuration =
+                                                                                         StorageDuration.Forever): Recorder<DaqcQuantity<T>> =
+        recorder(storageFrequency,
                 memoryDuration,
                 diskDuration,
-                this) { TODO("Use jackson or parsing here") }
+                this) { DaqcValue.quantityFromString<T>(it) }
 
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(storageFrequency: StorageFrequency = StorageFrequency.All,
                                                               memoryDuration: StorageDuration =
@@ -66,13 +67,33 @@ fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(storageFrequency: 
                                                               dataDeserializer: (String) -> T) =
         RecordedUpdatable(this, this.createRecorder(storageFrequency, memoryDuration, diskDuration, dataDeserializer))
 
-fun <T : DaqcValue, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(storageFrequency: StorageFrequency =
-                                                                          StorageFrequency.All,
-                                                                          memoryDuration: StorageDuration =
-                                                                          StorageDuration.For(30L.secondsSpan),
-                                                                          diskDuration: StorageDuration =
-                                                                          StorageDuration.Forever) =
-        RecordedUpdatable(this, this.createRecorder(storageFrequency, memoryDuration, diskDuration))
+inline fun <reified T : DaqcQuantity<T>, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(storageFrequency: StorageFrequency =
+                                                                                               StorageFrequency.All,
+                                                                                               memoryDuration: StorageDuration =
+                                                                                               StorageDuration.For(30L.secondsSpan),
+                                                                                               diskDuration: StorageDuration =
+                                                                                               StorageDuration.Forever) =
+        RecordedUpdatable(this, daqcQuantityRecorder(storageFrequency, memoryDuration, diskDuration))
+
+fun <T> List<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>, shouldBeEncompasing: Boolean = false):
+        List<ValueInstant<T>> {
+
+    val start = instantRange.start
+    val end = instantRange.endInclusive
+
+    if (shouldBeEncompasing && start.isBefore(Instant.now())) {
+        throw IllegalArgumentException("Requested start time is in the future.")
+    }
+
+    val found = ArrayList<ValueInstant<T>>(filter { it.instant.isAfter(start) && it.instant.isBefore(end) })
+
+    if (shouldBeEncompasing && found.sortedBy { it.instant }.last().instant.isBefore(end)) {
+        throw IllegalArgumentException("Last possible Instant is before last requested Instant")
+    }
+
+    return found
+}
+
 
 data class RecordedUpdatable<out T, out U : Updatable<ValueInstant<T>>>(val updatable: U,
                                                                         val recorder: Recorder<T>)

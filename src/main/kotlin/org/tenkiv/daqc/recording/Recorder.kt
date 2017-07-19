@@ -12,7 +12,6 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.secondsSpan
 import org.tenkiv.daqc.StoredData
 import org.tenkiv.daqc.hardware.definitions.Updatable
-import org.tenkiv.daqcThreadContext
 import org.tenkiv.getMemoryRecorderUid
 import java.io.File
 import java.nio.ByteBuffer
@@ -34,6 +33,8 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
 
     val uid = getMemoryRecorderUid()
 
+    private val context = newSingleThreadContext("Recorder Context")
+
     private val currentFilesMap = HashMap<Instant, File>()
 
     private var perCountFrequencyCounter = 0
@@ -51,7 +52,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
         val file = File("tempStorage_${uid}_${now.toEpochMilli()}.json")
         val writer = AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE)
 
-        launch(daqcThreadContext) {
+        launch(context) {
             mutex.withLock {
                 writeJsonBuffer("[", fileChannel)
 
@@ -59,7 +60,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
         }
         if (currentFilesMap.size != 0) {
             if (fileChannel.isOpen) {
-                launch(daqcThreadContext) {
+                launch(context) {
                     mutex.withLock {
                         writeJsonBuffer("]", fileChannel)
                         fileChannel.force(true)
@@ -92,7 +93,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
 
         if (diskDuration is StorageDuration.For) {
             val delay = diskDuration.duration.toMillis() / 2
-            diskRefreshJob = launch(daqcThreadContext) {
+            diskRefreshJob = launch(context) {
                 while (isActive) {
                     delay(delay)
                     fileChannel = getNewFileWriter()
@@ -103,7 +104,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
 
         if (memoryDuration is StorageDuration.For) {
             val delay = memoryDuration.duration.toMillis() / 2
-            memoryRefreshJob = launch(daqcThreadContext) {
+            memoryRefreshJob = launch(context) {
                 while (isActive) {
                     delay(delay)
                     checkMemoryAge()
@@ -143,7 +144,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
             val now = Instant.now()
             currentFilesMap.iterator().forEach {
                 if (Duration.between(it.key, now) > diskDuration.duration) {
-                    launch(daqcThreadContext) {
+                    launch(context) {
                         currentFilesMap[it.key]?.delete()
                         currentFilesMap.remove(it.key)
                     }
@@ -157,7 +158,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
         if (memoryDuration is StorageDuration.For) {
             _dataInMemory.iterator().forEach {
                 if (Duration.between(it.instant, now) > memoryDuration.duration) {
-                    launch(daqcThreadContext) {
+                    launch(context) {
                         writeOut(it)
                         _dataInMemory.remove(it)
 
@@ -208,7 +209,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
 
     private fun writeOut(entry: ValueInstant<T>) {
         if (diskDuration != StorageDuration.None) {
-            launch(daqcThreadContext) {
+            launch(context) {
                 mutex.withLock {
 
                     writeJsonBuffer(
@@ -234,7 +235,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
         memoryRefreshJob?.cancel()
         listenJob.cancel()
         writeOut(_dataInMemory)
-        launch(daqcThreadContext) {
+        launch(context) {
             if (!deleteDiskData) {
                 writeJsonBuffer("]", fileChannel)
                 fileChannel.force(true)
@@ -252,11 +253,11 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
         }
     }
 
-    fun getAllDataFromDisk(): Deferred<List<ValueInstant<T>>> = async(daqcThreadContext) { getDataFromDisk() }
+    fun getAllDataFromDisk(): Deferred<List<ValueInstant<T>>> = async(context) { getDataFromDisk() }
 
     //TODO: Make matching extension function for Collection<ValueInstant<T>>
     fun getDataInRange(instantRange: ClosedRange<Instant>): Deferred<List<ValueInstant<T>>> =
-            async(daqcThreadContext) {
+            async(context) {
                 val start = instantRange.start
                 val end = instantRange.endInclusive
 
@@ -293,7 +294,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
     }
 
     fun getMatchingData(filter: (ValueInstant<T>) -> Boolean): Deferred<Collection<ValueInstant<T>>> =
-            async(daqcThreadContext) {
+            async(context) {
                 val found = ArrayList<ValueInstant<T>>(_dataInMemory.filter { filter(it) })
                 getDataFromDisk(filter, found)
                 return@async found
