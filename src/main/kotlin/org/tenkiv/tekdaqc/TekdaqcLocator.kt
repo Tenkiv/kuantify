@@ -3,6 +3,7 @@ package org.tenkiv.tekdaqc
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.locator.Locator
 import com.tenkiv.tekdaqc.locator.OnTekdaqcDiscovered
+import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.FoundDevice
 import org.tenkiv.LocatorUpdate
@@ -41,6 +42,8 @@ class TekdaqcLocator : OnTekdaqcDiscovered, DeviceLocator() {
         _activeDevices.add(board)
         _broadcastChannel.offer(FoundDevice(board))
     }
+
+    override fun awaitSpecificDevice(serialNumber: String): Deferred<TekdaqcDevice> = _awaitSpecificDevice(serialNumber)
 
     override fun search() {
         Locator.instance.searchForTekdaqcs()
