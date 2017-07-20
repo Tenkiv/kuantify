@@ -21,7 +21,7 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
 
     abstract fun stop()
 
-    fun awaitSpecificDevice(serialNumber: String): Deferred<Device> {
+    open fun awaitSpecificDevice(serialNumber: String): Deferred<Device> {
         return async(CommonPool) {
             return@async activeDevices.filter {
                 it.serialNumber == serialNumber
@@ -29,7 +29,7 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
         }
     }
 
-    private suspend fun awaitBroadcast(job: CoroutineScope, serialNumber: String): Device {
+    open protected suspend fun awaitBroadcast(job: CoroutineScope, serialNumber: String): Device {
         val awaitingJob = broadcastChannel.open()
         val iterator = awaitingJob.iterator()
 
