@@ -11,7 +11,7 @@ import org.tenkiv.LostDevice
 import org.tenkiv.daqc.networking.DeviceLocator
 import java.util.concurrent.CopyOnWriteArrayList
 
-class TekdaqcLocator : OnTekdaqcDiscovered, DeviceLocator() {
+class TekdaqcLocator : DeviceLocator() {
 
     private val _activeDevices = CopyOnWriteArrayList<TekdaqcDevice>()
 
@@ -24,23 +24,23 @@ class TekdaqcLocator : OnTekdaqcDiscovered, DeviceLocator() {
         get() = _broadcastChannel
 
     init {
-        Locator.instance.addLocatorListener(this)
-    }
+        Locator.instance.addLocatorListener(object : OnTekdaqcDiscovered {
+            override fun onTekdaqcResponse(tekdaqc: ATekdaqc) {}
 
-    override fun onTekdaqcResponse(tekdaqc: ATekdaqc) {}
+            override fun onTekdaqcNoLongerLocated(tekdaqc: ATekdaqc) {
+                val board = activeDevices.filter { it.serialNumber == tekdaqc.serialNumber }.firstOrNull()
+                if (board != null) {
+                    _broadcastChannel.offer(LostDevice(board))
+                }
+                _activeDevices.removeIf { it.serialNumber == tekdaqc.serialNumber }
+            }
 
-    override fun onTekdaqcNoLongerLocated(tekdaqc: ATekdaqc) {
-        val board = activeDevices.filter { it.serialNumber == tekdaqc.serialNumber }.firstOrNull()
-        if (board != null) {
-            _broadcastChannel.offer(LostDevice(board))
-        }
-        _activeDevices.removeIf { it.serialNumber == tekdaqc.serialNumber }
-    }
-
-    override fun onTekdaqcFirstLocated(tekdaqc: ATekdaqc) {
-        val board = TekdaqcDevice(tekdaqc)
-        _activeDevices.add(board)
-        _broadcastChannel.offer(FoundDevice(board))
+            override fun onTekdaqcFirstLocated(tekdaqc: ATekdaqc) {
+                val board = TekdaqcDevice(tekdaqc)
+                _activeDevices.add(board)
+                _broadcastChannel.offer(FoundDevice(board))
+            }
+        })
     }
 
     override fun awaitSpecificDevice(serialNumber: String): Deferred<TekdaqcDevice> = _awaitSpecificDevice(serialNumber)
