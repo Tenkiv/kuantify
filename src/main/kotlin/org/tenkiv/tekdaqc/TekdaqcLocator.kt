@@ -9,6 +9,7 @@ import org.tenkiv.FoundDevice
 import org.tenkiv.LocatorUpdate
 import org.tenkiv.LostDevice
 import org.tenkiv.daqc.networking.DeviceLocator
+import java.time.Duration
 import java.util.concurrent.CopyOnWriteArrayList
 
 class TekdaqcLocator : DeviceLocator() {
@@ -43,7 +44,11 @@ class TekdaqcLocator : DeviceLocator() {
         })
     }
 
-    override fun awaitSpecificDevice(serialNumber: String): Deferred<TekdaqcDevice> = _awaitSpecificDevice(serialNumber)
+    override fun getDeviceForSerial(serialNumber: String): TekdaqcDevice? =
+            activeDevices.firstOrNull { it.serialNumber == serialNumber }
+
+    override fun awaitSpecificDevice(serialNumber: String, timeout: Duration?): Deferred<TekdaqcDevice> =
+            _awaitSpecificDevice(serialNumber, timeout)
 
     override fun search() {
         Locator.instance.searchForTekdaqcs()
