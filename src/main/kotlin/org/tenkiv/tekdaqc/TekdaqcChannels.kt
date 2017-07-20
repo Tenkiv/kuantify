@@ -107,14 +107,14 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
                 maxAcceptableError,
                 tekdaqc.lineFrequency)
 
-        tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.rate = rate
-        tekdaqc.tekdaqc.analogInputs[hardwareNumber]?.gain = voltageSettings.first
+        tekdaqc.wrappedTekdaqc.analogInputs[hardwareNumber]?.rate = rate
+        tekdaqc.wrappedTekdaqc.analogInputs[hardwareNumber]?.gain = voltageSettings.first
 
-        if (tekdaqc.tekdaqc.analogInputScale != voltageSettings.second) {
+        if (tekdaqc.wrappedTekdaqc.analogInputScale != voltageSettings.second) {
             System.err.println("Tekdaqc Scale Updated. Jumper must be moved to ${voltageSettings.second}")
         }
 
-        tekdaqc.tekdaqc.analogInputScale = voltageSettings.second
+        tekdaqc.wrappedTekdaqc.analogInputScale = voltageSettings.second
 
     }
 

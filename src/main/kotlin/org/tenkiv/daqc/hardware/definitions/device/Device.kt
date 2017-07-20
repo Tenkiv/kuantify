@@ -21,5 +21,5 @@ interface Device {
 
     fun disconnect(protocol: NetworkProtocol?)
 
-    fun initializeBoard()
+    fun initializeDevice()
 }

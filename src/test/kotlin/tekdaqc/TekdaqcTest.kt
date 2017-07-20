@@ -20,8 +20,8 @@ class TekdaqcTest: StringSpec(){
                 tekdaqcLocator.broadcastChannel.consumeEach {
                     println("Got Something: $it")
                     it.forEach {
-                        println(it.tekdaqc.serialNumber)
-                        if(it.tekdaqc.serialNumber == "00000000000000000000000000000017"){
+                        println(it.wrappedTekdaqc.serialNumber)
+                        if(it.wrappedTekdaqc.serialNumber == "00000000000000000000000000000017"){
                             executeBoardCommands(it)
                             tekdaqcLocator.stop()
                         }
@@ -40,30 +40,30 @@ class TekdaqcTest: StringSpec(){
         println("Executing Board Commands")
         board.connect(LineNoiseFrequency.AccountFor(60.hertz),NetworkProtocol.TELNET)
 
-        board.tekdaqc.addListener(object: IMessageListener{
-            override fun onDigitalInputDataReceived(tekdaqc: ATekdaqc?, data: DigitalInputData?) {}
+        board.wrappedTekdaqc.addListener(object: IMessageListener{
+            override fun onDigitalInputDataReceived(wrappedTekdaqc: ATekdaqc?, data: DigitalInputData?) {}
 
-            override fun onDebugMessageReceived(tekdaqc: ATekdaqc?, message: ABoardMessage?) {
+            override fun onDebugMessageReceived(wrappedTekdaqc: ATekdaqc?, message: ABoardMessage?) {
                 println("Debug ${message.toString()}")
             }
 
-            override fun onErrorMessageReceived(tekdaqc: ATekdaqc?, message: ABoardMessage?) {
+            override fun onErrorMessageReceived(wrappedTekdaqc: ATekdaqc?, message: ABoardMessage?) {
                 println("Error ${message.toString()}")
             }
 
-            override fun onAnalogInputDataReceived(tekdaqc: ATekdaqc?, data: AnalogInputCountData?) {
+            override fun onAnalogInputDataReceived(wrappedTekdaqc: ATekdaqc?, data: AnalogInputCountData?) {
                 println("Analog ${data?.data?.toString()}")
             }
 
-            override fun onCommandDataMessageReceived(tekdaqc: ATekdaqc?, message: ABoardMessage?) {
+            override fun onCommandDataMessageReceived(wrappedTekdaqc: ATekdaqc?, message: ABoardMessage?) {
                 println("Command ${message.toString()}")
             }
 
-            override fun onStatusMessageReceived(tekdaqc: ATekdaqc?, message: ABoardMessage?) {
+            override fun onStatusMessageReceived(wrappedTekdaqc: ATekdaqc?, message: ABoardMessage?) {
                 println("Status ${message.toString()}")
             }
 
-            override fun onDigitalOutputDataReceived(tekdaqc: ATekdaqc?, data: BooleanArray?) {
+            override fun onDigitalOutputDataReceived(wrappedTekdaqc: ATekdaqc?, data: BooleanArray?) {
             }
 
         })
@@ -76,6 +76,6 @@ class TekdaqcTest: StringSpec(){
 
         board.analogInputs[0].activate()
 
-        board.tekdaqc.sample(100)
+        board.wrappedTekdaqc.sample(100)
     }*/
 }

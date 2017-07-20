@@ -24,7 +24,7 @@ internal fun getMemoryRecorderUid(): String {
     return (memRecorderUid++).toString()
 }
 
-sealed class LocatorUpdate<out T : Device>(val capturedDevice: T) : Device by capturedDevice
+sealed class LocatorUpdate<out T : Device>(val wrappedDevice: T) : Device by wrappedDevice
 
 class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device)
 

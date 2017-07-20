@@ -10,17 +10,13 @@ import org.tenkiv.daqc.networking.NetworkProtocol
 import org.tenkiv.daqc.networking.SharingStatus
 import org.tenkiv.daqc.networking.UnsupportedProtocolException
 import org.tenkiv.physikal.core.hertz
-import org.tenkiv.physikal.core.tu
-import tec.uom.se.unit.MetricPrefix.MILLI
-import tec.uom.se.unit.Units.SECOND
 import java.net.InetAddress
-import javax.measure.Quantity
-import javax.measure.quantity.Time
+import java.time.Duration
 
-class TekdaqcDevice(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice {
+class TekdaqcDevice(val wrappedTekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice {
 
-    override val inetAddr: InetAddress = InetAddress.getByName(tekdaqc.hostIP)
-    override val serialNumber: String = tekdaqc.serialNumber
+    override val inetAddr: InetAddress = InetAddress.getByName(wrappedTekdaqc.hostIP)
+    override val serialNumber: String = wrappedTekdaqc.serialNumber
     override var isConnected = false
     override var networkProtocol: NetworkProtocol = NetworkProtocol.TELNET
     override var networkSharingStatus: SharingStatus = SharingStatus.NONE
@@ -33,31 +29,32 @@ class TekdaqcDevice(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevic
 
         when (protocol) {
             NetworkProtocol.TELNET, NetworkProtocol.TCP -> {
-                tekdaqc.connect(ATekdaqc.AnalogScale.ANALOG_SCALE_5V, ATekdaqc.CONNECTION_METHOD.ETHERNET)
+                wrappedTekdaqc.connect(ATekdaqc.AnalogScale.ANALOG_SCALE_5V, ATekdaqc.CONNECTION_METHOD.ETHERNET)
             }
             else -> {
+                //TODO: Add message
                 throw UnsupportedProtocolException()
             }
         }
 
-        initializeBoard()
+        initializeDevice()
     }
 
     override fun disconnect(protocol: NetworkProtocol?) {
-        tekdaqc.disconnectCleanly()
+        wrappedTekdaqc.disconnectCleanly()
     }
 
-    fun restoreBoard(millisTimeout: Quantity<Time>, reAddChannels: Boolean) {
-        tekdaqc.restoreTekdaqc((millisTimeout tu MILLI(SECOND)).value.toLong(), reAddChannels)
+    fun restoreTekdaqc(timeout: Duration, reAddChannels: Boolean = true) {
+        wrappedTekdaqc.restoreTekdaqc(timeout.toMillis(), reAddChannels)
     }
 
     override val analogOutputs: List<AnalogOutput> = emptyList()
 
-    override val digitalOutputs: List<DigitalOutput> = toDaqcDO(tekdaqc.digitalOutputs.values)
+    override val digitalOutputs: List<DigitalOutput> = toDaqcDO(wrappedTekdaqc.digitalOutputs.values)
 
-    override val analogInputs: List<AnalogInput> = toDaqcAI(tekdaqc.analogInputs.values)
+    override val analogInputs: List<AnalogInput> = toDaqcAI(wrappedTekdaqc.analogInputs.values)
 
-    override val digitalInputs: List<DigitalInput> = toDaqcDI(tekdaqc.digitalInputs.values)
+    override val digitalInputs: List<DigitalInput> = toDaqcDI(wrappedTekdaqc.digitalInputs.values)
 
     override val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>> = HashMap()
 
@@ -75,10 +72,11 @@ class TekdaqcDevice(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevic
 
     internal var mandatory400Voltage: Boolean = false
 
-    override fun initializeBoard() {
+    override fun initializeDevice() {
         analogInputs.forEach { it.deactivate() }
         digitalInputs.forEach { it.deactivate() }
         digitalOutputs.forEach { it.deactivate() }
+        wrappedTekdaqc.sample(0)
     }
 
     private fun toDaqcAI(inputs: Collection<com.tenkiv.tekdaqc.hardware.AAnalogInput>): List<TekdaqcAnalogInput> {
@@ -100,8 +98,8 @@ class TekdaqcDevice(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevic
     }
 
     var analogScale: ATekdaqc.AnalogScale
-        get() = tekdaqc.analogInputScale
+        get() = wrappedTekdaqc.analogInputScale
         set(value) {
-            tekdaqc.analogInputScale = value
+            wrappedTekdaqc.analogInputScale = value
         }
 }
