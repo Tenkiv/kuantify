@@ -1,14 +1,13 @@
 package org.tenkiv.daqc.networking
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
 import org.tenkiv.FoundDevice
 import org.tenkiv.LocatorUpdate
 import org.tenkiv.daqc.hardware.definitions.Updatable
 import org.tenkiv.daqc.hardware.definitions.device.Device
+import java.time.Duration
+import java.util.concurrent.TimeoutException
 
 abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
 
@@ -21,13 +20,15 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
 
     abstract fun stop()
 
-    abstract fun awaitSpecificDevice(serialNumber: String): Deferred<Device>
+    abstract fun awaitSpecificDevice(serialNumber: String, timeout: Duration? = null): Deferred<Device>
 
-    protected inline fun <reified T : Device> _awaitSpecificDevice(serialNumber: String): Deferred<T> =
-            async(CommonPool) {
+    abstract fun getDeviceForSerial(serialNumber: String): Device?
+
+    protected inline fun <reified T : Device> _awaitSpecificDevice(serialNumber: String, timeout: Duration? = null):
+            Deferred<T> = async(CommonPool) {
                 val device = activeDevices.filter {
                     it.serialNumber == serialNumber
-                }.firstOrNull() ?: awaitBroadcast(this@async, serialNumber)
+                }.firstOrNull() ?: awaitBroadcast(this@async, serialNumber, timeout)
 
                 device as? T ?: throw ClassCastException(
                         "Implementation error in class extending DeviceLocator.\n" +
@@ -36,15 +37,25 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
                 )
             }
 
-    //TODO: Consider making this an inner function of _awaitSpecificDevice.
-    protected suspend fun awaitBroadcast(job: CoroutineScope, serialNumber: String): Device {
+    //TODO: Make this an inner function of _awaitSpecificDevice when it is allowed by kotlin runtime.
+    protected suspend fun awaitBroadcast(job: CoroutineScope, serialNumber: String, timeout: Duration? = null): Device {
         val awaitingJob = broadcastChannel.open()
         val iterator = awaitingJob.iterator()
+
+        val timeOutJob =
+                if (timeout != null)
+                    launch(CommonPool) {
+                        delay(timeout.toMillis())
+                        throw TimeoutException("Awaiting Device: $serialNumber Timed Out")
+                    }
+                else
+                    null
 
         while (iterator.hasNext() && job.isActive) {
             val next = iterator.next()
             if (next is FoundDevice<*> && next.serialNumber == serialNumber) {
                 awaitingJob.use {
+                    timeOutJob?.cancel()
                     return next
                 }
             }
