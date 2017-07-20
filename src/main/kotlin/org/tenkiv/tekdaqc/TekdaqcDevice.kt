@@ -61,8 +61,6 @@ class TekdaqcDevice(val tekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevic
 
     override val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>> = HashMap()
 
-    //override val sharedInputs: MutableMap<SharingStatus, Input<ValueInstant<DaqcValue>>> = HashMap()
-
     override val sharedInputs: MutableMap<SharingStatus, Input<DaqcValue>> = HashMap()
 
     override val hasAnalogOutputs get() = false
