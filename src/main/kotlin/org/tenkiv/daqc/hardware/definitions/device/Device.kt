@@ -17,7 +17,7 @@ interface Device {
 
     var networkSharingStatus: SharingStatus
 
-    fun connect(lineFrequency: LineNoiseFrequency, protocol: NetworkProtocol?)
+    fun connect(lineFrequency: LineNoiseFrequency, protocol: NetworkProtocol? = null)
 
     fun disconnect(protocol: NetworkProtocol?)
 
