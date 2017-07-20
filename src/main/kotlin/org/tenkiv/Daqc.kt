@@ -26,9 +26,15 @@ internal fun getMemoryRecorderUid(): String {
 
 sealed class LocatorUpdate<out T : Device>(val wrappedDevice: T) : Device by wrappedDevice
 
-class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device)
+class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
 
-class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device)
+    override fun toString() = "FoundDevice: $wrappedDevice"
+}
+
+class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
+
+    override fun toString() = "LostDevice: $wrappedDevice"
+}
 
 
 open class DaqcException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)
