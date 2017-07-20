@@ -21,7 +21,7 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
 
     abstract fun stop()
 
-    suspend fun awaitSpecificDevice(serialNumber: String): Deferred<Device> {
+    fun awaitSpecificDevice(serialNumber: String): Deferred<Device> {
         return async(CommonPool) {
             return@async activeDevices.filter {
                 it.serialNumber == serialNumber
