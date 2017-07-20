@@ -31,11 +31,19 @@ class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device)
 class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device)
 
 
-class DaqcException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)
+open class DaqcException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)
 
-enum class DaqcCriticalError {
-    FAILED_TO_REINITIALIZE,
-    FAILED_MAJOR_COMMAND,
-    TERMINAL_CONNECTION_DISRUPTION,
-    PARTIAL_DISCONNECTION
+
+sealed class DaqcCriticalError {
+
+    abstract val device: Device
+
+    data class FailedToReinitialize(override val device: Device) : DaqcCriticalError()
+
+    data class FailedMajorCommand(override val device: Device) : DaqcCriticalError()
+
+    data class TerminalConnectionDisruption(override val device: Device) : DaqcCriticalError()
+
+    data class PartialDisconnection(override val device: Device) : DaqcCriticalError()
+
 }
