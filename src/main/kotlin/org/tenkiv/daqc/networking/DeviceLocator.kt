@@ -1,6 +1,7 @@
 package org.tenkiv.daqc.networking
 
 import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
@@ -8,7 +9,6 @@ import org.tenkiv.FoundDevice
 import org.tenkiv.LocatorUpdate
 import org.tenkiv.daqc.hardware.definitions.Updatable
 import org.tenkiv.daqc.hardware.definitions.device.Device
-import kotlin.run
 
 abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
 
@@ -27,22 +27,7 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
             async(CommonPool) {
                 val device = activeDevices.filter {
                     it.serialNumber == serialNumber
-                }.firstOrNull() ?: run {
-                    //TODO: Consider splitting this off into separate function.
-                    val awaitingJob = broadcastChannel.open()
-                    val iterator = awaitingJob.iterator()
-
-                    while (iterator.hasNext() && this@async.isActive) {
-                        val next = iterator.next()
-                        if (next is FoundDevice<*> && next.serialNumber == serialNumber) {
-                            awaitingJob.use {
-                                return@run next
-                            }
-                        }
-                    }
-                    throw ClosedReceiveChannelException("Broadcast channel for DeviceLocator updates was closed " +
-                            "while awaiting a specific device.")
-                }
+                }.firstOrNull() ?: awaitBroadcast(this@async, serialNumber)
 
                 device as? T ?: throw ClassCastException(
                         "Implementation error in class extending DeviceLocator.\n" +
@@ -50,4 +35,22 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
                                 " implementation of DeviceLocator."
                 )
             }
+
+    //TODO: Consider making this an inner function of _awaitSpecificDevice.
+    protected suspend fun awaitBroadcast(job: CoroutineScope, serialNumber: String): Device {
+        val awaitingJob = broadcastChannel.open()
+        val iterator = awaitingJob.iterator()
+
+        while (iterator.hasNext() && job.isActive) {
+            val next = iterator.next()
+            if (next is FoundDevice<*> && next.serialNumber == serialNumber) {
+                awaitingJob.use {
+                    return next
+                }
+            }
+        }
+        throw ClosedReceiveChannelException("Broadcast channel for DeviceLocator updates was closed " +
+                "while awaiting a specific device.")
+    }
+
 }
