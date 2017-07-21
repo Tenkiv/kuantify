@@ -1,6 +1,7 @@
 package org.tenkiv.daqc.recording
 
 import org.tenkiv.BinaryStateMeasurement
+import org.tenkiv.QuantityMeasurement
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.secondsSpan
 import org.tenkiv.daqc.BinaryState
@@ -13,6 +14,7 @@ import org.tenkiv.daqc.hardware.definitions.channel.QuantityInput
 import org.tenkiv.daqc.hardware.definitions.channel.QuantityOutput
 import java.time.Duration
 import java.time.Instant
+import javax.measure.Quantity
 
 
 typealias RecordedQuantityInput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityInput<Q>>
@@ -53,17 +55,17 @@ fun <T> Updatable<ValueInstant<T>>.createRecorder(storageFrequency: StorageFrequ
                 this,
                 dataDeserializer)
 
-inline fun <reified T : DaqcQuantity<T>>
-        Updatable<ValueInstant<T>>.daqcQuantityRecorder(storageFrequency: StorageFrequency =
-                                                        StorageFrequency.All,
-                                                        memoryDuration: StorageDuration =
-                                                        StorageDuration.For(30L.secondsSpan),
-                                                        diskDuration: StorageDuration =
-                                                        StorageDuration.Forever): Recorder<DaqcQuantity<T>> =
+inline fun <reified Q : Quantity<Q>>
+        Updatable<QuantityMeasurement<Q>>.daqcQuantityRecorder(storageFrequency: StorageFrequency =
+                                                               StorageFrequency.All,
+                                                               memoryDuration: StorageDuration =
+                                                               StorageDuration.For(30L.secondsSpan),
+                                                               diskDuration: StorageDuration =
+                                                               StorageDuration.Forever): Recorder<DaqcQuantity<Q>> =
         recorder(storageFrequency,
                 memoryDuration,
                 diskDuration,
-                this) { DaqcValue.quantityFromString<T>(it) }
+                this) { DaqcValue.quantityFromString<Q>(it) }
 
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(storageFrequency: StorageFrequency = StorageFrequency.All,
                                                               memoryDuration: StorageDuration =
@@ -80,7 +82,8 @@ fun <U : Updatable<BinaryStateMeasurement>> U.pairWithNewBinStateRecorder(storag
                                                                           StorageDuration.Forever) =
         RecordedUpdatable(this, binaryStateRecorder(storageFrequency, memoryDuration, diskDuration))
 
-inline fun <reified T : DaqcQuantity<T>, U : Updatable<ValueInstant<T>>>
+//TODO: Using type aliases here seems to crash the compiler, switch to type alias when that is fixed.
+inline fun <reified Q : Quantity<Q>, U : Updatable<ValueInstant<DaqcQuantity<Q>>>>
         U.pairWithNewQuantityRecorder(storageFrequency: StorageFrequency =
                                       StorageFrequency.All,
                                       memoryDuration: StorageDuration =
@@ -89,19 +92,19 @@ inline fun <reified T : DaqcQuantity<T>, U : Updatable<ValueInstant<T>>>
                                       StorageDuration.Forever) =
         RecordedUpdatable(this, daqcQuantityRecorder(storageFrequency, memoryDuration, diskDuration))
 
-fun <T> List<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>, shouldBeEncompasing: Boolean = false):
+fun <T> List<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>, shouldBeEncompassing: Boolean = false):
         List<ValueInstant<T>> {
 
     val start = instantRange.start
     val end = instantRange.endInclusive
 
-    if (shouldBeEncompasing && start.isBefore(Instant.now())) {
+    if (shouldBeEncompassing && start.isBefore(Instant.now())) {
         throw IllegalArgumentException("Requested start time is in the future.")
     }
 
     val found = ArrayList<ValueInstant<T>>(filter { it.instant.isAfter(start) && it.instant.isBefore(end) })
 
-    if (shouldBeEncompasing && found.sortedBy { it.instant }.last().instant.isBefore(end)) {
+    if (shouldBeEncompassing && found.sortedBy { it.instant }.last().instant.isBefore(end)) {
         throw IllegalArgumentException("Last possible Instant is before last requested Instant")
     }
 
