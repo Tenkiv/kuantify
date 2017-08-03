@@ -23,10 +23,13 @@ class ThermocoupleK(channel: AnalogInput,
 
     /**
      * @throws ValueOutOfRangeException
+     * @throws UninitializedPropertyAccessException
      */
     override fun convertInput(ep: ComparableQuantity<ElectricPotential>): DaqcQuantity<Temperature> {
         val mv = ep.toDoubleIn(MILLI(VOLT))
-        val temperatureReferenceValue = analogInput.device.temperatureReference.broadcastChannel.value.value
+        val temperatureReferenceValue =
+                analogInput.device.temperatureReference.broadcastChannel.valueOrNull?.value ?:
+                        throw UninitializedPropertyAccessException("")
 
         fun calculate(c0: Double,
                       c1: Double,
