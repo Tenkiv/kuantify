@@ -78,10 +78,26 @@ sealed class BinaryState : DaqcValue() {
 
 }
 
-data class DaqcQuantity<Q : Quantity<Q>>(private val quantity: ComparableQuantity<Q>)
+open class DaqcQuantity<Q : Quantity<Q>>(private val quantity: ComparableQuantity<Q>)
     : DaqcValue(), ComparableQuantity<Q> by quantity {
 
     override fun toString() = quantity.toString()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other?.javaClass != javaClass) return false
+
+        other as DaqcQuantity<*>
+
+        if (quantity != other.quantity) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return quantity.hashCode()
+    }
+
 
     companion object {
         fun <Q : Quantity<Q>> of(value: Number, unit: Unit<Q>) =
