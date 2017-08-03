@@ -15,7 +15,8 @@ import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Temperature
 
 
-class ThermocoupleK(channel: AnalogInput, acceptableError: ComparableQuantity<Temperature> = 1.celsius) :
+class ThermocoupleK(channel: AnalogInput,
+                    acceptableError: ComparableQuantity<Temperature> = 1.celsius) :
         ScAnalogSensor<Temperature>(channel,
                 maximumEp = 55.milli.volt,
                 acceptableError = 18.micro.volt * acceptableError.toDoubleIn(CELSIUS)) {
@@ -25,6 +26,7 @@ class ThermocoupleK(channel: AnalogInput, acceptableError: ComparableQuantity<Te
      */
     override fun convertInput(ep: ComparableQuantity<ElectricPotential>): DaqcQuantity<Temperature> {
         val mv = ep.toDoubleIn(MILLI(VOLT))
+        val temperatureReferenceValue = analogInput.device.temperatureReference.broadcastChannel.value.value
 
         fun calculate(c0: Double,
                       c1: Double,
@@ -35,7 +37,7 @@ class ThermocoupleK(channel: AnalogInput, acceptableError: ComparableQuantity<Te
                       c6: Double,
                       c7: Double,
                       c8: Double,
-                      c9: Double) = (c0 +
+                      c9: Double) = ((c0 +
                 (c1 * mv) +
                 (c2 * mv.pow(2.0)) +
                 (c3 * mv.pow(3.0)) +
@@ -44,7 +46,7 @@ class ThermocoupleK(channel: AnalogInput, acceptableError: ComparableQuantity<Te
                 (c6 * mv.pow(6.0)) +
                 (c7 * mv.pow(7.0)) +
                 (c8 * mv.pow(8.0)) +
-                (c9 * mv.pow(9.0))).celsius.toDaqc()
+                (c9 * mv.pow(9.0))).celsius + temperatureReferenceValue).toDaqc()
 
         if (mv >= -5.891 && mv < 0)
             return calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0)
