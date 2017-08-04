@@ -45,7 +45,6 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
         }
     }
 
-    //TODO: Consider making this return a result.
     abstract protected fun convertInput(ep: ComparableQuantity<ElectricPotential>): Result<DaqcQuantity<Q>, Exception>
 
     override fun activate() = analogInput.activate()
