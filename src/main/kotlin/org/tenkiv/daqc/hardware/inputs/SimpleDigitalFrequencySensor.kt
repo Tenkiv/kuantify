@@ -8,6 +8,8 @@ class SimpleDigitalFrequencySensor(val digitalInput: DigitalInput) : QuantityInp
 
     override val broadcastChannel get() = digitalInput.transitionFrequencyBroadcastChannel
 
+    override val failureBroadcastChannel get() = digitalInput.failureBroadcastChannel
+
     override val isActive get() = digitalInput.isActiveForTransitionFrequency
 
     override fun activate() = digitalInput.activateForTransitionFrequency()

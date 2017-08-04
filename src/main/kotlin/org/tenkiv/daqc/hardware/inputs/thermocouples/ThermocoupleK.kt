@@ -1,5 +1,6 @@
 package org.tenkiv.daqc.hardware.inputs.thermocouples
 
+import com.github.kittinunf.result.Result
 import org.tenkiv.coral.pow
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
@@ -21,15 +22,20 @@ class ThermocoupleK(channel: AnalogInput,
                 maximumEp = 55.milli.volt,
                 acceptableError = 18.micro.volt * acceptableError.toDoubleIn(CELSIUS)) {
 
+    private val noTempRefValueMsg get() =
+    "The temperature reference for device:\n" +
+            " ${analogInput.device} \n" +
+            "has not yet measured a temperature, thermocouples from this device cannot function until it does."
+
     /**
      * @throws ValueOutOfRangeException
      * @throws UninitializedPropertyAccessException
      */
-    override fun convertInput(ep: ComparableQuantity<ElectricPotential>): DaqcQuantity<Temperature> {
+    @Throws(ValueOutOfRangeException::class, UninitializedPropertyAccessException::class)
+    override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Result<DaqcQuantity<Temperature>, Exception> {
         val mv = ep.toDoubleIn(MILLI(VOLT))
         val temperatureReferenceValue =
-                analogInput.device.temperatureReference.broadcastChannel.valueOrNull?.value ?:
-                        throw UninitializedPropertyAccessException("")
+                analogInput.device.temperatureReference.broadcastChannel.valueOrNull?.value
 
         fun calculate(c0: Double,
                       c1: Double,
@@ -49,17 +55,22 @@ class ThermocoupleK(channel: AnalogInput,
                 (c6 * mv.pow(6.0)) +
                 (c7 * mv.pow(7.0)) +
                 (c8 * mv.pow(8.0)) +
-                (c9 * mv.pow(9.0))).celsius + temperatureReferenceValue).toDaqc()
+                (c9 * mv.pow(9.0))).celsius +
+                (temperatureReferenceValue ?: throw UninitializedPropertyAccessException(noTempRefValueMsg))
+                ).toDaqc()
 
-        if (mv >= -5.891 && mv < 0)
-            return calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0)
-        else if (mv >= 0 && mv < 20.644)
-            return calculate(0.0, mid1, mid2, mid3, mid4, mid5, mid6, mid7, mid8, mid9)
-        else if (mv >= 20.644 && mv < 54.886)
-            return calculate(hi0, hi1, hi2, hi3, hi4, hi5, hi6, 0.0, 0.0, 0.0)
-        else
-            throw ValueOutOfRangeException("Type K thermocouple cannot accurately produce a temperature from" +
-                    " voltage ${ep tu MILLI(VOLT)}")
+        return Result.of {
+            if (mv >= -5.891 && mv < 0)
+                calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0)
+            else if (mv >= 0 && mv < 20.644)
+                calculate(0.0, mid1, mid2, mid3, mid4, mid5, mid6, mid7, mid8, mid9)
+            else if (mv >= 20.644 && mv < 54.886)
+                calculate(hi0, hi1, hi2, hi3, hi4, hi5, hi6, 0.0, 0.0, 0.0)
+            else
+                throw ValueOutOfRangeException("Type K thermocouple cannot accurately produce a temperature from" +
+                        " voltage ${ep tu MILLI(VOLT)}")
+        }
+
     }
 
     companion object {

@@ -13,6 +13,9 @@ interface Output<T : DaqcValue> : Updatable<ValueInstant<T>> {
 
     val isActive: Boolean
 
+    /**
+     * @throws Throwable if something prevents this output from being set.
+     */
     fun setOutput(setting: T)
 
     fun deactivate()

@@ -1,8 +1,10 @@
 package org.tenkiv.daqc.hardware.inputs
 
+import com.github.kittinunf.result.Result
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.QuantityMeasurement
+import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
@@ -18,15 +20,23 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput,
         QuantityInput<Q> {
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-
     final override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
+
+    private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
+    final override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        get() = _failureBroadcastChannel
 
     override val isActive get() = digitalInput.isActiveForPwm
 
     init {
-        digitalInput.pwmBroadcastChannel.openNewCoroutineListener(CommonPool) {
-            _broadcastChannel.send(convertInput(it.value) at it.instant)
+        digitalInput.pwmBroadcastChannel.openNewCoroutineListener(CommonPool) { measurement ->
+            val convertedInput = convertInput(measurement.value)
+
+            when (convertedInput) {
+                is Result.Success -> _broadcastChannel.send(convertedInput.value at measurement.instant)
+                is Result.Failure -> _failureBroadcastChannel.send(convertedInput.error at measurement.instant)
+            }
         }
     }
 
@@ -34,5 +44,5 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput,
 
     override fun deactivate() = digitalInput.deactivate()
 
-    protected abstract fun convertInput(percentOn: ComparableQuantity<Dimensionless>): DaqcQuantity<Q>
+    protected abstract fun convertInput(percentOn: ComparableQuantity<Dimensionless>): Result<DaqcQuantity<Q>, *>
 }

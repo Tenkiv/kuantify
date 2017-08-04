@@ -7,6 +7,8 @@ class SimpleBinaryStateSensor(val digitalInput: DigitalInput) : BinaryStateInput
 
     override val broadcastChannel get() = digitalInput.broadcastChannel
 
+    override val failureBroadcastChannel get() = digitalInput.failureBroadcastChannel
+
     override val isActive get() = digitalInput.isActive
 
     override fun activate() = digitalInput.activate()

@@ -12,6 +12,8 @@ class SimplePwmSensor(val digitalInput: DigitalInput,
 
     override val broadcastChannel get() = digitalInput.pwmBroadcastChannel
 
+    override val failureBroadcastChannel get() = digitalInput.failureBroadcastChannel
+
     override val isActive get() = digitalInput.isActiveForPwm
 
     override fun activate() = digitalInput.activateForPwm(avgFrequency)
