@@ -14,6 +14,8 @@ import javax.measure.quantity.ElectricPotential
 
 
 class DigitalGibberingSensor : Input<BinaryState> {
+    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<BinaryState>>()
     override val isActive: Boolean = false
 
@@ -40,6 +42,8 @@ class DigitalGibberingSensor : Input<BinaryState> {
 }
 
 class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
+    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
 
     override val isActive: Boolean = false

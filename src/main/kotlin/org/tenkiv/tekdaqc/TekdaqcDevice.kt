@@ -12,8 +12,12 @@ import org.tenkiv.daqc.networking.UnsupportedProtocolException
 import org.tenkiv.physikal.core.hertz
 import java.net.InetAddress
 import java.time.Duration
+import javax.measure.quantity.Temperature
 
 class TekdaqcDevice(val wrappedTekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice {
+
+    override val temperatureReference: QuantityInput<Temperature> =
+            TekdaqcTemperatureReference(TekdaqcAnalogInput(this, wrappedTekdaqc.temperatureReference))
 
     override val inetAddr: InetAddress = InetAddress.getByName(wrappedTekdaqc.hostIP)
     override val serialNumber: String = wrappedTekdaqc.serialNumber
@@ -21,7 +25,7 @@ class TekdaqcDevice(val wrappedTekdaqc: ATekdaqc) : ControlDevice, DataAcquisiti
     override var networkProtocol: NetworkProtocol = NetworkProtocol.TELNET
     override var networkSharingStatus: SharingStatus = SharingStatus.NONE
 
-    var lineFrequency: LineNoiseFrequency = LineNoiseFrequency.AccountFor(50.hertz)
+    var lineFrequency: LineNoiseFrequency = LineNoiseFrequency.AccountFor(60.hertz)
 
     override fun connect(lineFrequency: LineNoiseFrequency, protocol: NetworkProtocol?) {
 
@@ -73,6 +77,7 @@ class TekdaqcDevice(val wrappedTekdaqc: ATekdaqc) : ControlDevice, DataAcquisiti
     internal var mandatory400Voltage: Boolean = false
 
     override fun initializeDevice() {
+        wrappedTekdaqc.readAnalogInput(36, 5)
         analogInputs.forEach { it.deactivate() }
         digitalInputs.forEach { it.deactivate() }
         digitalOutputs.forEach { it.deactivate() }
@@ -98,8 +103,8 @@ class TekdaqcDevice(val wrappedTekdaqc: ATekdaqc) : ControlDevice, DataAcquisiti
     }
 
     var analogScale: ATekdaqc.AnalogScale
-        get() = wrappedTekdaqc.analogInputScale
+        get() = wrappedTekdaqc.analogScale
         set(value) {
-            wrappedTekdaqc.analogInputScale = value
+            wrappedTekdaqc.analogScale = value
         }
 }

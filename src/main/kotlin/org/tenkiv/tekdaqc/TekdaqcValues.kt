@@ -141,7 +141,6 @@ fun getFastestRateForAccuracy(
 
     val scaler = if (analogScale == AnalogScale.ANALOG_SCALE_400V) 80 else 1
 
-
     val acceptableRates = analogNoiseLookupTable[gain]?.filter { it.value < (maximumError * scaler) }
 
     if (acceptableRates == null || acceptableRates.isEmpty()) {
@@ -149,7 +148,7 @@ fun getFastestRateForAccuracy(
     } else {
         val list = if (lineFrequency is LineNoiseFrequency.AccountFor) {
             acceptableRates.keys.filter {
-                it.rate.toFloat().approxDivisibleBy((lineFrequency.frequency tu HERTZ).toFloat())
+                (lineFrequency.frequency tu HERTZ).toFloat().approxDivisibleBy(it.rate.toFloat())
             }
         } else {
             acceptableRates.keys
@@ -164,5 +163,5 @@ fun Float.approxDivisibleBy(number: Float): Boolean {
     if (mod > 0) {
         mod * -1
     }
-    return (mod <= .01f)
+    return (mod <= .1f)
 }

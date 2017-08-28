@@ -7,7 +7,6 @@ import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.recording.Recorder
 import org.tenkiv.daqc.recording.StorageDuration
 import org.tenkiv.daqc.recording.StorageFrequency
-import java.time.Instant
 
 class RecorderTest : StringSpec() {
 
@@ -35,7 +34,7 @@ class RecorderTest : StringSpec() {
 
             Thread.sleep(15000)
 
-            runBlocking { memoryRecorder.getDataInRange(Instant.MIN..Instant.MAX).await().forEach(::println) }
+            runBlocking { memoryRecorder.getMatchingData { true }.await().forEach(::println) }
             memoryRecorder.stop()
         }
 

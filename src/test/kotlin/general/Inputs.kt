@@ -2,6 +2,7 @@ package general
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.QuantityMeasurement
+import org.tenkiv.coral.ValueInstant
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
@@ -14,6 +15,8 @@ import javax.measure.quantity.Frequency
  * Created by tenkiv on 7/1/17.
  */
 class EmptyAnalogInput : AnalogInput() {
+    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val sampleRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override val device: Device
@@ -42,6 +45,13 @@ class EmptyAnalogInput : AnalogInput() {
 }
 
 class EmptyDigitalInput : DigitalInput() {
+    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+
+    override val transitionFrequencyIsSimulated: Boolean
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    override val pwmIsSimulated: Boolean
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
 
     override val isActiveForBinaryState: Boolean
         get() = throw Exception("Empty Test Class Exception")

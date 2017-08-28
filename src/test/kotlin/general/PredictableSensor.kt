@@ -12,6 +12,8 @@ import java.util.*
 import javax.measure.quantity.ElectricPotential
 
 class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
+    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val isActive: Boolean = false
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
 
@@ -51,6 +53,8 @@ class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
 }
 
 class PredictableDigitalSensor : Input<BinaryState> {
+    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<BinaryState>> = ConflatedBroadcastChannel()
     override val isActive: Boolean = true
 

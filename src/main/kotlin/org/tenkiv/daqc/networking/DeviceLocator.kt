@@ -38,7 +38,7 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
             }
 
     //TODO: Make this an inner function of _awaitSpecificDevice when it is allowed by kotlin runtime.
-    protected suspend fun awaitBroadcast(job: CoroutineScope, serialNumber: String, timeout: Duration? = null): Device {
+    suspend fun awaitBroadcast(job: CoroutineScope, serialNumber: String, timeout: Duration? = null): Device {
         val awaitingJob = broadcastChannel.open()
         val iterator = awaitingJob.iterator()
 

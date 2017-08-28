@@ -113,7 +113,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
         }
 
         if (memoryDuration != StorageDuration.None) {
-            listenJob = updatable.openNewCoroutineListener {
+            listenJob = updatable.openNewCoroutineListener(CommonPool) {
                 when (storageFrequency) {
                     is StorageFrequency.PerNumMeasurements -> {
                         cachePerNumMeasurement(it, storageFrequency.number)
@@ -127,7 +127,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
                 }
             }
         } else {
-            listenJob = updatable.openNewCoroutineListener {
+            listenJob = updatable.openNewCoroutineListener(CommonPool) {
                 writeOut(it)
             }
         }
