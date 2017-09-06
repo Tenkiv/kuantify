@@ -1,6 +1,8 @@
 package org.tenkiv.daqc.monitoring
 
 import kotlinx.coroutines.experimental.CommonPool
+import org.neuroph.core.data.DataSet
+import org.neuroph.nnet.MultiLayerPerceptron
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.DaqcValue
@@ -8,17 +10,8 @@ import org.tenkiv.daqc.hardware.definitions.channel.Input
 import org.tenkiv.daqc.hardware.definitions.channel.Output
 import org.tenkiv.physikal.core.toDouble
 import org.tenkiv.physikal.core.tu
-import shape.komputation.cpu.Network
-import shape.komputation.initialization.heInitialization
-import shape.komputation.layers.entry.inputLayer
-import shape.komputation.layers.forward.activation.ActivationFunction
-import shape.komputation.layers.forward.denseLayer
-import shape.komputation.loss.squaredLoss
-import shape.komputation.matrix.doubleColumnVector
-import shape.komputation.optimization.stochasticGradientDescent
 import java.time.Duration
 import java.time.Instant
-import java.util.*
 import javax.measure.Quantity
 
 /**
@@ -45,158 +38,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*class QuantityNNPIDController<I : Quantity<I>, O : Quantity<O>>(private val targetInput: Input<DaqcQuantity<I>>,
-                                                                private val output: Output<DaqcQuantity<O>>,
-                                                                private val outputUnit: Unit<O>,
-                                                                private val desiredValue: DaqcQuantity<I>,
-                                                                private vararg val correlatedInputs: Input<DaqcQuantity<I>>){
-
-    val init = heInitialization(Random())
-
-    private val hiddenLayer = denseLayer((2+correlatedInputs.size), 3, init, init,
-            ActivationFunction.Sigmoid, stochasticGradientDescent(0.1))
-    private val outputLayer = denseLayer(3, 3, init, init,
-            ActivationFunction.Sigmoid, stochasticGradientDescent(0.1))
-
-    private val net = Network(inputLayer(2), hiddenLayer, outputLayer)
-
-    private var error: Double = 0.0
-    private var previousError: Double = 0.0
-    private var integral: Double = 0.0
-
-    private var previousTime: Instant = Instant.now()
-
-    private var kp = .3
-    private var ki = .4
-    private var kd = .3
-
-    init {
-        targetInput.openNewCoroutineListener(CommonPool){
-            val recentVal = it.value tu desiredValue.unit
-
-            val time = if(previousTime.isBefore(it.instant)){
-                (Duration.between(previousTime,it.instant).seconds/1000.0)
-            }else{
-                .00005
-            }
-
-            if(previousTime.isAfter(it.instant)){previousTime = it.instant}
-
-            error = desiredValue.toDouble() - recentVal.toDouble()
-            integral += error * time
-            val derivative = (error - previousError)
-
-            val pid = (kp * error + ki * integral + kd * derivative)
-            previousError = error
-
-            val correlatedValues = DoubleArray(correlatedInputs.size)
-
-            correlatedInputs.forEachIndexed { index, input ->
-                correlatedValues[index] = input.broadcastChannel.value.value.toDouble()
-            }
-
-            net.train(arrayOf(doubleColumnVector(desiredValue.toDouble(), error, *correlatedValues)),
-                    arrayOf(doubleColumnVector(kp, ki, kd)),
-                    squaredLoss(1), 1, 1)
-
-            val netUpdate = net.forward(
-                    doubleColumnVector(desiredValue.toDouble(), error, *correlatedValues),
-                    false).entries
-
-            kp = netUpdate[0]
-            ki = netUpdate[1]
-            kd = netUpdate[2]
-
-            if(integral > WINDUP_LIMIT){
-                integral = WINDUP_LIMIT
-            }
-
-            output.setOutput(DaqcQuantity.Companion.of(pid,outputUnit))
-
-            previousTime = it.instant
-        }
-    }
-}
-
-class BinaryNNPIDController<I : Quantity<I>>(private val targetInput: Input<DaqcQuantity<I>>,
-                                             private val output: DigitalOutput,
-                                             private val desiredValue: DaqcQuantity<I>,
-                                             private vararg val correlatedInputs: Input<DaqcQuantity<I>>){
-
-    val init = heInitialization(Random())
-
-    private val hiddenLayer = denseLayer((2+correlatedInputs.size), 3, init, init,
-            ActivationFunction.Sigmoid, stochasticGradientDescent(0.1))
-    private val outputLayer = denseLayer(3, 3, init, init,
-            ActivationFunction.Sigmoid, stochasticGradientDescent(0.1))
-
-    private val net = Network(inputLayer(2), hiddenLayer, outputLayer)
-
-    private var error: Double = 0.0
-    private var previousError: Double = 0.0
-    private var integral: Double = 0.0
-
-    private var previousTime: Instant = Instant.now()
-
-    private var kp = .3
-    private var ki = .4
-    private var kd = .3
-
-    init {
-        targetInput.openNewCoroutineListener(CommonPool){
-            val recentVal = it.value tu desiredValue.unit
-
-            val time = if(previousTime.isBefore(it.instant)){
-                (Duration.between(previousTime,it.instant).seconds/1000.0)
-            }else{
-                .00005
-            }
-
-            if(previousTime.isAfter(it.instant)){previousTime = it.instant}
-
-            error = desiredValue.toDouble() - recentVal.toDouble()
-            integral += error * time
-            val derivative = (error - previousError)
-
-            println("Kp:$kp Ki:$ki Kd:$kd")
-            val pid = (kp * error + ki * integral + kd * derivative)
-            previousError = error
-            println("CurrentTemp:$recentVal Output:$pid Error:$previousError Integral: $integral")
-
-            val correlatedValues = DoubleArray(correlatedInputs.size)
-
-            correlatedInputs.forEachIndexed { index, input ->
-                correlatedValues[index] = input.broadcastChannel.value.value.toDouble()
-            }
-
-            net.train(arrayOf(doubleColumnVector(desiredValue.toDouble(), error, *correlatedValues)),
-                    arrayOf(doubleColumnVector(kp, ki, kd)),
-                    squaredLoss(1), 1, 1)
-
-            val netUpdate = net.forward(
-                    doubleColumnVector(desiredValue.toDouble(), error, *correlatedValues),
-                    false).entries
-
-            kp = netUpdate[0]
-            ki = netUpdate[1]
-            kd = netUpdate[2]
-
-            if(integral > WINDUP_LIMIT){
-                integral = WINDUP_LIMIT
-            }
-
-            if(pid > 1){
-                output.setOutput(BinaryState.On)
-            }else{
-                output.setOutput(BinaryState.Off)
-            }
-
-            previousTime = it.instant
-        }
-    }
-}*/
-
-const val WINDUP_LIMIT = 100.0
+const val WINDUP_LIMIT = 20.0
 
 class QuantityNNPIDController<I : Quantity<I>, O : Quantity<O>>(targetInput: Input<DaqcQuantity<I>>,
                                                                 output: Output<DaqcQuantity<O>>,
@@ -212,15 +54,21 @@ class QuantityNNPIDController<I : Quantity<I>, O : Quantity<O>>(targetInput: Inp
                 activationFun = activationFun,
                 correlatedInputs = *correlatedInputs)
 
-class BinaryNNPIDController<I : Quantity<I>>(targetInput: Input<DaqcQuantity<I>>,
-                                             output: Output<DaqcValue>,
-                                             desiredValue: DaqcQuantity<I>,
-                                             vararg correlatedInputs: Input<DaqcQuantity<I>>) :
-        AbstractNNPIDController<I, DaqcValue>(
+class BinaryNNPIDController<I : Quantity<I>, O : Output<BinaryState>>(targetInput: Input<DaqcQuantity<I>>,
+                                                                      output: O,
+                                                                      desiredValue: DaqcQuantity<I>,
+                                                                      vararg correlatedInputs: Input<DaqcQuantity<I>>) :
+        AbstractNNPIDController<I, BinaryState>(
                 targetInput = targetInput,
                 output = output,
                 desiredValue = desiredValue,
-                activationFun = { mainInput, relatedInputs, data -> BinaryState.On },
+                activationFun = { mainInput, relatedInputs, data ->
+                    if (data > 1) {
+                        BinaryState.On
+                    } else {
+                        BinaryState.Off
+                    }
+                },
                 correlatedInputs = *correlatedInputs)
 
 abstract class AbstractNNPIDController<I : Quantity<I>, out O : DaqcValue>(private val targetInput:
@@ -234,14 +82,9 @@ abstract class AbstractNNPIDController<I : Quantity<I>, out O : DaqcValue>(priva
                                                                             Array<out Input<DaqcQuantity<I>>>,
                                                                             Double) -> O) {
 
-    val init = heInitialization(Random())
+    private val inputSize = 2 + correlatedInputs.size
 
-    private val hiddenLayer = denseLayer((2 + correlatedInputs.size), 3, init, init,
-            ActivationFunction.Sigmoid, stochasticGradientDescent(0.1))
-    private val outputLayer = denseLayer(3, 3, init, init,
-            ActivationFunction.Sigmoid, stochasticGradientDescent(0.1))
-
-    private val net = Network(inputLayer(2), hiddenLayer, outputLayer)
+    private val net = MultiLayerPerceptron(2 + correlatedInputs.size, 3, 1)
 
     private var error: Double = 0.0
     private var previousError: Double = 0.0
@@ -255,52 +98,60 @@ abstract class AbstractNNPIDController<I : Quantity<I>, out O : DaqcValue>(priva
 
     init {
         targetInput.openNewCoroutineListener(CommonPool) {
-            val recentVal = it.value tu desiredValue.unit
+            try {
+                val recentVal = it.value tu desiredValue.unit
 
-            val time = if (previousTime.isBefore(it.instant)) {
-                (Duration.between(previousTime, it.instant).seconds / 1000.0)
-            } else {
-                .00005
-            }
+                val time = if (previousTime.isBefore(it.instant)) {
+                    (Duration.between(previousTime, it.instant).seconds / 1000.0)
+                } else {
+                    .00005
+                }
 
-            if (previousTime.isAfter(it.instant)) {
+                if (previousTime.isAfter(it.instant)) {
+                    previousTime = it.instant
+                }
+
+                error = desiredValue.toDouble() - recentVal.toDouble()
+                integral += error * time
+                val derivative = (error - previousError)
+
+                println("Kp:$kp Ki:$ki Kd:$kd")
+                val pid = (kp * error + ki * integral + kd * derivative)
+                previousError = error
+                println("CurrentTemp:$recentVal Output:$pid Error:$previousError Integral: $integral")
+
+                val correlatedValues = DoubleArray(correlatedInputs.size)
+
+                correlatedInputs.forEachIndexed { index, input ->
+                    correlatedValues[index] = input.broadcastChannel.value.value.toDouble()
+                }
+
+                val data = DataSet(inputSize, 3)
+
+                data.addRow(doubleArrayOf(desiredValue.toDouble(), error, *correlatedValues), doubleArrayOf(kp, ki, kd))
+
+                net.learn(data)
+
+                net.setInput(desiredValue.toDouble(), error, *correlatedValues)
+                net.calculate()
+                val netOutput = net.layers.last()?.neurons?.first()?.weights ?: throw Exception("NN Init Error")
+
+                kp = netOutput[0].value
+                ki = netOutput[1].value
+                kd = netOutput[2].value
+
+                if (integral > WINDUP_LIMIT) {
+                    integral = WINDUP_LIMIT
+                } else if (integral < -WINDUP_LIMIT) {
+                    integral = -WINDUP_LIMIT
+                }
+
+                output.setOutput(activationFun(targetInput, correlatedInputs, pid))
+
                 previousTime = it.instant
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-
-            error = desiredValue.toDouble() - recentVal.toDouble()
-            integral += error * time
-            val derivative = (error - previousError)
-
-            println("Kp:$kp Ki:$ki Kd:$kd")
-            val pid = (kp * error + ki * integral + kd * derivative)
-            previousError = error
-            println("CurrentTemp:$recentVal Output:$pid Error:$previousError Integral: $integral")
-
-            val correlatedValues = DoubleArray(correlatedInputs.size)
-
-            correlatedInputs.forEachIndexed { index, input ->
-                correlatedValues[index] = input.broadcastChannel.value.value.toDouble()
-            }
-
-            net.train(arrayOf(doubleColumnVector(desiredValue.toDouble(), error, *correlatedValues)),
-                    arrayOf(doubleColumnVector(kp, ki, kd)),
-                    squaredLoss(1), 1, 1)
-
-            val netUpdate = net.forward(
-                    doubleColumnVector(desiredValue.toDouble(), error, *correlatedValues),
-                    false).entries
-
-            kp = netUpdate[0]
-            ki = netUpdate[1]
-            kd = netUpdate[2]
-
-            if (integral > WINDUP_LIMIT) {
-                integral = WINDUP_LIMIT
-            }
-
-            output.setOutput(activationFun(targetInput, correlatedInputs, pid))
-
-            previousTime = it.instant
         }
     }
 }

@@ -2,7 +2,7 @@ group 'org.tenkiv.daqc'
 version '0.0.3.9-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.1.3-2'
+    ext.kotlin_version = '1.1.4-3'
 
     repositories {
         mavenCentral()
@@ -29,21 +29,23 @@ repositories {
         // Maven Central Snapshot Repo
         url "https://oss.sonatype.org/content/repositories/snapshots/"
     }
-}
 
-task compileMavenProject(type: Exec) {
-    workingDir "../komputation-0.7.11"
-    commandLine "/usr/bin/mvn", "clean", "compile"
+    maven{
+        // Neuroph Maven Repo
+        url "http://neuroph.sourceforge.net/maven2/"
+    }
 }
 
 dependencies {
     //Testing Framework
     testCompile 'io.kotlintest:kotlintest:1.3.5'
 
+    compile "org.neuroph:neuroph-core:2.94"
+
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
 
     //Units of Measurement Library
-    compile "org.tenkiv.physikal:core:1.0.1.0-SNAPSHOT"
+    compile "org.tenkiv.physikal:core:1.0.1.1"
 
     //General utilities for Kotlin
     compile "com.tenkiv.coral.jdk:core:0.11.4.0-SNAPSHOT"
@@ -64,12 +66,6 @@ dependencies {
 
     compile 'com.opower:opower-parent:4.0.1'
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-
-    compile files("../komputation-0.7.11/target/classes") {
-        builtBy "compileMavenProject"
-    }
-
-    //compile 'org.jcuda:jcublas:0.8.0'
 }
 
 apply from: 'maven_push.gradle'

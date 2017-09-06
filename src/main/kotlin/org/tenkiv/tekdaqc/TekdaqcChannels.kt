@@ -213,7 +213,6 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
 
     override fun onVoltageDataReceived(input: AAnalogInput,
                                        value: ValueInstant<ComparableQuantity<ElectricPotential>>) {
-        println("Voltage $value")
         broadcastChannel.offer(DaqcQuantity.of(value.value).at(value.instant))
     }
 }

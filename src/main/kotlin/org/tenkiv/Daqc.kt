@@ -37,7 +37,7 @@ class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
 }
 
 
-open class DaqcException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)
+open class DaqcException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
 
 
 sealed class DaqcCriticalError {
