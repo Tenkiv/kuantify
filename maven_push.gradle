@@ -34,7 +34,7 @@ def getRepositoryPassword() {
 }
 
 boolean isRelease() {
-    return /*VERSION_NAME.contains("SNAPSHOT") == false*/ false
+    return /*VERSION_NAME.contains("SNAPSHOT") == false*/ true
 }
 
 afterEvaluate { project ->

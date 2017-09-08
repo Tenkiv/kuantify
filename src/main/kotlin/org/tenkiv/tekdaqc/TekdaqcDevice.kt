@@ -1,6 +1,9 @@
 package org.tenkiv.tekdaqc
 
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
+import com.tenkiv.tekdaqc.utility.CriticalErrorListener
+import com.tenkiv.tekdaqc.utility.TekdaqcCriticalError
+import org.tenkiv.DaqcCriticalError
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.LineNoiseFrequency
 import org.tenkiv.daqc.hardware.definitions.channel.*
@@ -9,12 +12,13 @@ import org.tenkiv.daqc.hardware.definitions.device.DataAcquisitionDevice
 import org.tenkiv.daqc.networking.NetworkProtocol
 import org.tenkiv.daqc.networking.SharingStatus
 import org.tenkiv.daqc.networking.UnsupportedProtocolException
+import org.tenkiv.daqcCriticalErrorBroadcastChannel
 import org.tenkiv.physikal.core.hertz
 import java.net.InetAddress
 import java.time.Duration
 import javax.measure.quantity.Temperature
 
-class TekdaqcDevice(val wrappedTekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice {
+class TekdaqcDevice(val wrappedTekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice, CriticalErrorListener {
 
     override val temperatureReference: QuantityInput<Temperature> =
             TekdaqcTemperatureReference(TekdaqcAnalogInput(this, wrappedTekdaqc.temperatureReference))
@@ -48,6 +52,23 @@ class TekdaqcDevice(val wrappedTekdaqc: ATekdaqc) : ControlDevice, DataAcquisiti
         wrappedTekdaqc.disconnectCleanly()
     }
 
+    override fun onTekdaqcCriticalError(criticalError: TekdaqcCriticalError) {
+        when (criticalError) {
+            TekdaqcCriticalError.FAILED_TO_REINITIALIZE -> {
+                daqcCriticalErrorBroadcastChannel.offer(DaqcCriticalError.FailedToReinitialize(this))
+            }
+            TekdaqcCriticalError.FAILED_MAJOR_COMMAND -> {
+                daqcCriticalErrorBroadcastChannel.offer(DaqcCriticalError.FailedMajorCommand(this))
+            }
+            TekdaqcCriticalError.PARTIAL_DISCONNECTION -> {
+                daqcCriticalErrorBroadcastChannel.offer(DaqcCriticalError.PartialDisconnection(this))
+            }
+            TekdaqcCriticalError.TERMINAL_CONNECTION_DISRUPTION -> {
+                daqcCriticalErrorBroadcastChannel.offer(DaqcCriticalError.TerminalConnectionDisruption(this))
+            }
+        }
+    }
+
     fun restoreTekdaqc(timeout: Duration, reAddChannels: Boolean = true) {
         wrappedTekdaqc.restoreTekdaqc(timeout.toMillis(), reAddChannels)
     }
@@ -77,6 +98,7 @@ class TekdaqcDevice(val wrappedTekdaqc: ATekdaqc) : ControlDevice, DataAcquisiti
     internal var mandatory400Voltage: Boolean = false
 
     override fun initializeDevice() {
+        wrappedTekdaqc.addCriticalFailureListener(this)
         wrappedTekdaqc.readAnalogInput(36, 5)
         analogInputs.forEach { it.deactivate() }
         digitalInputs.forEach { it.deactivate() }
