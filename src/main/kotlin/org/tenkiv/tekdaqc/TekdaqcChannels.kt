@@ -68,7 +68,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
         input.addVoltageListener(this)
     }
 
-    private var _buffer: Boolean = true
+    @Volatile private var _buffer: Boolean = true
 
     override var buffer: Boolean
         get() = _buffer
@@ -267,14 +267,14 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
 
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
 
-            when (data.state) {
-                true -> {
-                    _binaryStateBroadcastChannel.offer(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))
-                }
-                false -> {
-                    _binaryStateBroadcastChannel.offer(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))
-                }
+        when (data.state) {
+            true -> {
+                _binaryStateBroadcastChannel.offer(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))
             }
+            false -> {
+                _binaryStateBroadcastChannel.offer(BinaryState.Off.at(Instant.ofEpochMilli(data.timestamp)))
+            }
+        }
 
     }
 

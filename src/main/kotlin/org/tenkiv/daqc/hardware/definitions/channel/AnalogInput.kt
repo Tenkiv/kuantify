@@ -9,12 +9,24 @@ abstract class AnalogInput :
         QuantityInput<ElectricPotential>,
         DaqcChannel {
 
+    /**
+     * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
+     * reads from multiple threads.
+     */
     abstract var buffer: Boolean
 
     abstract val sampleRate: ComparableQuantity<Frequency>
 
+    /**
+     * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
+     * reads from multiple threads.
+     */
     abstract var maxAcceptableError: ComparableQuantity<ElectricPotential>
 
+    /**
+     * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
+     * reads from multiple threads.
+     */
     abstract var maxElectricPotential: ComparableQuantity<ElectricPotential>
 
 }

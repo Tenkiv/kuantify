@@ -15,10 +15,22 @@ interface Device {
 
     val temperatureReference: QuantityInput<Temperature>
 
-    var isConnected: Boolean
+    /**
+     * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
+     * reads from multiple threads.
+     */
+    val isConnected: Boolean
 
+    /**
+     * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
+     * reads from multiple threads.
+     */
     var networkProtocol: NetworkProtocol
 
+    /**
+     * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
+     * reads from multiple threads.
+     */
     var networkSharingStatus: SharingStatus
 
     fun connect(lineFrequency: LineNoiseFrequency, protocol: NetworkProtocol? = null)
