@@ -23,11 +23,11 @@ class TekdaqcDevice(val wrappedTekdaqc: ATekdaqc) : ControlDevice, DataAcquisiti
     override val temperatureReference: QuantityInput<Temperature> =
             TekdaqcTemperatureReference(TekdaqcAnalogInput(this, wrappedTekdaqc.temperatureReference))
 
-    override val inetAddr: InetAddress = InetAddress.getByName(wrappedTekdaqc.hostIP)
-    override val serialNumber: String = wrappedTekdaqc.serialNumber
-    override var isConnected = false
-    override var networkProtocol: NetworkProtocol = NetworkProtocol.TELNET
-    override var networkSharingStatus: SharingStatus = SharingStatus.NONE
+    override val inetAddr: InetAddress get() = InetAddress.getByName(wrappedTekdaqc.hostIP)
+    override val serialNumber: String get() = wrappedTekdaqc.serialNumber
+    @Volatile override var isConnected = false
+    @Volatile override var networkProtocol: NetworkProtocol = NetworkProtocol.TELNET
+    @Volatile override var networkSharingStatus: SharingStatus = SharingStatus.NONE
 
     var lineFrequency: LineNoiseFrequency = LineNoiseFrequency.AccountFor(60.hertz)
 
