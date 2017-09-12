@@ -1,10 +1,16 @@
 package org.tenkiv.daqc.hardware.inputs
 
+import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.hardware.definitions.channel.QuantityInput
+import org.tenkiv.daqc.toDaqc
+import org.tenkiv.physikal.core.hertz
 import javax.measure.quantity.Frequency
 
-class SimpleDigitalFrequencySensor(val digitalInput: DigitalInput) : QuantityInput<Frequency> {
+class SimpleDigitalFrequencySensor internal constructor(val digitalInput: DigitalInput) : QuantityInput<Frequency> {
+
+    @Volatile
+    var avgFrequency: DaqcQuantity<Frequency> = 1.hertz.toDaqc()
 
     override val broadcastChannel get() = digitalInput.transitionFrequencyBroadcastChannel
 
@@ -12,7 +18,7 @@ class SimpleDigitalFrequencySensor(val digitalInput: DigitalInput) : QuantityInp
 
     override val isActive get() = digitalInput.isActiveForTransitionFrequency
 
-    override fun activate() = digitalInput.activateForTransitionFrequency()
+    override fun activate() = digitalInput.activateForTransitionFrequency(avgFrequency)
 
     override fun deactivate() = digitalInput.deactivate()
 

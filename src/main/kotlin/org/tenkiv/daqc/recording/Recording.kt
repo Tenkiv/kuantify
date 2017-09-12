@@ -65,7 +65,7 @@ inline fun <reified Q : Quantity<Q>>
         recorder(storageFrequency,
                 memoryDuration,
                 diskDuration,
-                this) { DaqcValue.quantityFromString<Q>(it) }
+                this) { DaqcValue.quantityFromString(it) }
 
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(storageFrequency: StorageFrequency = StorageFrequency.All,
                                                               memoryDuration: StorageDuration =

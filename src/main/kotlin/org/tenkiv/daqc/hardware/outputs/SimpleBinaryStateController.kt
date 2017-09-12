@@ -7,8 +7,10 @@ import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.hardware.definitions.channel.BinaryStateOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 
-class SimpleBinaryStateController(val digitalOutput: DigitalOutput,
-                                  val inverted: Boolean = false) : BinaryStateOutput {
+class SimpleBinaryStateController internal constructor(val digitalOutput: DigitalOutput) : BinaryStateOutput {
+
+    @Volatile
+    var inverted: Boolean = false
 
     override val isActive: Boolean = digitalOutput.isActive
 

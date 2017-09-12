@@ -7,6 +7,6 @@ import javax.measure.quantity.Dimensionless
 
 class SimplePwmController(digitalOutput: DigitalOutput) : ScPwmController<Dimensionless>(digitalOutput) {
 
-    override fun convertOutput(setting: DaqcQuantity<Dimensionless>): DaqcQuantity<Dimensionless> = setting
+    override fun convertOutput(setting: DaqcQuantity<Dimensionless>) = setting
 
 }

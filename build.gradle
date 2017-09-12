@@ -30,7 +30,7 @@ repositories {
         url "https://oss.sonatype.org/content/repositories/snapshots/"
     }
 
-    maven{
+    maven {
         // Neuroph Maven Repo
         url "http://neuroph.sourceforge.net/maven2/"
     }
@@ -45,15 +45,15 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
 
     //Units of Measurement Library
-    compile "org.tenkiv.physikal:core:1.0.1.1"
+    compile "org.tenkiv.physikal:core:1.0.2.1"
 
     //General utilities for Kotlin
     compile "com.tenkiv.coral.jdk:core:0.11.4.0-SNAPSHOT"
     compile 'com.github.kittinunf.result:result:1.1.0'
 
     //Kotlin Coroutines
-    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.17'
-    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-nio:0.17'
+    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
+    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-nio:0.18'
 
     //Temp Tekdaqc Dependency
     compile 'com.tenkiv.tekdaqc:shared-java-library:1.5.1.1-SNAPSHOT'

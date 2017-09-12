@@ -4,17 +4,18 @@ import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.launch
+import org.tenkiv.QuantityMeasurement
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.hardware.definitions.Updatable
 import org.tenkiv.daqc.hardware.definitions.channel.Input
+import org.tenkiv.physikal.core.PhysicalUnit
 import org.tenkiv.physikal.core.asType
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities
 import java.time.Instant
 import java.util.zip.DataFormatException
 import javax.measure.Quantity
-import javax.measure.Unit
 import javax.measure.quantity.Frequency
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -45,7 +46,7 @@ sealed class DaqcValue {
         }
 
         inline fun <reified Q : Quantity<Q>> quantityFromString(input: String): DaqcQuantity<Q> {
-            val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType<Q>()
+            val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType()
             if (quant != null) {
                 return DaqcQuantity.of(quant)
             } else {
@@ -53,15 +54,6 @@ sealed class DaqcValue {
             }
         }
 
-
-        inline fun <reified Q : DaqcQuantity<Q>> daqcQuantityFromString(input: String): DaqcQuantity<Q> {
-            val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType<Q>()
-            if (quant != null) {
-                return DaqcQuantity.of(quant)
-            } else {
-                throw DataFormatException("Data with Quantity value not found")
-            }
-        }
     }
 }
 
@@ -78,10 +70,10 @@ sealed class BinaryState : DaqcValue() {
 
 }
 
-open class DaqcQuantity<Q : Quantity<Q>>(private val quantity: ComparableQuantity<Q>)
-    : DaqcValue(), ComparableQuantity<Q> by quantity {
+class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuantity<Q>)
+    : DaqcValue(), ComparableQuantity<Q> by wrappedQuantity {
 
-    override fun toString() = quantity.toString()
+    override fun toString() = wrappedQuantity.toString()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -89,24 +81,24 @@ open class DaqcQuantity<Q : Quantity<Q>>(private val quantity: ComparableQuantit
 
         other as DaqcQuantity<*>
 
-        if (quantity != other.quantity) return false
+        if (wrappedQuantity != other.wrappedQuantity) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return quantity.hashCode()
+        return wrappedQuantity.hashCode()
     }
 
 
     companion object {
-        fun <Q : Quantity<Q>> of(value: Number, unit: Unit<Q>) =
+        fun <Q : Quantity<Q>> of(value: Number, unit: PhysicalUnit<Q>) =
                 DaqcQuantity(Quantities.getQuantity(value, unit))
 
         fun <Q : Quantity<Q>> of(quantity: ComparableQuantity<Q>) =
                 DaqcQuantity(quantity)
 
-        fun <Q : Quantity<Q>> of(instant: ValueInstant<ComparableQuantity<Q>>) =
+        fun <Q : Quantity<Q>> of(instant: QuantityMeasurement<Q>) =
                 DaqcQuantity(instant.value)
     }
 }
@@ -120,25 +112,10 @@ sealed class LineNoiseFrequency {
 
 }
 
-class BoundedFirstInFirstOutArrayList<T>(val maxSize: Int) : ArrayList<T>() {
-
-    override fun add(element: T): Boolean {
-        val r = super.add(element)
-        if (size > maxSize) {
-            removeRange(0, size - maxSize)
-        }
-        return r
-    }
-
-    fun youngest(): T = get(size - 1)
-
-    fun oldest(): T = get(0)
-}
-
 fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(context: CoroutineContext = CommonPool,
-                                                                       action: suspend (T) -> kotlin.Unit):
+                                                                       action: suspend (T) -> Unit):
         SubscriptionReceiveChannel<T> {
-    val subChannel = open()
+    val subChannel = openSubscription()
     launch(context) {
         subChannel.use { channel -> for (x in channel) action(x) }
     }
@@ -155,7 +132,7 @@ enum class DigitalStatus {
 data class StoredData(val time: Long, val value: String) {
     fun <T> getValueInstant(deserializer: (String) -> T): ValueInstant<T>
             = try {
-        deserializer(value).at(Instant.ofEpochMilli(time))
+        deserializer(value) at Instant.ofEpochMilli(time)
     } catch (e: Exception) {
         throw e
     }

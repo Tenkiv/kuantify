@@ -3,12 +3,16 @@ package org.tenkiv.daqc.hardware.inputs
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.hardware.definitions.channel.QuantityInput
+import org.tenkiv.daqc.toDaqc
+import org.tenkiv.physikal.core.hertz
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
 
 
-class SimplePwmSensor(val digitalInput: DigitalInput,
-                      val avgFrequency: DaqcQuantity<Frequency>) : QuantityInput<Dimensionless> {
+class SimplePwmSensor internal constructor(val digitalInput: DigitalInput) : QuantityInput<Dimensionless> {
+
+    @Volatile
+    var avgFrequency: DaqcQuantity<Frequency> = 1.hertz.toDaqc()
 
     override val broadcastChannel get() = digitalInput.pwmBroadcastChannel
 

@@ -15,6 +15,7 @@ abstract class AnalogInput :
      */
     abstract var buffer: Boolean
 
+    //TODO: This may need to be volatile as well, not sure.
     abstract val sampleRate: ComparableQuantity<Frequency>
 
     /**
