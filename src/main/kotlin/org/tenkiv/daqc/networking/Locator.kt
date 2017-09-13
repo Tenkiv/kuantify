@@ -45,7 +45,6 @@ object Locator : Updatable<LocatorUpdate<*>> {
                     putIfAbsent(device.wrappedDevice::class, HashMap())?.
                     remove(device.serialNumber)
         }
+        _broadcastChannel.offer(device)
     }
-
-
 }

@@ -207,7 +207,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
                 scale = ATekdaqc.AnalogScale.ANALOG_SCALE_400V
             }
         }
-        println("Decided on $gain and $scale from $voltage and manVolt: ${tekdaqc.mandatory400Voltage}")
+        println("Decided on G:$gain and $scale from $voltage and manVolt: ${tekdaqc.mandatory400Voltage}")
         return Pair(gain, scale)
     }
 
@@ -253,7 +253,7 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
         activate(); currentState = DigitalStatus.ACTIVATED_STATE
     }
 
-    override fun activateForTransitionFrequency() {
+    override fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {
         input.deactivate()
         currentState = DigitalStatus.ACTIVATED_STATE; currentState = DigitalStatus.ACTIVATED_FREQUENCY
         //input.activatePWM()

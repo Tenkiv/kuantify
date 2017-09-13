@@ -52,8 +52,8 @@ dependencies {
     compile 'com.github.kittinunf.result:result:1.1.0'
 
     //Kotlin Coroutines
-    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18'
-    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-nio:0.18'
+    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.17'
+    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-nio:0.17'
 
     //Temp Tekdaqc Dependency
     compile 'com.tenkiv.tekdaqc:shared-java-library:1.5.1.1-SNAPSHOT'

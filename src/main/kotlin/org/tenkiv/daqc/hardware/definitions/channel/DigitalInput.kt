@@ -1,13 +1,12 @@
 package org.tenkiv.daqc.hardware.definitions.channel
 
 import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.hardware.definitions.DigitalDaqcChannel
 import org.tenkiv.daqc.hardware.inputs.SimpleBinaryStateSensor
 import org.tenkiv.daqc.hardware.inputs.SimpleDigitalFrequencySensor
 import org.tenkiv.daqc.hardware.inputs.SimplePwmSensor
 import javax.measure.quantity.Frequency
 
-abstract class DigitalInput : DigitalChannelBase(), BinaryStateInput, DigitalDaqcChannel {
+abstract class DigitalInput : DigitalChannel(), BinaryStateInput {
 
     override val isActive get() = super.isActive
 

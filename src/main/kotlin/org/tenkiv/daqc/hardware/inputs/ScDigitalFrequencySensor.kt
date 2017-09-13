@@ -10,6 +10,7 @@ import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.hardware.definitions.channel.QuantityInput
 import org.tenkiv.daqc.lib.openNewCoroutineListener
+import org.tenkiv.physikal.core.hertz
 import tec.uom.se.ComparableQuantity
 import javax.measure.Quantity
 import javax.measure.quantity.Frequency
@@ -39,7 +40,9 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
         }
     }
 
-    override fun activate() = digitalInput.activateForTransitionFrequency()
+    public var averageTransitionFrequency: DaqcQuantity<Frequency> = DaqcQuantity.Companion.of(2.hertz)
+
+    override fun activate() = digitalInput.activateForTransitionFrequency(averageTransitionFrequency)
 
     override fun deactivate() = digitalInput.deactivate()
 

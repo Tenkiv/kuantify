@@ -5,6 +5,7 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.BinaryStateMeasurement
 import org.tenkiv.Measurement
 import org.tenkiv.QuantityMeasurement
+import org.tenkiv.daqc.hardware.definitions.DaqcChannel
 import org.tenkiv.daqc.hardware.definitions.Updatable
 import org.tenkiv.daqc.lib.openNewCoroutineListener
 import javax.measure.quantity.Dimensionless
@@ -33,7 +34,27 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSE
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-abstract class DigitalChannelBase : Updatable<BinaryStateMeasurement> {
+abstract class DigitalChannel : Updatable<BinaryStateMeasurement>, DaqcChannel {
+
+    open val isActive get() = isActiveForBinaryState || isActiveForPwm || isActiveForTransitionFrequency
+
+    /**
+     * Implementing backing  field must be atomic or otherwise provide safety for
+     * reads from multiple threads.
+     */
+    abstract val isActiveForBinaryState: Boolean
+
+    /**
+     * Implementing backing  field must be atomic or otherwise provide safety for
+     * reads from multiple threads.
+     */
+    abstract val isActiveForPwm: Boolean
+
+    /**
+     * Implementing backing  field must be atomic or otherwise provide safety for
+     * reads from multiple threads.
+     */
+    abstract val isActiveForTransitionFrequency: Boolean
 
     protected val _binaryStateBroadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
 

@@ -2,7 +2,6 @@ package org.tenkiv.daqc.hardware.definitions.channel
 
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.hardware.definitions.DigitalDaqcChannel
 import org.tenkiv.daqc.hardware.outputs.SimpleBinaryStateController
 import org.tenkiv.daqc.hardware.outputs.SimpleFrequencyController
 import org.tenkiv.daqc.hardware.outputs.SimplePwmController
@@ -10,8 +9,7 @@ import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
 
 
-abstract class DigitalOutput : DigitalChannelBase(), BinaryStateOutput,
-        DigitalDaqcChannel {
+abstract class DigitalOutput : DigitalChannel(), BinaryStateOutput {
 
     override val isActive get() = super.isActive
 
