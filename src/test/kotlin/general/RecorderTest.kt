@@ -2,15 +2,13 @@ package general
 
 import io.kotlintest.specs.StringSpec
 import kotlinx.coroutines.experimental.runBlocking
-import org.tenkiv.coral.secondsSpan
+import org.tenkiv.coral.at
 import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.recording.Recorder
-import org.tenkiv.daqc.recording.StorageDuration
-import org.tenkiv.daqc.recording.StorageFrequency
+import org.tenkiv.daqc.recording.createRecorder
+import org.tenkiv.daqc.recording.getDataInRange
+import java.time.Instant
 
 class RecorderTest : StringSpec() {
-
-    val fileName = "TestJson.json"
 
     init {
         "Memory Recorder Test"{
@@ -23,70 +21,22 @@ class RecorderTest : StringSpec() {
                 }
             }
 
-            //val memoryRecorder = Recorder(dataDeserializer = deserializer,
-            //        updatable = PredictableDigitalSensor())
+            val testData = listOf(
+                    0.at(Instant.MAX),
+                    1.at(Instant.now()),
+                    2.at(Instant.now()),
+                    3.at(Instant.now()),
+                    4.at(Instant.now()),
+                    5.at(Instant.MAX))
 
-            val memoryRecorder = Recorder(StorageFrequency.All,
-                    StorageDuration.For(1L.secondsSpan),
-                    StorageDuration.Forever,
-                    DigitalGibberingSensor(),
-                    deserializer)
+            assert(testData.getDataInRange(Instant.MIN..Instant.now()).size == 4)
+
+            val memoryRecorder = DigitalGibberingSensor().createRecorder { deserializer.invoke(it) }
 
             Thread.sleep(15000)
 
             runBlocking { memoryRecorder.getMatchingData { true }.await().forEach(::println) }
             memoryRecorder.stop()
         }
-
-        /*"Digital Memory Recorder Test"{
-
-            if(File(fileName).exists()){
-                File(fileName).delete()
-            }
-
-            val deserializer: (String) -> BinaryState = {
-                if(it == BinaryState.On.toString()){ BinaryState.On }else{ BinaryState.Off }
-            }
-
-            val memoryRecorder = Recorder(1000,
-                                                fileName,
-                                                deserializer,
-                                                PredictableDigitalSensor())
-            Thread.sleep(5000)
-            memoryRecorder.stop()
-
-            val result = memoryRecorder.getDataInRange(Instant.MIN, Instant.MAX)
-
-            println("Digital recording size was ${result.size} and value was ${result[5].value}")
-
-            assert(result.size == 10 && result[5].value == BinaryState.On)
-
-            if(File(fileName).exists()){
-                File(fileName).delete()
-            }
-        }
-
-        "Analog Memory Recorder Test"{
-
-            if(File(fileName).exists()){
-                File(fileName).delete()
-            }
-
-            val memoryRecorder = getDaqcValueRecorder(10000,
-                    fileName,
-                    PredictableAnalogSensor())
-            Thread.sleep(5000)
-            memoryRecorder.stop()
-
-            val result = memoryRecorder.getDataInRange(Instant.MIN, Instant.MAX)
-
-            println("Analog recording size was ${result.size} and value was ${result[5].value}")
-
-            assert(result.size == 10 && result[5].value qeq 12.volt)
-
-            if(File(fileName).exists()){
-                File(fileName).delete()
-            }
-        }*/
     }
 }

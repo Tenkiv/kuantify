@@ -86,7 +86,6 @@ class PredictableDigitalSensor : Input<BinaryState> {
                 } else {
                     timer.cancel()
                 }
-
             }
         }, 100, 100)
     }
