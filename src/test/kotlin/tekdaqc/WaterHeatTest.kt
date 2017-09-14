@@ -1,6 +1,5 @@
 package tekdaqc
 
-import io.kotlintest.specs.StringSpec
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
@@ -38,43 +37,42 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSE
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-class WaterHeatTest : StringSpec() {
+class WaterHeatTest {
     init {
-        "Heating Water Test"{
 
-            val tekdaqcLoc = TekdaqcLocator()
+        val tekdaqcLoc = TekdaqcLocator()
 
-            tekdaqcLoc.search()
+        tekdaqcLoc.search()
 
-            Locator.addDeviceLocator(tekdaqcLoc)
+        Locator.addDeviceLocator(tekdaqcLoc)
 
-            println("Pre Tekdaqc Discovery")
+        println("Pre Tekdaqc Discovery")
 
-            launch(CommonPool) {
-                tekdaqcLoc.openNewCoroutineListener(CommonPool) {
+        launch(CommonPool) {
+            tekdaqcLoc.openNewCoroutineListener(CommonPool) {
 
-                    if (it.serialNumber == "00000000000000000000000000000012") {
-                        println("Tekdaqc Discovered")
+                if (it.serialNumber == "00000000000000000000000000000012") {
+                    println("Tekdaqc Discovered")
 
-                        val tekdaqc = it.wrappedDevice as TekdaqcDevice
+                    val tekdaqc = it.wrappedDevice as TekdaqcDevice
 
-                        tekdaqc.connect(LineNoiseFrequency.AccountFor(60.hertz), NetworkProtocol.TELNET)
-                        val thermo = ThermocoupleK(tekdaqc.analogInputs[0], 50.celsius)
+                    tekdaqc.connect(LineNoiseFrequency.AccountFor(60.hertz), NetworkProtocol.TELNET)
+                    val thermo = ThermocoupleK(tekdaqc.analogInputs[0], 50.celsius)
 
-                        //tekdaqc.wrappedTekdaqc.readAnalogInput(36,5)
+                    //tekdaqc.wrappedTekdaqc.readAnalogInput(36,5)
 
-                        thermo.failureBroadcastChannel.consumeEach { it.value.printStackTrace() }
+                    thermo.failureBroadcastChannel.consumeEach { it.value.printStackTrace() }
 
-                        thermo.activate()
+                    thermo.activate()
 
-                        //tekdaqc.wrappedTekdaqc.sample(0)
+                    //tekdaqc.wrappedTekdaqc.sample(0)
 
-                        val controllrer = BinaryNNPIDController(thermo, tekdaqc.digitalOutputs[0], DaqcQuantity(42.celsius))
+                    val controllrer = BinaryNNPIDController(thermo, tekdaqc.digitalOutputs[0], DaqcQuantity(42.celsius))
 
-                    }
                 }
-                Thread.sleep(600000)
             }
+            Thread.sleep(600000)
+
         }
     }
 }

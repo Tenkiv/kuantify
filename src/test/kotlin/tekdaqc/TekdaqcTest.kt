@@ -1,8 +1,6 @@
 package tekdaqc
 
-import io.kotlintest.specs.StringSpec
-
-class TekdaqcTest: StringSpec(){
+class TekdaqcTest {
 
     init{
 
