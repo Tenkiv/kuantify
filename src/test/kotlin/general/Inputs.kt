@@ -45,6 +45,10 @@ class EmptyAnalogInput : AnalogInput() {
 }
 
 class EmptyDigitalInput : DigitalInput() {
+    override fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
 
@@ -59,10 +63,6 @@ class EmptyDigitalInput : DigitalInput() {
         get() = throw Exception("Empty Test Class Exception")
     override val isActiveForTransitionFrequency: Boolean
         get() = throw Exception("Empty Test Class Exception")
-
-    override fun activateForTransitionFrequency() {
-        throw Exception("Empty Test Class Exception")
-    }
 
     override fun activateForPwm(avgFrequency: DaqcQuantity<Frequency>) {
         throw Exception("Empty Test Class Exception")
