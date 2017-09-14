@@ -1,0 +1,5 @@
+#TODO: Change this to kotlin when Travis supports it.
+language: java
+
+jdk:
+  - openjdk8
