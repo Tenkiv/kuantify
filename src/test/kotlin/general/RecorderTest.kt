@@ -29,6 +29,8 @@ class RecorderTest : StringSpec() {
                     4.at(Instant.now()),
                     5.at(Instant.MAX))
 
+            Thread.sleep(100)
+
             assert(testData.getDataInRange(Instant.MIN..Instant.now()).size == 4)
 
             val memoryRecorder = DigitalGibberingSensor().createRecorder { deserializer.invoke(it) }
