@@ -4,8 +4,7 @@ import io.kotlintest.specs.StringSpec
 import kotlinx.coroutines.experimental.runBlocking
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.recording.createRecorder
-import org.tenkiv.daqc.recording.getDataInRange
+import org.tenkiv.daqc.recording.*
 import java.time.Instant
 
 class RecorderTest : StringSpec() {
@@ -33,12 +32,23 @@ class RecorderTest : StringSpec() {
 
             assert(testData.getDataInRange(Instant.MIN..Instant.now()).size == 4)
 
-            val memoryRecorder = DigitalGibberingSensor().createRecorder { deserializer.invoke(it) }
+            val recorders = ArrayList<Recorder<BinaryState>>()
+            for( i in 0..20) {
+                recorders.add(DigitalGibberingSensor().createRecorder(storageFrequency = StorageFrequency.All,
+                        memoryDuration = StorageDuration.Forever,
+                        diskDuration = StorageDuration.Forever
+                        ) { deserializer.invoke(it) })
+            }
 
-            Thread.sleep(15000)
+            Thread.sleep(10000)
 
-            runBlocking { memoryRecorder.getMatchingData { true }.await().forEach(::println) }
-            memoryRecorder.stop()
+            runBlocking {
+                recorders.forEach {
+                    println("Fetching Data")
+                    recorders.forEach{it.stop(false)}
+                    it.getMatchingData { true }.await().forEach(::println)
+                }
+            }
         }
     }
 }

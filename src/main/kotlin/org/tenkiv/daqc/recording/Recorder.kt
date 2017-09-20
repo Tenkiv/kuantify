@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.nio.aRead
 import kotlinx.coroutines.experimental.nio.aWrite
 import kotlinx.coroutines.experimental.sync.Mutex
@@ -44,30 +46,28 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
 
     private var currentInterval: Long = 0
 
+    private var isFirst = true
+
     private val mutex = Mutex()
 
     private fun getNewFileWriter(): AsynchronousFileChannel {
         val now = Instant.now()
         val file = File("tempStorage_${uid}_${now.toEpochMilli()}.json")
         val writer = AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-
-        launch(daqcThreadContext) {
-            mutex.withLock {
-                writeJsonBuffer("[", fileChannel)
-
-            }
-        }
+        isFirst = true
         if (currentFilesMap.size != 0) {
             if (fileChannel.isOpen) {
                 launch(daqcThreadContext) {
-                    mutex.withLock {
-                        writeJsonBuffer("]", fileChannel)
-                        fileChannel.force(true)
-                        fileChannel.close()
-                    }
+                    writeJsonBuffer("]", fileChannel)
+                    // fileChannel.close()
                 }
 
             }
+        }
+
+        launch(daqcThreadContext) {
+            writeJsonBuffer("[", writer)
+            writer.force(false)
         }
 
         currentFilesMap.put(now, file)
@@ -81,7 +81,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
 
     val allData: Deferred<List<ValueInstant<T>>> get() = getDataInRange(Instant.MIN..Instant.MAX)
 
-    private var listenJob: Job
+    private val subRecChannel: SubscriptionReceiveChannel<ValueInstant<T>>
 
     private var diskRefreshJob: Job? = null
 
@@ -95,7 +95,9 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
             diskRefreshJob = launch(daqcThreadContext) {
                 while (isActive) {
                     delay(delay)
-                    fileChannel = getNewFileWriter()
+                    mutex.withLock {
+                        fileChannel = getNewFileWriter()
+                    }
                     checkFileAge()
                 }
             }
@@ -111,23 +113,26 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
             }
         }
 
-        if (memoryDuration != StorageDuration.None) {
-            listenJob = updatable.openNewCoroutineListener(CommonPool) {
-                when (storageFrequency) {
-                    is StorageFrequency.PerNumMeasurements -> {
-                        cachePerNumMeasurement(it, storageFrequency.number)
-                    }
-                    is StorageFrequency.Interval -> {
-                        cachePerInterval(it, storageFrequency.interval)
-                    }
-                    is StorageFrequency.All -> {
-                        cacheAll(it)
+        subRecChannel = updatable.broadcastChannel.openSubscription()
+        launch(daqcThreadContext) {
+            if (memoryDuration != StorageDuration.None) {
+                subRecChannel.consumeEach {
+                    when (storageFrequency) {
+                        is StorageFrequency.PerNumMeasurements -> {
+                            cachePerNumMeasurement(it, storageFrequency.number)
+                        }
+                        is StorageFrequency.Interval -> {
+                            cachePerInterval(it, storageFrequency.interval)
+                        }
+                        is StorageFrequency.All -> {
+                            cacheAll(it)
+                        }
                     }
                 }
-            }
-        } else {
-            listenJob = updatable.openNewCoroutineListener(CommonPool) {
-                writeOut(it)
+            } else {
+                subRecChannel.consumeEach {
+                    writeOut(it)
+                }
             }
         }
     }
@@ -199,39 +204,48 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
 
     private suspend fun writeOut(entry: ValueInstant<T>) {
         if (diskDuration != StorageDuration.None) {
-            launch(daqcThreadContext) {
-                mutex.withLock {
-
-                    writeJsonBuffer(
-                            "{\"$TIME\":${entry.instant.toEpochMilli()}," +
-                                    "\"$VALUE\":\"${entry.value}\"},", fileChannel)
-
-                }
-            }
+            //mutex.withLock {
+                writeJsonBuffer(
+                        "${if(isFirst){isFirst=false;""}else{","}}{\"$TIME\":${entry.instant.toEpochMilli()}," +
+                                "\"$VALUE\":\"${entry.value}\"}", fileChannel)
+            //}
         }
     }
 
-    suspend fun writeJsonBuffer(string: String,
-                                fileChannel: AsynchronousFileChannel,
-                                charset: Charset = Charset.defaultCharset()) {
+    private suspend fun writeJsonBuffer(string: String,
+                                        fileChannel: AsynchronousFileChannel,
+                                        charset: Charset = Charset.defaultCharset()) {
 
-        filePosition += string.length
-        val buffer = ByteBuffer.wrap(string.toByteArray(charset))
-        fileChannel.aWrite(buffer, filePosition)
+        try {
+            mutex.withLock {
+                filePosition += string.length
+                val buffer = ByteBuffer.wrap(string.toByteArray(charset))
+                println("${currentFilesMap.values.forEach { println(it.name)}} $filePosition Writing: ${String(buffer.array())}")
+                if(fileChannel.isOpen) {
+                    fileChannel.aWrite(buffer, filePosition)
+                }
+            }
+        }catch (e: Exception){
+            e.printStackTrace()
+        }
     }
 
     fun stop(deleteDiskData: Boolean = true) {
-        diskRefreshJob?.cancel()
-        memoryRefreshJob?.cancel()
-        listenJob.cancel()
         launch(daqcThreadContext) {
+            diskRefreshJob?.cancel()
+            memoryRefreshJob?.cancel()
+            subRecChannel.close()
+
             writeOut(_dataInMemory)
             if (!deleteDiskData) {
-                writeJsonBuffer("]", fileChannel)
-                fileChannel.force(true)
-                fileChannel.close()
+                //mutex.withLock {
+                    fileChannel.force(false)
+                    writeJsonBuffer("]", fileChannel)
+                    //fileChannel.close()
+
+                //}
             } else {
-                fileChannel.close()
+                //fileChannel.close()
                 currentFilesMap.forEach {
                     mutex.withLock {
                         if (it.value.exists()) {
@@ -316,40 +330,44 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
         var buff = ByteBuffer.allocate(100)
         var position = 0L
 
-        while (true) {
-
-            channel.aRead(buff, position)
-            val array = buff.array()
-            array.forEach {
-                if (objectStart && it == STRING_DELIM) {
-                    isInString = !isInString
-                }
-
-                if (!isInString && it == OBJECT_START) objectStart = true
-
-                if (objectStart) {
-                    currentObject.add(it)
-                }
-
-                if (!isInString && it == OBJECT_END) {
-                    objectStart = false
-                    val value = jacksonMapper.readValue<StoredData>(currentObject.toByteArray()).
-                            getValueInstant(dataDeserializer)
-                    if (filter(value)) {
-                        complyingObjects.add(value)
+        while (channel.isOpen) {
+            try {
+                channel.aRead(buff, position)
+                val array = buff.array()
+                array.forEach {
+                    if (objectStart && it == STRING_DELIM) {
+                        isInString = !isInString
                     }
-                    currentObject.clear()
-                }
 
-                if (it == ZERO_BYTE) {
-                    zeroCount++
-                    if (zeroCount >= array.size) {
-                        return@readFromDisk complyingObjects
+                    if (!isInString && it == OBJECT_START) objectStart = true
+
+                    if (objectStart) {
+                        currentObject.add(it)
+                    }
+
+                    if (!isInString && it == OBJECT_END) {
+                        objectStart = false
+                        val value = jacksonMapper.readValue<StoredData>(currentObject.toByteArray()).
+                                getValueInstant(dataDeserializer)
+                        if (filter(value)) {
+                            complyingObjects.add(value)
+                        }
+                        currentObject.clear()
+                    }
+
+                    if (it == ZERO_BYTE) {
+                        zeroCount++
+                        if (zeroCount >= array.size) {
+                            return@readFromDisk complyingObjects
+                        }
                     }
                 }
+                position += 100
+                buff = ByteBuffer.allocate(100)
+            }catch (e:Exception){
+               e.printStackTrace()
             }
-            position += 100
-            buff = ByteBuffer.allocate(100)
         }
+        return complyingObjects
     }
 }
