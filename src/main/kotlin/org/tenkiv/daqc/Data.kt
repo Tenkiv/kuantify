@@ -13,6 +13,7 @@ import org.tenkiv.physikal.core.PhysicalUnit
 import org.tenkiv.physikal.core.asType
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities
+import java.nio.channels.AsynchronousFileChannel
 import java.time.Instant
 import java.util.zip.DataFormatException
 import javax.measure.Quantity
@@ -136,4 +137,13 @@ data class StoredData(val time: Long, val value: String) {
     } catch (e: Exception) {
         throw e
     }
+}
+
+suspend fun <T> AsynchronousFileChannel.withALock(action: suspend () -> T): T {
+    /*val lock = this.aLock()
+    try {*/
+    return action()
+    /*}finally {
+        lock.release()
+    }*/
 }

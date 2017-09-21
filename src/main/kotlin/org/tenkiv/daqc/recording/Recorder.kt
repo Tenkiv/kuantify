@@ -8,12 +8,11 @@ import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.nio.aRead
 import kotlinx.coroutines.experimental.nio.aWrite
-import kotlinx.coroutines.experimental.sync.Mutex
-import kotlinx.coroutines.experimental.sync.withLock
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.secondsSpan
 import org.tenkiv.daqc.StoredData
 import org.tenkiv.daqc.hardware.definitions.Updatable
+import org.tenkiv.daqc.withALock
 import org.tenkiv.daqcThreadContext
 import org.tenkiv.getMemoryRecorderUid
 import java.io.File
@@ -37,6 +36,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
     val uid = getMemoryRecorderUid()
 
     private val currentFilesMap = HashMap<Instant, File>()
+    private val currentFileChannelsMap = HashMap<Instant, AsynchronousFileChannel>()
 
     private var perCountFrequencyCounter = 0
 
@@ -48,12 +48,13 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
 
     private var isFirst = true
 
-    private val mutex = Mutex()
-
     private fun getNewFileWriter(): AsynchronousFileChannel {
         val now = Instant.now()
         val file = File("tempStorage_${uid}_${now.toEpochMilli()}.json")
-        val writer = AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+        val writer = AsynchronousFileChannel.open(file.toPath(),
+                StandardOpenOption.READ,
+                StandardOpenOption.WRITE,
+                StandardOpenOption.CREATE)
         isFirst = true
         if (currentFilesMap.size != 0) {
             if (fileChannel.isOpen) {
@@ -61,7 +62,6 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
                     writeJsonBuffer("]", fileChannel)
                     // fileChannel.close()
                 }
-
             }
         }
 
@@ -70,6 +70,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
             writer.force(false)
         }
 
+        currentFileChannelsMap.put(now, writer)
         currentFilesMap.put(now, file)
         return writer
     }
@@ -95,9 +96,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
             diskRefreshJob = launch(daqcThreadContext) {
                 while (isActive) {
                     delay(delay)
-                    mutex.withLock {
-                        fileChannel = getNewFileWriter()
-                    }
+                    fileChannel = getNewFileWriter()
                     checkFileAge()
                 }
             }
@@ -149,6 +148,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
             currentFilesMap.iterator().forEach {
                 if (Duration.between(it.key, now) > diskDuration.duration) {
                     launch(daqcThreadContext) {
+                        currentFileChannelsMap[it.key]?.close()
                         currentFilesMap[it.key]?.delete()
                         currentFilesMap.remove(it.key)
                     }
@@ -200,15 +200,22 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
         if (diskDuration != StorageDuration.None) {
             entry.forEach { writeOut(it) }
         }
+
     }
 
     private suspend fun writeOut(entry: ValueInstant<T>) {
         if (diskDuration != StorageDuration.None) {
-            //mutex.withLock {
+            try {
                 writeJsonBuffer(
-                        "${if(isFirst){isFirst=false;""}else{","}}{\"$TIME\":${entry.instant.toEpochMilli()}," +
+                        "${if (isFirst) {
+                            isFirst = false;""
+                        } else {
+                            ","
+                        }}{\"$TIME\":${entry.instant.toEpochMilli()}," +
                                 "\"$VALUE\":\"${entry.value}\"}", fileChannel)
-            //}
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -217,37 +224,43 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
                                         charset: Charset = Charset.defaultCharset()) {
 
         try {
-            mutex.withLock {
-                filePosition += string.length
+            fileChannel.withALock {
                 val buffer = ByteBuffer.wrap(string.toByteArray(charset))
-                println("${currentFilesMap.values.forEach { println(it.name)}} $filePosition Writing: ${String(buffer.array())}")
-                if(fileChannel.isOpen) {
+                println("$filePosition Writing: ${String(buffer.array())}")
                     fileChannel.aWrite(buffer, filePosition)
-                }
+                filePosition += string.length
             }
-        }catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     fun stop(deleteDiskData: Boolean = true) {
+        println("Stop 1")
         launch(daqcThreadContext) {
+
             diskRefreshJob?.cancel()
             memoryRefreshJob?.cancel()
             subRecChannel.close()
-
+            println("Stop2 " + deleteDiskData)
             writeOut(_dataInMemory)
+            println("Stop3")
             if (!deleteDiskData) {
+
                 //mutex.withLock {
+                fileChannel.withALock {
                     fileChannel.force(false)
-                    writeJsonBuffer("]", fileChannel)
-                    //fileChannel.close()
+
+                }
+                writeJsonBuffer("]", fileChannel)
+                //fileChannel.close()
 
                 //}
             } else {
                 //fileChannel.close()
                 currentFilesMap.forEach {
-                    mutex.withLock {
+                    currentFileChannelsMap[it.key]?.withALock {
+                        currentFileChannelsMap[it.key]?.close()
                         if (it.value.exists()) {
                             it.value.delete()
                         }
@@ -289,10 +302,10 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
                                         aggregatedList: MutableList<ValueInstant<T>> = ArrayList()):
             List<ValueInstant<T>> {
 
-        currentFilesMap.toSortedMap().forEach {
-            mutex.withLock {
+        currentFileChannelsMap.toSortedMap().forEach {
+            //mutex.withLock {
                 aggregatedList.addAll(readFromDisk(it.value, filter))
-            }
+            //}
         }
         return aggregatedList
     }
@@ -319,9 +332,9 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
     private val ZERO_BYTE: Byte = 0
     private var zeroCount = 0
 
-    private suspend fun readFromDisk(file: File, filter: (ValueInstant<T>) -> Boolean = { true }): List<ValueInstant<T>> {
-        val channel = AsynchronousFileChannel.open(file.toPath(),
-                StandardOpenOption.READ)
+    private suspend fun readFromDisk(channel: AsynchronousFileChannel, filter: (ValueInstant<T>) -> Boolean = { true }): List<ValueInstant<T>> {
+        /*val channel = AsynchronousFileChannel.open(file.toPath(),
+                StandardOpenOption.READ)*/
 
         var objectStart = false
         var isInString = false
@@ -332,7 +345,9 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
 
         while (channel.isOpen) {
             try {
+                //channel.withALock {
                 channel.aRead(buff, position)
+                //}
                 val array = buff.array()
                 array.forEach {
                     if (objectStart && it == STRING_DELIM) {

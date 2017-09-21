@@ -45,10 +45,12 @@ class RecorderTest : StringSpec() {
             runBlocking {
                 recorders.forEach {
                     println("Fetching Data")
-                    recorders.forEach{it.stop(false)}
-                    it.getMatchingData { true }.await().forEach(::println)
+                    it.stop(false)
+                    it.getMatchingData { true }.await()
                 }
             }
+
+            Thread.sleep(10000)
         }
     }
 }
