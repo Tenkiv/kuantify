@@ -332,6 +332,8 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
                 channel.aRead(buff, position)
                 //}
                 val array = buff.array()
+                //DEBUG
+                println(String(array))
                 array.forEach {
                     if (objectStart && it == STRING_DELIM) {
                         isInString = !isInString
@@ -363,7 +365,7 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
                 position += 100
                 buff = ByteBuffer.allocate(100)
             } catch (e: Exception) {
-                e.printStackTrace()
+                //e.printStackTrace()
             }
         }
         return complyingObjects

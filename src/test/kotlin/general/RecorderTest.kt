@@ -46,7 +46,7 @@ class RecorderTest : StringSpec() {
                 recorders.forEach {
                     println("Fetching Data")
                     it.stop(false)
-                    it.getMatchingData { true }.await()
+                    it.getMatchingData { true }.await().forEach { println() }
                 }
             }
 
