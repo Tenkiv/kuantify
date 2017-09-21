@@ -97,58 +97,54 @@ abstract class AbstractNNPIDController<I : Quantity<I>, out O : DaqcValue>(priva
 
     init {
         targetInput.openNewCoroutineListener(CommonPool) {
-            try {
-                val recentVal = it.value tu desiredValue.unit
+            val recentVal = it.value tu desiredValue.unit
 
-                val time = if (previousTime.isBefore(it.instant)) {
-                    (Duration.between(previousTime, it.instant).seconds / 1000.0)
-                } else {
-                    .00005
-                }
-
-                if (previousTime.isAfter(it.instant)) {
-                    previousTime = it.instant
-                }
-
-                error = desiredValue.toFloat() - recentVal.toFloat()
-                integral += (error * time).toFloat()
-                val derivative = (error - previousError)
-
-                println("Kp:$kp Ki:$ki Kd:$kd")
-                val pid = (kp * error + ki * integral + kd * derivative).toFloat()
-                previousError = error
-                println("CurrentTemp:$recentVal Output:$pid Error:$previousError Integral: $integral")
-
-                val correlatedValues = FloatArray(correlatedInputs.size)
-
-                correlatedInputs.forEachIndexed { index, input ->
-                    correlatedValues[index] = input.broadcastChannel.value.value.toFloat()
-                }
-
-                net.train(floatArrayOf(
-                        desiredValue.toFloat(),
-                        recentVal.toFloat(),
-                        *correlatedValues),
-                        floatArrayOf(error))
-
-                net.runGraph(floatArrayOf(desiredValue.toFloat(), error, *correlatedValues))
-
-                kp = net.weightOutput[0][0]
-                ki = net.weightOutput[1][0]
-                kd = net.weightOutput[2][0]
-
-                if (integral > WINDUP_LIMIT) {
-                    integral = WINDUP_LIMIT
-                } else if (integral < -WINDUP_LIMIT) {
-                    integral = -WINDUP_LIMIT
-                }
-
-                output.setOutput(activationFun(targetInput, correlatedInputs, pid))
-
-                previousTime = it.instant
-            } catch (e: Exception) {
-                e.printStackTrace()
+            val time = if (previousTime.isBefore(it.instant)) {
+                (Duration.between(previousTime, it.instant).seconds / 1000.0)
+            } else {
+                .00005
             }
+
+            if (previousTime.isAfter(it.instant)) {
+                previousTime = it.instant
+            }
+
+            error = desiredValue.toFloat() - recentVal.toFloat()
+            integral += (error * time).toFloat()
+            val derivative = (error - previousError)
+
+            //println("Kp:$kp Ki:$ki Kd:$kd")
+            val pid = (kp * error + ki * integral + kd * derivative).toFloat()
+            previousError = error
+            //println("CurrentTemp:$recentVal Output:$pid Error:$previousError Integral: $integral")
+
+            val correlatedValues = FloatArray(correlatedInputs.size)
+
+            correlatedInputs.forEachIndexed { index, input ->
+                correlatedValues[index] = input.broadcastChannel.value.value.toFloat()
+            }
+
+            net.train(floatArrayOf(
+                    desiredValue.toFloat(),
+                    recentVal.toFloat(),
+                    *correlatedValues),
+                    floatArrayOf(error))
+
+            net.runGraph(floatArrayOf(desiredValue.toFloat(), error, *correlatedValues))
+
+            kp = net.weightOutput[0][0]
+            ki = net.weightOutput[1][0]
+            kd = net.weightOutput[2][0]
+
+            if (integral > WINDUP_LIMIT) {
+                integral = WINDUP_LIMIT
+            } else if (integral < -WINDUP_LIMIT) {
+                integral = -WINDUP_LIMIT
+            }
+
+            output.setOutput(activationFun(targetInput, correlatedInputs, pid))
+
+            previousTime = it.instant
         }
     }
 }
@@ -293,13 +289,6 @@ class NeuralNetwork(val inputSize: Int, val hiddenSize: Int, val outputSize: Int
             runGraph(data)
             val bp = backPropagate(result, learningRate, momentum)
             error += bp
-        }
-    }
-
-    fun test(data: Array<FloatArray>) {
-        data.forEach {
-            it.forEach(::print)
-            println(" -> " + runGraph(it)[0])
         }
     }
 
