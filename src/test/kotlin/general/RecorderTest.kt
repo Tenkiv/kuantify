@@ -26,18 +26,20 @@ class RecorderTest : StringSpec() {
                     2.at(Instant.now()),
                     3.at(Instant.now()),
                     4.at(Instant.now()),
-                    5.at(Instant.MAX))
+                    5.at(Instant.MAX)
+            )
 
             Thread.sleep(100)
 
             assert(testData.getDataInRange(Instant.MIN..Instant.now()).size == 4)
 
             val recorders = ArrayList<Recorder<BinaryState>>()
-            for( i in 0..20) {
-                recorders.add(DigitalGibberingSensor().createRecorder(storageFrequency = StorageFrequency.All,
-                        memoryDuration = StorageDuration.Forever,
-                        diskDuration = StorageDuration.Forever
-                        ) { deserializer.invoke(it) })
+            for (i in 0..20) {
+                recorders.add(
+                        DigitalGibberingSensor().newBinaryStateRecorder(storageFrequency = StorageFrequency.All,
+                                memoryDuration = StorageDuration.Forever,
+                                diskDuration = StorageDuration.Forever)
+                )
             }
 
             Thread.sleep(10000)
@@ -46,7 +48,7 @@ class RecorderTest : StringSpec() {
                 recorders.forEach {
                     println("Fetching Data")
                     it.stop(false)
-                    it.getMatchingData { true }.await().forEach { println() }
+                    it.getAllData().await().forEach { println() }
                 }
             }
 

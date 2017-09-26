@@ -4,17 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.nio.aRead
 import kotlinx.coroutines.experimental.nio.aWrite
+import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.experimental.sync.withLock
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.coral.isOlderThan
 import org.tenkiv.coral.secondsSpan
-import org.tenkiv.daqc.StoredData
+import org.tenkiv.daqc.PrimitiveValueInstant
 import org.tenkiv.daqc.hardware.definitions.Updatable
-import org.tenkiv.daqc.withALock
 import org.tenkiv.daqcThreadContext
-import org.tenkiv.getMemoryRecorderUid
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
@@ -22,340 +22,269 @@ import java.nio.charset.Charset
 import java.nio.file.StandardOpenOption
 import java.time.Duration
 import java.time.Instant
-import java.util.*
-import kotlin.collections.ArrayList
 
 
-open class Recorder<out T> internal constructor(val storageFrequency: StorageFrequency = StorageFrequency.All,
-                                                val memoryDuration: StorageDuration =
-                                                StorageDuration.For(30L.secondsSpan),
-                                                val diskDuration: StorageDuration = StorageDuration.Forever,
-                                                updatable: Updatable<ValueInstant<T>>,
-                                                val dataDeserializer: (String) -> T) {
+/**
+ * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
+ * ValueInstant and false if it should not.
+ */
+class Recorder<out T> internal constructor(
+        updatable: Updatable<ValueInstant<T>>,
+        val storageFrequency: StorageFrequency = StorageFrequency.All,
+        val memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+        val diskDuration: StorageDuration = StorageDuration.None,
+        private val filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
+        private val valueSerializer: (T) -> String,
+        private val valueDeserializer: (String) -> T
+) {
 
-    val uid = getMemoryRecorderUid()
-
-    private val currentFilesMap = HashMap<Instant, File>()
-    private val currentFileChannelsMap = HashMap<Instant, AsynchronousFileChannel>()
-
-    private var perCountFrequencyCounter = 0
-
-    private var fileChannel: AsynchronousFileChannel
-
-    private var filePosition = 0L
-
-    private var currentInterval: Long = 0
-
-    private var isFirst = true
-
-    private var zeroCount = 0
-
-    //TODO: Change to implementation of a truly immutable list.
-    val dataInMemory: List<ValueInstant<T>> get() = ArrayList(_dataInMemory)
-
-    val allData: Deferred<List<ValueInstant<T>>> get() = getDataInRange(Instant.MIN..Instant.MAX)
-
-    private val subRecChannel: SubscriptionReceiveChannel<ValueInstant<T>>
-
-    private var diskRefreshJob: Job? = null
-
-    private var memoryRefreshJob: Job? = null
+    private val uid = getRecorderUid()
+    private val directoryPath = async(daqcThreadContext) { "$RECORDERS_PATH/${uid.await()}" }
+    private val directoryFile = async(daqcThreadContext) { File(directoryPath.await()).apply { mkdir() } }
 
     private val _dataInMemory = ArrayList<ValueInstant<T>>()
+    private val _reversedDataInMemory = _dataInMemory.asReversed()
 
-    init {
-        fileChannel = getNewFileWriter()
+    private val files = ArrayList<RecorderFile>()
+    private val reversedFiles = files.asReversed()
 
+    private val receiveChannel = updatable.broadcastChannel.openSubscription()
+
+
+    private val recordJob = launch(daqcThreadContext) {
+        if (diskDuration is StorageDuration.Forever)
+            files += RecorderFile(null)
+
+        //TODO: Make sure this is canceled when parent coroutine is cancelled
         if (diskDuration is StorageDuration.For) {
-            val delay = diskDuration.duration.toMillis() / 2
-            diskRefreshJob = launch(daqcThreadContext) {
+            launch(daqcThreadContext) {
+                val fileCreationInterval = diskDuration.duration.dividedBy(10)
+                val fileExpiresIn = diskDuration.duration + diskDuration.duration.dividedBy(9)
                 while (isActive) {
-                    delay(delay)
-                    fileChannel = getNewFileWriter()
-                    checkFileAge()
+                    files += RecorderFile(fileExpiresIn)
+                    delay(fileCreationInterval.toMillis())
                 }
             }
         }
 
-        if (memoryDuration is StorageDuration.For) {
-            val delay = memoryDuration.duration.toMillis() / 2
-            memoryRefreshJob = launch(daqcThreadContext) {
-                while (isActive) {
-                    delay(delay)
-                    checkMemoryAge()
-                }
+        if (storageFrequency is StorageFrequency.Interval)
+            while (isActive) {
+                delay(storageFrequency.interval.toMillis())
+                val latestUpdate = updatable.broadcastChannel.valueOrNull
+                if (latestUpdate != null)
+                    recordUpdate(latestUpdate)
+                cleanMemory()
             }
-        }
+        else {
+            var numUnstoredMeasurements = 0
 
-        subRecChannel = updatable.broadcastChannel.openSubscription()
-        launch(daqcThreadContext) {
-            if (memoryDuration != StorageDuration.None) {
-                subRecChannel.consumeEach {
-                    when (storageFrequency) {
-                        is StorageFrequency.PerNumMeasurements -> {
-                            cachePerNumMeasurement(it, storageFrequency.number)
-                        }
-                        is StorageFrequency.Interval -> {
-                            cachePerInterval(it, storageFrequency.interval)
-                        }
-                        is StorageFrequency.All -> {
-                            cacheAll(it)
-                        }
+            receiveChannel.consumeEach { update ->
+                if (storageFrequency is StorageFrequency.All)
+                    recordUpdate(update)
+                if (storageFrequency is StorageFrequency.PerNumMeasurements) {
+                    numUnstoredMeasurements++
+                    if (numUnstoredMeasurements == storageFrequency.number) {
+                        recordUpdate(update)
+                        cleanMemory()
+                        numUnstoredMeasurements = 0
                     }
                 }
             }
         }
     }
 
-    private fun getNewFileWriter(): AsynchronousFileChannel {
-        val now = Instant.now()
-        val file = File("tempStorage_${uid}_${now.toEpochMilli()}.json")
-        val writer = AsynchronousFileChannel.open(file.toPath(),
-                StandardOpenOption.READ,
-                StandardOpenOption.WRITE,
-                StandardOpenOption.CREATE)
-        isFirst = true
-        if (currentFilesMap.size != 0) {
-            if (fileChannel.isOpen) {
-                launch(daqcThreadContext) {
-                    writeJsonBuffer("]", fileChannel)
-                    // fileChannel.close()
-                }
+    /**
+     * Gets the data currently stored in RAM by this recorder. The returned list can not be modified,
+     * to get an updated list of data in memory, call this function again.
+     */
+    //TODO: Make this return truly immutable list.
+    fun getDataInMemory(): List<ValueInstant<T>> = ArrayList(_dataInMemory)
+
+    //TODO: Make this return a truly immutable list using a builder
+    fun getAllData(): Deferred<List<ValueInstant<T>>> = async(daqcThreadContext) {
+        if (memoryDuration >= diskDuration)
+            getDataInMemory()
+        else {
+            val data = ArrayList<ValueInstant<T>>()
+            reversedFiles.forEach {
+                data.addAll(it.readFromDisk { true })
             }
-        }
-
-        launch(daqcThreadContext) {
-            writeJsonBuffer("[", writer)
-            writer.force(false)
-        }
-
-        currentFileChannelsMap.put(now, writer)
-        currentFilesMap.put(now, file)
-        return writer
-    }
-
-    private suspend fun cachePerNumMeasurement(value: ValueInstant<T>, samples: Int) {
-        if (perCountFrequencyCounter >= samples) {
-            _dataInMemory.add(value)
+            data
         }
     }
 
-    private fun checkFileAge() {
-        if (diskDuration is StorageDuration.For) {
-            val now = Instant.now()
-            currentFilesMap.iterator().forEach {
-                if (Duration.between(it.key, now) > diskDuration.duration) {
-                    launch(daqcThreadContext) {
-                        currentFileChannelsMap[it.key]?.close()
-                        currentFilesMap[it.key]?.delete()
-                        currentFilesMap.remove(it.key)
-                    }
-                }
-            }
-        }
-    }
-
-    private suspend fun checkMemoryAge() {
-        val now = Instant.now()
-        if (memoryDuration is StorageDuration.For) {
-            _dataInMemory.iterator().forEach {
-                if (Duration.between(it.instant, now) > memoryDuration.duration) {
-                    launch(daqcThreadContext) {
-                        writeOut(it)
-                        _dataInMemory.remove(it)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun checkInterval(duration: Duration): Boolean {
-        val potential = (Instant.now().toEpochMilli() / duration.toMillis())
-        if (currentInterval - potential < 0) {
-            currentInterval = potential
-            return true
-        }
-        return false
-    }
-
-    private suspend fun cachePerInterval(value: ValueInstant<T>, duration: Duration) {
-        if (checkInterval(duration)) {
-            writeOut(_dataInMemory)
-            _dataInMemory.clear()
-        } else {
-            _dataInMemory.add(value)
-        }
-    }
-
-    private suspend fun cacheAll(value: ValueInstant<T>) {
-        _dataInMemory.add(value)
-        if (memoryDuration == StorageDuration.Forever && diskDuration != StorageDuration.None) {
-            writeOut(value)
-        }
-    }
-
-    private suspend fun writeOut(entry: List<ValueInstant<T>>) {
-        if (diskDuration != StorageDuration.None) {
-            entry.forEach { writeOut(it) }
-        }
-
-    }
-
-    private suspend fun writeOut(entry: ValueInstant<T>) {
-        if (diskDuration != StorageDuration.None) {
-            try {
-                writeJsonBuffer(
-                        "${if (isFirst) {
-                            isFirst = false;""
-                        } else {
-                            ","
-                        }}{\"$TIME\":${entry.instant.toEpochMilli()}," +
-                                "\"$VALUE\":\"${entry.value}\"}", fileChannel)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    private suspend fun writeJsonBuffer(string: String,
-                                        fileChannel: AsynchronousFileChannel,
-                                        charset: Charset = Charset.defaultCharset()) {
-
-        try {
-            fileChannel.withALock {
-                val buffer = ByteBuffer.wrap(string.toByteArray(charset))
-                println("$filePosition Writing: ${String(buffer.array())}")
-                fileChannel.aWrite(buffer, filePosition)
-                filePosition += string.length
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    fun stop(deleteDiskData: Boolean = true) {
-        println("Stop 1")
-        launch(daqcThreadContext) {
-
-            diskRefreshJob?.cancel()
-            memoryRefreshJob?.cancel()
-            subRecChannel.close()
-            println("Stop2 " + deleteDiskData)
-            writeOut(_dataInMemory)
-            println("Stop3")
-            if (!deleteDiskData) {
-
-                //mutex.withLock {
-                fileChannel.withALock {
-                    fileChannel.force(false)
-
-                }
-                writeJsonBuffer("]", fileChannel)
-                //fileChannel.close()
-
-                //}
-            } else {
-                //fileChannel.close()
-                currentFilesMap.forEach {
-                    currentFileChannelsMap[it.key]?.withALock {
-                        currentFileChannelsMap[it.key]?.close()
-                        if (it.value.exists()) {
-                            it.value.delete()
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fun getAllDataFromDisk(): Deferred<List<ValueInstant<T>>> = async(daqcThreadContext) { getDataFromDisk() }
-
-    //TODO: Make matching extension function for Collection<ValueInstant<T>>
+    //TODO: Make similar extension function for Collection<ValueInstant<T>>
     fun getDataInRange(instantRange: ClosedRange<Instant>): Deferred<List<ValueInstant<T>>> =
             async(daqcThreadContext) {
-                val start = instantRange.start
-                val end = instantRange.endInclusive
+                val oldestRequested = instantRange.start
+                val newestRequested = instantRange.endInclusive
 
-                val filterFun: (ValueInstant<T>) -> Boolean = { it.instant.isAfter(start) && it.instant.isBefore(end) }
-
-                if (start.isBefore(Instant.now())) {
-                    throw IllegalArgumentException("Requested start time is in the future.")
+                val filterFun: (ValueInstant<T>) -> Boolean = {
+                    it.instant.isAfter(oldestRequested) &&
+                            it.instant.isBefore(newestRequested) ||
+                            it.instant == oldestRequested ||
+                            it.instant == newestRequested
                 }
 
-                val found = ArrayList<ValueInstant<T>>(_dataInMemory.filter(filterFun))
-
-                if (!(_dataInMemory.filter { it.instant.isAfter(end) }.isNotEmpty())) {
-                    return@async found
-                } else {
-                    getDataFromDisk(filterFun, found)
-                }
-
-                if (found.sortedBy { it.instant }.last().instant.isBefore(end)) {
-                    throw IllegalArgumentException("Last possible Instant is before last requested Instant")
-                }
-                return@async found
+                val oldestMemory = _dataInMemory.firstOrNull()
+                if (oldestMemory != null && oldestMemory.instant.isBefore(oldestRequested))
+                    return@async _dataInMemory.filter(filterFun)
+                else if (diskDuration > memoryDuration) {
+                    getDataFromDisk(filterFun)
+                } else
+                    return@async _dataInMemory.filter(filterFun)
             }
 
-    private suspend fun getDataFromDisk(filter: (ValueInstant<T>) -> Boolean = { true },
-                                        aggregatedList: MutableList<ValueInstant<T>> = ArrayList()):
-            List<ValueInstant<T>> {
-
-        currentFileChannelsMap.toSortedMap().forEach {
-            //mutex.withLock {
-            aggregatedList.addAll(readFromDisk(it.value, filter))
-            //}
-        }
-        return aggregatedList
+    fun stop(shouldDeleteDiskData: Boolean = false) {
+        receiveChannel.close()
+        recordJob.cancel(CancellationException("Recorder stopped"))
+        files.forEach { it.stop() }
+        if (shouldDeleteDiskData)
+            launch(daqcThreadContext) {
+                directoryFile.await().delete()
+            }
     }
 
-    fun getMatchingData(filter: (ValueInstant<T>) -> Boolean): Deferred<Collection<ValueInstant<T>>> =
-            async(daqcThreadContext) {
-                val found = ArrayList<ValueInstant<T>>(_dataInMemory.filter { filter(it) })
-                getDataFromDisk(filter, found)
-                return@async found
+    private suspend fun getDataFromDisk(filter: (ValueInstant<T>) -> Boolean): List<ValueInstant<T>> {
+        //TODO: Change to immutable list using builder
+        val result = ArrayList<ValueInstant<T>>()
+        reversedFiles.forEach { result.addAll(it.readFromDisk(filter)) }
+        return result
+    }
+
+    private suspend fun recordUpdate(update: ValueInstant<T>) {
+        if (filterOnRecord(update)) {
+            if (memoryDuration !is StorageDuration.None)
+                _dataInMemory += update
+            files.lastOrNull()?.writeEntry(update)
+        }
+    }
+
+    private suspend fun cleanMemory() {
+        if (memoryDuration is StorageDuration.For) {
+            val iterator = _reversedDataInMemory.iterator()
+            while (iterator.hasNext()) {
+                if (iterator.next().instant.isOlderThan(memoryDuration.duration))
+                    iterator.remove()
+                else
+                    break
             }
+        }
+    }
 
-    private suspend fun readFromDisk(channel: AsynchronousFileChannel, filter: (ValueInstant<T>) -> Boolean = { true }): List<ValueInstant<T>> {
-        /*val channel = AsynchronousFileChannel.open(file.toPath(),
-                StandardOpenOption.READ)*/
+    // This has to be an extension function in order to keep out variance in Recorder class generic
+    private suspend fun RecorderFile.writeEntry(entry: ValueInstant<T>) {
+        val jsonObjectString =
+                "{\"$INSTANT_KEY\":${entry.instant.toEpochMilli()}," +
+                        "\"$VALUE_KEY\":\"${valueSerializer(entry.value)}\"}"
+        writeJsonBuffer(jsonObjectString)
+    }
 
-        var objectStart = false
-        var isInString = false
-        val complyingObjects = ArrayList<ValueInstant<T>>()
-        val currentObject = ArrayList<Byte>()
-        var buff = ByteBuffer.allocate(100)
-        var position = 0L
+    //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
+    //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Inner class ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
+    //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
+    private inner class RecorderFile internal constructor(val expiresIn: Duration?) {
 
-        while (channel.isOpen) {
-            try {
-                //channel.withALock {
-                channel.aRead(buff, position)
-                //}
-                val array = buff.array()
-                //DEBUG
-                println(String(array))
-                array.forEach {
-                    if (objectStart && it == STRING_DELIM) {
-                        isInString = !isInString
-                    }
+        internal val file = async(daqcThreadContext) {
+            File("${directoryPath.await()}/${System.currentTimeMillis()}.json")
+        }
+        internal val fileChannel = async(daqcThreadContext) {
+            AsynchronousFileChannel.open(
+                    file.await().toPath(),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.READ,
+                    StandardOpenOption.WRITE
+            )
+        }
 
-                    if (!isInString && it == OBJECT_START) objectStart = true
+        private val mutex = Mutex()
+
+        private var arrayLastPosition = 0L
+        private var isFirstWrite = true
+
+        init {
+            if (expiresIn != null)
+                launch(daqcThreadContext) {
+                    delay(expiresIn.toMillis())
+                    files.remove(this@RecorderFile)
+
+                    fileChannel.await().close()
+                    file.await().delete()
+                }
+
+        }
+
+        internal suspend fun writeJsonBuffer(jsonObjectString: String,
+                                             charset: Charset = Charset.defaultCharset()) {
+            val string: String
+            if (isFirstWrite) {
+                string = "$ARRAY_OPEN$jsonObjectString$ARRAY_CLOSE"
+                writeToFile(string)
+                isFirstWrite = false
+            } else {
+                string = ",$jsonObjectString$ARRAY_CLOSE"
+                writeToFile(string)
+            }
+            arrayLastPosition += string.length - ARRAY_CLOSE.length
+        }
+
+        private suspend fun writeToFile(string: String,
+                                        charset: Charset = Charset.defaultCharset()) {
+            val buffer = ByteBuffer.wrap(string.toByteArray(charset))
+            mutex.withLock {
+                fileChannel.await().aWrite(buffer, arrayLastPosition)
+            }
+        }
+
+        internal fun stop() {
+            launch(daqcThreadContext) {
+                val channel = fileChannel.await()
+                mutex.withLock {
+                    //TODO: Change this to blocking() call in kotlin coroutines.
+                    channel.force(true)
+                    channel.close()
+                }
+
+            }
+        }
+
+        internal suspend fun readFromDisk(filter: (ValueInstant<T>) -> Boolean): List<ValueInstant<T>> {
+            val channel = fileChannel.await()
+            var zeroCount = 0
+            var objectStart = false
+            var inString = false
+            val complyingObjects = ArrayList<ValueInstant<T>>()
+            val currentObject = ArrayList<Byte>()
+            var buffer = ByteBuffer.allocate(100)
+            var position = 0L
+
+            while (channel.isOpen) {
+                mutex.withLock { channel.aRead(buffer, position) }
+
+                val array = buffer.array()
+                array.forEach { charByte ->
+                    if (objectStart && charByte == STRING_DELIM)
+                        inString = !inString
+
+                    if (!inString && charByte == OBJECT_START)
+                        objectStart = true
 
                     if (objectStart) {
-                        currentObject.add(it)
+                        currentObject += charByte
                     }
 
-                    if (!isInString && it == OBJECT_END) {
+                    if (!inString && charByte == OBJECT_END) {
                         objectStart = false
-                        val value = jacksonMapper.readValue<StoredData>(currentObject.toByteArray()).
-                                getValueInstant(dataDeserializer)
+                        val value = jacksonMapper
+                                .readValue<PrimitiveValueInstant>(currentObject.toByteArray())
+                                .toValueInstant(valueDeserializer)
                         if (filter(value)) {
-                            complyingObjects.add(value)
+                            complyingObjects += value
                         }
                         currentObject.clear()
                     }
 
-                    if (it == ZERO_BYTE) {
+                    if (charByte == ZERO_BYTE) {
                         zeroCount++
                         if (zeroCount >= array.size) {
                             return@readFromDisk complyingObjects
@@ -363,26 +292,54 @@ open class Recorder<out T> internal constructor(val storageFrequency: StorageFre
                     }
                 }
                 position += 100
-                buff = ByteBuffer.allocate(100)
-            } catch (e: Exception) {
-                //e.printStackTrace()
+                buffer = ByteBuffer.allocate(100)
+
             }
+            return complyingObjects
         }
-        return complyingObjects
     }
 
-    companion object {
-        private const val VALUE = "value"
-        private const val TIME = "time"
 
+    companion object {
+        private const val VALUE_KEY = "value"
+        private const val INSTANT_KEY = "instant"
         private const val OBJECT_START = '{'.toByte()
         private const val OBJECT_END = '}'.toByte()
-
         private const val STRING_DELIM = '"'.toByte()
-
         private const val ZERO_BYTE: Byte = 0
+        private const val ARRAY_OPEN = "{\"entries\":["
+        private const val ARRAY_CLOSE = "]}"
+
+        private const val RECORDERS_PATH = "recorders"
 
         private val jacksonMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
+
+        private val recordersDirectory = File(RECORDERS_PATH).apply { mkdir() }
+
+        //TODO: Change to ReadWriteMutex
+        private val recorderUidMutex = Mutex()
+        private var recorderUid: Long? = null
+
+        private fun getRecorderUid(): Deferred<String> = async(daqcThreadContext) {
+            recorderUidMutex.withLock {
+                recorderUid?.inc()?.toString() ?: run {
+                    val uid = recordersDirectory.listFiles()
+                            .map { it.name.toLongOrNull() }
+                            .requireNoNulls()
+                            .max()?.plus(1) ?: 1L
+                    recorderUid?.inc()?.toString()
+                    recorderUid = uid
+                    uid.toString()
+                }
+            }
+
+        }
+
+        /**
+         * This is a blocking call.
+         */
+        fun deleteAllRecordsFromDisk() = recordersDirectory.delete()
+
     }
 
 }

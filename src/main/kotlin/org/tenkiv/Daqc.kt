@@ -15,14 +15,7 @@ typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
 
 internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 
-//TODO: Transmit critical errors over this.
 val daqcCriticalErrorBroadcastChannel = ConflatedBroadcastChannel<DaqcCriticalError>()
-
-private var memRecorderUid = 0L
-
-internal fun getMemoryRecorderUid(): String {
-    return (memRecorderUid++).toString()
-}
 
 sealed class LocatorUpdate<out T : Device>(val wrappedDevice: T) : Device by wrappedDevice
 

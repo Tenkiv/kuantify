@@ -13,7 +13,6 @@ import org.tenkiv.physikal.core.PhysicalUnit
 import org.tenkiv.physikal.core.asType
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities
-import java.nio.channels.AsynchronousFileChannel
 import java.time.Instant
 import java.util.zip.DataFormatException
 import javax.measure.Quantity
@@ -33,30 +32,7 @@ interface UpdatableListener<T> {
 
 }
 
-sealed class DaqcValue {
-    companion object {
-
-        fun binaryFromString(input: String): DaqcValue {
-            if (input == BinaryState.On.toString()) {
-                return BinaryState.On
-            }
-            if (input == BinaryState.Off.toString()) {
-                return BinaryState.Off
-            }
-            throw DataFormatException("Data with BinaryState not found")
-        }
-
-        inline fun <reified Q : Quantity<Q>> quantityFromString(input: String): DaqcQuantity<Q> {
-            val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType()
-            if (quant != null) {
-                return DaqcQuantity.of(quant)
-            } else {
-                throw DataFormatException("Data with Quantity value not found")
-            }
-        }
-
-    }
-}
+sealed class DaqcValue
 
 sealed class BinaryState : DaqcValue() {
 
@@ -67,6 +43,18 @@ sealed class BinaryState : DaqcValue() {
     object Off : BinaryState() {
         override fun toString() = "BinaryState.OFF"
 
+    }
+
+    companion object {
+        fun fromString(input: String): BinaryState {
+            if (input == BinaryState.On.toString()) {
+                return BinaryState.On
+            }
+            if (input == BinaryState.Off.toString()) {
+                return BinaryState.Off
+            }
+            throw DataFormatException("Data with BinaryState not found")
+        }
     }
 
 }
@@ -101,6 +89,15 @@ class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuant
 
         fun <Q : Quantity<Q>> of(instant: QuantityMeasurement<Q>) =
                 DaqcQuantity(instant.value)
+
+        inline fun <reified Q : Quantity<Q>> fromString(input: String): DaqcQuantity<Q> {
+            val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType()
+            if (quant != null) {
+                return DaqcQuantity.of(quant)
+            } else {
+                throw DataFormatException("Data with Quantity value not found")
+            }
+        }
     }
 }
 
@@ -130,20 +127,13 @@ enum class DigitalStatus {
     DEACTIVATED
 }
 
-data class StoredData(val time: Long, val value: String) {
-    fun <T> getValueInstant(deserializer: (String) -> T): ValueInstant<T>
+data class PrimitiveValueInstant(val epochMilli: Long, val value: String) {
+
+    fun <T> toValueInstant(deserializeValue: (String) -> T): ValueInstant<T>
             = try {
-        deserializer(value) at Instant.ofEpochMilli(time)
+        deserializeValue(value) at Instant.ofEpochMilli(epochMilli)
     } catch (e: Exception) {
         throw e
     }
-}
 
-suspend fun <T> AsynchronousFileChannel.withALock(action: suspend () -> T): T {
-    /*val lock = this.aLock()
-    try {*/
-    return action()
-    /*}finally {
-        lock.release()
-    }*/
 }

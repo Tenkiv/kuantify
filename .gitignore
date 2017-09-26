@@ -49,4 +49,4 @@ TestRecording.json
 /Daqc-Tools.iml
 /src/main/kotlin/org/tenkiv/Test.kt
 
-tempStorage*
+/recorders/

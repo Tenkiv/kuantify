@@ -6,7 +6,6 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.secondsSpan
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.Updatable
 import org.tenkiv.daqc.hardware.definitions.channel.BinaryStateInput
 import org.tenkiv.daqc.hardware.definitions.channel.BinaryStateOutput
@@ -23,92 +22,102 @@ typealias RecordedQuantityOutput<Q> = RecordedUpdatable<DaqcQuantity<Q>, Quantit
 typealias RecordedBinaryStateOutput = RecordedUpdatable<BinaryState, BinaryStateOutput>
 
 //TODO: Move default parameter values in recorder creation function to constants
-fun <T> recorder(storageFrequency: StorageFrequency = StorageFrequency.All,
-                 memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-                 diskDuration: StorageDuration = StorageDuration.Forever,
-                 updatable: Updatable<ValueInstant<T>>,
-                 dataDeserializer: (String) -> T) = Recorder(storageFrequency,
-        memoryDuration,
-        diskDuration,
-        updatable,
-        dataDeserializer)
-
-fun Updatable<BinaryStateMeasurement>.binaryStateRecorder(storageFrequency: StorageFrequency =
-                                                          StorageFrequency.All,
-                                                          memoryDuration: StorageDuration =
-                                                          StorageDuration.For(30L.secondsSpan),
-                                                          diskDuration: StorageDuration =
-                                                          StorageDuration.Forever) =
-        Recorder(storageFrequency,
+fun <T> Updatable<ValueInstant<T>>.newRecorder(
+        storageFrequency: StorageFrequency = StorageFrequency.All,
+        memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+        diskDuration: StorageDuration = StorageDuration.Forever,
+        filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
+        valueSerializer: (T) -> String,
+        valueDeserializer: (String) -> T
+): Recorder<T> =
+        Recorder(this,
+                storageFrequency,
                 memoryDuration,
                 diskDuration,
-                this) { DaqcValue.binaryFromString(it) }
+                filterOnRecord,
+                valueSerializer,
+                valueDeserializer)
 
-fun <T> Updatable<ValueInstant<T>>.createRecorder(storageFrequency: StorageFrequency = StorageFrequency.All,
-                                                  memoryDuration: StorageDuration =
-                                                  StorageDuration.For(30L.secondsSpan),
-                                                  diskDuration: StorageDuration = StorageDuration.Forever,
-                                                  dataDeserializer: (String) -> T): Recorder<T> =
-        Recorder(storageFrequency,
+fun Updatable<BinaryStateMeasurement>.newBinaryStateRecorder(
+        storageFrequency: StorageFrequency = StorageFrequency.All,
+        memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+        diskDuration: StorageDuration = StorageDuration.Forever,
+        filterOnRecord: Recorder<BinaryState>.(ValueInstant<BinaryState>) -> Boolean = { true }
+) =
+        Recorder(this,
+                storageFrequency,
                 memoryDuration,
                 diskDuration,
+                filterOnRecord,
+                valueSerializer = BinaryState::toString,
+                valueDeserializer = BinaryState.Companion::fromString)
+
+//TODO: Add optional filterOnRecord parameter when supported by kotlin
+inline fun <reified Q : Quantity<Q>> Updatable<QuantityMeasurement<Q>>.newQuantityRecorder(
+        storageFrequency: StorageFrequency = StorageFrequency.All,
+        memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+        diskDuration: StorageDuration = StorageDuration.Forever
+): Recorder<DaqcQuantity<Q>> =
+        newRecorder(storageFrequency,
+                memoryDuration,
+                diskDuration,
+                filterOnRecord = { true },
+                valueSerializer = DaqcQuantity<Q>::toString,
+                valueDeserializer = DaqcQuantity.Companion::fromString)
+
+fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
+        storageFrequency: StorageFrequency = StorageFrequency.All,
+        memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+        diskDuration: StorageDuration = StorageDuration.Forever,
+        filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
+        valueSerializer: (T) -> String,
+        valueDeserializer: (String) -> T
+) =
+        RecordedUpdatable(
                 this,
-                dataDeserializer)
+                this.newRecorder(storageFrequency,
+                        memoryDuration,
+                        diskDuration,
+                        filterOnRecord,
+                        valueSerializer,
+                        valueDeserializer)
+        )
 
-inline fun <reified Q : Quantity<Q>>
-        Updatable<QuantityMeasurement<Q>>.daqcQuantityRecorder(storageFrequency: StorageFrequency =
-                                                               StorageFrequency.All,
-                                                               memoryDuration: StorageDuration =
-                                                               StorageDuration.For(30L.secondsSpan),
-                                                               diskDuration: StorageDuration =
-                                                               StorageDuration.Forever): Recorder<DaqcQuantity<Q>> =
-        recorder(storageFrequency,
-                memoryDuration,
-                diskDuration,
-                this) { DaqcValue.quantityFromString(it) }
+fun <U : Updatable<BinaryStateMeasurement>> U.pairWithNewBinStateRecorder(
+        storageFrequency: StorageFrequency = StorageFrequency.All,
+        memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+        diskDuration: StorageDuration = StorageDuration.Forever,
+        filterOnRecord: Recorder<BinaryState>.(ValueInstant<BinaryState>) -> Boolean = { true }
+) =
+        RecordedUpdatable(
+                this,
+                newBinaryStateRecorder(storageFrequency,
+                        memoryDuration,
+                        diskDuration,
+                        filterOnRecord)
+        )
 
-fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(storageFrequency: StorageFrequency = StorageFrequency.All,
-                                                              memoryDuration: StorageDuration =
-                                                              StorageDuration.For(30L.secondsSpan),
-                                                              diskDuration: StorageDuration = StorageDuration.Forever,
-                                                              dataDeserializer: (String) -> T) =
-        RecordedUpdatable(this, this.createRecorder(storageFrequency, memoryDuration, diskDuration, dataDeserializer))
-
-fun <U : Updatable<BinaryStateMeasurement>> U.pairWithNewBinStateRecorder(storageFrequency: StorageFrequency =
-                                                                          StorageFrequency.All,
-                                                                          memoryDuration: StorageDuration =
-                                                                          StorageDuration.For(30L.secondsSpan),
-                                                                          diskDuration: StorageDuration =
-                                                                          StorageDuration.Forever) =
-        RecordedUpdatable(this, binaryStateRecorder(storageFrequency, memoryDuration, diskDuration))
-
+//TODO: Add optional filterOnRecord parameter when supported by kotlin
 //TODO: Using type aliases here seems to crash the compiler, switch to type alias when that is fixed.
 inline fun <reified Q : Quantity<Q>, U : Updatable<ValueInstant<DaqcQuantity<Q>>>>
-        U.pairWithNewQuantityRecorder(storageFrequency: StorageFrequency =
-                                      StorageFrequency.All,
-                                      memoryDuration: StorageDuration =
-                                      StorageDuration.For(30L.secondsSpan),
-                                      diskDuration: StorageDuration =
-                                      StorageDuration.Forever) =
-        RecordedUpdatable(this, daqcQuantityRecorder(storageFrequency, memoryDuration, diskDuration))
+        U.pairWithNewQuantityRecorder(
+        storageFrequency: StorageFrequency = StorageFrequency.All,
+        memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+        diskDuration: StorageDuration = StorageDuration.Forever
+) =
+        RecordedUpdatable(this, newQuantityRecorder(storageFrequency, memoryDuration, diskDuration))
 
-fun <T> List<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>, shouldBeEncompassing: Boolean = false):
+fun <T> List<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>):
         List<ValueInstant<T>> {
+    val oldestRequested = instantRange.start
+    val newestRequested = instantRange.endInclusive
 
-    val start = instantRange.start
-    val end = instantRange.endInclusive
-
-    if (shouldBeEncompassing && start.isBefore(Instant.now())) {
-        throw IllegalArgumentException("Requested start time is in the future.")
+    return this.filter {
+        it.instant.isAfter(oldestRequested) &&
+                it.instant.isBefore(newestRequested) ||
+                it.instant == oldestRequested ||
+                it.instant == newestRequested
     }
-
-    val found = ArrayList<ValueInstant<T>>(filter { it.instant.isAfter(start) && it.instant.isBefore(end) })
-
-    if (shouldBeEncompassing && found.sortedBy { it.instant }.last().instant.isBefore(end)) {
-        throw IllegalArgumentException("Last possible Instant is before last requested Instant")
-    }
-
-    return found
 }
 
 
@@ -124,12 +133,37 @@ sealed class StorageFrequency {
     data class PerNumMeasurements(val number: Int) : StorageFrequency()
 }
 
-sealed class StorageDuration {
+sealed class StorageDuration : Comparable<StorageDuration> {
 
-    object Forever : StorageDuration()
+    object Forever : StorageDuration() {
 
-    object None : StorageDuration()
+        override fun compareTo(other: StorageDuration): Int =
+                when (other) {
+                    is Forever -> 0
+                    else -> 1
+                }
 
-    data class For(val duration: Duration) : StorageDuration()
+    }
+
+    object None : StorageDuration() {
+
+        override fun compareTo(other: StorageDuration): Int =
+                when (other) {
+                    is None -> 0
+                    else -> -1
+                }
+
+    }
+
+    data class For(val duration: Duration) : StorageDuration() {
+
+        override fun compareTo(other: StorageDuration): Int =
+                when (other) {
+                    is Forever -> -1
+                    is None -> 1
+                    is For -> duration.compareTo(other.duration)
+                }
+
+    }
 
 }
