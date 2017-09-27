@@ -55,9 +55,8 @@ class Recorder<out T> internal constructor(
         if (diskDuration is StorageDuration.Forever)
             files += RecorderFile(null)
 
-        //TODO: Make sure this is canceled when parent coroutine is cancelled
-        if (diskDuration is StorageDuration.For) {
-            launch(daqcThreadContext) {
+        if (diskDuration is StorageDuration.For)
+            launch(coroutineContext) {
                 val fileCreationInterval = diskDuration.duration.dividedBy(10)
                 val fileExpiresIn = diskDuration.duration + diskDuration.duration.dividedBy(9)
                 while (isActive) {
@@ -65,7 +64,7 @@ class Recorder<out T> internal constructor(
                     delay(fileCreationInterval.toMillis())
                 }
             }
-        }
+
 
         if (storageFrequency is StorageFrequency.Interval)
             while (isActive) {
@@ -137,7 +136,7 @@ class Recorder<out T> internal constructor(
 
     fun stop(shouldDeleteDiskData: Boolean = false) {
         receiveChannel.close()
-        recordJob.cancel(CancellationException("Recorder stopped"))
+        recordJob.cancel(CancellationException("Recorder manually stopped"))
         files.forEach { it.stop() }
         if (shouldDeleteDiskData)
             launch(daqcThreadContext) {
@@ -322,15 +321,20 @@ class Recorder<out T> internal constructor(
 
         private fun getRecorderUid(): Deferred<String> = async(daqcThreadContext) {
             recorderUidMutex.withLock {
-                recorderUid?.inc()?.toString() ?: run {
-                    val uid = recordersDirectory.listFiles()
+                val lastUid = recorderUid
+                val thisUid: Long
+
+                if (lastUid != null) {
+                    thisUid = lastUid + 1
+                    recorderUid = thisUid
+                } else {
+                    thisUid = recordersDirectory.listFiles()
                             .map { it.name.toLongOrNull() }
                             .requireNoNulls()
                             .max()?.plus(1) ?: 1L
-                    recorderUid?.inc()?.toString()
-                    recorderUid = uid
-                    uid.toString()
+                    recorderUid = thisUid
                 }
+                thisUid.toString()
             }
 
         }
