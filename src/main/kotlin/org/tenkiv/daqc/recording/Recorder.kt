@@ -27,6 +27,7 @@ import java.time.Instant
 /**
  * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
  * ValueInstant and false if it should not.
+ * @param valueSerializer returned String will be stored in a JSON file and should be a compliant JSON String.
  */
 class Recorder<out T> internal constructor(
         updatable: Updatable<ValueInstant<T>>,
@@ -34,6 +35,7 @@ class Recorder<out T> internal constructor(
         val memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
         val diskDuration: StorageDuration = StorageDuration.None,
         private val filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
+        //TODO: Consider changing String to some JsonString type for these serializers to make the specification clear.
         private val valueSerializer: (T) -> String,
         private val valueDeserializer: (String) -> T
 ) {
@@ -175,7 +177,7 @@ class Recorder<out T> internal constructor(
     private suspend fun RecorderFile.writeEntry(entry: ValueInstant<T>) {
         val jsonObjectString =
                 "{\"$INSTANT_KEY\":${entry.instant.toEpochMilli()}," +
-                        "\"$VALUE_KEY\":\"${valueSerializer(entry.value)}\"}"
+                        "\"$VALUE_KEY\":${valueSerializer(entry.value)}}"
         writeJsonBuffer(jsonObjectString)
     }
 
@@ -249,9 +251,9 @@ class Recorder<out T> internal constructor(
 
         internal suspend fun readFromDisk(filter: (ValueInstant<T>) -> Boolean): List<ValueInstant<T>> {
             val channel = fileChannel.await()
-            var zeroCount = 0
-            var objectStart = false
             var inString = false
+            var numUnclosedBraces = 0
+            var previousCharByte = ' '.toByte()
             val complyingObjects = ArrayList<ValueInstant<T>>()
             val currentObject = ArrayList<Byte>()
             var buffer = ByteBuffer.allocate(100)
@@ -262,33 +264,30 @@ class Recorder<out T> internal constructor(
 
                 val array = buffer.array()
                 array.forEach { charByte ->
-                    if (objectStart && charByte == STRING_DELIM)
+                    if (charByte == STRING_DELIM && previousCharByte != BREAK)
                         inString = !inString
 
-                    if (!inString && charByte == OBJECT_START)
-                        objectStart = true
+                    if (!inString && charByte == OPEN_BRACE)
+                        numUnclosedBraces++
 
-                    if (objectStart) {
+                    if (numUnclosedBraces > 1) {
                         currentObject += charByte
                     }
 
-                    if (!inString && charByte == OBJECT_END) {
-                        objectStart = false
-                        val value = jacksonMapper
+                    if (!inString && charByte == CLOSE_BRACE) {
+                        numUnclosedBraces--
+                        val valueInstant = jacksonMapper
                                 .readValue<PrimitiveValueInstant>(currentObject.toByteArray())
                                 .toValueInstant(valueDeserializer)
-                        if (filter(value)) {
-                            complyingObjects += value
+                        if (filter(valueInstant)) {
+                            complyingObjects += valueInstant
                         }
                         currentObject.clear()
+                        if (numUnclosedBraces == 0)
+                            return@readFromDisk complyingObjects
                     }
 
-                    if (charByte == ZERO_BYTE) {
-                        zeroCount++
-                        if (zeroCount >= array.size) {
-                            return@readFromDisk complyingObjects
-                        }
-                    }
+                    previousCharByte = charByte
                 }
                 position += 100
                 buffer = ByteBuffer.allocate(100)
@@ -302,9 +301,10 @@ class Recorder<out T> internal constructor(
     companion object {
         private const val VALUE_KEY = "value"
         private const val INSTANT_KEY = "instant"
-        private const val OBJECT_START = '{'.toByte()
-        private const val OBJECT_END = '}'.toByte()
+        private const val OPEN_BRACE = '{'.toByte()
+        private const val CLOSE_BRACE = '}'.toByte()
         private const val STRING_DELIM = '"'.toByte()
+        private const val BREAK = '\\'.toByte()
         private const val ZERO_BYTE: Byte = 0
         private const val ARRAY_OPEN = "{\"entries\":["
         private const val ARRAY_CLOSE = "]}"

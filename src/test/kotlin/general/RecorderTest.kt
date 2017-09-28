@@ -48,7 +48,6 @@ class RecorderTest : StringSpec() {
                 recorders.forEach {
                     println("Fetching Data")
                     it.stop(false)
-                    it.getAllData().await().forEach { println() }
                 }
             }
 

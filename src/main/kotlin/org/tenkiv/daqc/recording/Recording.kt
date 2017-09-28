@@ -49,7 +49,7 @@ fun Updatable<BinaryStateMeasurement>.newBinaryStateRecorder(
                 memoryDuration,
                 diskDuration,
                 filterOnRecord,
-                valueSerializer = BinaryState::toString,
+                valueSerializer = { "\"$it\"" },
                 valueDeserializer = BinaryState.Companion::fromString)
 
 //TODO: Add optional filterOnRecord parameter when supported by kotlin
@@ -62,7 +62,7 @@ inline fun <reified Q : Quantity<Q>> Updatable<QuantityMeasurement<Q>>.newQuanti
                 memoryDuration,
                 diskDuration,
                 filterOnRecord = { true },
-                valueSerializer = DaqcQuantity<Q>::toString,
+                valueSerializer = { "\"$it\"" },
                 valueDeserializer = DaqcQuantity.Companion::fromString)
 
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(

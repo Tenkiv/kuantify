@@ -129,11 +129,7 @@ enum class DigitalStatus {
 
 data class PrimitiveValueInstant(val epochMilli: Long, val value: String) {
 
-    fun <T> toValueInstant(deserializeValue: (String) -> T): ValueInstant<T>
-            = try {
-        deserializeValue(value) at Instant.ofEpochMilli(epochMilli)
-    } catch (e: Exception) {
-        throw e
-    }
+    fun <T> toValueInstant(deserializeValue: (String) -> T): ValueInstant<T> =
+            deserializeValue(value) at Instant.ofEpochMilli(epochMilli)
 
 }
