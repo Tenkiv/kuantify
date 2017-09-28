@@ -7,7 +7,6 @@ import kotlinx.coroutines.experimental.launch
 import org.tenkiv.QuantityMeasurement
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.hardware.definitions.Updatable
 import org.tenkiv.daqc.hardware.definitions.channel.Input
 import org.tenkiv.physikal.core.PhysicalUnit
 import org.tenkiv.physikal.core.asType
@@ -24,12 +23,6 @@ data class ArffDataSetStub(val data: Int)
 data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (ValueInstant<T>) -> Boolean) {
     var lastValue: ValueInstant<T>? = null
     var hasBeenReached: Boolean = false
-}
-
-interface UpdatableListener<T> {
-
-    suspend fun onUpdate(updatable: Updatable<T>, value: T)
-
 }
 
 sealed class DaqcValue
