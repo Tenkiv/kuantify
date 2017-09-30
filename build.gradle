@@ -45,8 +45,8 @@ dependencies {
     compile 'com.github.kittinunf.result:result:1.1.0'
 
     //Kotlin Coroutines
-    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.17'
-    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-nio:0.17'
+    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.19'
+    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-nio:0.19'
 
     //Temp Tekdaqc Dependency
     compile 'com.tenkiv.tekdaqc:java-library:2.2.0.0'

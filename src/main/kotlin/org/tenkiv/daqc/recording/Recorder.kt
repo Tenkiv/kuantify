@@ -35,7 +35,6 @@ class Recorder<out T> internal constructor(
         val memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
         val diskDuration: StorageDuration = StorageDuration.None,
         private val filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
-        //TODO: Consider changing String to some JsonString type for these serializers to make the specification clear.
         private val valueSerializer: (T) -> String,
         private val valueDeserializer: (String) -> T
 ) {
