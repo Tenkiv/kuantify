@@ -37,7 +37,7 @@ class RecorderTest : StringSpec() {
             for (i in 0..20) {
                 recorders.add(
                         DigitalGibberingSensor().newBinaryStateRecorder(storageFrequency = StorageFrequency.All,
-                                memoryDuration = StorageDuration.Forever,
+                                memoryDuration = StorageDuration.None,
                                 diskDuration = StorageDuration.Forever)
                 )
             }
@@ -47,7 +47,8 @@ class RecorderTest : StringSpec() {
             runBlocking {
                 recorders.forEach {
                     println("Fetching Data")
-                    it.stop(false)
+                    //it.stop(false)
+                    println(it.getAllData().await())
                 }
             }
 

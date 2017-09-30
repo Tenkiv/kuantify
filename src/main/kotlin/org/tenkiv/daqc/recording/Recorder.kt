@@ -276,6 +276,9 @@ class Recorder<out T> internal constructor(
 
                     if (!inString && charByte == CLOSE_BRACE) {
                         numUnclosedBraces--
+                        if (numUnclosedBraces == 0)
+                            return@readFromDisk complyingObjects
+
                         val valueInstant = jacksonMapper
                                 .readValue<PrimitiveValueInstant>(currentObject.toByteArray())
                                 .toValueInstant(valueDeserializer)
@@ -283,8 +286,7 @@ class Recorder<out T> internal constructor(
                             complyingObjects += valueInstant
                         }
                         currentObject.clear()
-                        if (numUnclosedBraces == 0)
-                            return@readFromDisk complyingObjects
+
                     }
 
                     previousCharByte = charByte
@@ -299,8 +301,10 @@ class Recorder<out T> internal constructor(
 
 
     companion object {
+        // The value of this must match the corresponding property name in PrimitiveValueInstant.
         private const val VALUE_KEY = "value"
-        private const val INSTANT_KEY = "instant"
+        // The value of this must match the corresponding property name in PrimitiveValueInstant.
+        private const val INSTANT_KEY = "epochMilli"
         private const val OPEN_BRACE = '{'.toByte()
         private const val CLOSE_BRACE = '}'.toByte()
         private const val STRING_DELIM = '"'.toByte()
