@@ -32,9 +32,6 @@ repositories {
 }
 
 dependencies {
-    //Testing Framework
-    testCompile 'io.kotlintest:kotlintest:1.3.5'
-
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
 
     //Units of Measurement Library
@@ -59,6 +56,9 @@ dependencies {
 
     //compile 'com.opower:opower-parent:4.0.1'
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+
+    //Testing Framework
+    testCompile 'io.kotlintest:kotlintest:2.0.5'
 }
 
 apply from: 'maven_push.gradle'
