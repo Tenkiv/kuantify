@@ -38,7 +38,8 @@ dependencies {
     compile "org.tenkiv.physikal:core:1.0.2.1"
 
     //General utilities for Kotlin
-    compile "com.tenkiv.coral.jdk:core:0.11.4.0-SNAPSHOT"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    compile 'org.tenkiv.coral.jdk:core:0.14.0.0'
     compile 'com.github.kittinunf.result:result:1.1.0'
 
     //Kotlin Coroutines
@@ -52,10 +53,6 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.8.7'
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.7'
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.7'
-    //compile 'com.googlecode.matrix-toolkits-java:mtj:1.0.4'
-
-    //compile 'com.opower:opower-parent:4.0.1'
-    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     //Testing Framework
     testCompile 'io.kotlintest:kotlintest:2.0.5'
