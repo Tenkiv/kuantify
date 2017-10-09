@@ -1,13 +1,13 @@
-package general
+package org.tenkiv.daqc.recording
 
 import io.kotlintest.specs.StringSpec
 import kotlinx.coroutines.experimental.runBlocking
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.recording.*
+import org.tenkiv.daqc.DigitalGibberingSensor
 import java.time.Instant
 
-class RecorderTest : StringSpec() {
+class RecorderSpec : StringSpec() {
 
     init {
         "Memory Recorder Test"{

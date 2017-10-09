@@ -4,9 +4,9 @@ import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
-import org.tenkiv.FoundDevice
-import org.tenkiv.LocatorUpdate
-import org.tenkiv.LostDevice
+import org.tenkiv.daqc.FoundDevice
+import org.tenkiv.daqc.LocatorUpdate
+import org.tenkiv.daqc.LostDevice
 import org.tenkiv.daqc.hardware.definitions.Updatable
 import org.tenkiv.daqc.hardware.definitions.device.Device
 import java.io.IOException

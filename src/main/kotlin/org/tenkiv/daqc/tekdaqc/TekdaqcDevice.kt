@@ -1,18 +1,18 @@
-package org.tenkiv.tekdaqc
+package org.tenkiv.daqc.tekdaqc
 
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.utility.CriticalErrorListener
 import com.tenkiv.tekdaqc.utility.TekdaqcCriticalError
-import org.tenkiv.DaqcCriticalError
+import org.tenkiv.daqc.DaqcCriticalError
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.LineNoiseFrequency
+import org.tenkiv.daqc.daqcCriticalErrorBroadcastChannel
 import org.tenkiv.daqc.hardware.definitions.channel.*
 import org.tenkiv.daqc.hardware.definitions.device.ControlDevice
 import org.tenkiv.daqc.hardware.definitions.device.DataAcquisitionDevice
 import org.tenkiv.daqc.networking.NetworkProtocol
 import org.tenkiv.daqc.networking.SharingStatus
 import org.tenkiv.daqc.networking.UnsupportedProtocolException
-import org.tenkiv.daqcCriticalErrorBroadcastChannel
 import org.tenkiv.physikal.core.hertz
 import java.net.InetAddress
 import java.time.Duration

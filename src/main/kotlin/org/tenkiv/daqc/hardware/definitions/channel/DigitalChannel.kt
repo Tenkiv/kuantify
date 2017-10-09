@@ -2,9 +2,9 @@ package org.tenkiv.daqc.hardware.definitions.channel
 
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import org.tenkiv.BinaryStateMeasurement
-import org.tenkiv.Measurement
-import org.tenkiv.QuantityMeasurement
+import org.tenkiv.daqc.BinaryStateMeasurement
+import org.tenkiv.daqc.Measurement
+import org.tenkiv.daqc.QuantityMeasurement
 import org.tenkiv.daqc.hardware.definitions.DaqcChannel
 import org.tenkiv.daqc.hardware.definitions.Updatable
 import org.tenkiv.daqc.lib.openNewCoroutineListener

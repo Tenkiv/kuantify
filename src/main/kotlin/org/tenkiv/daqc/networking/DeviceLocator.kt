@@ -2,8 +2,8 @@ package org.tenkiv.daqc.networking
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import org.tenkiv.FoundDevice
-import org.tenkiv.LocatorUpdate
+import org.tenkiv.daqc.FoundDevice
+import org.tenkiv.daqc.LocatorUpdate
 import org.tenkiv.daqc.hardware.definitions.Updatable
 import org.tenkiv.daqc.hardware.definitions.device.Device
 import java.time.Duration

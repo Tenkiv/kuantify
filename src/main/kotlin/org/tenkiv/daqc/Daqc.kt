@@ -1,11 +1,8 @@
-package org.tenkiv
+package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.ValueInstant
-import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.device.Device
 
 

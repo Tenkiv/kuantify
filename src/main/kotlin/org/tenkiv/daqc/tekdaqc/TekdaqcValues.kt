@@ -1,4 +1,4 @@
-package org.tenkiv.tekdaqc
+package org.tenkiv.daqc.tekdaqc
 
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Gain
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate

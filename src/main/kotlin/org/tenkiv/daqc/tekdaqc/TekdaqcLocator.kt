@@ -1,13 +1,13 @@
-package org.tenkiv.tekdaqc
+package org.tenkiv.daqc.tekdaqc
 
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.locator.Locator
 import com.tenkiv.tekdaqc.locator.OnTekdaqcDiscovered
 import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import org.tenkiv.FoundDevice
-import org.tenkiv.LocatorUpdate
-import org.tenkiv.LostDevice
+import org.tenkiv.daqc.FoundDevice
+import org.tenkiv.daqc.LocatorUpdate
+import org.tenkiv.daqc.LostDevice
 import org.tenkiv.daqc.networking.DeviceLocator
 import java.time.Duration
 import java.util.concurrent.CopyOnWriteArrayList

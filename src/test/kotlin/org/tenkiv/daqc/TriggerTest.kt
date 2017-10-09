@@ -1,4 +1,4 @@
-package general
+package org.tenkiv.daqc
 
 import io.kotlintest.specs.StringSpec
 import org.tenkiv.physikal.core.milli

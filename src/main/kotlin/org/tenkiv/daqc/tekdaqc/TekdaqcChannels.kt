@@ -1,4 +1,4 @@
-package org.tenkiv.tekdaqc
+package org.tenkiv.daqc.tekdaqc
 
 import com.github.kittinunf.result.Result
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData
@@ -14,19 +14,14 @@ import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
-import org.tenkiv.QuantityMeasurement
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.DigitalStatus
-import org.tenkiv.daqc.LineNoiseFrequency
+import org.tenkiv.daqc.*
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import org.tenkiv.daqc.hardware.definitions.device.Device
 import org.tenkiv.daqc.hardware.inputs.ScAnalogSensor
-import org.tenkiv.daqcThreadContext
 import org.tenkiv.physikal.core.*
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities

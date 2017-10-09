@@ -3,10 +3,10 @@ package org.tenkiv.daqc.hardware.inputs
 import com.github.kittinunf.result.Result
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import org.tenkiv.QuantityMeasurement
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.DaqcQuantity
+import org.tenkiv.daqc.QuantityMeasurement
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.QuantityInput
 import tec.uom.se.ComparableQuantity
