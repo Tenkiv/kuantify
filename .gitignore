@@ -23,7 +23,6 @@ out
 hs_err_pid*
 ### Gradle template
 .gradle
-#/gradle
 /build/
 
 # Ignore Gradle GUI config
@@ -37,9 +36,6 @@ gradle-app.setting
 
 # # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
 # gradle/wrapper/gradle-wrapper.properties
-
-gradlew
-gradlew.bat
 
 .idea
 
