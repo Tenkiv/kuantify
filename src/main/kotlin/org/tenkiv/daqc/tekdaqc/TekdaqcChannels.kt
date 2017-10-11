@@ -102,11 +102,11 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
         } else {
             analogInputSwitchingTime * activatedInputs
         }
-        return ((input.rate.rate.toDouble()) / ((switchingTime tu SECOND).toDouble())).hertz
+        return ((input.rate.rate.toDouble()) / ((switchingTime.toDoubleIn(SECOND)))).hertz
     }
 
     fun recalculateState() {
-        val voltageSettings = maxVoltageSettings(maxElectricPotential.tu(VOLT).toDouble())
+        val voltageSettings = maxVoltageSettings(maxElectricPotential.toDoubleIn(VOLT))
         println("Tekdaqc $tekdaqc ${tekdaqc.lineFrequency} ${tekdaqc.is400vManditory}")
         val rate = getFastestRateForAccuracy(
                 voltageSettings.first,
@@ -321,7 +321,7 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcDevice, val output: com.tenkiv.tekdaq
     override fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>) {
         currentState = DigitalStatus.ACTIVATED_FREQUENCY
         frequencyJob = launch(daqcThreadContext) {
-            val cycleSpeec = ((freq tu HERTZ) / 2).toLong()
+            val cycleSpeed = ((freq) / 2).toLongIn(HERTZ)
             var isOn = false
             while (true) {
                 when {
@@ -333,7 +333,7 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcDevice, val output: com.tenkiv.tekdaq
                     }
                 }
                 isOn = !isOn
-                delay(cycleSpeec, TimeUnit.SECONDS)
+                delay(cycleSpeed, TimeUnit.SECONDS)
             }
         }
         _transitionFrequencyBroadcastChannel.offer(freq.at(Instant.now()))

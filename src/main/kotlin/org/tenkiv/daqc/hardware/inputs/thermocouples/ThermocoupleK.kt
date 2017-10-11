@@ -68,7 +68,7 @@ class ThermocoupleK(channel: AnalogInput,
                 calculate(hi0, hi1, hi2, hi3, hi4, hi5, hi6, 0.0, 0.0, 0.0)
             else
                 throw ValueOutOfRangeException("Type K thermocouple cannot accurately produce a temperature from" +
-                        " voltage ${ep tu MILLI(VOLT)}")
+                        " voltage ${ep convertTo MILLI(VOLT)}")
         }
 
     }

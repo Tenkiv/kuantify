@@ -34,8 +34,11 @@ repositories {
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
 
+    compile 'org.deeplearning4j:deeplearning4j-core:0.9.1'
+    compile 'org.nd4j:nd4j-native-platform:0.9.1'
+
     //Units of Measurement Library
-    compile "org.tenkiv.physikal:core:1.0.2.1"
+    compile "org.tenkiv.physikal:core:1.1.0.0"
 
     //General utilities for Kotlin
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
@@ -47,7 +50,7 @@ dependencies {
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-nio:0.19'
 
     //Temp Tekdaqc Dependency
-    compile 'com.tenkiv.tekdaqc:java-library:2.2.0.0'
+    compile 'com.tenkiv.tekdaqc:java-library:2.2.0.1'
 
     //JSON
     compile 'com.fasterxml.jackson.core:jackson-databind:2.8.7'

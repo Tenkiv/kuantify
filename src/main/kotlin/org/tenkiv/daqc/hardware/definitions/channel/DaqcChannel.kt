@@ -1,4 +1,4 @@
-package org.tenkiv.daqc.hardware.definitions
+package org.tenkiv.daqc.hardware.definitions.channel
 
 import org.tenkiv.daqc.hardware.definitions.device.Device
 

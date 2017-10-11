@@ -3,10 +3,9 @@ package org.tenkiv.daqc
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.BinaryState
+import org.tenkiv.daqc.hardware.definitions.Input
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
-import org.tenkiv.daqc.hardware.definitions.channel.Input
 import org.tenkiv.daqc.hardware.definitions.device.Device
 import org.tenkiv.physikal.core.hertz
 import org.tenkiv.physikal.core.percent

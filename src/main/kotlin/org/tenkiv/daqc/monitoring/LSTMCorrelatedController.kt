@@ -1,7 +1,15 @@
 package org.tenkiv.daqc.monitoring
 
 import kotlinx.coroutines.experimental.CommonPool
-import org.tenkiv.daqc.BinaryState
+import org.deeplearning4j.nn.conf.NeuralNetConfiguration
+import org.deeplearning4j.nn.conf.layers.GravesLSTM
+import org.deeplearning4j.nn.conf.layers.RnnOutputLayer
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
+import org.deeplearning4j.nn.weights.WeightInit
+import org.nd4j.linalg.activations.Activation
+import org.nd4j.linalg.api.ndarray.INDArray
+import org.nd4j.linalg.factory.Nd4j
+import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.Input
@@ -35,53 +43,22 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-const val WINDUP_LIMIT = 20.0f
-
-class QuantityNNPIDController<I : Quantity<I>, O : Quantity<O>>(targetInput: Input<DaqcQuantity<I>>,
-                                                                output: Output<DaqcQuantity<O>>,
-                                                                desiredValue: DaqcQuantity<I>,
-                                                                activationFun: (Input<DaqcQuantity<I>>,
-                                                                                Array<out Input<DaqcQuantity<*>>>,
-                                                                                Float) -> DaqcQuantity<O>,
-                                                                vararg correlatedInputs: Input<DaqcQuantity<*>>) :
-        AbstractNNPIDController<I, DaqcQuantity<O>>(
-                targetInput = targetInput,
-                output = output,
-                desiredValue = desiredValue,
-                activationFun = activationFun,
-                correlatedInputs = *correlatedInputs)
-
-class BinaryNNPIDController<I : Quantity<I>, O : Output<BinaryState>>(targetInput: Input<DaqcQuantity<I>>,
-                                                                      output: O,
-                                                                      desiredValue: DaqcQuantity<I>,
-                                                                      vararg correlatedInputs: Input<DaqcQuantity<I>>) :
-        AbstractNNPIDController<I, BinaryState>(
-                targetInput = targetInput,
-                output = output,
-                desiredValue = desiredValue,
-                activationFun = { mainInput, relatedInputs, data ->
-                    if (data > 1) {
-                        BinaryState.On
-                    } else {
-                        BinaryState.Off
-                    }
-                },
-                correlatedInputs = *correlatedInputs)
-
-abstract class AbstractNNPIDController<I : Quantity<I>, out O : DaqcValue>(private val targetInput:
-                                                                           Input<DaqcQuantity<I>>,
-                                                                           private val output: Output<O>,
-                                                                           private val desiredValue: DaqcQuantity<I>,
-                                                                           private vararg val correlatedInputs:
-                                                                           Input<DaqcQuantity<*>>,
-                                                                           private val activationFun:
-                                                                           (Input<DaqcQuantity<I>>,
-                                                                            Array<out Input<DaqcQuantity<*>>>,
-                                                                            Float) -> O) {
+abstract class AbstractLSTMCorrelatedController<I : Quantity<I>, out O : DaqcValue>(private val targetInput:
+                                                                                    Input<DaqcQuantity<I>>,
+                                                                                    private val output: Output<O>,
+                                                                                    private val desiredValue: DaqcQuantity<I>,
+                                                                                    private vararg val correlatedInputs:
+                                                                                    Input<DaqcQuantity<I>>,
+                                                                                    private val activationFun:
+                                                                                    (Input<DaqcQuantity<I>>,
+                                                                                     Array<out Input<DaqcQuantity<I>>>,
+                                                                                     Float) -> O) {
 
     private val inputSize = 2 + correlatedInputs.size
 
-    internal val net = NeuralNetwork(2 + correlatedInputs.size, 3, 1)
+    private val net = NeuralNetwork(2 + correlatedInputs.size, 3, 1)
+
+    private val correlatedNetwork = CorrelatedLSTMNetwork()
 
     private var error: Float = 0f
     private var previousError: Float = 0f
@@ -143,4 +120,72 @@ abstract class AbstractNNPIDController<I : Quantity<I>, out O : DaqcValue>(priva
             previousTime = it.instant
         }
     }
+
+    inner class CorrelatedLSTMNetwork(vararg inputs: Input<DaqcQuantity<*>>) {
+        private val net: MultiLayerNetwork
+        var priorIns = Nd4j.zeros(1, 3)
+        var priorOut = Nd4j.create(doubleArrayOf(100.0))
+
+        init {
+            val lstmconf = NeuralNetConfiguration.Builder()
+                    .iterations(10)
+                    .weightInit(WeightInit.XAVIER)
+                    .learningRate(0.5)
+                    .list()
+                    .backprop(true)
+
+            lstmconf.layer(0, GravesLSTM.Builder().apply {
+                nIn(3)
+                nOut(4)
+                activation(Activation.SIGMOID)
+            }.build())
+
+            lstmconf.layer(1, GravesLSTM.Builder().apply {
+                nIn(4)
+                nOut(4)
+                activation(Activation.SIGMOID)
+            }.build())
+
+            lstmconf.layer(2, RnnOutputLayer.Builder(LossFunctions.LossFunction.MSE).apply {
+                nIn(4)
+                nOut(1)
+                activation(Activation.IDENTITY)
+            }.build())
+
+            net = MultiLayerNetwork(lstmconf.build())
+            net.init()
+
+            train()
+        }
+
+        fun run(): Double {
+            val values = getCorrelatedValues()
+            priorOut = net.output(values)
+            priorIns = values
+            return priorOut.getDouble(0)
+        }
+
+        fun train(wasHigh: Boolean) {
+            var newValue = priorOut.getDouble(0)
+            if (wasHigh) {
+                newValue--
+            } else {
+                newValue++
+            }
+            if (newValue < 0) {
+                newValue = 0.0
+            }
+            priorOut.putScalar(0, newValue)
+            net.fit(priorIns, priorOut)
+        }
+
+        fun train() {
+            net.fit(priorIns, priorOut)
+        }
+
+        private fun getCorrelatedValues(): INDArray = Nd4j.create(correlatedInputs.map
+        { it.broadcastChannel.value.value.toFloatInSystemUnit() }.toFloatArray())
+    }
+
 }
+

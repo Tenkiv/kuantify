@@ -5,8 +5,7 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.daqc.BinaryStateMeasurement
 import org.tenkiv.daqc.Measurement
 import org.tenkiv.daqc.QuantityMeasurement
-import org.tenkiv.daqc.hardware.definitions.DaqcChannel
-import org.tenkiv.daqc.hardware.definitions.Updatable
+import org.tenkiv.daqc.Updatable
 import org.tenkiv.daqc.lib.openNewCoroutineListener
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency

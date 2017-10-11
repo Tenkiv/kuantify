@@ -1,10 +1,9 @@
-package org.tenkiv.daqc.hardware.definitions
+package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
-import org.tenkiv.daqc.daqcThreadContext
 import kotlin.coroutines.experimental.CoroutineContext
 
 interface Updatable<out T> {

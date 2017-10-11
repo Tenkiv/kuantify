@@ -1,6 +1,7 @@
 package org.tenkiv.daqc.hardware.definitions.channel
 
 import org.tenkiv.daqc.DaqcQuantity
+import org.tenkiv.daqc.hardware.definitions.BinaryStateInput
 import org.tenkiv.daqc.hardware.inputs.SimpleBinaryStateSensor
 import org.tenkiv.daqc.hardware.inputs.SimpleDigitalFrequencySensor
 import org.tenkiv.daqc.hardware.inputs.SimplePwmSensor

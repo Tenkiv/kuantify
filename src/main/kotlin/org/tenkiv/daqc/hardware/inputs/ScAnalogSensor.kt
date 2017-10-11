@@ -7,8 +7,8 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.QuantityMeasurement
+import org.tenkiv.daqc.hardware.definitions.QuantityInput
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
-import org.tenkiv.daqc.hardware.definitions.channel.QuantityInput
 import tec.uom.se.ComparableQuantity
 import javax.measure.Quantity
 import javax.measure.quantity.ElectricPotential

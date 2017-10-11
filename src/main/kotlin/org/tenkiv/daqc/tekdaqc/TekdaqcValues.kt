@@ -5,7 +5,10 @@ import com.tenkiv.tekdaqc.hardware.AAnalogInput.Rate
 import com.tenkiv.tekdaqc.hardware.ATekdaqc.AnalogScale
 import org.tenkiv.daqc.LineNoiseFrequency
 import org.tenkiv.daqc.lib.ValueOutOfRangeException
-import org.tenkiv.physikal.core.*
+import org.tenkiv.physikal.core.micro
+import org.tenkiv.physikal.core.times
+import org.tenkiv.physikal.core.toFloatIn
+import org.tenkiv.physikal.core.volt
 import tec.uom.se.ComparableQuantity
 import tec.uom.se.unit.Units.HERTZ
 import javax.measure.quantity.ElectricPotential
@@ -148,7 +151,7 @@ fun getFastestRateForAccuracy(
     } else {
         val list = if (lineFrequency is LineNoiseFrequency.AccountFor) {
             acceptableRates.keys.filter {
-                (lineFrequency.frequency tu HERTZ).toFloat().approxDivisibleBy(it.rate.toFloat())
+                (lineFrequency.frequency.toFloatIn(HERTZ).approxDivisibleBy(it.rate.toFloat()))
             }
         } else {
             acceptableRates.keys

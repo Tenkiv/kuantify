@@ -1,6 +1,6 @@
 package org.tenkiv.daqc.hardware.definitions.channel
 
-import org.tenkiv.daqc.hardware.definitions.DaqcChannel
+import org.tenkiv.daqc.hardware.definitions.QuantityInput
 import tec.uom.se.ComparableQuantity
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency

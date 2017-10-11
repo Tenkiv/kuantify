@@ -4,8 +4,8 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.now
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.QuantityMeasurement
+import org.tenkiv.daqc.hardware.definitions.QuantityOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
-import org.tenkiv.daqc.hardware.definitions.channel.QuantityOutput
 import javax.measure.Quantity
 import javax.measure.quantity.Frequency
 

@@ -7,7 +7,13 @@ import org.tenkiv.daqc.DaqcCriticalError
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.LineNoiseFrequency
 import org.tenkiv.daqc.daqcCriticalErrorBroadcastChannel
-import org.tenkiv.daqc.hardware.definitions.channel.*
+import org.tenkiv.daqc.hardware.definitions.Input
+import org.tenkiv.daqc.hardware.definitions.Output
+import org.tenkiv.daqc.hardware.definitions.QuantityInput
+import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
+import org.tenkiv.daqc.hardware.definitions.channel.AnalogOutput
+import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
+import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import org.tenkiv.daqc.hardware.definitions.device.ControlDevice
 import org.tenkiv.daqc.hardware.definitions.device.DataAcquisitionDevice
 import org.tenkiv.daqc.networking.NetworkProtocol

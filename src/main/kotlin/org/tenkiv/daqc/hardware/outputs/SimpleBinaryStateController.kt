@@ -4,7 +4,7 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.now
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.BinaryStateMeasurement
-import org.tenkiv.daqc.hardware.definitions.channel.BinaryStateOutput
+import org.tenkiv.daqc.hardware.definitions.BinaryStateOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 
 class SimpleBinaryStateController internal constructor(val digitalOutput: DigitalOutput) : BinaryStateOutput {
