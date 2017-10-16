@@ -39,10 +39,9 @@ gradle-app.setting
 
 .idea
 
-#Files generated when tests are run
 TestRecording.json
 
-/Daqc-Tools.iml
+*.iml
 
 /recorders/
 /src/main/kotlin/org/tenkiv/daqc/Test.kt
