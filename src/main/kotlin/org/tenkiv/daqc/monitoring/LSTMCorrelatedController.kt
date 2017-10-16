@@ -1,6 +1,8 @@
 package org.tenkiv.daqc.monitoring
 
 import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.GravesLSTM
 import org.deeplearning4j.nn.conf.layers.RnnOutputLayer
@@ -10,6 +12,7 @@ import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.lossfunctions.LossFunctions
+import org.tenkiv.coral.ValueInstant
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.DaqcValue
@@ -75,20 +78,28 @@ class BinaryLSTMCorrelatedController<I : Quantity<I>, O : Output<BinaryState>>(t
                 },
                 correlatedInputs = *correlatedInputs)
 
-abstract class AbstractLSTMCorrelatedController<I : Quantity<I>, out O : DaqcValue>(private val targetInput:
+abstract class AbstractLSTMCorrelatedController<I : Quantity<I>, O : DaqcValue>(private val targetInput:
                                                                                     Input<DaqcQuantity<I>>,
-                                                                                    private val output: Output<O>,
-                                                                                    private val desiredValue: DaqcQuantity<I>,
-                                                                                    private vararg val correlatedInputs:
+                                                                                private val output: Output<O>,
+                                                                                private var desiredValue: DaqcQuantity<I>,
+                                                                                private vararg val correlatedInputs:
                                                                                     Input<DaqcQuantity<*>>,
-                                                                                    private val activationFun:
+                                                                                private val activationFun:
                                                                                     (Input<DaqcQuantity<I>>,
                                                                                      Array<out Input<DaqcQuantity<*>>>,
-                                                                                     Float) -> O) {
+                                                                                     Float) -> O) : Output<DaqcQuantity<I>> {
 
-    private val net = NeuralNetwork(3, 3, 1)
+    private val pidNetInputSize = 2 + if (correlatedInputs.isNotEmpty()) {
+        1
+    } else {
+        0
+    }
+
+    private val net = NeuralNetwork(pidNetInputSize, 3, 1)
 
     private val correlatedNetwork = CorrelatedLSTMNetwork()
+
+    private var isActivated = true
 
     private var error: Float = 0f
     private var previousError: Float = 0f
@@ -96,12 +107,14 @@ abstract class AbstractLSTMCorrelatedController<I : Quantity<I>, out O : DaqcVal
 
     private var previousTime: Instant = Instant.now()
 
+    private val listenJob: Job
+
     private var kp = .3f
     private var ki = .4f
     private var kd = .3f
 
     init {
-        targetInput.openNewCoroutineListener(CommonPool) {
+        listenJob = targetInput.openNewCoroutineListener(CommonPool) {
             val recentVal = it.value.toFloatInSystemUnit()
 
             val time = if (previousTime.isBefore(it.instant)) {
@@ -118,22 +131,21 @@ abstract class AbstractLSTMCorrelatedController<I : Quantity<I>, out O : DaqcVal
             integral += (error * time).toFloat()
             val derivative = (error - previousError)
 
-            println("Kp:$kp Ki:$ki Kd:$kd")
             val pid = (kp * error + ki * integral + kd * derivative)
             previousError = error
-            println("CurrentTemp:$recentVal Output:$pid Error:$previousError Integral: $integral")
 
-            val correlatedValue = if (correlatedInputs.isNotEmpty()) {
-                correlatedNetwork.run()
+            val trainArray = if (correlatedInputs.isNotEmpty()) {
+                floatArrayOf(
+                        derivative,
+                        recentVal,
+                        correlatedNetwork.run())
             } else {
-                0f
+                floatArrayOf(
+                        derivative,
+                        recentVal)
             }
 
-            net.train(floatArrayOf(
-                    derivative,
-                    recentVal,
-                    correlatedValue),
-                    floatArrayOf(integral))
+            net.train(trainArray, floatArrayOf(integral))
 
             kp = net.weights[1][0][0]
             ki = net.weights[1][1][0]
@@ -151,9 +163,25 @@ abstract class AbstractLSTMCorrelatedController<I : Quantity<I>, out O : DaqcVal
         }
     }
 
+    override val broadcastChannel: ConflatedBroadcastChannel<out ValueInstant<DaqcQuantity<I>>>
+        get() = ConflatedBroadcastChannel()
+
+    override val isActive: Boolean
+        get() = isActivated
+
+    override fun setOutput(setting: DaqcQuantity<I>) {
+        desiredValue = setting
+    }
+
+    override fun deactivate() {
+        isActivated = false
+
+        listenJob.cancel()
+    }
+
     inner class CorrelatedLSTMNetwork(vararg inputs: Input<DaqcQuantity<*>>) {
         private val net: MultiLayerNetwork
-        var priorIns = Nd4j.zeros(1, 3)
+        var priorIns = Nd4j.zeros(1, inputs.size)
         var priorOut = Nd4j.create(doubleArrayOf(100.0))
 
         init {
@@ -165,19 +193,19 @@ abstract class AbstractLSTMCorrelatedController<I : Quantity<I>, out O : DaqcVal
                     .backprop(true)
 
             lstmconf.layer(0, GravesLSTM.Builder().apply {
-                nIn(3)
-                nOut(4)
+                nIn(inputs.size)
+                nOut(inputs.size)
                 activation(Activation.SIGMOID)
             }.build())
 
             lstmconf.layer(1, GravesLSTM.Builder().apply {
-                nIn(4)
-                nOut(4)
+                nIn(inputs.size)
+                nOut(inputs.size)
                 activation(Activation.SIGMOID)
             }.build())
 
             lstmconf.layer(2, RnnOutputLayer.Builder(LossFunctions.LossFunction.MSE).apply {
-                nIn(4)
+                nIn(inputs.size)
                 nOut(1)
                 activation(Activation.IDENTITY)
             }.build())

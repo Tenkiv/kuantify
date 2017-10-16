@@ -1,6 +1,9 @@
 package org.tenkiv.daqc.monitoring
 
 import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import org.tenkiv.coral.ValueInstant
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.DaqcValue
@@ -71,13 +74,13 @@ class BinaryNNPIDController<I : Quantity<I>, O : Output<BinaryState>>(targetInpu
 abstract class AbstractNNPIDController<I : Quantity<I>, out O : DaqcValue>(private val targetInput:
                                                                            Input<DaqcQuantity<I>>,
                                                                            private val output: Output<O>,
-                                                                           private val desiredValue: DaqcQuantity<I>,
+                                                                           private var desiredValue: DaqcQuantity<I>,
                                                                            private vararg val correlatedInputs:
                                                                            Input<DaqcQuantity<*>>,
                                                                            private val activationFun:
                                                                            (Input<DaqcQuantity<I>>,
                                                                             Array<out Input<DaqcQuantity<*>>>,
-                                                                            Float) -> O) {
+                                                                            Float) -> O) : Output<DaqcQuantity<I>> {
 
     private val inputSize = 2 + correlatedInputs.size
 
@@ -92,9 +95,12 @@ abstract class AbstractNNPIDController<I : Quantity<I>, out O : DaqcValue>(priva
     private var kp = .3f
     private var ki = .4f
     private var kd = .3f
+    private var isActivated = true
+
+    private val listenJob: Job
 
     init {
-        targetInput.openNewCoroutineListener(CommonPool) {
+        listenJob = targetInput.openNewCoroutineListener(CommonPool) {
             val recentVal = it.value.toFloatInSystemUnit()
 
             val time = if (previousTime.isBefore(it.instant)) {
@@ -111,10 +117,8 @@ abstract class AbstractNNPIDController<I : Quantity<I>, out O : DaqcValue>(priva
             integral += (error * time).toFloat()
             val derivative = (error - previousError)
 
-            println("Kp:$kp Ki:$ki Kd:$kd")
             val pid = (kp * error + ki * integral + kd * derivative)
             previousError = error
-            println("CurrentTemp:$recentVal Output:$pid Error:$previousError Integral: $integral")
 
             val correlatedValues = FloatArray(correlatedInputs.size)
 
@@ -142,5 +146,21 @@ abstract class AbstractNNPIDController<I : Quantity<I>, out O : DaqcValue>(priva
 
             previousTime = it.instant
         }
+    }
+
+    override val broadcastChannel: ConflatedBroadcastChannel<out ValueInstant<DaqcQuantity<I>>>
+        get() = ConflatedBroadcastChannel()
+
+    override val isActive: Boolean
+        get() = isActivated
+
+    override fun setOutput(setting: DaqcQuantity<I>) {
+        desiredValue = setting
+    }
+
+    override fun deactivate() {
+        isActivated = false
+
+        listenJob.cancel()
     }
 }
