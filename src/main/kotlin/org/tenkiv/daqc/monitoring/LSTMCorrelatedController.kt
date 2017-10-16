@@ -10,6 +10,7 @@ import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.lossfunctions.LossFunctions
+import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.Input
@@ -43,20 +44,49 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+class QuantityLSTMCorrelatedController<I : Quantity<I>, O : Quantity<O>>(targetInput: Input<DaqcQuantity<I>>,
+                                                                         output: Output<DaqcQuantity<O>>,
+                                                                         desiredValue: DaqcQuantity<I>,
+                                                                         activationFun: (Input<DaqcQuantity<I>>,
+                                                                                         Array<out Input<DaqcQuantity<*>>>,
+                                                                                         Float) -> DaqcQuantity<O>,
+                                                                         vararg correlatedInputs: Input<DaqcQuantity<*>>) :
+        AbstractLSTMCorrelatedController<I, DaqcQuantity<O>>(
+                targetInput = targetInput,
+                output = output,
+                desiredValue = desiredValue,
+                activationFun = activationFun,
+                correlatedInputs = *correlatedInputs)
+
+class BinaryLSTMCorrelatedController<I : Quantity<I>, O : Output<BinaryState>>(targetInput: Input<DaqcQuantity<I>>,
+                                                                               output: O,
+                                                                               desiredValue: DaqcQuantity<I>,
+                                                                               vararg correlatedInputs: Input<DaqcQuantity<I>>) :
+        AbstractLSTMCorrelatedController<I, BinaryState>(
+                targetInput = targetInput,
+                output = output,
+                desiredValue = desiredValue,
+                activationFun = { mainInput, relatedInputs, data ->
+                    if (data > 1) {
+                        BinaryState.On
+                    } else {
+                        BinaryState.Off
+                    }
+                },
+                correlatedInputs = *correlatedInputs)
+
 abstract class AbstractLSTMCorrelatedController<I : Quantity<I>, out O : DaqcValue>(private val targetInput:
                                                                                     Input<DaqcQuantity<I>>,
                                                                                     private val output: Output<O>,
                                                                                     private val desiredValue: DaqcQuantity<I>,
                                                                                     private vararg val correlatedInputs:
-                                                                                    Input<DaqcQuantity<I>>,
+                                                                                    Input<DaqcQuantity<*>>,
                                                                                     private val activationFun:
                                                                                     (Input<DaqcQuantity<I>>,
-                                                                                     Array<out Input<DaqcQuantity<I>>>,
+                                                                                     Array<out Input<DaqcQuantity<*>>>,
                                                                                      Float) -> O) {
 
-    private val inputSize = 2 + correlatedInputs.size
-
-    private val net = NeuralNetwork(2 + correlatedInputs.size, 3, 1)
+    private val net = NeuralNetwork(3, 3, 1)
 
     private val correlatedNetwork = CorrelatedLSTMNetwork()
 
@@ -93,16 +123,16 @@ abstract class AbstractLSTMCorrelatedController<I : Quantity<I>, out O : DaqcVal
             previousError = error
             println("CurrentTemp:$recentVal Output:$pid Error:$previousError Integral: $integral")
 
-            val correlatedValues = FloatArray(correlatedInputs.size)
-
-            correlatedInputs.forEachIndexed { index, input ->
-                correlatedValues[index] = input.broadcastChannel.value.value.toFloatInSystemUnit()
+            val correlatedValue = if (correlatedInputs.isNotEmpty()) {
+                correlatedNetwork.run()
+            } else {
+                0f
             }
 
             net.train(floatArrayOf(
                     derivative,
                     recentVal,
-                    *correlatedValues),
+                    correlatedValue),
                     floatArrayOf(integral))
 
             kp = net.weights[1][0][0]
@@ -158,11 +188,11 @@ abstract class AbstractLSTMCorrelatedController<I : Quantity<I>, out O : DaqcVal
             train()
         }
 
-        fun run(): Double {
+        fun run(): Float {
             val values = getCorrelatedValues()
             priorOut = net.output(values)
             priorIns = values
-            return priorOut.getDouble(0)
+            return priorOut.getFloat(0)
         }
 
         fun train(wasHigh: Boolean) {
