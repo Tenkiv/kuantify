@@ -107,7 +107,6 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
 
     fun recalculateState() {
         val voltageSettings = maxVoltageSettings(maxElectricPotential.toDoubleIn(VOLT))
-        println("Tekdaqc $tekdaqc ${tekdaqc.lineFrequency} ${tekdaqc.is400vManditory}")
         val rate = getFastestRateForAccuracy(
                 voltageSettings.first,
                 voltageSettings.second,
@@ -132,7 +131,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
 
         when {
             (voltage > 400) -> {
-                throw Exception("Voltage out of range")
+                throw IllegalArgumentException("Voltage out of range")
             }
             (voltage <= 400 && voltage > 200) -> {
                 gain = Gain.X1
@@ -202,7 +201,6 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
                 scale = ATekdaqc.AnalogScale.ANALOG_SCALE_400V
             }
         }
-        println("Decided on G:$gain and $scale from $voltage and manVolt: ${tekdaqc.mandatory400Voltage}")
         return Pair(gain, scale)
     }
 

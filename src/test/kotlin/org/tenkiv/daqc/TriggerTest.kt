@@ -16,10 +16,11 @@ class TriggerTest : StringSpec() {
 
             gibberingSensor.addTrigger(
                     {
-                        println("Trying Trigger with latestValue ${it.value}")
                         (it.value >= 3750.milli.volt)
                     },
-                    { println("Trigger Fired");completed = true })
+                    {
+                        completed = true
+                    })
 
             Thread.sleep(3000)
 

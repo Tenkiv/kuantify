@@ -158,7 +158,7 @@ class NeuralNetwork(val inputSize: Int, val hiddenSize: Int, val outputSize: Int
               momentum: Float = .1f) {
         repeat(iterations) {
             var error = 0.0f
-            data.forEachIndexed { i, pattern ->
+            data.forEachIndexed { i, _ ->
                 runGraph(data[i])
                 val bp = backPropagate(result[i], learningRate, momentum)
                 error += bp
@@ -188,7 +188,7 @@ internal class Matrix(val rows: Int, val columns: Int, defaultValue: () -> Float
     val content = ArrayList<ArrayList<Float>>(rows)
 
     init {
-        repeat(rows) { j ->
+        repeat(rows) {
             val nl = ArrayList<Float>()
             content.add(nl)
             repeat(columns) {

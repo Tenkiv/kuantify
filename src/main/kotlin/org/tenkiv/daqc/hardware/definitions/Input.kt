@@ -24,6 +24,6 @@ interface Input<out T : DaqcValue> : Updatable<ValueInstant<T>> {
     fun deactivate()
 
     fun addTrigger(condition: (ValueInstant<T>) -> Boolean, onTrigger: () -> Unit): Trigger<out T> {
-        return Trigger(TriggerCondition(this@Input, condition), triggerFunction = onTrigger)
+        return Trigger(triggerConditions = TriggerCondition(this@Input, condition), triggerFunction = onTrigger)
     }
 }

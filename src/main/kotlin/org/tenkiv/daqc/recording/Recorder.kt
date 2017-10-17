@@ -368,8 +368,7 @@ class Recorder<out T> internal constructor(
 
         }
 
-        internal suspend fun writeJsonBuffer(jsonObjectString: String,
-                                             charset: Charset = Charset.defaultCharset()) {
+        internal suspend fun writeJsonBuffer(jsonObjectString: String) {
             val string: String
             if (isFirstWrite) {
                 string = "$ARRAY_OPEN$jsonObjectString$ARRAY_CLOSE"

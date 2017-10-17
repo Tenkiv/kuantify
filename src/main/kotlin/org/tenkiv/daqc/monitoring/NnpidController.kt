@@ -46,7 +46,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-const val WINDUP_LIMIT = 20.0f
+private const val WINDUP_LIMIT = 20.0f
 
 
 fun <I : Quantity<I>, O : Quantity<O>> createNnpidController(
@@ -85,7 +85,7 @@ private class BinaryNnpidController<I : Quantity<I>>(targetInput: Input<DaqcQuan
         AbstractNnpidController<DaqcQuantity<I>, BinaryState>(
                 targetInput = targetInput,
                 output = output,
-                activationFun = { mainInput, relatedInputs, data ->
+                activationFun = { _, _, data ->
                     if (data > 1) {
                         BinaryState.On
                     } else {
