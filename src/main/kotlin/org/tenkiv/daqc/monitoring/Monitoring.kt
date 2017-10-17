@@ -1,5 +1,9 @@
 package org.tenkiv.daqc.monitoring
 
+import org.tenkiv.daqc.BinaryState
+import org.tenkiv.daqc.DaqcQuantity
+import org.tenkiv.daqc.DaqcValue
+import org.tenkiv.physikal.core.toFloatInSystemUnit
 import java.util.*
 
 /**
@@ -194,4 +198,11 @@ internal class Matrix(val rows: Int, val columns: Int, defaultValue: () -> Float
     }
 
     operator fun get(i: Int) = content[i]
+}
+
+internal fun DaqcValue.toPidFloat() = when (this) {
+    is DaqcQuantity<*> -> ((this as? DaqcQuantity<*>)
+            ?: throw Exception()).toFloatInSystemUnit()
+    BinaryState.On -> 1f
+    BinaryState.Off -> 0f
 }
