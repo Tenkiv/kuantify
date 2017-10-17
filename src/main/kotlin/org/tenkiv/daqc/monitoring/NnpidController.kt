@@ -3,6 +3,7 @@ package org.tenkiv.daqc.monitoring
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.yield
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.distribution.UniformDistribution
 import org.deeplearning4j.nn.conf.layers.DenseLayer
@@ -52,32 +53,32 @@ private const val WINDUP_LIMIT = 20.0f
 fun <I : Quantity<I>, O : Quantity<O>> createNnpidController(
         targetInput: Input<DaqcQuantity<I>>,
         output: Output<DaqcQuantity<O>>,
-        activationFun: (Input<DaqcQuantity<I>>,
-                        Array<out Input<DaqcValue>>,
-                        Float) -> DaqcQuantity<O>,
-        vararg correlatedInputs: Input<DaqcValue>):
+        postProcess: (Input<DaqcQuantity<I>>, Array<out Input<DaqcValue>>, Float) -> DaqcQuantity<O>,
+        vararg correlatedInputs: Input<DaqcValue>
+):
         AbstractNnpidController<DaqcQuantity<I>, DaqcQuantity<O>> =
-        QuantityNnpidController(targetInput, output, activationFun, *correlatedInputs)
+        QuantityNnpidController(targetInput, output, postProcess, *correlatedInputs)
 
 fun <I : Quantity<I>> createNnpidController(
         targetInput: Input<DaqcQuantity<I>>,
         output: Output<BinaryState>,
         vararg correlatedInputs: Input<DaqcValue>):
-        AbstractNnpidController<DaqcQuantity<I>, BinaryState>
-        = BinaryNnpidController(targetInput, output, *correlatedInputs)
+        AbstractNnpidController<DaqcQuantity<I>, BinaryState> =
+        BinaryNnpidController(targetInput, output, *correlatedInputs)
 
 
-private class QuantityNnpidController<I : Quantity<I>, O : Quantity<O>>(targetInput: Input<DaqcQuantity<I>>,
-                                                                        output: Output<DaqcQuantity<O>>,
-                                                                        activationFun: (Input<DaqcQuantity<I>>,
-                                                                                        Array<out Input<DaqcValue>>,
-                                                                                        Float) -> DaqcQuantity<O>,
-                                                                        vararg correlatedInputs: Input<DaqcValue>) :
+private class QuantityNnpidController<I : Quantity<I>, O : Quantity<O>>(
+        targetInput: Input<DaqcQuantity<I>>,
+        output: Output<DaqcQuantity<O>>,
+        activationFun: (Input<DaqcQuantity<I>>, Array<out Input<DaqcValue>>, Float) -> DaqcQuantity<O>,
+        vararg correlatedInputs: Input<DaqcValue>
+) :
         AbstractNnpidController<DaqcQuantity<I>, DaqcQuantity<O>>(
                 targetInput = targetInput,
                 output = output,
                 activationFun = activationFun,
-                correlatedInputs = *correlatedInputs)
+                correlatedInputs = *correlatedInputs
+        )
 
 private class BinaryNnpidController<I : Quantity<I>>(targetInput: Input<DaqcQuantity<I>>,
                                                      output: Output<BinaryState>,
@@ -103,15 +104,15 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
                                                                          private vararg val correlatedInputs:
                                                                          Input<DaqcValue>) : Output<I> {
 
-    private var isActivated = true
+    private var _isActivate = true
 
     private var listenJob: Job? = null
 
-    private val correlatedNetwork = if (correlatedInputs.isNotEmpty()) {
+    private val correlatedNetwork = if (correlatedInputs.isNotEmpty())
         CorrelatedLstmNetwork(*correlatedInputs)
-    } else {
+    else
         null
-    }
+
 
     private val pidIterations = 10
     private val pidLearnRate = .5
@@ -159,15 +160,6 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
                 }.build())
             }.build())
 
-    private fun start(desiredValue: I) {
-        //TODO This can occasionally consume additional resources if called during NN training.
-        if (listenJob?.isActive == true) {
-            listenJob?.cancel()
-        }
-
-        runJob(desiredValue)
-    }
-
     private fun runJob(desiredValue: I) {
         listenJob = targetInput.openNewCoroutineListener(CommonPool) {
 
@@ -178,13 +170,13 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
             correlatedNetwork?.train(desiredValue.toPidFloat(), recentVal)
 
             val trainArray = Nd4j.create(
-                    if (correlatedNetwork != null) {
+                    if (correlatedNetwork != null)
                         floatArrayOf(
                                 pid.third,
                                 it.value.toPidFloat(),
                                 correlatedNetwork.run()
                         )
-                    } else
+                    else
                         floatArrayOf(pid.third, recentVal)
             )
 
@@ -200,6 +192,9 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
             else if (integral < -WINDUP_LIMIT)
                 integral = -WINDUP_LIMIT
 
+            previousTime = it.instant
+            yield()
+
             output.setOutput(
                     activationFun(
                             targetInput,
@@ -207,7 +202,6 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
                             pid.first * kp + pid.second * ki + pid.third * kd)
             )
 
-            previousTime = it.instant
         }
     }
 
@@ -238,14 +232,19 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
         get() = ConflatedBroadcastChannel()
 
     override val isActive: Boolean
-        get() = isActivated
+        get() = _isActivate
 
     override fun setOutput(setting: I) {
-        start(setting)
+        //TODO This can occasionally consume additional resources if called during NN training.
+        if (listenJob?.isActive == true) {
+            listenJob?.cancel()
+        }
+
+        runJob(setting)
     }
 
     override fun deactivate() {
-        isActivated = false
+        _isActivate = false
 
         listenJob?.cancel()
     }
