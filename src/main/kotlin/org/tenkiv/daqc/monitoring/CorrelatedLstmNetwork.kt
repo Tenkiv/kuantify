@@ -199,7 +199,15 @@ internal class CorrelatedLstmNetwork(vararg inputs: Input<DaqcValue>) {
         return priorOut.getFloat(0)
     }
 
-    fun train(wasHigh: Boolean) {
+    fun train(desiredValue: Float, actualValue: Float) {
+        when {
+            desiredValue > actualValue -> train(false)
+            desiredValue < actualValue -> train(true)
+            else -> train()
+        }
+    }
+
+    private fun train(wasHigh: Boolean) {
         var newValue = priorOut.getDouble(0)
         if (wasHigh)
             newValue--

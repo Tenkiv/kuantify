@@ -3,13 +3,21 @@ package org.tenkiv.daqc.monitoring
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import org.deeplearning4j.nn.conf.NeuralNetConfiguration
+import org.deeplearning4j.nn.conf.distribution.UniformDistribution
+import org.deeplearning4j.nn.conf.layers.DenseLayer
+import org.deeplearning4j.nn.conf.layers.OutputLayer
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
+import org.deeplearning4j.nn.weights.WeightInit
+import org.nd4j.linalg.activations.Activation
+import org.nd4j.linalg.factory.Nd4j
+import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.Input
 import org.tenkiv.daqc.hardware.definitions.Output
-import org.tenkiv.physikal.core.toFloatInSystemUnit
 import java.time.Duration
 import java.time.Instant
 import javax.measure.Quantity
@@ -105,13 +113,13 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
         null
     }
 
-    private val net = NeuralNetwork(2 + if (correlatedNetwork != null) {
-        1
-    } else {
-        0
-    }, 3, 1)
-
-    private var previousTime: Instant = Instant.now()
+    private val pidIterations = 10
+    private val pidLearnRate = .5
+    private var pidEntryLayerSize = 2
+    private val pidHiddenSize = 3
+    private val pidOutSize = 1
+    private val weightUpperBound = 1.0
+    private val weightLowerBound = 0.0
 
     private var error = 0f
     private var previousError = 0f
@@ -121,41 +129,76 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
     private var ki = .4f
     private var kd = .3f
 
-    var desiredValue: I? = null
+    private val defaultTimeValue = .00005
+    private var previousTime: Instant = Instant.now()
 
-    private fun start() {
+    private val net: MultiLayerNetwork =
+            MultiLayerNetwork(NeuralNetConfiguration.Builder().apply {
+                iterations(pidIterations)
+                weightInit(WeightInit.XAVIER)
+                learningRate(pidLearnRate)
+            }.list().backprop(true).apply {
+                layer(0, DenseLayer.Builder().apply {
+                    nIn(if (correlatedInputs.isNotEmpty()) {
+                        pidEntryLayerSize + 1
+                    } else {
+                        pidEntryLayerSize
+                    })
+                    nOut(pidHiddenSize)
+                    weightInit(WeightInit.DISTRIBUTION)
+                    dist(UniformDistribution(weightLowerBound, weightUpperBound))
+                    activation(Activation.TANH)
+                }.build())
+                layer(1, OutputLayer.Builder().apply {
+                    nIn(pidHiddenSize)
+                    nOut(pidOutSize)
+                    weightInit(WeightInit.DISTRIBUTION)
+                    dist(UniformDistribution(weightLowerBound, weightUpperBound))
+                    activation(Activation.TANH)
+                    lossFunction(LossFunctions.LossFunction.SQUARED_LOSS)
+                }.build())
+            }.build())
 
-        if (desiredValue == null) {
-            throw UninitializedPropertyAccessException()
+    private fun start(desiredValue: I) {
+        //TODO This can occasionally consume additional resources if called during NN training.
+        if (listenJob?.isActive == true) {
+            listenJob?.cancel()
         }
 
+        runJob(desiredValue)
+    }
+
+    private fun runJob(desiredValue: I) {
         listenJob = targetInput.openNewCoroutineListener(CommonPool) {
 
-            val pid = runPid(it)
+            val pid = runPid(desiredValue, it)
 
             val recentVal = it.value.toPidFloat()
 
-            val trainArray = if (correlatedNetwork != null) {
-                floatArrayOf(
-                        pid.third,
-                        it.value.toPidFloat(),
-                        correlatedNetwork.run()
-                )
-            } else
-                floatArrayOf(pid.third, recentVal)
+            correlatedNetwork?.train(desiredValue.toPidFloat(), recentVal)
+
+            val trainArray = Nd4j.create(
+                    if (correlatedNetwork != null) {
+                        floatArrayOf(
+                                pid.third,
+                                it.value.toPidFloat(),
+                                correlatedNetwork.run()
+                        )
+                    } else
+                        floatArrayOf(pid.third, recentVal)
+            )
 
 
-            net.train(trainArray, floatArrayOf(integral))
+            net.fit(trainArray, Nd4j.create(floatArrayOf(integral)))
 
-            kp = net.weights[1][0][0]
-            ki = net.weights[1][1][0]
-            kd = net.weights[1][2][0]
+            kp = net.outputLayer.params().getFloat(0, 0)
+            ki = net.outputLayer.params().getFloat(0, 1)
+            kd = net.outputLayer.params().getFloat(0, 2)
 
             if (integral > WINDUP_LIMIT)
                 integral = WINDUP_LIMIT
             else if (integral < -WINDUP_LIMIT)
                 integral = -WINDUP_LIMIT
-
 
             output.setOutput(
                     activationFun(
@@ -170,24 +213,18 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
 
     private fun getTime(instant: Instant): Double =
             if (previousTime.isBefore(instant)) {
-                (Duration.between(previousTime, instant).seconds / 1000.0)
+                (Duration.between(previousTime, instant).toMillis().toDouble())
             } else {
-                .00005
+                defaultTimeValue
             }
 
-    private fun runPid(data: ValueInstant<DaqcValue>): Triple<Float, Float, Float> {
+    private fun runPid(desiredValue: I, data: ValueInstant<DaqcValue>): Triple<Float, Float, Float> {
 
         val recentVal = data.value.toPidFloat()
 
         val time = getTime(data.instant)
 
-        error = when (desiredValue) {
-            is DaqcQuantity<*> -> ((data.value as? DaqcQuantity<*>)
-                    ?: throw Exception()).toFloatInSystemUnit()
-            BinaryState.On -> 1f
-            BinaryState.Off -> 0f
-            else -> throw UninitializedPropertyAccessException()
-        } - recentVal
+        error = desiredValue.toPidFloat() - recentVal
 
         integral += (error * time).toFloat()
         val derivative = error - previousError
@@ -204,7 +241,7 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
         get() = isActivated
 
     override fun setOutput(setting: I) {
-        desiredValue = setting
+        start(setting)
     }
 
     override fun deactivate() {
