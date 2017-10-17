@@ -47,7 +47,7 @@ fun <I : Quantity<I>, O : Quantity<O>> createNnpidController(
         activationFun: (Input<DaqcQuantity<I>>,
                         Array<out Input<DaqcValue>>,
                         Float) -> DaqcQuantity<O>,
-        vararg correlatedInputs: Input<DaqcQuantity<*>>):
+        vararg correlatedInputs: Input<DaqcValue>):
         AbstractNnpidController<DaqcQuantity<I>, DaqcQuantity<O>> =
         QuantityNnpidController(targetInput, output, activationFun, *correlatedInputs)
 
@@ -139,33 +139,30 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
                 floatArrayOf(
                         pid.third,
                         it.value.toPidFloat(),
-                        correlatedNetwork.run())
-            } else {
-                floatArrayOf(
-                        pid.third,
-                        recentVal)
-            }
+                        correlatedNetwork.run()
+                )
+            } else
+                floatArrayOf(pid.third, recentVal)
+
 
             net.train(trainArray, floatArrayOf(integral))
-
-            net.train(trainArray,
-                    floatArrayOf(integral))
 
             kp = net.weights[1][0][0]
             ki = net.weights[1][1][0]
             kd = net.weights[1][2][0]
 
-            if (integral > WINDUP_LIMIT) {
+            if (integral > WINDUP_LIMIT)
                 integral = WINDUP_LIMIT
-            } else if (integral < -WINDUP_LIMIT) {
+            else if (integral < -WINDUP_LIMIT)
                 integral = -WINDUP_LIMIT
-            }
+
 
             output.setOutput(
                     activationFun(
                             targetInput,
                             correlatedInputs,
-                            pid.first * kp + pid.second * ki + pid.third * kd))
+                            pid.first * kp + pid.second * ki + pid.third * kd)
+            )
 
             previousTime = it.instant
         }
@@ -193,7 +190,7 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
         } - recentVal
 
         integral += (error * time).toFloat()
-        val derivative = (error - previousError)
+        val derivative = error - previousError
 
         previousError = error
 

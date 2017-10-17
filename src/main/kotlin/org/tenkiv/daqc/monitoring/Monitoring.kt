@@ -48,8 +48,8 @@ class NeuralNetwork(val inputSize: Int, val hiddenSize: Int, val outputSize: Int
     private val momentumOutput = Matrix(hiddenSize, outputSize)
 
     init {
-        weights.add(Matrix(/*actualInputSize*/inputSize, hiddenSize, { -> rand(-0.2f, 0.2f) }))
-        weights.add(Matrix(hiddenSize, outputSize, { -> rand(-0.2f, 0.2f) }))
+        weights.add(Matrix(/*actualInputSize*/inputSize, hiddenSize, { rand(-0.2f, 0.2f) }))
+        weights.add(Matrix(hiddenSize, outputSize, { rand(-0.2f, 0.2f) }))
     }
 
     /**

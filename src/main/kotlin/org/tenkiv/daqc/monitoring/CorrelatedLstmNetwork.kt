@@ -153,7 +153,7 @@ abstract class AbstractLSTMCorrelatedController<I : Quantity<I>, O : DaqcValue>(
     }
 }*/
 
-class CorrelatedLstmNetwork(vararg inputs: Input<DaqcValue>) {
+internal class CorrelatedLstmNetwork(vararg inputs: Input<DaqcValue>) {
 
     private val correlatedInputs = inputs
 
@@ -162,12 +162,11 @@ class CorrelatedLstmNetwork(vararg inputs: Input<DaqcValue>) {
     var priorOut = Nd4j.create(doubleArrayOf(100.0))
 
     init {
-        val lstmconf = NeuralNetConfiguration.Builder()
-                .iterations(10)
-                .weightInit(WeightInit.XAVIER)
-                .learningRate(0.5)
-                .list()
-                .backprop(true)
+        val lstmconf = NeuralNetConfiguration.Builder().apply {
+            iterations(10)
+            weightInit(WeightInit.XAVIER)
+            learningRate(0.5)
+        }.list().backprop(true)
 
         lstmconf.layer(0, GravesLSTM.Builder().apply {
             nIn(correlatedInputs.size)
@@ -202,26 +201,26 @@ class CorrelatedLstmNetwork(vararg inputs: Input<DaqcValue>) {
 
     fun train(wasHigh: Boolean) {
         var newValue = priorOut.getDouble(0)
-        if (wasHigh) {
+        if (wasHigh)
             newValue--
-        } else {
+        else
             newValue++
-        }
-        if (newValue < 0) {
+
+        if (newValue < 0)
             newValue = 0.0
-        }
+
         priorOut.putScalar(0, newValue)
         net.fit(priorIns, priorOut)
     }
 
-    fun train() {
+    private fun train() {
         net.fit(priorIns, priorOut)
     }
 
-    private fun getCorrelatedValues(): INDArray {
-        return Nd4j.create(correlatedInputs.map
-        { it.broadcastChannel.value.value.toPidFloat() }.toFloatArray())
-    }
+    private fun getCorrelatedValues(): INDArray =
+            Nd4j.create(correlatedInputs.map
+            { it.broadcastChannel.value.value.toPidFloat() }.toFloatArray())
+
 
 }
 
