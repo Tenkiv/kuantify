@@ -113,14 +113,7 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
     else
         null
 
-
-    private val pidIterations = 10
-    private val pidLearnRate = .5
     private var pidEntryLayerSize = 2
-    private val pidHiddenSize = 3
-    private val pidOutSize = 1
-    private val weightUpperBound = 1.0
-    private val weightLowerBound = 0.0
 
     private var error = 0f
     private var previousError = 0f
@@ -248,4 +241,14 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
 
         listenJob?.cancel()
     }
+
+    companion object {
+        private const val pidIterations = 10
+        private const val pidLearnRate = .5
+        private const val pidHiddenSize = 3
+        private const val pidOutSize = 1
+        private const val weightUpperBound = 1.0
+        private const val weightLowerBound = 0.0
+    }
+
 }
