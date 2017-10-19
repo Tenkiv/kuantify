@@ -1,5 +1,5 @@
 group 'org.tenkiv.daqc'
-version '0.1.0.0-SNAPSHOT'
+version '0.1.1.0-SNAPSHOT'
 
 buildscript {
     ext.kotlin_version = '1.1.51'
@@ -38,7 +38,7 @@ dependencies {
     compile 'org.nd4j:nd4j-native-platform:0.9.1'
 
     //Units of Measurement Library
-    compile "org.tenkiv.physikal:core:1.1.0.0"
+    compile "org.tenkiv.physikal:core:1.1.2.0"
 
     //General utilities for Kotlin
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"

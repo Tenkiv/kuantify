@@ -19,9 +19,12 @@ import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.Input
 import org.tenkiv.daqc.hardware.definitions.Output
+import org.tenkiv.physikal.core.invoke
+import tec.uom.se.unit.Units
 import java.time.Duration
 import java.time.Instant
 import javax.measure.Quantity
+import javax.measure.Unit
 
 /**
  * Copyright 2017 TENKIV, INC.
@@ -47,63 +50,67 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-private const val WINDUP_LIMIT = 20.0f
 
-
-fun <I : Quantity<I>, O : Quantity<O>> createNnpidController(
+inline fun <reified I : Quantity<I>, reified O : Quantity<O>> createQuantityController(
         targetInput: Input<DaqcQuantity<I>>,
         output: Output<DaqcQuantity<O>>,
-        postProcess: (Input<DaqcQuantity<I>>, Array<out Input<DaqcValue>>, Float) -> DaqcQuantity<O>,
-        vararg correlatedInputs: Input<DaqcValue>
-):
-        AbstractNnpidController<DaqcQuantity<I>, DaqcQuantity<O>> =
-        QuantityNnpidController(targetInput, output, postProcess, *correlatedInputs)
+        processor: PostProcessor<DaqcQuantity<I>, O>,
+        vararg correlatedInputs: Input<DaqcValue>): AbstractNnpidController<DaqcQuantity<I>, O> =
+        QuantityNnpidController<I, O>(
+                targetInput = targetInput,
+                outputUnit = (Units.getInstance().getUnit(O::class.java)),
+                output = output,
+                processor = processor,
+                correlatedInputs = *correlatedInputs)
 
-fun <I : Quantity<I>> createNnpidController(
-        targetInput: Input<DaqcQuantity<I>>,
-        output: Output<BinaryState>,
-        vararg correlatedInputs: Input<DaqcValue>):
-        AbstractNnpidController<DaqcQuantity<I>, BinaryState> =
-        BinaryNnpidController(targetInput, output, *correlatedInputs)
-
-
-private class QuantityNnpidController<I : Quantity<I>, O : Quantity<O>>(
-        targetInput: Input<DaqcQuantity<I>>,
+inline fun <I : BinaryState, reified O : Quantity<O>> createBinaryController(
+        targetInput: Input<I>,
         output: Output<DaqcQuantity<O>>,
-        activationFun: (Input<DaqcQuantity<I>>, Array<out Input<DaqcValue>>, Float) -> DaqcQuantity<O>,
+        postProcessor: PostProcessor<I, O>,
+        vararg correlatedInputs: Input<I>):
+        AbstractNnpidController<I, O> =
+        BinaryNnpidController<I, O>(
+                targetInput = targetInput,
+                outputUnit = (Units.getInstance().getUnit(O::class.java)),
+                output = output,
+                correlatedInputs = *correlatedInputs,
+                postProcessor = postProcessor)
+
+@PublishedApi
+internal class QuantityNnpidController<I : Quantity<I>, O : Quantity<O>>(
+        targetInput: Input<DaqcQuantity<I>>,
+        outputUnit: Unit<O>,
+        output: Output<DaqcQuantity<O>>,
+        processor: PostProcessor<DaqcQuantity<I>, O>,
         vararg correlatedInputs: Input<DaqcValue>
 ) :
-        AbstractNnpidController<DaqcQuantity<I>, DaqcQuantity<O>>(
+        AbstractNnpidController<DaqcQuantity<I>, O>(
                 targetInput = targetInput,
+                outputUnit = outputUnit,
                 output = output,
-                activationFun = activationFun,
+                processor = processor,
                 correlatedInputs = *correlatedInputs
         )
 
-private class BinaryNnpidController<I : Quantity<I>>(targetInput: Input<DaqcQuantity<I>>,
-                                                     output: Output<BinaryState>,
-                                                     vararg correlatedInputs: Input<DaqcValue>) :
-        AbstractNnpidController<DaqcQuantity<I>, BinaryState>(
+@PublishedApi
+internal class BinaryNnpidController<I : BinaryState, O : Quantity<O>>(targetInput: Input<I>,
+                                                                       outputUnit: Unit<O>,
+                                                                       output: Output<DaqcQuantity<O>>,
+                                                                       postProcessor: PostProcessor<I, O>,
+                                                                       vararg correlatedInputs: Input<I>) :
+        AbstractNnpidController<I, O>(
                 targetInput = targetInput,
+                outputUnit = outputUnit,
                 output = output,
-                activationFun = { _, _, data ->
-                    if (data > 1) {
-                        BinaryState.On
-                    } else {
-                        BinaryState.Off
-                    }
-                },
-                correlatedInputs = *correlatedInputs)
+                correlatedInputs = *correlatedInputs,
+                processor = postProcessor)
 
-abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private val targetInput: Input<I>,
-                                                                         private val output: Output<O>,
-                                                                         private val activationFun:
-                                                                         (Input<I>,
-                                                                          Array<out Input<DaqcValue>>,
-                                                                          Float) -> O,
-                                                                         private vararg val correlatedInputs:
-                                                                         Input<DaqcValue>) : Output<I> {
-
+abstract class AbstractNnpidController<I : DaqcValue, O : Quantity<O>>(private val targetInput: Input<I>,
+                                                                       private val outputUnit: Unit<O>,
+                                                                       private val output: Output<DaqcQuantity<O>>,
+                                                                       private val processor: PostProcessor<I, O>,
+                                                                       private vararg val correlatedInputs:
+                                                                       Input<DaqcValue>) : Output<I> {
     private var _isActivate = true
 
     private var listenJob: Job? = null
@@ -123,14 +130,13 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
     private var ki = .4f
     private var kd = .3f
 
-    private val defaultTimeValue = .00005
     private var previousTime: Instant = Instant.now()
 
     private val net: MultiLayerNetwork =
             MultiLayerNetwork(NeuralNetConfiguration.Builder().apply {
-                iterations(pidIterations)
+                iterations(PID_ITERATIONS)
                 weightInit(WeightInit.XAVIER)
-                learningRate(pidLearnRate)
+                learningRate(PID_LEARNING_RATE)
             }.list().backprop(true).apply {
                 layer(0, DenseLayer.Builder().apply {
                     nIn(if (correlatedInputs.isNotEmpty()) {
@@ -138,16 +144,16 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
                     } else {
                         pidEntryLayerSize
                     })
-                    nOut(pidHiddenSize)
+                    nOut(PID_HIDDEN_SIZE)
                     weightInit(WeightInit.DISTRIBUTION)
-                    dist(UniformDistribution(weightLowerBound, weightUpperBound))
+                    dist(UniformDistribution(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND))
                     activation(Activation.TANH)
                 }.build())
                 layer(1, OutputLayer.Builder().apply {
-                    nIn(pidHiddenSize)
-                    nOut(pidOutSize)
+                    nIn(PID_HIDDEN_SIZE)
+                    nOut(PID_OUT_SIZE)
                     weightInit(WeightInit.DISTRIBUTION)
-                    dist(UniformDistribution(weightLowerBound, weightUpperBound))
+                    dist(UniformDistribution(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND))
                     activation(Activation.TANH)
                     lossFunction(LossFunctions.LossFunction.SQUARED_LOSS)
                 }.build())
@@ -188,13 +194,15 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
             previousTime = it.instant
             yield()
 
+            processor.postProcessor
+
             output.setOutput(
-                    activationFun(
+                    processor.postProcessor(
                             targetInput,
                             correlatedInputs,
-                            pid.first * kp + pid.second * ki + pid.third * kd)
+                            DaqcQuantity.of((pid.first * kp + pid.second * ki + pid.third * kd)(outputUnit))
+                    )
             )
-
         }
     }
 
@@ -202,7 +210,7 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
             if (previousTime.isBefore(instant)) {
                 (Duration.between(previousTime, instant).toMillis().toDouble())
             } else {
-                defaultTimeValue
+                DEFAULT_TIME_VALUE
             }
 
     private fun runPid(desiredValue: I, data: ValueInstant<DaqcValue>): Triple<Float, Float, Float> {
@@ -243,12 +251,20 @@ abstract class AbstractNnpidController<I : DaqcValue, out O : DaqcValue>(private
     }
 
     companion object {
-        private const val pidIterations = 10
-        private const val pidLearnRate = .5
-        private const val pidHiddenSize = 3
-        private const val pidOutSize = 1
-        private const val weightUpperBound = 1.0
-        private const val weightLowerBound = 0.0
-    }
+        private const val PID_ITERATIONS = 10
 
+        private const val PID_LEARNING_RATE = .5
+
+        private const val PID_HIDDEN_SIZE = 3
+
+        private const val PID_OUT_SIZE = 1
+
+        private const val WEIGHT_UPPER_BOUND = 1.0
+
+        private const val WEIGHT_LOWER_BOUND = 0.0
+
+        private const val DEFAULT_TIME_VALUE = .00005
+
+        private const val WINDUP_LIMIT = 20.0f
+    }
 }

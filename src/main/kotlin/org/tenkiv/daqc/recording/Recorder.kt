@@ -162,7 +162,6 @@ sealed class StorageDuration : Comparable<StorageDuration> {
                     is None -> 0
                     else -> -1
                 }
-
     }
 
     data class For(val duration: Duration) : StorageDuration() {
@@ -173,9 +172,7 @@ sealed class StorageDuration : Comparable<StorageDuration> {
                     is None -> 1
                     is For -> duration.compareTo(other.duration)
                 }
-
     }
-
 }
 
 /**
