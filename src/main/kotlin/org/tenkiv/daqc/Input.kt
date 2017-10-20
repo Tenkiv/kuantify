@@ -1,8 +1,7 @@
-package org.tenkiv.daqc.hardware.definitions
+package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
-import org.tenkiv.daqc.*
 
 typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
 typealias BinaryStateInput = Input<BinaryState>

@@ -1,4 +1,4 @@
-package org.tenkiv.daqc.monitoring
+package org.tenkiv.daqc.learning
 
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.GravesLSTM
@@ -10,7 +10,7 @@ import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.tenkiv.daqc.DaqcValue
-import org.tenkiv.daqc.hardware.definitions.Input
+import org.tenkiv.daqc.Input
 
 /**
  * Copyright 2017 TENKIV, INC.
@@ -84,8 +84,8 @@ internal class CorrelatedLstmNetwork(vararg inputs: Input<DaqcValue>) {
 
     fun train(desiredValue: Float, actualValue: Float) {
         when {
-            desiredValue > actualValue -> train(false)
-            desiredValue < actualValue -> train(true)
+            desiredValue > actualValue -> train(wasHigh = false)
+            desiredValue < actualValue -> train(wasHigh = true)
             else -> train()
         }
     }

@@ -3,7 +3,6 @@ package org.tenkiv.daqc
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.hardware.definitions.Input
 import org.tenkiv.physikal.core.volt
 import java.time.Instant
 import java.util.*

@@ -3,13 +3,7 @@ package org.tenkiv.daqc.tekdaqc
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.utility.CriticalErrorListener
 import com.tenkiv.tekdaqc.utility.TekdaqcCriticalError
-import org.tenkiv.daqc.DaqcCriticalError
-import org.tenkiv.daqc.DaqcValue
-import org.tenkiv.daqc.LineNoiseFrequency
-import org.tenkiv.daqc.daqcCriticalErrorBroadcastChannel
-import org.tenkiv.daqc.hardware.definitions.Input
-import org.tenkiv.daqc.hardware.definitions.Output
-import org.tenkiv.daqc.hardware.definitions.QuantityInput
+import org.tenkiv.daqc.*
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput

@@ -1,4 +1,4 @@
-package org.tenkiv.daqc.monitoring
+package org.tenkiv.daqc.learning
 
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.Job
@@ -14,11 +14,7 @@ import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.tenkiv.coral.ValueInstant
-import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.DaqcValue
-import org.tenkiv.daqc.hardware.definitions.Input
-import org.tenkiv.daqc.hardware.definitions.Output
-import org.tenkiv.daqc.hardware.definitions.QuantityOutput
+import org.tenkiv.daqc.*
 import org.tenkiv.physikal.core.invoke
 import tec.uom.se.unit.Units
 import java.time.Duration
@@ -50,15 +46,13 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal constructor(
-        private val targetInput: Input<I>,
+class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal constructor(
+        private val targetInput: Input<T>,
         private val outputUnit: Unit<O>,
         private val output: Output<DaqcQuantity<O>>,
-        private val processor:
-        (Input<I>, Array<out Input<*>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
-        private vararg val correlatedInputs:
-        Input<DaqcValue>
-) : Output<I> {
+        private val postProcessor: (Input<T>, Array<out Input<*>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
+        private vararg val correlatedInputs: Input<DaqcValue>
+) : Output<T> {
     private var _isActivate = true
 
     private var listenJob: Job? = null
@@ -89,11 +83,11 @@ class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal con
                 learningRate(PID_LEARNING_RATE)
             }.list().backprop(true).apply {
                 layer(0, DenseLayer.Builder().apply {
-                    nIn(if (correlatedInputs.isNotEmpty()) {
+                    nIn(if (correlatedInputs.isNotEmpty())
                         pidEntryLayerSize + 1
-                    } else {
+                    else
                         pidEntryLayerSize
-                    })
+                    )
                     nOut(PID_HIDDEN_SIZE)
                     weightInit(WeightInit.DISTRIBUTION)
                     dist(UniformDistribution(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND))
@@ -109,7 +103,7 @@ class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal con
                 }.build())
             }.build())
 
-    private fun runJob(desiredValue: I) {
+    private fun runJob(desiredValue: T) {
         listenJob = targetInput.openNewCoroutineListener(CommonPool) {
 
             val pid = runPid(desiredValue, it)
@@ -121,15 +115,11 @@ class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal con
             val trainArray = Nd4j.create(
                     if (correlatedNetwork != null) {
                         val correlatedValues = correlatedNetwork.run()
-                        if (correlatedValues != null) {
-                            floatArrayOf(
-                                    pid.third,
-                                    it.value.toPidFloat(),
-                                    correlatedValues
-                            )
-                        } else {
+                        if (correlatedValues != null)
+                            floatArrayOf(pid.third, it.value.toPidFloat(), correlatedValues)
+                        else
                             null
-                        }
+
                     } else
                         floatArrayOf(pid.third, recentVal)
             )
@@ -138,11 +128,10 @@ class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal con
                 net.fit(trainArray, Nd4j.create(floatArrayOf(integral)))
             else {
                 failureCount++
-                if (failureCount > MAX_ALLOWED_FAILURE_COUNT) {
+                if (failureCount > MAX_ALLOWED_FAILURE_COUNT)
                     throw UninitializedPropertyAccessException(
-                            "Correlated inputs do no have sampled values. " +
+                            "Correlated inputs are not attaining any samples. " +
                                     "Correlated Inputs must be sampling and have previously sampled data")
-                }
             }
 
             kp = net.outputLayer.params().getFloat(0, 0)
@@ -158,7 +147,7 @@ class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal con
             yield()
 
             output.setOutput(
-                    processor(
+                    postProcessor(
                             targetInput,
                             correlatedInputs,
                             DaqcQuantity.of((pid.first * kp + pid.second * ki + pid.third * kd)(outputUnit))
@@ -168,13 +157,13 @@ class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal con
     }
 
     private fun getTime(instant: Instant): Double =
-            if (previousTime.isBefore(instant)) {
-                (Duration.between(previousTime, instant).toMillis().toDouble())
-            } else {
+            if (previousTime.isBefore(instant))
+                Duration.between(previousTime, instant).toMillis().toDouble()
+            else
                 DEFAULT_TIME_VALUE
-            }
 
-    private fun runPid(desiredValue: I, data: ValueInstant<DaqcValue>): Triple<Float, Float, Float> {
+
+    private fun runPid(desiredValue: T, data: ValueInstant<DaqcValue>): Triple<Float, Float, Float> {
 
         val recentVal = data.value.toPidFloat()
 
@@ -190,13 +179,13 @@ class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal con
         return Triple(error, integral, derivative)
     }
 
-    override val broadcastChannel: ConflatedBroadcastChannel<out ValueInstant<I>>
+    override val broadcastChannel: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = ConflatedBroadcastChannel()
 
     override val isActive: Boolean
         get() = _isActivate
 
-    override fun setOutput(setting: I) {
+    override fun setOutput(setting: T) {
         //TODO This can occasionally consume additional resources if called during NN training.
         if (listenJob?.isActive == true) {
             listenJob?.cancel()
@@ -212,7 +201,7 @@ class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal con
     }
 
     companion object {
-        private const val MAX_ALLOWED_FAILURE_COUNT = 0
+        private const val MAX_ALLOWED_FAILURE_COUNT = 20
 
         private const val PID_ITERATIONS = 10
 
@@ -230,16 +219,16 @@ class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal con
 
         private const val WINDUP_LIMIT = 20.0f
 
-        inline operator fun <I : DaqcValue, reified O : Quantity<O>> invoke(
-                targetInput: Input<I>,
+        inline operator fun <T : DaqcValue, reified O : Quantity<O>> invoke(
+                targetInput: Input<T>,
                 output: QuantityOutput<O>,
-                noinline postProcessor: (Input<I>, Array<out Input<*>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
-                vararg correlatedInputs: Input<DaqcValue>): NnpidController<I, O> =
-                NnpidController<I, O>(
+                noinline postProcessor: (Input<T>, Array<out Input<*>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
+                vararg correlatedInputs: Input<DaqcValue>): NnpidController<T, O> =
+                NnpidController<T, O>(
                         targetInput = targetInput,
                         outputUnit = Units.getInstance().getUnit(O::class.java),
                         output = output,
-                        processor = postProcessor,
+                        postProcessor = postProcessor,
                         correlatedInputs = *correlatedInputs
                 )
     }

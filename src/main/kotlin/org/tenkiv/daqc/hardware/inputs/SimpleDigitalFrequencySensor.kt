@@ -1,7 +1,7 @@
 package org.tenkiv.daqc.hardware.inputs
 
 import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.hardware.definitions.QuantityInput
+import org.tenkiv.daqc.QuantityInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.hertz

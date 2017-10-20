@@ -6,7 +6,6 @@ import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.hardware.definitions.Input
 import org.tenkiv.physikal.core.PhysicalUnit
 import org.tenkiv.physikal.core.asType
 import tec.uom.se.ComparableQuantity

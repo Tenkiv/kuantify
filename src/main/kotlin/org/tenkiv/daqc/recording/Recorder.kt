@@ -13,10 +13,6 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.isOlderThan
 import org.tenkiv.coral.secondsSpan
 import org.tenkiv.daqc.*
-import org.tenkiv.daqc.hardware.definitions.BinaryStateInput
-import org.tenkiv.daqc.hardware.definitions.BinaryStateOutput
-import org.tenkiv.daqc.hardware.definitions.QuantityInput
-import org.tenkiv.daqc.hardware.definitions.QuantityOutput
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel

@@ -1,4 +1,4 @@
-package org.tenkiv.daqc.monitoring
+package org.tenkiv.daqc.learning
 
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
