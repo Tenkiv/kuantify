@@ -46,6 +46,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal constructor(
         private val targetInput: Input<T>,
         private val outputUnit: Unit<O>,
@@ -185,6 +186,13 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
     override val isActive: Boolean
         get() = _isActivate
 
+    /**
+     * Sets the target output of the NNPID controller.
+     *
+     * @param setting The target output.
+     *
+     * @throws IllegalArgumentException If correlated input values are null
+     */
     override fun setOutput(setting: T) {
         //TODO This can occasionally consume additional resources if called during NN training.
         if (listenJob?.isActive == true) {
