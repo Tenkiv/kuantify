@@ -54,7 +54,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 inline fun <reified I : Quantity<I>, reified O : Quantity<O>> createQuantityController(
         targetInput: Input<DaqcQuantity<I>>,
         output: Output<DaqcQuantity<O>>,
-        processor: PostProcessor<DaqcQuantity<I>, O>,
+        noinline processor: (Input<DaqcQuantity<I>>, Array<out Input<DaqcValue>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
         vararg correlatedInputs: Input<DaqcValue>): AbstractNnpidController<DaqcQuantity<I>, O> =
         QuantityNnpidController<I, O>(
                 targetInput = targetInput,
@@ -66,7 +66,7 @@ inline fun <reified I : Quantity<I>, reified O : Quantity<O>> createQuantityCont
 inline fun <I : BinaryState, reified O : Quantity<O>> createBinaryController(
         targetInput: Input<I>,
         output: Output<DaqcQuantity<O>>,
-        postProcessor: PostProcessor<I, O>,
+        noinline postProcessor: (Input<I>, Array<out Input<DaqcValue>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
         vararg correlatedInputs: Input<I>):
         AbstractNnpidController<I, O> =
         BinaryNnpidController<I, O>(
@@ -81,7 +81,7 @@ internal class QuantityNnpidController<I : Quantity<I>, O : Quantity<O>>(
         targetInput: Input<DaqcQuantity<I>>,
         outputUnit: Unit<O>,
         output: Output<DaqcQuantity<O>>,
-        processor: PostProcessor<DaqcQuantity<I>, O>,
+        processor: (Input<DaqcQuantity<I>>, Array<out Input<DaqcValue>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
         vararg correlatedInputs: Input<DaqcValue>
 ) :
         AbstractNnpidController<DaqcQuantity<I>, O>(
@@ -96,7 +96,10 @@ internal class QuantityNnpidController<I : Quantity<I>, O : Quantity<O>>(
 internal class BinaryNnpidController<I : BinaryState, O : Quantity<O>>(targetInput: Input<I>,
                                                                        outputUnit: Unit<O>,
                                                                        output: Output<DaqcQuantity<O>>,
-                                                                       postProcessor: PostProcessor<I, O>,
+                                                                       postProcessor: (Input<I>,
+                                                                                       Array<out Input<DaqcValue>>,
+                                                                                       DaqcQuantity<O>)
+                                                                       -> DaqcQuantity<O>,
                                                                        vararg correlatedInputs: Input<I>) :
         AbstractNnpidController<I, O>(
                 targetInput = targetInput,
@@ -108,7 +111,11 @@ internal class BinaryNnpidController<I : BinaryState, O : Quantity<O>>(targetInp
 abstract class AbstractNnpidController<I : DaqcValue, O : Quantity<O>>(private val targetInput: Input<I>,
                                                                        private val outputUnit: Unit<O>,
                                                                        private val output: Output<DaqcQuantity<O>>,
-                                                                       private val processor: PostProcessor<I, O>,
+                                                                       private val processor:
+                                                                       (Input<I>,
+                                                                        Array<out Input<DaqcValue>>,
+                                                                        DaqcQuantity<O>)
+                                                                       -> DaqcQuantity<O>,
                                                                        private vararg val correlatedInputs:
                                                                        Input<DaqcValue>) : Output<I> {
     private var _isActivate = true
@@ -194,10 +201,8 @@ abstract class AbstractNnpidController<I : DaqcValue, O : Quantity<O>>(private v
             previousTime = it.instant
             yield()
 
-            processor.postProcessor
-
             output.setOutput(
-                    processor.postProcessor(
+                    processor(
                             targetInput,
                             correlatedInputs,
                             DaqcQuantity.of((pid.first * kp + pid.second * ki + pid.third * kd)(outputUnit))
