@@ -80,6 +80,8 @@ class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal con
 
     private var previousTime: Instant = Instant.now()
 
+    private var failureCount = 0
+
     private val net: MultiLayerNetwork =
             MultiLayerNetwork(NeuralNetConfiguration.Builder().apply {
                 iterations(PID_ITERATIONS)
@@ -117,18 +119,31 @@ class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal con
             correlatedNetwork?.train(desiredValue.toPidFloat(), recentVal)
 
             val trainArray = Nd4j.create(
-                    if (correlatedNetwork != null)
-                        floatArrayOf(
-                                pid.third,
-                                it.value.toPidFloat(),
-                                correlatedNetwork.run()
-                        )
-                    else
+                    if (correlatedNetwork != null) {
+                        val correlatedValues = correlatedNetwork.run()
+                        if (correlatedValues != null) {
+                            floatArrayOf(
+                                    pid.third,
+                                    it.value.toPidFloat(),
+                                    correlatedValues
+                            )
+                        } else {
+                            null
+                        }
+                    } else
                         floatArrayOf(pid.third, recentVal)
             )
 
-
-            net.fit(trainArray, Nd4j.create(floatArrayOf(integral)))
+            if (trainArray != null)
+                net.fit(trainArray, Nd4j.create(floatArrayOf(integral)))
+            else {
+                failureCount++
+                if (failureCount > MAX_ALLOWED_FAILURE_COUNT) {
+                    throw UninitializedPropertyAccessException(
+                            "Correlated inputs do no have sampled values. " +
+                                    "Correlated Inputs must be sampling and have previously sampled data")
+                }
+            }
 
             kp = net.outputLayer.params().getFloat(0, 0)
             ki = net.outputLayer.params().getFloat(0, 1)
@@ -197,6 +212,8 @@ class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal con
     }
 
     companion object {
+        private const val MAX_ALLOWED_FAILURE_COUNT = 0
+
         private const val PID_ITERATIONS = 10
 
         private const val PID_LEARNING_RATE = .5
