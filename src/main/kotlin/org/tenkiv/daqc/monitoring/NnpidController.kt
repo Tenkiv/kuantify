@@ -14,11 +14,11 @@ import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.tenkiv.coral.ValueInstant
-import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.Input
 import org.tenkiv.daqc.hardware.definitions.Output
+import org.tenkiv.daqc.hardware.definitions.QuantityOutput
 import org.tenkiv.physikal.core.invoke
 import tec.uom.se.unit.Units
 import java.time.Duration
@@ -50,74 +50,15 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-inline fun <reified I : Quantity<I>, reified O : Quantity<O>> createQuantityController(
-        targetInput: Input<DaqcQuantity<I>>,
-        output: Output<DaqcQuantity<O>>,
-        noinline processor: (Input<DaqcQuantity<I>>, Array<out Input<DaqcValue>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
-        vararg correlatedInputs: Input<DaqcValue>): AbstractNnpidController<DaqcQuantity<I>, O> =
-        QuantityNnpidController<I, O>(
-                targetInput = targetInput,
-                outputUnit = (Units.getInstance().getUnit(O::class.java)),
-                output = output,
-                processor = processor,
-                correlatedInputs = *correlatedInputs)
-
-inline fun <I : BinaryState, reified O : Quantity<O>> createBinaryController(
-        targetInput: Input<I>,
-        output: Output<DaqcQuantity<O>>,
-        noinline postProcessor: (Input<I>, Array<out Input<DaqcValue>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
-        vararg correlatedInputs: Input<I>):
-        AbstractNnpidController<I, O> =
-        BinaryNnpidController<I, O>(
-                targetInput = targetInput,
-                outputUnit = (Units.getInstance().getUnit(O::class.java)),
-                output = output,
-                correlatedInputs = *correlatedInputs,
-                postProcessor = postProcessor)
-
-@PublishedApi
-internal class QuantityNnpidController<I : Quantity<I>, O : Quantity<O>>(
-        targetInput: Input<DaqcQuantity<I>>,
-        outputUnit: Unit<O>,
-        output: Output<DaqcQuantity<O>>,
-        processor: (Input<DaqcQuantity<I>>, Array<out Input<DaqcValue>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
-        vararg correlatedInputs: Input<DaqcValue>
-) :
-        AbstractNnpidController<DaqcQuantity<I>, O>(
-                targetInput = targetInput,
-                outputUnit = outputUnit,
-                output = output,
-                processor = processor,
-                correlatedInputs = *correlatedInputs
-        )
-
-@PublishedApi
-internal class BinaryNnpidController<I : BinaryState, O : Quantity<O>>(targetInput: Input<I>,
-                                                                       outputUnit: Unit<O>,
-                                                                       output: Output<DaqcQuantity<O>>,
-                                                                       postProcessor: (Input<I>,
-                                                                                       Array<out Input<DaqcValue>>,
-                                                                                       DaqcQuantity<O>)
-                                                                       -> DaqcQuantity<O>,
-                                                                       vararg correlatedInputs: Input<I>) :
-        AbstractNnpidController<I, O>(
-                targetInput = targetInput,
-                outputUnit = outputUnit,
-                output = output,
-                correlatedInputs = *correlatedInputs,
-                processor = postProcessor)
-
-abstract class AbstractNnpidController<I : DaqcValue, O : Quantity<O>>(private val targetInput: Input<I>,
-                                                                       private val outputUnit: Unit<O>,
-                                                                       private val output: Output<DaqcQuantity<O>>,
-                                                                       private val processor:
-                                                                       (Input<I>,
-                                                                        Array<out Input<DaqcValue>>,
-                                                                        DaqcQuantity<O>)
-                                                                       -> DaqcQuantity<O>,
-                                                                       private vararg val correlatedInputs:
-                                                                       Input<DaqcValue>) : Output<I> {
+class NnpidController<I : DaqcValue, O : Quantity<O>> @PublishedApi internal constructor(
+        private val targetInput: Input<I>,
+        private val outputUnit: Unit<O>,
+        private val output: Output<DaqcQuantity<O>>,
+        private val processor:
+        (Input<I>, Array<out Input<*>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
+        private vararg val correlatedInputs:
+        Input<DaqcValue>
+) : Output<I> {
     private var _isActivate = true
 
     private var listenJob: Job? = null
@@ -271,5 +212,18 @@ abstract class AbstractNnpidController<I : DaqcValue, O : Quantity<O>>(private v
         private const val DEFAULT_TIME_VALUE = .00005
 
         private const val WINDUP_LIMIT = 20.0f
+
+        inline operator fun <I : DaqcValue, reified O : Quantity<O>> invoke(
+                targetInput: Input<I>,
+                output: QuantityOutput<O>,
+                noinline postProcessor: (Input<I>, Array<out Input<*>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
+                vararg correlatedInputs: Input<DaqcValue>): NnpidController<I, O> =
+                NnpidController<I, O>(
+                        targetInput = targetInput,
+                        outputUnit = Units.getInstance().getUnit(O::class.java),
+                        output = output,
+                        processor = postProcessor,
+                        correlatedInputs = *correlatedInputs
+                )
     }
 }

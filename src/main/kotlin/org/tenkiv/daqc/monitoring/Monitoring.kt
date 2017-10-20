@@ -28,13 +28,9 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSE
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/**
- * A simple neural network, styled after an implementation by Cédric Beust.
- */
 
 internal fun DaqcValue.toPidFloat() = when (this) {
-    is DaqcQuantity<*> -> ((this as? DaqcQuantity<*>)
-            ?: throw Exception()).toFloatInSystemUnit()
+    is DaqcQuantity<*> -> this.toFloatInSystemUnit()
     BinaryState.On -> 1f
     BinaryState.Off -> 0f
 }
