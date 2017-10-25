@@ -109,7 +109,8 @@ internal class CorrelatedLstmNetwork(vararg inputs: Input<DaqcValue>) {
     }
 
     private fun getCorrelatedValues(): INDArray? =
-            Nd4j.create(correlatedInputs.map
-            { it.broadcastChannel.valueOrNull?.value?.toPidFloat() ?: return null }.toFloatArray())
+            Nd4j.create(correlatedInputs.map {
+                it.broadcastChannel.valueOrNull?.value?.toPidFloat() ?: return null
+            }.toFloatArray())
 }
 
