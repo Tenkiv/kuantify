@@ -199,6 +199,9 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
             listenJob?.cancel()
         }
 
+        targetInput.activate()
+        correlatedInputs.forEach(Input<DaqcValue>::activate)
+
         runJob(setting)
     }
 
