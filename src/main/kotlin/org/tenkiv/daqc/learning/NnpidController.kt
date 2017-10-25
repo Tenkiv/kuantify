@@ -233,14 +233,25 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
         inline operator fun <T : DaqcValue, reified O : Quantity<O>> invoke(
                 targetInput: Input<T>,
                 output: QuantityOutput<O>,
-                noinline postProcessor: (Input<T>, Array<out Input<*>>, DaqcQuantity<O>) -> DaqcQuantity<O> =
-                { _, _, out -> out },
+                noinline postProcessor: (Input<T>, Array<out Input<*>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
                 vararg correlatedInputs: Input<DaqcValue>): NnpidController<T, O> =
                 NnpidController<T, O>(
                         targetInput = targetInput,
                         outputUnit = Units.getInstance().getUnit(O::class.java),
                         output = output,
                         postProcessor = postProcessor,
+                        correlatedInputs = *correlatedInputs
+                )
+
+        inline operator fun <T : DaqcValue, reified O : Quantity<O>> invoke(
+                targetInput: Input<T>,
+                output: QuantityOutput<O>,
+                vararg correlatedInputs: Input<DaqcValue>): NnpidController<T, O> =
+                NnpidController<T, O>(
+                        targetInput = targetInput,
+                        outputUnit = Units.getInstance().getUnit(O::class.java),
+                        output = output,
+                        postProcessor = { _, _, out -> out },
                         correlatedInputs = *correlatedInputs
                 )
     }
