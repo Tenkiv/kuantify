@@ -14,6 +14,7 @@ import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.coral.now
 import org.tenkiv.daqc.*
 import org.tenkiv.physikal.core.invoke
 import tec.uom.se.unit.Units
@@ -54,6 +55,16 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
         private val postProcessor: (Input<T>, Array<out Input<*>>, DaqcQuantity<O>) -> DaqcQuantity<O>,
         private vararg val correlatedInputs: Input<DaqcValue>
 ) : Output<T> {
+
+    private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<T>>()
+
+    override val broadcastChannel: ConflatedBroadcastChannel<out ValueInstant<T>>
+        get() = _broadcastChannel
+
+    override val isActive: Boolean
+        get() = _isActivate
+
+    @Volatile
     private var _isActivate = true
 
     private var listenJob: Job? = null
@@ -180,12 +191,6 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
         return Triple(error, integral, derivative)
     }
 
-    override val broadcastChannel: ConflatedBroadcastChannel<out ValueInstant<T>>
-        get() = ConflatedBroadcastChannel()
-
-    override val isActive: Boolean
-        get() = _isActivate
-
     /**
      * Sets the target output of the NNPID controller.
      *
@@ -198,6 +203,8 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
         if (listenJob?.isActive == true) {
             listenJob?.cancel()
         }
+
+        _broadcastChannel.offer(setting.now())
 
         targetInput.activate()
         correlatedInputs.forEach(Input<DaqcValue>::activate)
