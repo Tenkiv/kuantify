@@ -213,11 +213,11 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
     }
 
     override fun deactivate() {
-        _isActivate = false
-
         output.deactivate()
 
         listenJob?.cancel()
+
+        _isActivate = false
     }
 
     companion object {
