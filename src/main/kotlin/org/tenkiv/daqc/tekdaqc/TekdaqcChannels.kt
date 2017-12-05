@@ -274,7 +274,7 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
     override fun onPWMDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput, data: PWMInputData) {
 
         _pwmBroadcastChannel.offer(ValueInstant.invoke(
-                DaqcQuantity.of(data.percetageOn.percent), Instant.ofEpochMilli(data.timestamp)))
+                DaqcQuantity.of(data.percentageOn.percent), Instant.ofEpochMilli(data.timestamp)))
 
         _transitionFrequencyBroadcastChannel.offer(ValueInstant.invoke(
                 //TODO This isn't accurate need time stamp val to calculate Hertz

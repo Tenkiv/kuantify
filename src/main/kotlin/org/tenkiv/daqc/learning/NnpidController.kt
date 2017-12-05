@@ -7,10 +7,13 @@ import kotlinx.coroutines.experimental.yield
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.distribution.UniformDistribution
 import org.deeplearning4j.nn.conf.layers.DenseLayer
+import org.deeplearning4j.nn.conf.layers.GravesLSTM
 import org.deeplearning4j.nn.conf.layers.OutputLayer
+import org.deeplearning4j.nn.conf.layers.RnnOutputLayer
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
+import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.tenkiv.coral.ValueInstant
@@ -20,8 +23,10 @@ import org.tenkiv.physikal.core.invoke
 import tec.uom.se.unit.Units
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.measure.Quantity
 import javax.measure.Unit
+import kotlin.concurrent.write
 
 /**
  * Copyright 2017 TENKIV, INC.
@@ -84,6 +89,8 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
     private var ki = .4f
     private var kd = .3f
 
+    var out = 0.001f
+
     private var previousTime: Instant = Instant.now()
 
     private var failureCount = 0
@@ -95,23 +102,19 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
                 learningRate(PID_LEARNING_RATE)
             }.list().backprop(true).apply {
                 layer(0, DenseLayer.Builder().apply {
-                    nIn(if (correlatedInputs.isNotEmpty())
-                        pidEntryLayerSize + 1
-                    else
-                        pidEntryLayerSize
-                    )
-                    nOut(PID_HIDDEN_SIZE)
-                    weightInit(WeightInit.DISTRIBUTION)
-                    dist(UniformDistribution(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND))
+                    nIn(1)
+                    nOut(4)
                     activation(Activation.TANH)
                 }.build())
-                layer(1, OutputLayer.Builder().apply {
-                    nIn(PID_HIDDEN_SIZE)
-                    nOut(PID_OUT_SIZE)
-                    weightInit(WeightInit.DISTRIBUTION)
-                    dist(UniformDistribution(WEIGHT_LOWER_BOUND, WEIGHT_UPPER_BOUND))
+                layer(1, GravesLSTM.Builder().apply {
+                    nIn(4)
+                    nOut(4)
                     activation(Activation.TANH)
-                    lossFunction(LossFunctions.LossFunction.SQUARED_LOSS)
+                }.build())
+                layer(2, RnnOutputLayer.Builder(LossFunctions.LossFunction.MSE).apply {
+                    nIn(4)
+                    nOut(1)
+                    activation(Activation.IDENTITY)
                 }.build())
             }.build())
 
@@ -125,19 +128,19 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
             correlatedNetwork?.train(desiredValue.toPidFloat(), recentVal)
 
             val trainArray = Nd4j.create(
-                    if (correlatedNetwork != null) {
+                    /*if (correlatedNetwork != null) {
                         val correlatedValues = correlatedNetwork.run()
                         if (correlatedValues != null)
                             floatArrayOf(pid.third, it.value.toPidFloat(), correlatedValues)
                         else
                             null
 
-                    } else
-                        floatArrayOf(pid.third, recentVal)
+                    } else*/
+                    floatArrayOf(recentVal)
             )
 
             if (trainArray != null)
-                net.fit(trainArray, Nd4j.create(floatArrayOf(integral)))
+                net.fit(trainArray, Nd4j.create(floatArrayOf(out)))
             else {
                 failureCount++
                 if (failureCount > MAX_ALLOWED_FAILURE_COUNT)
@@ -150,21 +153,26 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
             ki = net.outputLayer.params().getFloat(0, 1)
             kd = net.outputLayer.params().getFloat(0, 2)
 
-            if (integral > WINDUP_LIMIT)
-                integral = WINDUP_LIMIT
-            else if (integral < -WINDUP_LIMIT)
-                integral = -WINDUP_LIMIT
+            /*println("o0:${out.getFloat(0)} o1:${out.getFloat(1)} o2:${out.getFloat(2)}")
+            println("p0:${posO.getFloat(0)} p1:${posO.getFloat(1)} p2:${posO.getFloat(2)}")
+            println("n0:${negO.getFloat(0)} n1:${negO.getFloat(1)} n2:${negO.getFloat(2)}")
+
+            kp = negO.getFloat(0)
+            ki = negO.getFloat(1)
+            kd = negO.getFloat(2)*/
+
+            println("p:$kp i:$ki d:$kd")
 
             previousTime = it.instant
             yield()
 
-            output.setOutput(
+            /*output.setOutput(
                     postProcessor(
                             targetInput,
                             correlatedInputs,
-                            DaqcQuantity.of((pid.first * kp + pid.second * ki + pid.third * kd)(outputUnit))
+                            DaqcQuantity.of((out)(outputUnit))
                     )
-            )
+            )*/
         }
     }
 
@@ -184,7 +192,13 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
         error = desiredValue.toPidFloat() - recentVal
 
         integral += (error * time).toFloat()
+
         val derivative = error - previousError
+
+        if (integral > WINDUP_LIMIT)
+            integral = WINDUP_LIMIT
+        else if (integral < -WINDUP_LIMIT)
+            integral = -WINDUP_LIMIT
 
         previousError = error
 

@@ -444,5 +444,4 @@ class Recorder<out T> internal constructor(
         fun deleteAllRecordsFromDisk() = recordersDirectory.delete()
 
     }
-
 }

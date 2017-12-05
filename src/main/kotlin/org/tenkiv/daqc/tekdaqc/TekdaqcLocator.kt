@@ -57,5 +57,4 @@ class TekdaqcLocator : DeviceLocator() {
     override fun stop() {
         Locator.instance.cancelLocator()
     }
-
 }

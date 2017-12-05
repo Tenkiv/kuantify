@@ -34,8 +34,12 @@ class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
     override fun hashCode(): Int {
         return wrappedDevice.hashCode()
     }
+}
 
-
+fun <T: Device>whenTest(locatorUpdate: LocatorUpdate<T>){
+    when(locatorUpdate){
+        is FoundDevice<T> -> {}
+    }
 }
 
 class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {

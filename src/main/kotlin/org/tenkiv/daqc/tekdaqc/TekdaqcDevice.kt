@@ -99,7 +99,7 @@ class TekdaqcDevice(val wrappedTekdaqc: ATekdaqc) : ControlDevice, DataAcquisiti
 
     override fun initializeDevice() {
         wrappedTekdaqc.addCriticalFailureListener(this)
-        wrappedTekdaqc.readAnalogInput(36, 5)
+        //wrappedTekdaqc.readAnalogInput(36, 5)
         analogInputs.forEach { it.deactivate() }
         digitalInputs.forEach { it.deactivate() }
         digitalOutputs.forEach { it.deactivate() }
