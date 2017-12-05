@@ -12,7 +12,9 @@ import kotlinx.coroutines.experimental.sync.withLock
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.isOlderThan
 import org.tenkiv.coral.secondsSpan
-import org.tenkiv.daqc.*
+import org.tenkiv.daqc.PrimitiveValueInstant
+import org.tenkiv.daqc.Updatable
+import org.tenkiv.daqc.daqcThreadContext
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
@@ -20,12 +22,7 @@ import java.nio.charset.Charset
 import java.nio.file.StandardOpenOption
 import java.time.Duration
 import java.time.Instant
-import javax.measure.Quantity
 
-typealias RecordedQuantityInput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityInput<Q>>
-typealias RecordedBinaryStateInput = RecordedUpdatable<BinaryState, BinaryStateInput>
-typealias RecordedQuantityOutput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityOutput<Q>>
-typealias RecordedBinaryStateOutput = RecordedUpdatable<BinaryState, BinaryStateOutput>
 
 //TODO: Move default parameter values in recorder creation function to constants
 fun <T> Updatable<ValueInstant<T>>.newRecorder(
@@ -44,32 +41,6 @@ fun <T> Updatable<ValueInstant<T>>.newRecorder(
                 valueSerializer,
                 valueDeserializer)
 
-fun Updatable<BinaryStateMeasurement>.newBinaryStateRecorder(
-        storageFrequency: StorageFrequency = StorageFrequency.All,
-        memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-        diskDuration: StorageDuration = StorageDuration.Forever,
-        filterOnRecord: Recorder<BinaryState>.(BinaryStateMeasurement) -> Boolean = { true }
-) =
-        Recorder(this,
-                storageFrequency,
-                memoryDuration,
-                diskDuration,
-                filterOnRecord,
-                valueSerializer = { "\"$it\"" },
-                valueDeserializer = BinaryState.Companion::fromString)
-
-inline fun <reified Q : Quantity<Q>> Updatable<QuantityMeasurement<Q>>.newQuantityRecorder(
-        storageFrequency: StorageFrequency = StorageFrequency.All,
-        memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-        diskDuration: StorageDuration = StorageDuration.Forever,
-        noinline filterOnRecord: Recorder<DaqcQuantity<Q>>.(QuantityMeasurement<Q>) -> Boolean = { true }
-): Recorder<DaqcQuantity<Q>> =
-        newRecorder(storageFrequency,
-                memoryDuration,
-                diskDuration,
-                filterOnRecord,
-                valueSerializer = { "\"$it\"" },
-                valueDeserializer = DaqcQuantity.Companion::fromString)
 
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
         storageFrequency: StorageFrequency = StorageFrequency.All,
@@ -88,31 +59,6 @@ fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
                         valueSerializer,
                         valueDeserializer)
         )
-
-fun <U : Updatable<BinaryStateMeasurement>> U.pairWithNewBinStateRecorder(
-        storageFrequency: StorageFrequency = StorageFrequency.All,
-        memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-        diskDuration: StorageDuration = StorageDuration.Forever,
-        filterOnRecord: Recorder<BinaryState>.(ValueInstant<BinaryState>) -> Boolean = { true }
-) =
-        RecordedUpdatable(
-                this,
-                newBinaryStateRecorder(storageFrequency,
-                        memoryDuration,
-                        diskDuration,
-                        filterOnRecord)
-        )
-
-//TODO: Using type aliases here seems to crash the compiler, switch to type alias when that is fixed.
-inline fun <reified Q : Quantity<Q>, U : Updatable<ValueInstant<DaqcQuantity<Q>>>>
-        U.pairWithNewQuantityRecorder(
-        storageFrequency: StorageFrequency = StorageFrequency.All,
-        memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-        diskDuration: StorageDuration = StorageDuration.Forever,
-        noinline filterOnRecord: Recorder<DaqcQuantity<Q>>.(QuantityMeasurement<Q>) -> Boolean = { true }
-) =
-        RecordedUpdatable(this,
-                newQuantityRecorder(storageFrequency, memoryDuration, diskDuration, filterOnRecord))
 
 fun <T> List<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>):
         List<ValueInstant<T>> {
@@ -180,7 +126,7 @@ sealed class StorageDuration : Comparable<StorageDuration> {
 class Recorder<out T> internal constructor(
         updatable: Updatable<ValueInstant<T>>,
         val storageFrequency: StorageFrequency = StorageFrequency.All,
-        val memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+        val memoryDuration: StorageDuration = StorageDuration.For(memoryDurationDefault),
         val diskDuration: StorageDuration = StorageDuration.None,
         private val filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
         private val valueSerializer: (T) -> String,
@@ -277,9 +223,9 @@ class Recorder<out T> internal constructor(
                 val oldestMemory = _dataInMemory.firstOrNull()
                 if (oldestMemory != null && oldestMemory.instant.isBefore(oldestRequested))
                     return@async _dataInMemory.filter(filterFun)
-                else if (diskDuration > memoryDuration) {
+                else if (diskDuration > memoryDuration)
                     getDataFromDisk(filterFun)
-                } else
+                else
                     return@async _dataInMemory.filter(filterFun)
             }
 
@@ -311,12 +257,12 @@ class Recorder<out T> internal constructor(
     private suspend fun cleanMemory() {
         if (memoryDuration is StorageDuration.For) {
             val iterator = _reversedDataInMemory.iterator()
-            while (iterator.hasNext()) {
+            while (iterator.hasNext())
                 if (iterator.next().instant.isOlderThan(memoryDuration.duration))
                     iterator.remove()
                 else
                     break
-            }
+
         }
     }
 
@@ -416,9 +362,9 @@ class Recorder<out T> internal constructor(
                     if (!inString && charByte == OPEN_BRACE)
                         numUnclosedBraces++
 
-                    if (numUnclosedBraces > 1) {
+                    if (numUnclosedBraces > 1)
                         currentObject += charByte
-                    }
+
 
                     if (!inString && charByte == CLOSE_BRACE) {
                         numUnclosedBraces--
@@ -447,6 +393,9 @@ class Recorder<out T> internal constructor(
 
 
     companion object {
+        @PublishedApi
+        internal val memoryDurationDefault = 30L.secondsSpan
+
         // The value of this must match the corresponding property name in PrimitiveValueInstant.
         private const val VALUE_KEY = "value"
         // The value of this must match the corresponding property name in PrimitiveValueInstant.
@@ -461,7 +410,7 @@ class Recorder<out T> internal constructor(
 
         private const val RECORDERS_PATH = "recorders"
 
-        private val jacksonMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
+        private val jacksonMapper: ObjectMapper = ObjectMapper().apply { registerModule(KotlinModule()) }
 
         private val recordersDirectory = File(RECORDERS_PATH).apply { mkdir() }
 

@@ -1,9 +1,13 @@
 package org.tenkiv.daqc.recording
 
+import io.kotlintest.matchers.plusOrMinus
+import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
 import org.tenkiv.coral.secondsSpan
 import org.tenkiv.daqc.AnalogGibberingSensor
 import org.tenkiv.daqc.DigitalGibberingSensor
+import org.tenkiv.daqc.recording.binary.newRecorder
+import org.tenkiv.daqc.recording.quantity.newRecorder
 import java.lang.Thread.sleep
 
 class RecorderSpec : StringSpec({
@@ -17,11 +21,16 @@ class RecorderSpec : StringSpec({
 
     "Recorder write daqc value to memory" {
 
-        analogGibberingSensor.pairWithNewQuantityRecorder(memoryDuration = StorageDuration.For(10L.secondsSpan),
+        val analogRecorder = analogGibberingSensor.newRecorder(memoryDuration = StorageDuration.For(10L.secondsSpan),
                 diskDuration = StorageDuration.None)
 
-        sleep(11_000)
+        val digitalRecorder = digitalGibberingSensor.newRecorder(memoryDuration = StorageDuration.For(10L.secondsSpan),
+                diskDuration = StorageDuration.None)
 
+        sleep(12_000)
+
+        analogRecorder.getDataInMemory().last().instant.epochSecond -
+                analogRecorder.getDataInMemory().first().instant.epochSecond shouldBe (10.0 plusOrMinus 1.0)
 
     }
 

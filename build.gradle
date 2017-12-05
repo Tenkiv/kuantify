@@ -1,18 +1,17 @@
 buildscript {
-    ext.kotlin_version = '1.2.0'
 
     repositories {
         mavenCentral()
     }
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.0"
     }
 }
 
 apply plugin: 'kotlin'
 apply plugin: 'jacoco'
 
-sourceCompatibility = 1.5
+sourceCompatibility = 1.6
 
 def isReleaseBuild() {
     return version.contains("SNAPSHOT") == false
@@ -29,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
     compile 'org.deeplearning4j:deeplearning4j-core:0.9.1'
     compile 'org.nd4j:nd4j-native-platform:0.9.1'
@@ -38,7 +37,7 @@ dependencies {
     compile "org.tenkiv.physikal:core:1.1.3.0"
 
     //General utilities for Kotlin
-    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect"
     compile 'org.tenkiv.coral.jdk:core:1.0.0.0'
     compile 'com.github.kittinunf.result:result:1.1.0'
 
@@ -56,6 +55,8 @@ dependencies {
 
     //Testing Framework
     testCompile 'io.kotlintest:kotlintest:2.0.5'
+//    testCompile "org.jetbrains.kotlin:kotlin-test"
+//    testCompile "org.jetbrains.kotlin:kotlin-test-junit"
 }
 
 apply from: 'maven_push.gradle'
