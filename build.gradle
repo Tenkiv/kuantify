@@ -46,7 +46,7 @@ dependencies {
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-nio:0.19'
 
     //Temp Tekdaqc Dependency
-    compile 'com.tenkiv.tekdaqc:java-library:2.2.0.3-SNAPSHOT'
+    compile 'com.tenkiv.tekdaqc:java-library:2.2.0.4-SNAPSHOT'
 
     //JSON
     compile 'com.fasterxml.jackson.core:jackson-databind:2.8.7'
