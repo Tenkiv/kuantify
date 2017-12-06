@@ -73,6 +73,6 @@ class Trigger<T : DaqcValue>(val triggerOnSimultaneousValues: Boolean = false,
 
 sealed class MaxTriggerCount
 
-data class TriggerCount(var count: Int): MaxTriggerCount()
+data class TriggerCount(@Volatile var count: Int): MaxTriggerCount()
 
 class UnlimitedCount: MaxTriggerCount()
