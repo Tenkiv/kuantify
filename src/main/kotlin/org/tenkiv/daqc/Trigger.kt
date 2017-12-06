@@ -76,7 +76,7 @@ class Trigger<T : DaqcValue>(val triggerOnSimultaneousValues: Boolean = false,
 sealed class MaxTriggerCount
 
 data class TriggerCount(val count: Int): MaxTriggerCount(){
-    val atomicCount = AtomicInteger(count)
+    internal val atomicCount = AtomicInteger(count)
 }
 
 class UnlimitedCount: MaxTriggerCount()
