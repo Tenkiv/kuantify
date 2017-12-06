@@ -36,36 +36,37 @@ class Trigger<T : DaqcValue>(val triggerOnSimultaneousValues: Boolean = false,
     fun stop() {
         if (maxTimesTriggered is TriggerCount && maxTimesTriggered.count > 0) {
             maxTimesTriggered.count--
-            if (maxTimesTriggered.count <= 0){
-                channelList.forEach { it.close() }
-            }
+        }
+        if (maxTimesTriggered is TriggerCount && maxTimesTriggered.count <= 0){
+            channelList.forEach { it.close() }
         }
     }
 
     init {
-        triggerConditions.forEach {
-            channelList.add(it.input.broadcastChannel.consumeAndReturn { update ->
-                val currentVal = update
+        if (!(maxTimesTriggered is TriggerCount && maxTimesTriggered.count == 0)) {
+            triggerConditions.forEach {
+                channelList.add(it.input.broadcastChannel.consumeAndReturn { update ->
+                    val currentVal = update
 
-                it.lastValue = currentVal
+                    it.lastValue = currentVal
 
-                if (it.condition(currentVal)) {
-                    it.hasBeenReached = true
+                    if (it.condition(currentVal)) {
+                        it.hasBeenReached = true
 
-                    if (triggerOnSimultaneousValues) {
-                        stop()
-                        triggerConditions.all {
-                            val value = it.lastValue ?: return@all false
-                            it.condition(value)
-                        }.apply { triggerFunction.invoke() }
+                        if (triggerOnSimultaneousValues) {
+                            stop()
+                            triggerConditions.all {
+                                val value = it.lastValue ?: return@all false
+                                it.condition(value)
+                            }.apply { triggerFunction.invoke() }
 
-
-                    } else {
-                        stop()
-                        triggerConditions.all { it.hasBeenReached }.apply { triggerFunction.invoke() }
+                        } else {
+                            stop()
+                            triggerConditions.all { it.hasBeenReached }.apply { triggerFunction.invoke() }
+                        }
                     }
-                }
-            })
+                })
+            }
         }
     }
 }
