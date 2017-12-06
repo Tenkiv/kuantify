@@ -2,6 +2,7 @@ package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import org.tenkiv.coral.ValueInstant
+import java.util.concurrent.atomic.AtomicInteger
 
 class Trigger<T : DaqcValue>(val triggerOnSimultaneousValues: Boolean = false,
                              val maxTimesTriggered: MaxTriggerCount = TriggerCount(1),
@@ -34,16 +35,17 @@ class Trigger<T : DaqcValue>(val triggerOnSimultaneousValues: Boolean = false,
     private val channelList: MutableList<SubscriptionReceiveChannel<ValueInstant<T>>> = ArrayList()
 
     fun stop() {
-        if (maxTimesTriggered is TriggerCount && maxTimesTriggered.count > 0) {
-            maxTimesTriggered.count--
-        }
-        if (maxTimesTriggered is TriggerCount && maxTimesTriggered.count <= 0){
-            channelList.forEach { it.close() }
+        if (maxTimesTriggered is TriggerCount && maxTimesTriggered.atomicCount.get() > 0) {
+            maxTimesTriggered.atomicCount.decrementAndGet()
+
+            if (maxTimesTriggered.atomicCount.get() <= 0){
+                channelList.forEach { it.close() }
+            }
         }
     }
 
     init {
-        if (!(maxTimesTriggered is TriggerCount && maxTimesTriggered.count == 0)) {
+        if (!(maxTimesTriggered is TriggerCount && maxTimesTriggered.atomicCount.get() == 0)) {
             triggerConditions.forEach {
                 channelList.add(it.input.broadcastChannel.consumeAndReturn { update ->
                     val currentVal = update
@@ -73,6 +75,8 @@ class Trigger<T : DaqcValue>(val triggerOnSimultaneousValues: Boolean = false,
 
 sealed class MaxTriggerCount
 
-data class TriggerCount(@Volatile var count: Int): MaxTriggerCount()
+data class TriggerCount(val count: Int): MaxTriggerCount(){
+    val atomicCount = AtomicInteger(count)
+}
 
 class UnlimitedCount: MaxTriggerCount()
