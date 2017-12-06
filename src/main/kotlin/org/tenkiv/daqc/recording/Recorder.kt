@@ -1,7 +1,6 @@
 package org.tenkiv.daqc.recording
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.consumeEach
@@ -138,7 +137,6 @@ class Recorder<out T> internal constructor(
     private val directoryFile = async(daqcThreadContext) { File(directoryPath.await()).apply { mkdir() } }
 
     private val _dataInMemory = ArrayList<ValueInstant<T>>()
-    private val _reversedDataInMemory = _dataInMemory.asReversed()
 
     private val files = ArrayList<RecorderFile>()
     private val reversedFiles = files.asReversed()
@@ -173,8 +171,10 @@ class Recorder<out T> internal constructor(
             var numUnstoredMeasurements = 0
 
             receiveChannel.consumeEach { update ->
-                if (storageFrequency is StorageFrequency.All)
+                if (storageFrequency is StorageFrequency.All) {
                     recordUpdate(update)
+                    cleanMemory()
+                }
                 if (storageFrequency is StorageFrequency.PerNumMeasurements) {
                     numUnstoredMeasurements++
                     if (numUnstoredMeasurements == storageFrequency.number) {
@@ -256,13 +256,12 @@ class Recorder<out T> internal constructor(
 
     private suspend fun cleanMemory() {
         if (memoryDuration is StorageDuration.For) {
-            val iterator = _reversedDataInMemory.iterator()
+            val iterator = _dataInMemory.iterator()
             while (iterator.hasNext())
                 if (iterator.next().instant.isOlderThan(memoryDuration.duration))
                     iterator.remove()
                 else
                     break
-
         }
     }
 
@@ -410,7 +409,8 @@ class Recorder<out T> internal constructor(
 
         private const val RECORDERS_PATH = "recorders"
 
-        private val jacksonMapper: ObjectMapper = ObjectMapper().apply { registerModule(KotlinModule()) }
+        //TODO: Register kotlin module here when supported, add .apply { registerModule(KotlinModule()) }
+        private val jacksonMapper: ObjectMapper = ObjectMapper()
 
         private val recordersDirectory = File(RECORDERS_PATH).apply { mkdir() }
 

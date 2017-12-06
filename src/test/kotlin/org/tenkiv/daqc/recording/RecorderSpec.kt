@@ -29,8 +29,9 @@ class RecorderSpec : StringSpec({
 
         sleep(12_000)
 
-        analogRecorder.getDataInMemory().last().instant.epochSecond -
-                analogRecorder.getDataInMemory().first().instant.epochSecond shouldBe (10.0 plusOrMinus 1.0)
+        val analogDataInMemory = analogRecorder.getDataInMemory()
+        analogDataInMemory.last().instant.epochSecond -
+                analogDataInMemory.first().instant.epochSecond shouldBe (10.0 plusOrMinus 1.0)
 
     }
 
