@@ -293,6 +293,7 @@ class Recorder<out T> internal constructor(
         private val mutex = Mutex()
 
         private var arrayLastPosition = 0L
+
         private var isFirstWrite = true
 
         init {
@@ -389,7 +390,6 @@ class Recorder<out T> internal constructor(
             return complyingObjects
         }
     }
-
 
     companion object {
         @PublishedApi
