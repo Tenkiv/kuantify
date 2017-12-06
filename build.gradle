@@ -55,8 +55,6 @@ dependencies {
 
     //Testing Framework
     testCompile 'io.kotlintest:kotlintest:2.0.5'
-//    testCompile "org.jetbrains.kotlin:kotlin-test"
-//    testCompile "org.jetbrains.kotlin:kotlin-test-junit"
 }
 
 apply from: 'maven_push.gradle'
