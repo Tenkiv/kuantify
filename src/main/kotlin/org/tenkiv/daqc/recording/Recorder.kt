@@ -2,7 +2,6 @@ package org.tenkiv.daqc.recording
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
@@ -392,13 +391,29 @@ class Recorder<out T> internal constructor(
                         if (numUnclosedBraces == 0)
                             return@readFromDisk complyingObjects
 
-                        val valueInstant = jacksonMapper
-                                .readValue<PrimitiveValueInstant>(currentObject.toByteArray())
-                                .toValueInstant(valueDeserializer)
-                        if (filter(valueInstant)) {
-                            complyingObjects += valueInstant
+                        if (numUnclosedBraces == 1) {
+
+                            println("Byte Array = ${String(currentObject.toByteArray())}")
+
+//                            val valueInstant = jacksonMapper
+//                                    .readValue<PrimitiveValueInstant>(currentObject.toByteArray())
+//                                    .toValueInstant(valueDeserializer)
+
+                            val jsonTree = jacksonMapper.readTree(currentObject.toByteArray())
+                            val epochMilli = jsonTree[INSTANT_KEY].asLong()
+                            val valueString = jsonTree[VALUE_KEY].toString()
+                            println("epochMilli=$epochMilli, valueString=$valueString")
+                            val valueInstant =
+                                    PrimitiveValueInstant(epochMilli, valueString)
+                                            .toValueInstant(valueDeserializer)
+
+
+                            if (filter(valueInstant)) {
+                                complyingObjects += valueInstant
+                            }
+                            currentObject.clear()
+
                         }
-                        currentObject.clear()
 
                     }
 
