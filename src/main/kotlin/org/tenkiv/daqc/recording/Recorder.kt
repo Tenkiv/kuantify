@@ -1,8 +1,10 @@
 package org.tenkiv.daqc.recording
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.nio.aRead
 import kotlinx.coroutines.experimental.nio.aWrite
@@ -123,7 +125,7 @@ sealed class StorageDuration : Comparable<StorageDuration> {
  * @param valueSerializer returned String will be stored in a JSON file and should be a compliant JSON String.
  */
 class Recorder<out T> internal constructor(
-        updatable: Updatable<ValueInstant<T>>,
+        private val updatable: Updatable<ValueInstant<T>>,
         val storageFrequency: StorageFrequency = StorageFrequency.All,
         val memoryDuration: StorageDuration = StorageDuration.For(memoryDurationDefault),
         val diskDuration: StorageDuration = StorageDuration.None,
@@ -139,9 +141,10 @@ class Recorder<out T> internal constructor(
     private val _dataInMemory = ArrayList<ValueInstant<T>>()
 
     private val files = ArrayList<RecorderFile>()
-    private val reversedFiles = files.asReversed()
 
     private val receiveChannel = updatable.broadcastChannel.openSubscription()
+
+    private val fileCreationBroadcaster = ConflatedBroadcastChannel<RecorderFile>()
 
 
     private val recordJob = launch(daqcThreadContext) {
@@ -153,7 +156,9 @@ class Recorder<out T> internal constructor(
                 val fileCreationInterval = diskDuration.duration.dividedBy(10)
                 val fileExpiresIn = diskDuration.duration + diskDuration.duration.dividedBy(9)
                 while (isActive) {
-                    files += RecorderFile(fileExpiresIn)
+                    val newRecorderFile = RecorderFile(fileExpiresIn)
+                    files += newRecorderFile
+                    fileCreationBroadcaster.send(newRecorderFile)
                     delay(fileCreationInterval.toMillis())
                 }
             }
@@ -199,11 +204,7 @@ class Recorder<out T> internal constructor(
         if (memoryDuration >= diskDuration)
             getDataInMemory()
         else {
-            val data = ArrayList<ValueInstant<T>>()
-            reversedFiles.forEach {
-                data.addAll(it.readFromDisk { true })
-            }
-            data
+            getDataFromDisk { true }
         }
     }
 
@@ -242,7 +243,27 @@ class Recorder<out T> internal constructor(
     private suspend fun getDataFromDisk(filter: (ValueInstant<T>) -> Boolean): List<ValueInstant<T>> {
         //TODO: Change to immutable list using builder
         val result = ArrayList<ValueInstant<T>>()
-        reversedFiles.forEach { result.addAll(it.readFromDisk(filter)) }
+        val currentFiles: List<RecorderFile> = ArrayList(files)
+
+        val bufferMutex = Mutex()
+        val buffer = ArrayList<ValueInstant<T>>()
+
+        launch(daqcThreadContext) {
+            fileCreationBroadcaster.openSubscription().receive()
+            updatable.broadcastChannel.consumeEach { value ->
+                bufferMutex.withLock {
+                    buffer += value
+                }
+            }
+        }
+
+        currentFiles.forEach {
+            result.addAll(it.readFromDisk(filter))
+        }
+        bufferMutex.withLock {
+            result.addAll(buffer.filter(filter))
+        }
+
         return result
     }
 
@@ -409,8 +430,7 @@ class Recorder<out T> internal constructor(
 
         private const val RECORDERS_PATH = "recorders"
 
-        //TODO: Register kotlin module here when supported, add .apply { registerModule(KotlinModule()) }
-        private val jacksonMapper: ObjectMapper = ObjectMapper()
+        private val jacksonMapper: ObjectMapper = jacksonObjectMapper()
 
         private val recordersDirectory = File(RECORDERS_PATH).apply { mkdir() }
 
