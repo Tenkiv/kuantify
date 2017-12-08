@@ -395,13 +395,10 @@ class Recorder<out T> internal constructor(
 
                             println("Byte Array = ${String(currentObject.toByteArray())}")
 
-//                            val valueInstant = jacksonMapper
-//                                    .readValue<PrimitiveValueInstant>(currentObject.toByteArray())
-//                                    .toValueInstant(valueDeserializer)
-
                             val jsonTree = jacksonMapper.readTree(currentObject.toByteArray())
                             val epochMilli = jsonTree[INSTANT_KEY].asLong()
-                            val valueString = jsonTree[VALUE_KEY].toString()
+                            val valueTree = jsonTree[VALUE_KEY]
+                            val valueString = if (valueTree.isTextual) valueTree.asText() else valueTree.toString()
                             println("epochMilli=$epochMilli, valueString=$valueString")
                             val valueInstant =
                                     PrimitiveValueInstant(epochMilli, valueString)
