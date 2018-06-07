@@ -16,6 +16,9 @@ val daqcCriticalErrorBroadcastChannel = ConflatedBroadcastChannel<DaqcCriticalEr
 
 sealed class LocatorUpdate<out T : Device>(val wrappedDevice: T) : Device by wrappedDevice
 
+/**
+ * A Device found by a Locator
+ */
 class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
 
     override fun toString() = "FoundDevice: $wrappedDevice"
