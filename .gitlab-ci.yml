@@ -1,0 +1,10 @@
+stages:
+  - build
+  - test
+
+test:
+  stage: build
+  script:
+    - echo "Heres some Text"
+    - gradle build
+    - gradle test
