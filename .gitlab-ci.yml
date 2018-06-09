@@ -2,6 +2,8 @@ stages:
   - build
   - test
 
+image: ubuntu
+
 test:
   stage: build
   script:
