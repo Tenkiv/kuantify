@@ -2,7 +2,7 @@ stages:
   - build
   - test
 
-image: openjdk:latest
+image: gradle:latest
 
 test:
   stage: build
