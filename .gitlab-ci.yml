@@ -1,11 +1,12 @@
 stages:
   - build
   - test
-
+  - deploy
+  
 image: gradle:latest
 
-test:
-  stage: build
+gradle_test:
+  stage: test
   script:
     - gradle build
     - gradle test
