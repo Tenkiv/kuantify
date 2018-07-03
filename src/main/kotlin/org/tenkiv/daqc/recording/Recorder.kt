@@ -26,39 +26,43 @@ import java.time.Instant
 
 //TODO: Move default parameter values in recorder creation function to constants
 fun <T> Updatable<ValueInstant<T>>.newRecorder(
-        storageFrequency: StorageFrequency = StorageFrequency.All,
-        memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-        diskDuration: StorageDuration = StorageDuration.Forever,
-        filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
-        valueSerializer: (T) -> String,
-        valueDeserializer: (String) -> T
+    storageFrequency: StorageFrequency = StorageFrequency.All,
+    memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+    diskDuration: StorageDuration = StorageDuration.Forever,
+    filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
+    valueSerializer: (T) -> String,
+    valueDeserializer: (String) -> T
 ): Recorder<T> =
-        Recorder(this,
-                storageFrequency,
-                memoryDuration,
-                diskDuration,
-                filterOnRecord,
-                valueSerializer,
-                valueDeserializer)
+    Recorder(
+        this,
+        storageFrequency,
+        memoryDuration,
+        diskDuration,
+        filterOnRecord,
+        valueSerializer,
+        valueDeserializer
+    )
 
 
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
-        storageFrequency: StorageFrequency = StorageFrequency.All,
-        memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-        diskDuration: StorageDuration = StorageDuration.Forever,
-        filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
-        valueSerializer: (T) -> String,
-        valueDeserializer: (String) -> T
+    storageFrequency: StorageFrequency = StorageFrequency.All,
+    memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
+    diskDuration: StorageDuration = StorageDuration.Forever,
+    filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
+    valueSerializer: (T) -> String,
+    valueDeserializer: (String) -> T
 ) =
-        RecordedUpdatable(
-                this,
-                this.newRecorder(storageFrequency,
-                        memoryDuration,
-                        diskDuration,
-                        filterOnRecord,
-                        valueSerializer,
-                        valueDeserializer)
+    RecordedUpdatable(
+        this,
+        this.newRecorder(
+            storageFrequency,
+            memoryDuration,
+            diskDuration,
+            filterOnRecord,
+            valueSerializer,
+            valueDeserializer
         )
+    )
 
 fun <T> List<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>):
         List<ValueInstant<T>> {
@@ -74,8 +78,10 @@ fun <T> List<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>)
 }
 
 
-data class RecordedUpdatable<out T, out U : Updatable<ValueInstant<T>>>(val updatable: U,
-                                                                        val recorder: Recorder<T>)
+data class RecordedUpdatable<out T, out U : Updatable<ValueInstant<T>>>(
+    val updatable: U,
+    val recorder: Recorder<T>
+)
 
 sealed class StorageFrequency {
 
@@ -91,30 +97,30 @@ sealed class StorageDuration : Comparable<StorageDuration> {
     object Forever : StorageDuration() {
 
         override fun compareTo(other: StorageDuration): Int =
-                when (other) {
-                    is Forever -> 0
-                    else -> 1
-                }
+            when (other) {
+                is Forever -> 0
+                else -> 1
+            }
 
     }
 
     object None : StorageDuration() {
 
         override fun compareTo(other: StorageDuration): Int =
-                when (other) {
-                    is None -> 0
-                    else -> -1
-                }
+            when (other) {
+                is None -> 0
+                else -> -1
+            }
     }
 
     data class For(val duration: Duration) : StorageDuration() {
 
         override fun compareTo(other: StorageDuration): Int =
-                when (other) {
-                    is Forever -> -1
-                    is None -> 1
-                    is For -> duration.compareTo(other.duration)
-                }
+            when (other) {
+                is Forever -> -1
+                is None -> 1
+                is For -> duration.compareTo(other.duration)
+            }
     }
 }
 
@@ -124,13 +130,13 @@ sealed class StorageDuration : Comparable<StorageDuration> {
  * @param valueSerializer returned String will be stored in a JSON file and should be a compliant JSON String.
  */
 class Recorder<out T> internal constructor(
-        private val updatable: Updatable<ValueInstant<T>>,
-        val storageFrequency: StorageFrequency = StorageFrequency.All,
-        val memoryDuration: StorageDuration = StorageDuration.For(memoryDurationDefault),
-        val diskDuration: StorageDuration = StorageDuration.None,
-        private val filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
-        private val valueSerializer: (T) -> String,
-        private val valueDeserializer: (String) -> T
+    private val updatable: Updatable<ValueInstant<T>>,
+    val storageFrequency: StorageFrequency = StorageFrequency.All,
+    val memoryDuration: StorageDuration = StorageDuration.For(memoryDurationDefault),
+    val diskDuration: StorageDuration = StorageDuration.None,
+    private val filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
+    private val valueSerializer: (T) -> String,
+    private val valueDeserializer: (String) -> T
 ) {
 
     private val uid = getRecorderUid()
@@ -209,25 +215,25 @@ class Recorder<out T> internal constructor(
 
     //TODO: Make similar extension function for Collection<ValueInstant<T>>
     fun getDataInRange(instantRange: ClosedRange<Instant>): Deferred<List<ValueInstant<T>>> =
-            async(daqcThreadContext) {
-                val oldestRequested = instantRange.start
-                val newestRequested = instantRange.endInclusive
+        async(daqcThreadContext) {
+            val oldestRequested = instantRange.start
+            val newestRequested = instantRange.endInclusive
 
-                val filterFun: (ValueInstant<T>) -> Boolean = {
-                    it.instant.isAfter(oldestRequested) &&
-                            it.instant.isBefore(newestRequested) ||
-                            it.instant == oldestRequested ||
-                            it.instant == newestRequested
-                }
-
-                val oldestMemory = _dataInMemory.firstOrNull()
-                if (oldestMemory != null && oldestMemory.instant.isBefore(oldestRequested))
-                    return@async _dataInMemory.filter(filterFun)
-                else if (diskDuration > memoryDuration)
-                    getDataFromDisk(filterFun)
-                else
-                    return@async _dataInMemory.filter(filterFun)
+            val filterFun: (ValueInstant<T>) -> Boolean = {
+                it.instant.isAfter(oldestRequested) &&
+                        it.instant.isBefore(newestRequested) ||
+                        it.instant == oldestRequested ||
+                        it.instant == newestRequested
             }
+
+            val oldestMemory = _dataInMemory.firstOrNull()
+            if (oldestMemory != null && oldestMemory.instant.isBefore(oldestRequested))
+                return@async _dataInMemory.filter(filterFun)
+            else if (diskDuration > memoryDuration)
+                getDataFromDisk(filterFun)
+            else
+                return@async _dataInMemory.filter(filterFun)
+        }
 
     fun stop(shouldDeleteDiskData: Boolean = false) {
         receiveChannel.close()
@@ -288,8 +294,8 @@ class Recorder<out T> internal constructor(
     // This has to be an extension function in order to keep out variance in Recorder class generic
     private suspend fun RecorderFile.writeEntry(entry: ValueInstant<T>) {
         val jsonObjectString =
-                "{\"$INSTANT_KEY\":${entry.instant.toEpochMilli()}," +
-                        "\"$VALUE_KEY\":${valueSerializer(entry.value)}}"
+            "{\"$INSTANT_KEY\":${entry.instant.toEpochMilli()}," +
+                    "\"$VALUE_KEY\":${valueSerializer(entry.value)}}"
         writeJsonBuffer(jsonObjectString)
     }
 
@@ -303,10 +309,10 @@ class Recorder<out T> internal constructor(
         }
         internal val fileChannel = async(daqcThreadContext) {
             AsynchronousFileChannel.open(
-                    file.await().toPath(),
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.READ,
-                    StandardOpenOption.WRITE
+                file.await().toPath(),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.READ,
+                StandardOpenOption.WRITE
             )
         }
 
@@ -341,8 +347,10 @@ class Recorder<out T> internal constructor(
             arrayLastPosition += string.length - ARRAY_CLOSE.length
         }
 
-        private suspend fun writeToFile(string: String,
-                                        charset: Charset = Charset.defaultCharset()) {
+        private suspend fun writeToFile(
+            string: String,
+            charset: Charset = Charset.defaultCharset()
+        ) {
             val buffer = ByteBuffer.wrap(string.toByteArray(charset))
             mutex.withLock {
                 fileChannel.await().aWrite(buffer, arrayLastPosition)
@@ -401,8 +409,8 @@ class Recorder<out T> internal constructor(
                             val valueString = if (valueTree.isTextual) valueTree.asText() else valueTree.toString()
                             println("epochMilli=$epochMilli, valueString=$valueString")
                             val valueInstant =
-                                    PrimitiveValueInstant(epochMilli, valueString)
-                                            .toValueInstant(valueDeserializer)
+                                PrimitiveValueInstant(epochMilli, valueString)
+                                    .toValueInstant(valueDeserializer)
 
 
                             if (filter(valueInstant)) {
@@ -460,9 +468,9 @@ class Recorder<out T> internal constructor(
                     recorderUid = thisUid
                 } else {
                     thisUid = recordersDirectory.listFiles()
-                            .map { it.name.toLongOrNull() }
-                            .requireNoNulls()
-                            .max()?.plus(1) ?: 1L
+                        .map { it.name.toLongOrNull() }
+                        .requireNoNulls()
+                        .max()?.plus(1) ?: 1L
                     recorderUid = thisUid
                 }
                 thisUid.toString()

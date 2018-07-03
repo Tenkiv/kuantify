@@ -17,9 +17,10 @@ import javax.measure.Quantity
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
 
-abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput,
-                                            val avgFrequency: DaqcQuantity<Frequency>) :
-        QuantityInput<Q> {
+abstract class ScPwmSensor<Q : Quantity<Q>>(
+    val digitalInput: DigitalInput,
+    val avgFrequency: DaqcQuantity<Frequency>
+) : QuantityInput<Q> {
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
     final override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>

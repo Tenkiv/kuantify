@@ -12,6 +12,7 @@ import org.tenkiv.daqc.QuantityInput
 import org.tenkiv.daqc.QuantityMeasurement
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.lib.openNewCoroutineListener
+import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.hertz
 import tec.uom.se.ComparableQuantity
 import javax.measure.Quantity
@@ -19,7 +20,7 @@ import javax.measure.quantity.Frequency
 
 
 abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: DigitalInput) :
-        QuantityInput<Q> {
+    QuantityInput<Q> {
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
     final override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
@@ -42,7 +43,7 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
         }
     }
 
-    public var averageTransitionFrequency: DaqcQuantity<Frequency> = DaqcQuantity.Companion.of(2.hertz)
+    public var averageTransitionFrequency: DaqcQuantity<Frequency> = 2.hertz.toDaqc()
 
     override fun activate() = digitalInput.activateForTransitionFrequency(averageTransitionFrequency)
 

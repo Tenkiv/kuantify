@@ -50,8 +50,8 @@ sealed class BinaryState : DaqcValue() {
 
 }
 
-class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuantity<Q>)
-    : DaqcValue(), ComparableQuantity<Q> by wrappedQuantity {
+class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuantity<Q>) : DaqcValue(),
+    ComparableQuantity<Q> by wrappedQuantity {
 
     override fun toString() = wrappedQuantity.toString()
 
@@ -73,13 +73,13 @@ class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuant
 
     companion object {
         fun <Q : Quantity<Q>> of(value: Number, unit: PhysicalUnit<Q>) =
-                DaqcQuantity(Quantities.getQuantity(value, unit))
+            DaqcQuantity(Quantities.getQuantity(value, unit))
 
         fun <Q : Quantity<Q>> of(quantity: ComparableQuantity<Q>) =
-                DaqcQuantity(quantity)
+            DaqcQuantity(quantity)
 
         fun <Q : Quantity<Q>> of(instant: QuantityMeasurement<Q>) =
-                DaqcQuantity(instant.value)
+            DaqcQuantity(instant.value)
 
         inline fun <reified Q : Quantity<Q>> fromString(input: String): DaqcQuantity<Q> {
             val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType()
@@ -101,8 +101,10 @@ sealed class LineNoiseFrequency {
 
 }
 
-fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(context: CoroutineContext = CommonPool,
-                                                                       action: suspend (T) -> Unit):
+fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(
+    context: CoroutineContext = CommonPool,
+    action: suspend (T) -> Unit
+):
         SubscriptionReceiveChannel<T> {
     val subChannel = openSubscription()
     launch(context) {
@@ -121,6 +123,6 @@ enum class DigitalStatus {
 data class PrimitiveValueInstant(val epochMilli: Long, val value: String) {
 
     inline fun <T> toValueInstant(deserializeValue: (String) -> T): ValueInstant<T> =
-            deserializeValue(value) at Instant.ofEpochMilli(epochMilli)
+        deserializeValue(value) at Instant.ofEpochMilli(epochMilli)
 
 }

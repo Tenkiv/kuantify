@@ -13,7 +13,7 @@ import tec.uom.se.ComparableQuantity
 import javax.measure.Quantity
 
 //TODO: Make this work with BinaryState or make another version for BinaryState
-class AverageQuantitySensor<Q : Quantity<Q>>(vararg private val inputs: QuantityInput<Q>) : QuantityInput<Q> {
+class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: QuantityInput<Q>) : QuantityInput<Q> {
 
     override val isActive: Boolean
         get() = run {

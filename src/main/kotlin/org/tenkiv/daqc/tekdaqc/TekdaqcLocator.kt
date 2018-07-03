@@ -29,7 +29,7 @@ class TekdaqcLocator : DeviceLocator() {
             override fun onTekdaqcResponse(tekdaqc: ATekdaqc) {}
 
             override fun onTekdaqcNoLongerLocated(tekdaqc: ATekdaqc) {
-                val board = activeDevices.filter { it.serialNumber == tekdaqc.serialNumber }.firstOrNull()
+                val board = activeDevices.firstOrNull { it.serialNumber == tekdaqc.serialNumber }
                 if (board != null) {
                     _broadcastChannel.offer(LostDevice(board))
                 }
@@ -45,10 +45,10 @@ class TekdaqcLocator : DeviceLocator() {
     }
 
     override fun getDeviceForSerial(serialNumber: String): TekdaqcDevice? =
-            activeDevices.firstOrNull { it.serialNumber == serialNumber }
+        activeDevices.firstOrNull { it.serialNumber == serialNumber }
 
     override fun awaitSpecificDevice(serialNumber: String, timeout: Duration?): Deferred<TekdaqcDevice> =
-            _awaitSpecificDevice(serialNumber, timeout)
+        _awaitSpecificDevice(serialNumber, timeout)
 
     override fun search() {
         Locator.instance.searchForTekdaqcs()

@@ -38,12 +38,10 @@ object Locator : Updatable<LocatorUpdate<*>> {
 
     private fun rebroadcast(device: LocatorUpdate<*>) {
         when (device) {
-            is FoundDevice -> currentDevices.
-                    putIfAbsent(device.wrappedDevice::class, HashMap())?.
-                    putIfAbsent(device.serialNumber, device.wrappedDevice)
-            is LostDevice -> currentDevices.
-                    putIfAbsent(device.wrappedDevice::class, HashMap())?.
-                    remove(device.serialNumber)
+            is FoundDevice -> currentDevices.putIfAbsent(device.wrappedDevice::class, HashMap())
+                ?.putIfAbsent(device.serialNumber, device.wrappedDevice)
+            is LostDevice -> currentDevices.putIfAbsent(device.wrappedDevice::class, HashMap())
+                ?.remove(device.serialNumber)
         }
         _broadcastChannel.offer(device)
     }

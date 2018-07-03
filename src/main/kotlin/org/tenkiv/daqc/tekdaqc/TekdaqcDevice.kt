@@ -21,13 +21,16 @@ import javax.measure.quantity.Temperature
 class TekdaqcDevice(val wrappedTekdaqc: ATekdaqc) : ControlDevice, DataAcquisitionDevice, CriticalErrorListener {
 
     override val temperatureReference: QuantityInput<Temperature> =
-            TekdaqcTemperatureReference(TekdaqcAnalogInput(this, wrappedTekdaqc.temperatureReference))
+        TekdaqcTemperatureReference(TekdaqcAnalogInput(this, wrappedTekdaqc.temperatureReference))
 
     override val inetAddr: InetAddress get() = InetAddress.getByName(wrappedTekdaqc.hostIP)
     override val serialNumber: String get() = wrappedTekdaqc.serialNumber
-    @Volatile override var isConnected = false
-    @Volatile override var networkProtocol: NetworkProtocol = NetworkProtocol.TELNET //TODO IMPLEMENT ISSUE #1 & #8
-    @Volatile override var networkSharingStatus: SharingStatus = SharingStatus.NONE //TODO IMPLEMENT ISSUE #1 & #8
+    @Volatile
+    override var isConnected = false
+    @Volatile
+    override var networkProtocol: NetworkProtocol = NetworkProtocol.TELNET //TODO IMPLEMENT ISSUE #1 & #8
+    @Volatile
+    override var networkSharingStatus: SharingStatus = SharingStatus.NONE //TODO IMPLEMENT ISSUE #1 & #8
 
     var lineFrequency: LineNoiseFrequency = LineNoiseFrequency.AccountFor(60.hertz)
 

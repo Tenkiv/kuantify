@@ -16,16 +16,21 @@ import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Temperature
 
 
-class ThermocoupleK(channel: AnalogInput,
-                    acceptableError: ComparableQuantity<Temperature> = 1.celsius) :
-        ScAnalogSensor<Temperature>(channel,
-                maximumEp = 55.milli.volt,
-                acceptableError = 18.micro.volt * acceptableError.toDoubleIn(CELSIUS)) {
+class ThermocoupleK(
+    channel: AnalogInput,
+    acceptableError: ComparableQuantity<Temperature> = 1.celsius
+) :
+    ScAnalogSensor<Temperature>(
+        channel,
+        maximumEp = 55.milli.volt,
+        acceptableError = 18.micro.volt * acceptableError.toDoubleIn(CELSIUS)
+    ) {
 
-    private val noTempRefValueMsg get() =
-    "The temperature reference for device:\n" +
-            " ${analogInput.device} \n" +
-            "has not yet measured a temperature, thermocouples from this device cannot function until it does."
+    private val noTempRefValueMsg
+        get() =
+            "The temperature reference for device:\n" +
+                    " ${analogInput.device} \n" +
+                    "has not yet measured a temperature, thermocouples from this device cannot function until it does."
 
     /**
      * @throws ValueOutOfRangeException
@@ -35,18 +40,20 @@ class ThermocoupleK(channel: AnalogInput,
     override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Temperature>> {
         val mv = ep.toDoubleIn(MILLI(VOLT))
         val temperatureReferenceValue =
-                analogInput.device.temperatureReference.broadcastChannel.valueOrNull?.value
+            analogInput.device.temperatureReference.broadcastChannel.valueOrNull?.value
 
-        fun calculate(c0: Double,
-                      c1: Double,
-                      c2: Double,
-                      c3: Double,
-                      c4: Double,
-                      c5: Double,
-                      c6: Double,
-                      c7: Double,
-                      c8: Double,
-                      c9: Double) = ((c0 +
+        fun calculate(
+            c0: Double,
+            c1: Double,
+            c2: Double,
+            c3: Double,
+            c4: Double,
+            c5: Double,
+            c6: Double,
+            c7: Double,
+            c8: Double,
+            c9: Double
+        ) = ((c0 +
                 (c1 * mv) +
                 (c2 * mv.pow(2.0)) +
                 (c3 * mv.pow(3.0)) +
@@ -60,15 +67,18 @@ class ThermocoupleK(channel: AnalogInput,
                 ).toDaqc()
 
         return Try {
-            if (mv >= -5.891 && mv < 0)
+            if (mv >= -5.891 && mv < 0) {
                 calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0)
-            else if (mv >= 0 && mv < 20.644)
+            } else if (mv >= 0 && mv < 20.644) {
                 calculate(0.0, mid1, mid2, mid3, mid4, mid5, mid6, mid7, mid8, mid9)
-            else if (mv >= 20.644 && mv < 54.886)
+            } else if (mv >= 20.644 && mv < 54.886) {
                 calculate(hi0, hi1, hi2, hi3, hi4, hi5, hi6, 0.0, 0.0, 0.0)
-            else
-                throw ValueOutOfRangeException("Type K thermocouple cannot accurately produce a temperature from" +
-                        " voltage ${ep convertTo MILLI(VOLT)}")
+            } else {
+                throw ValueOutOfRangeException(
+                    "Type K thermocouple cannot accurately produce a temperature from" +
+                            " voltage ${ep convertTo MILLI(VOLT)}"
+                )
+            }
         }
 
     }

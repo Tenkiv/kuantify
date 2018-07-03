@@ -39,12 +39,6 @@ class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
     }
 }
 
-fun <T: Device>whenTest(locatorUpdate: LocatorUpdate<T>){
-    when(locatorUpdate){
-        is FoundDevice<T> -> {}
-    }
-}
-
 class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
 
     override fun toString() = "LostDevice: $wrappedDevice"
@@ -75,21 +69,28 @@ sealed class DaqcCriticalError : DaqcException() {
 
     abstract val device: Device
 
+    data class FailedToReinitialize(
+        override val device: Device,
+        override val message: String? = null,
+        override val cause: Throwable? = null
+    ) : DaqcCriticalError()
 
-    data class FailedToReinitialize(override val device: Device,
-                                    override val message: String? = null,
-                                    override val cause: Throwable? = null) : DaqcCriticalError()
+    data class FailedMajorCommand(
+        override val device: Device,
+        override val message: String? = null,
+        override val cause: Throwable? = null
+    ) : DaqcCriticalError()
 
-    data class FailedMajorCommand(override val device: Device,
-                                  override val message: String? = null,
-                                  override val cause: Throwable? = null) : DaqcCriticalError()
+    data class TerminalConnectionDisruption(
+        override val device: Device,
+        override val message: String? = null,
+        override val cause: Throwable? = null
+    ) : DaqcCriticalError()
 
-    data class TerminalConnectionDisruption(override val device: Device,
-                                            override val message: String? = null,
-                                            override val cause: Throwable? = null) : DaqcCriticalError()
-
-    data class PartialDisconnection(override val device: Device,
-                                    override val message: String? = null,
-                                    override val cause: Throwable? = null) : DaqcCriticalError()
+    data class PartialDisconnection(
+        override val device: Device,
+        override val message: String? = null,
+        override val cause: Throwable? = null
+    ) : DaqcCriticalError()
 
 }

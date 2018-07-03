@@ -17,9 +17,9 @@ import javax.measure.quantity.ElectricPotential
 
 
 abstract class ScAnalogSensor<Q : Quantity<Q>>(
-        val analogInput: AnalogInput,
-        maximumEp: ComparableQuantity<ElectricPotential>,
-        acceptableError: ComparableQuantity<ElectricPotential>
+    val analogInput: AnalogInput,
+    maximumEp: ComparableQuantity<ElectricPotential>,
+    acceptableError: ComparableQuantity<ElectricPotential>
 ) : QuantityInput<Q> {
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
@@ -47,7 +47,7 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
         }
     }
 
-    abstract protected fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Q>>
+    protected abstract fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Q>>
 
     override fun activate() = analogInput.activate()
 

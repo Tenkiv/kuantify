@@ -10,7 +10,7 @@ import javax.measure.Quantity
 import javax.measure.quantity.Frequency
 
 abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput) :
-        QuantityOutput<Q> {
+    QuantityOutput<Q> {
 
     override val isActive get() = digitalOutput.isActiveForTransitionFrequency
 

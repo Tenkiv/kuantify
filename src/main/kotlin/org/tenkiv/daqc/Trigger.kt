@@ -4,33 +4,47 @@ import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
 import org.tenkiv.coral.ValueInstant
 import java.util.concurrent.atomic.AtomicInteger
 
-class Trigger<T : DaqcValue>(val triggerOnSimultaneousValues: Boolean = false,
-                             val maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
-                             vararg triggerConditions: TriggerCondition<T>,
-                             triggerFunction: () -> Unit) {
+class Trigger<T : DaqcValue>(
+    val triggerOnSimultaneousValues: Boolean = false,
+    val maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
+    vararg triggerConditions: TriggerCondition<T>,
+    triggerFunction: () -> Unit
+) {
 
-    constructor(vararg triggerConditions: TriggerCondition<T>,
-                triggerFunction: () -> Unit) :
-            this(false,
-                    MaxTriggerCount.Limited(1),
-                    *triggerConditions,
-                    triggerFunction = triggerFunction)
+    constructor(
+        vararg triggerConditions: TriggerCondition<T>,
+        triggerFunction: () -> Unit
+    ) :
+            this(
+                false,
+                MaxTriggerCount.Limited(1),
+                *triggerConditions,
+                triggerFunction = triggerFunction
+            )
 
-    constructor(maxTimesTriggered: MaxTriggerCount,
-                vararg triggerConditions: TriggerCondition<T>,
-                triggerFunction: () -> Unit) :
-            this(false,
-                    maxTimesTriggered,
-                    *triggerConditions,
-                    triggerFunction = triggerFunction)
+    constructor(
+        maxTimesTriggered: MaxTriggerCount,
+        vararg triggerConditions: TriggerCondition<T>,
+        triggerFunction: () -> Unit
+    ) :
+            this(
+                false,
+                maxTimesTriggered,
+                *triggerConditions,
+                triggerFunction = triggerFunction
+            )
 
-    constructor(triggerOnSimultaneousValues: Boolean,
-                vararg triggerConditions: TriggerCondition<T>,
-                triggerFunction: () -> Unit) :
-            this(triggerOnSimultaneousValues,
-                    MaxTriggerCount.Limited(1),
-                    *triggerConditions,
-                    triggerFunction = triggerFunction)
+    constructor(
+        triggerOnSimultaneousValues: Boolean,
+        vararg triggerConditions: TriggerCondition<T>,
+        triggerFunction: () -> Unit
+    ) :
+            this(
+                triggerOnSimultaneousValues,
+                MaxTriggerCount.Limited(1),
+                *triggerConditions,
+                triggerFunction = triggerFunction
+            )
 
     private val channelList: MutableList<SubscriptionReceiveChannel<ValueInstant<T>>> = ArrayList()
 

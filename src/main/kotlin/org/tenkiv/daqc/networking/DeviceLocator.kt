@@ -26,16 +26,16 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
 
     protected inline fun <reified T : Device> _awaitSpecificDevice(serialNumber: String, timeout: Duration? = null):
             Deferred<T> = async(CommonPool) {
-                val device = activeDevices.filter {
-                    it.serialNumber == serialNumber
-                }.firstOrNull() ?: awaitBroadcast(this@async, serialNumber, timeout)
+        val device = activeDevices.filter {
+            it.serialNumber == serialNumber
+        }.firstOrNull() ?: awaitBroadcast(this@async, serialNumber, timeout)
 
-                device as? T ?: throw ClassCastException(
-                        "Implementation error in class extending DeviceLocator.\n" +
-                                " Type parameter T passed to _awaitSpecificTekdaqc is not the type returned by the" +
-                                " implementation of DeviceLocator."
-                )
-            }
+        device as? T ?: throw ClassCastException(
+            "Implementation error in class extending DeviceLocator.\n" +
+                    " Type parameter T passed to _awaitSpecificTekdaqc is not the type returned by the" +
+                    " implementation of DeviceLocator."
+        )
+    }
 
     //TODO: Make this an inner function of _awaitSpecificDevice when it is allowed by kotlin runtime.
     suspend fun awaitBroadcast(job: CoroutineScope, serialNumber: String, timeout: Duration? = null): Device {
@@ -43,13 +43,13 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
         val iterator = awaitingJob.iterator()
 
         val timeOutJob =
-                if (timeout != null)
-                    launch(CommonPool) {
-                        delay(timeout.toMillis())
-                        throw TimeoutException("Awaiting Device: $serialNumber Timed Out")
-                    }
-                else
-                    null
+            if (timeout != null)
+                launch(CommonPool) {
+                    delay(timeout.toMillis())
+                    throw TimeoutException("Awaiting Device: $serialNumber Timed Out")
+                }
+            else
+                null
 
         while (iterator.hasNext() && job.isActive) {
             val next = iterator.next()
@@ -60,8 +60,10 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
                 }
             }
         }
-        throw ClosedReceiveChannelException("Broadcast channel for DeviceLocator updates was closed " +
-                "while awaiting a specific device.")
+        throw ClosedReceiveChannelException(
+            "Broadcast channel for DeviceLocator updates was closed " +
+                    "while awaiting a specific device."
+        )
     }
 
 }

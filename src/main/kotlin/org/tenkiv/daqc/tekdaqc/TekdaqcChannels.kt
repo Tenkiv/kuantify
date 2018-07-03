@@ -63,7 +63,8 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
         input.addVoltageListener(this)
     }
 
-    @Volatile private var _buffer: Boolean = true
+    @Volatile
+    private var _buffer: Boolean = true
 
     override var buffer: Boolean
         get() = _buffer
@@ -108,10 +109,11 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
     fun recalculateState() {
         val voltageSettings = maxVoltageSettings(maxElectricPotential.toDoubleIn(VOLT))
         val rate = getFastestRateForAccuracy(
-                voltageSettings.first,
-                voltageSettings.second,
-                maxAcceptableError,
-                LineNoiseFrequency.AccountFor(60.hertz))
+            voltageSettings.first,
+            voltageSettings.second,
+            maxAcceptableError,
+            LineNoiseFrequency.AccountFor(60.hertz)
+        )
 
         tekdaqc.wrappedTekdaqc.analogInputs[hardwareNumber]?.rate = rate
         tekdaqc.wrappedTekdaqc.analogInputs[hardwareNumber]?.gain = voltageSettings.first
@@ -204,14 +206,16 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
         return Pair(gain, scale)
     }
 
-    override fun onVoltageDataReceived(input: AAnalogInput,
-                                       value: ValueInstant<ComparableQuantity<ElectricPotential>>) {
+    override fun onVoltageDataReceived(
+        input: AAnalogInput,
+        value: ValueInstant<ComparableQuantity<ElectricPotential>>
+    ) {
         broadcastChannel.offer(DaqcQuantity.of(value.value).at(value.instant))
     }
 }
 
 class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.hardware.DigitalInput) :
-        DigitalInput(), IDigitalChannelListener, IPWMChannelListener {
+    DigitalInput(), IDigitalChannelListener, IPWMChannelListener {
 
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
@@ -273,17 +277,23 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
 
     override fun onPWMDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput, data: PWMInputData) {
 
-        _pwmBroadcastChannel.offer(ValueInstant.invoke(
-                DaqcQuantity.of(data.percentageOn.percent), Instant.ofEpochMilli(data.timestamp)))
+        _pwmBroadcastChannel.offer(
+            ValueInstant.invoke(
+                DaqcQuantity.of(data.percentageOn.percent), Instant.ofEpochMilli(data.timestamp)
+            )
+        )
 
-        _transitionFrequencyBroadcastChannel.offer(ValueInstant.invoke(
+        _transitionFrequencyBroadcastChannel.offer(
+            ValueInstant.invoke(
                 //TODO This isn't accurate need time stamp val to calculate Hertz
-                DaqcQuantity.of(data.totalTransitions.hertz), Instant.ofEpochMilli(data.timestamp)))
+                DaqcQuantity.of(data.totalTransitions.hertz), Instant.ofEpochMilli(data.timestamp)
+            )
+        )
     }
 }
 
 class TekdaqcDigitalOutput(tekdaqc: TekdaqcDevice, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :
-        DigitalOutput() {
+    DigitalOutput() {
 
     private var currentState = DigitalStatus.DEACTIVATED
     override val pwmIsSimulated: Boolean = false
@@ -338,9 +348,11 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcDevice, val output: com.tenkiv.tekdaq
     }
 }
 
-class TekdaqcTemperatureReference(analogInput: TekdaqcAnalogInput) : ScAnalogSensor<Temperature>(analogInput,
-        10.micro.volt,
-        3.volt) {
+class TekdaqcTemperatureReference(analogInput: TekdaqcAnalogInput) : ScAnalogSensor<Temperature>(
+    analogInput,
+    10.micro.volt,
+    3.volt
+) {
 
     override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Temperature>> {
         return Try { DaqcQuantity<Temperature>(Quantities.getQuantity(ep.toDoubleIn(VOLT) / .01, CELSIUS)) }
