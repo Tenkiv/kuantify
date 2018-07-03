@@ -1,6 +1,6 @@
 package org.tenkiv.daqc.tekdaqc
 
-import com.github.kittinunf.result.Result
+import arrow.core.Try
 import com.tenkiv.tekdaqc.communication.data_points.DigitalInputData
 import com.tenkiv.tekdaqc.communication.data_points.PWMInputData
 import com.tenkiv.tekdaqc.communication.message.IDigitalChannelListener
@@ -342,8 +342,8 @@ class TekdaqcTemperatureReference(analogInput: TekdaqcAnalogInput) : ScAnalogSen
         10.micro.volt,
         3.volt) {
 
-    override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Result<DaqcQuantity<Temperature>, Exception> {
-        return Result.Companion.of(DaqcQuantity<Temperature>(Quantities.getQuantity(ep.toDoubleIn(VOLT) / .01, CELSIUS)))
+    override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Temperature>> {
+        return Try { DaqcQuantity<Temperature>(Quantities.getQuantity(ep.toDoubleIn(VOLT) / .01, CELSIUS)) }
     }
 
 }

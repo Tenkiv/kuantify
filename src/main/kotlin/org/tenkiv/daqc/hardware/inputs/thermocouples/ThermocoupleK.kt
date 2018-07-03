@@ -1,6 +1,6 @@
 package org.tenkiv.daqc.hardware.inputs.thermocouples
 
-import com.github.kittinunf.result.Result
+import arrow.core.Try
 import org.tenkiv.coral.pow
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
@@ -32,7 +32,7 @@ class ThermocoupleK(channel: AnalogInput,
      * @throws UninitializedPropertyAccessException
      */
     @Throws(ValueOutOfRangeException::class, UninitializedPropertyAccessException::class)
-    override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Result<DaqcQuantity<Temperature>, Exception> {
+    override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Temperature>> {
         val mv = ep.toDoubleIn(MILLI(VOLT))
         val temperatureReferenceValue =
                 analogInput.device.temperatureReference.broadcastChannel.valueOrNull?.value
@@ -59,7 +59,7 @@ class ThermocoupleK(channel: AnalogInput,
                 (temperatureReferenceValue ?: throw UninitializedPropertyAccessException(noTempRefValueMsg))
                 ).toDaqc()
 
-        return Result.of {
+        return Try {
             if (mv >= -5.891 && mv < 0)
                 calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0)
             else if (mv >= 0 && mv < 20.644)

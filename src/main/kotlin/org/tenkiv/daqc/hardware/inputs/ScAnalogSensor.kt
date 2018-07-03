@@ -1,6 +1,8 @@
 package org.tenkiv.daqc.hardware.inputs
 
-import com.github.kittinunf.result.Result
+import arrow.core.Failure
+import arrow.core.Success
+import arrow.core.Try
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
@@ -38,14 +40,14 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
             val convertedResult = convertInput(measurement.value)
 
             when (convertedResult) {
-                is Result.Success -> _broadcastChannel.send(convertedResult.value at measurement.instant)
-                is Result.Failure -> _failureBroadcastChannel.send(convertedResult.error at measurement.instant)
+                is Success -> _broadcastChannel.send(convertedResult.value at measurement.instant)
+                is Failure -> _failureBroadcastChannel.send(convertedResult.exception at measurement.instant)
             }
 
         }
     }
 
-    abstract protected fun convertInput(ep: ComparableQuantity<ElectricPotential>): Result<DaqcQuantity<Q>, Exception>
+    abstract protected fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Q>>
 
     override fun activate() = analogInput.activate()
 

@@ -1,6 +1,8 @@
 package org.tenkiv.daqc.hardware.inputs
 
-import com.github.kittinunf.result.Result
+import arrow.core.Failure
+import arrow.core.Success
+import arrow.core.Try
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
@@ -34,8 +36,8 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput,
             val convertedInput = convertInput(measurement.value)
 
             when (convertedInput) {
-                is Result.Success -> _broadcastChannel.send(convertedInput.value at measurement.instant)
-                is Result.Failure -> _failureBroadcastChannel.send(convertedInput.error at measurement.instant)
+                is Success -> _broadcastChannel.send(convertedInput.value at measurement.instant)
+                is Failure -> _failureBroadcastChannel.send(convertedInput.exception at measurement.instant)
             }
         }
     }
@@ -44,5 +46,5 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput,
 
     override fun deactivate() = digitalInput.deactivate()
 
-    protected abstract fun convertInput(percentOn: ComparableQuantity<Dimensionless>): Result<DaqcQuantity<Q>, *>
+    protected abstract fun convertInput(percentOn: ComparableQuantity<Dimensionless>): Try<DaqcQuantity<Q>>
 }
