@@ -1,3 +1,4 @@
+/*
 package org.tenkiv.daqc.learning
 
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
@@ -12,6 +13,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.Input
 
+*/
 /**
  * Copyright 2017 TENKIV, INC.
 
@@ -34,7 +36,8 @@ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PRO
 SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ *//*
+
 
 internal class CorrelatedLstmNetwork(vararg inputs: Input<DaqcValue>) {
 
@@ -114,3 +117,4 @@ internal class CorrelatedLstmNetwork(vararg inputs: Input<DaqcValue>) {
             }.toFloatArray())
 }
 
+*/

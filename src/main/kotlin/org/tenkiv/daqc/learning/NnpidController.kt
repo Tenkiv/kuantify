@@ -1,3 +1,4 @@
+/*
 package org.tenkiv.daqc.learning
 
 import kotlinx.coroutines.experimental.CommonPool
@@ -28,6 +29,7 @@ import javax.measure.Quantity
 import javax.measure.Unit
 import kotlin.concurrent.write
 
+*/
 /**
  * Copyright 2017 TENKIV, INC.
 
@@ -50,7 +52,8 @@ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PRO
 SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ *//*
+
 
 
 class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal constructor(
@@ -128,14 +131,16 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
             correlatedNetwork?.train(desiredValue.toPidFloat(), recentVal)
 
             val trainArray = Nd4j.create(
-                    /*if (correlatedNetwork != null) {
+                    */
+/*if (correlatedNetwork != null) {
                         val correlatedValues = correlatedNetwork.run()
                         if (correlatedValues != null)
                             floatArrayOf(pid.third, it.value.toPidFloat(), correlatedValues)
                         else
                             null
 
-                    } else*/
+                    } else*//*
+
                     floatArrayOf(recentVal)
             )
 
@@ -153,26 +158,30 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
             ki = net.outputLayer.params().getFloat(0, 1)
             kd = net.outputLayer.params().getFloat(0, 2)
 
-            /*println("o0:${out.getFloat(0)} o1:${out.getFloat(1)} o2:${out.getFloat(2)}")
+            */
+/*println("o0:${out.getFloat(0)} o1:${out.getFloat(1)} o2:${out.getFloat(2)}")
             println("p0:${posO.getFloat(0)} p1:${posO.getFloat(1)} p2:${posO.getFloat(2)}")
             println("n0:${negO.getFloat(0)} n1:${negO.getFloat(1)} n2:${negO.getFloat(2)}")
 
             kp = negO.getFloat(0)
             ki = negO.getFloat(1)
-            kd = negO.getFloat(2)*/
+            kd = negO.getFloat(2)*//*
+
 
             println("p:$kp i:$ki d:$kd")
 
             previousTime = it.instant
             yield()
 
-            /*output.setOutput(
+            */
+/*output.setOutput(
                     postProcessor(
                             targetInput,
                             correlatedInputs,
                             DaqcQuantity.of((out)(outputUnit))
                     )
-            )*/
+            )*//*
+
         }
     }
 
@@ -205,13 +214,15 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
         return Triple(error, integral, derivative)
     }
 
-    /**
+    */
+/**
      * Sets the target output of the NNPID controller.
      *
      * @param setting The target output.
      *
      * @throws IllegalArgumentException If correlated input values are null
-     */
+     *//*
+
     override fun setOutput(setting: T) {
         //TODO This can occasionally consume additional resources if called during NN training.
         if (listenJob?.isActive == true) {
@@ -278,4 +289,4 @@ class NnpidController<T : DaqcValue, O : Quantity<O>> @PublishedApi internal con
                         correlatedInputs = *correlatedInputs
                 )
     }
-}
+}*/
