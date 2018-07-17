@@ -11,9 +11,9 @@ import org.tenkiv.daqc.RangedQuantityOutput
 class ControllerEnvironment(private val controller: LearningController<*>) :
     MDP<ControllerObservation, Int, DiscreteSpace> {
 
-    private val numQuantityOutputs = controller.outputs.count { it is RangedQuantityOutput<*> }
+    val numQuantityOutputs = controller.outputs.count { it is RangedQuantityOutput<*> }
 
-    private val numBinaryStateOutputs = controller.outputs.count { it is BinaryStateOutput }
+    val numBinaryStateOutputs = controller.outputs.count { it is BinaryStateOutput }
 
     private val actionHandlerList: List<OutputActionHandler> = kotlin.run {
         val listBuilder = ImmutableList.builder<OutputActionHandler>()
@@ -21,6 +21,7 @@ class ControllerEnvironment(private val controller: LearningController<*>) :
         controller.outputs.forEach {
             when (it) {
                 is RangedQuantityOutput<*> -> listBuilder.add(QuantityOutputActionHandler(it))
+                is BinaryStateOutput -> listBuilder.add(BinaryStateOutputActionHandler(it))
             }
         }
 

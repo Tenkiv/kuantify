@@ -3,7 +3,6 @@ package org.tenkiv.daqc.learning.controller
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.BinaryStateOutput
 import org.tenkiv.daqc.RangedQuantityOutput
-import org.tenkiv.physikal.core.invoke
 import org.tenkiv.physikal.core.toDoubleInSystemUnit
 
 sealed class OutputActionHandler {
@@ -35,12 +34,14 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
 
     private val subscribtion = output.broadcastChannel.openSubscription()
 
-    private val rangeSpan = output.possibleOutputRange.endInclusive.toDoubleInSystemUnit() -
+    private val rangeSpanSystemUnit = output.possibleOutputRange.endInclusive.toDoubleInSystemUnit() -
             output.possibleOutputRange.start.toDoubleInSystemUnit()
 
-    private val currentValue get() = output.broadcastChannel.value.value.toDoubleInSystemUnit()
+    private val currentValueSystemUnit
+        get() = output.valueOrNull?.value?.toDoubleInSystemUnit()
+                ?: output.possibleOutputRange.start.toDoubleInSystemUnit()
 
-    private val systemUnit get() = output.broadcastChannel.value.value.getUnit().getSystemUnit()
+    private val systemUnit = output.systemUnit
 
 
     override fun takeAction(action: Int) {
@@ -60,19 +61,21 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
 
     private fun increaseByPartOfRange(rangeRatio: Double) {
 
-        val increase = rangeSpan * rangeRatio
-        val newSetting = (currentValue + increase)(systemUnit).toDaqc()
+        val increaseSystemUnit = rangeSpanSystemUnit * rangeRatio
+        val newSettingSystemUnit = currentValueSystemUnit + increaseSystemUnit
 
-        if (newSetting <= output.possibleOutputRange.endInclusive) output.setOutput(newSetting)
+        if (newSettingSystemUnit <= output.possibleOutputRange.endInclusive.toDoubleInSystemUnit())
+            output.setOutputInSystemUnit(newSettingSystemUnit)
 
     }
 
     private fun decreaseByPartOfRange(rangeRatio: Double) {
 
-        val increase = rangeSpan * rangeRatio
-        val newSetting = (currentValue + increase)(systemUnit).toDaqc()
+        val increaseSystemUnit = rangeSpanSystemUnit * rangeRatio
+        val newSettingSystemUnit = currentValueSystemUnit + increaseSystemUnit
 
-        if (newSetting >= output.possibleOutputRange.start) output.setOutput(newSetting)
+        if (newSettingSystemUnit >= output.possibleOutputRange.start.toDoubleInSystemUnit())
+            output.setOutputInSystemUnit(newSettingSystemUnit)
 
     }
 
