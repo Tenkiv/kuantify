@@ -25,18 +25,35 @@ data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (
 
 sealed class DaqcValue
 
-sealed class BinaryState : DaqcValue() {
+sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
     object On : BinaryState() {
+
+        override fun compareTo(other: BinaryState) =
+            when (other) {
+                is On -> 0
+                is Off -> 1
+            }
+
         override fun toString() = "BinaryState.ON"
     }
 
     object Off : BinaryState() {
+
+        override fun compareTo(other: BinaryState) =
+            when (other) {
+                is On -> -1
+                is Off -> 0
+            }
+
         override fun toString() = "BinaryState.OFF"
 
     }
 
     companion object {
+
+        val range = Off..On
+
         fun fromString(input: String): BinaryState {
             if (input == BinaryState.On.toString()) {
                 return BinaryState.On

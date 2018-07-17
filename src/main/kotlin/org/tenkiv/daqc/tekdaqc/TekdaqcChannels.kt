@@ -133,7 +133,7 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
 
         when {
             (voltage > 400) -> {
-                throw IllegalArgumentException("Voltage out of range")
+                throw IllegalArgumentException("Voltage out of possibleOutputRange")
             }
             (voltage <= 400 && voltage > 200) -> {
                 gain = Gain.X1
