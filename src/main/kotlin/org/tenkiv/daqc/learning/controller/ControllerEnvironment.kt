@@ -1,15 +1,17 @@
 package org.tenkiv.daqc.learning.controller
 
 import com.google.common.collect.ImmutableList
+import com.google.common.collect.Sets
 import org.deeplearning4j.gym.StepReply
 import org.deeplearning4j.rl4j.mdp.MDP
 import org.deeplearning4j.rl4j.space.DiscreteSpace
 import org.deeplearning4j.rl4j.space.ObservationSpace
 import org.tenkiv.daqc.BinaryStateOutput
+import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.RangedQuantityOutput
 
-class ControllerEnvironment(private val controller: LearningController<*>) :
-    MDP<ControllerObservation, Int, DiscreteSpace> {
+class ControllerEnvironment<T>(private val controller: LearningController<T>) :
+    MDP<ControllerObservation, Int, DiscreteSpace> where T : DaqcValue, T : Comparable<T> {
 
     val numQuantityOutputs = controller.outputs.count { it is RangedQuantityOutput<*> }
 
@@ -28,7 +30,11 @@ class ControllerEnvironment(private val controller: LearningController<*>) :
         listBuilder.build()
     }
 
-    override fun getActionSpace() = DiscreteSpace()
+    private val actionPermutationList: List<List<Int>> = Sets.cartesianProduct(
+        actionHandlerList.map { it.actionSet }
+    ).toList()
+
+    override fun getActionSpace() = DiscreteSpace(actionPermutationList.size)
 
     override fun getObservationSpace(): ObservationSpace<ControllerObservation> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
@@ -51,11 +57,16 @@ class ControllerEnvironment(private val controller: LearningController<*>) :
     }
 
     override fun step(action: Int): StepReply<ControllerObservation> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
+        actionPermutationList[action].forEachIndexed { index, individualAction ->
+            actionHandlerList[index].takeAction(individualAction)
+        }
+
+        Thread.sleep(controller.minTimeBetweenActions.toMillis())
+
     }
 
-    private fun getDiscreteSpaceSize() {
-
+    private fun getReward() {
 
     }
 

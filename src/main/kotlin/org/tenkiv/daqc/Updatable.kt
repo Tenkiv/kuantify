@@ -1,10 +1,8 @@
 package org.tenkiv.daqc
 
-import kotlinx.coroutines.experimental.DefaultDispatcher
-import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.launch
 import kotlin.coroutines.experimental.CoroutineContext
 
 interface Updatable<out T> {
@@ -12,6 +10,11 @@ interface Updatable<out T> {
     val broadcastChannel: ConflatedBroadcastChannel<out T>
 
     val valueOrNull get() = broadcastChannel.valueOrNull
+
+    val value: Deferred<T>
+        get() = async {
+            broadcastChannel.valueOrNull ?: broadcastChannel.openSubscription().receive()
+        }
 
     suspend fun getValue(): T = broadcastChannel.valueOrNull ?: broadcastChannel.openSubscription().receive()
 

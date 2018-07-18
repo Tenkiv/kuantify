@@ -2,7 +2,9 @@ package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
+import tec.uom.se.ComparableQuantity
 import javax.measure.Quantity
+import javax.measure.quantity.Frequency
 
 typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
 
@@ -12,6 +14,8 @@ typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
 interface Input<out T : DaqcValue> : Updatable<ValueInstant<T>> {
 
     val isActive: Boolean
+
+    val sampleRate: ComparableQuantity<Frequency>
 
     /**
      * Exception is sent over this channel when something prevents the input from being received.

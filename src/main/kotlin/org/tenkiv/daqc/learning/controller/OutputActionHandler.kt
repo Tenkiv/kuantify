@@ -7,18 +7,22 @@ import org.tenkiv.physikal.core.toDoubleInSystemUnit
 
 sealed class OutputActionHandler {
 
+    abstract val actionSet: Set<Int>
+
     abstract fun takeAction(action: Int)
 
 }
 
 class BinaryStateOutputActionHandler(private val output: BinaryStateOutput) : OutputActionHandler() {
 
-    val actionsSet get() = setOf(0, 1, 2)
+    override val actionSet get() = setOf(0, 1, 2)
 
     override fun takeAction(action: Int) {
         when (action) {
+            0 -> Unit
             1 -> setOn()
             2 -> setOff()
+            else -> throw InvalidActionException("The action attempted by the MDP is invalid.")
         }
     }
 
@@ -30,7 +34,7 @@ class BinaryStateOutputActionHandler(private val output: BinaryStateOutput) : Ou
 
 class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) : OutputActionHandler() {
 
-    val actionsSet get() = setOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+    override val actionSet get() = setOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
     private val subscribtion = output.broadcastChannel.openSubscription()
 
@@ -46,6 +50,7 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
 
     override fun takeAction(action: Int) {
         when (action) {
+            0 -> Unit
             1 -> decreaseByPartOfRange(RANGE_RATIO_5)
             2 -> decreaseByPartOfRange(RANGE_RATIO_4)
             3 -> decreaseByPartOfRange(RANGE_RATIO_3)
@@ -56,6 +61,7 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
             8 -> increaseByPartOfRange(RANGE_RATIO_3)
             9 -> increaseByPartOfRange(RANGE_RATIO_4)
             10 -> increaseByPartOfRange(RANGE_RATIO_5)
+            else -> throw InvalidActionException("The action attempted by the MDP is invalid.")
         }
     }
 
@@ -88,3 +94,5 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
     }
 
 }
+
+class InvalidActionException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)
