@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.nio.aRead
 import kotlinx.coroutines.experimental.nio.aWrite
@@ -22,28 +23,10 @@ import java.nio.charset.Charset
 import java.nio.file.StandardOpenOption
 import java.time.Duration
 import java.time.Instant
+import kotlin.coroutines.experimental.coroutineContext
 
 
 //TODO: Move default parameter values in recorder creation function to constants
-fun <T> Updatable<ValueInstant<T>>.newRecorder(
-    storageFrequency: StorageFrequency = StorageFrequency.All,
-    memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-    diskDuration: StorageDuration = StorageDuration.Forever,
-    filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
-    valueSerializer: (T) -> String,
-    valueDeserializer: (String) -> T
-): Recorder<T> =
-    Recorder(
-        this,
-        storageFrequency,
-        memoryDuration,
-        diskDuration,
-        filterOnRecord,
-        valueSerializer,
-        valueDeserializer
-    )
-
-
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
@@ -54,7 +37,29 @@ fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
 ) =
     RecordedUpdatable(
         this,
-        this.newRecorder(
+        Recorder(
+            this,
+            storageFrequency,
+            memoryDuration,
+            diskDuration,
+            filterOnRecord,
+            valueSerializer,
+            valueDeserializer
+        )
+    )
+
+fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
+    storageFrequency: StorageFrequency = StorageFrequency.All,
+    memoryDuration: StorageSamples = StorageSamples.Number(100),
+    diskDuration: StorageSamples = StorageSamples.None,
+    filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
+    valueSerializer: (T) -> String,
+    valueDeserializer: (String) -> T
+) =
+    RecordedUpdatable(
+        this,
+        Recorder(
+            this,
             storageFrequency,
             memoryDuration,
             diskDuration,
@@ -92,7 +97,42 @@ sealed class StorageFrequency {
     data class PerNumMeasurements(val number: Int) : StorageFrequency()
 }
 
-sealed class StorageDuration : Comparable<StorageDuration> {
+sealed class StorageLength
+
+sealed class StorageSamples : StorageLength(), Comparable<StorageSamples> {
+
+    object All : StorageSamples() {
+
+        override fun compareTo(other: StorageSamples): Int =
+            when (other) {
+                is All -> 0
+                else -> 1
+            }
+
+    }
+
+    object None : StorageSamples() {
+
+        override fun compareTo(other: StorageSamples): Int =
+            when (other) {
+                is None -> 0
+                else -> -1
+            }
+    }
+
+    data class Number(val numSamples: Int) : StorageSamples() {
+
+        override fun compareTo(other: StorageSamples): Int =
+            when (other) {
+                is All -> -1
+                is None -> 1
+                is Number -> numSamples.compareTo(other.numSamples)
+            }
+    }
+
+}
+
+sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
 
     object Forever : StorageDuration() {
 
@@ -124,20 +164,19 @@ sealed class StorageDuration : Comparable<StorageDuration> {
     }
 }
 
-/**
- * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
- * ValueInstant and false if it should not.
- * @param valueSerializer returned String will be stored in a JSON file and should be a compliant JSON String.
- */
-class Recorder<out T> internal constructor(
-    private val updatable: Updatable<ValueInstant<T>>,
-    val storageFrequency: StorageFrequency = StorageFrequency.All,
-    val memoryDuration: StorageDuration = StorageDuration.For(memoryDurationDefault),
-    val diskDuration: StorageDuration = StorageDuration.None,
-    private val filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
-    private val valueSerializer: (T) -> String,
+class Recorder<out T> {
+
+    val updatable: Updatable<ValueInstant<T>>
+    val storageFrequency: StorageFrequency
+    val memoryStorageLength: StorageLength
+    val diskStorageLength: StorageLength
+    private val filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean
+    private val valueSerializer: (T) -> String
     private val valueDeserializer: (String) -> T
-) {
+
+    private val recordJob: Job
+
+    private val receiveChannel: ReceiveChannel<ValueInstant<T>>
 
     private val uid = getRecorderUid()
     private val directoryPath = async(daqcThreadContext) { "$RECORDERS_PATH/${uid.await()}" }
@@ -147,55 +186,55 @@ class Recorder<out T> internal constructor(
 
     private val files = ArrayList<RecorderFile>()
 
-    private val receiveChannel = updatable.broadcastChannel.openSubscription()
-
     private val fileCreationBroadcaster = ConflatedBroadcastChannel<RecorderFile>()
 
+    /**
+     * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
+     * ValueInstant and false if it should not.
+     * @param valueSerializer returned String will be stored in a JSON file and should be a compliant JSON String.
+     */
+    constructor(
+        updatable: Updatable<ValueInstant<T>>,
+        storageFrequency: StorageFrequency = StorageFrequency.All,
+        memoryDuration: StorageDuration = StorageDuration.For(memoryDurationDefault),
+        diskDuration: StorageDuration = StorageDuration.None,
+        filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
+        valueSerializer: (T) -> String,
+        valueDeserializer: (String) -> T
+    ) {
+        this.updatable = updatable
+        this.storageFrequency = storageFrequency
+        this.memoryStorageLength = memoryDuration
+        this.diskStorageLength = diskDuration
+        this.filterOnRecord = filterOnRecord
+        this.valueSerializer = valueSerializer
+        this.valueDeserializer = valueDeserializer
 
-    private val recordJob = launch(daqcThreadContext) {
-        if (diskDuration is StorageDuration.Forever)
-            files += RecorderFile(null)
-
-        if (diskDuration is StorageDuration.For)
-            launch(coroutineContext) {
-                val fileCreationInterval = diskDuration.duration.dividedBy(10)
-                val fileExpiresIn = diskDuration.duration + diskDuration.duration.dividedBy(9)
-                while (isActive) {
-                    val newRecorderFile = RecorderFile(fileExpiresIn)
-                    files += newRecorderFile
-                    fileCreationBroadcaster.send(newRecorderFile)
-                    delay(fileCreationInterval.toMillis())
-                }
-            }
-
-
-        if (storageFrequency is StorageFrequency.Interval)
-            while (isActive) {
-                delay(storageFrequency.interval.toMillis())
-                val latestUpdate = updatable.broadcastChannel.valueOrNull
-                if (latestUpdate != null)
-                    recordUpdate(latestUpdate)
-                cleanMemory()
-            }
-        else {
-            var numUnstoredMeasurements = 0
-
-            receiveChannel.consumeEach { update ->
-                if (storageFrequency is StorageFrequency.All) {
-                    recordUpdate(update)
-                    cleanMemory()
-                }
-                if (storageFrequency is StorageFrequency.PerNumMeasurements) {
-                    numUnstoredMeasurements++
-                    if (numUnstoredMeasurements == storageFrequency.number) {
-                        recordUpdate(update)
-                        cleanMemory()
-                        numUnstoredMeasurements = 0
-                    }
-                }
-            }
-        }
+        this.receiveChannel = updatable.broadcastChannel.openSubscription()
+        this.recordJob = createRecordJob()
     }
+
+    constructor(
+        updatable: Updatable<ValueInstant<T>>,
+        storageFrequency: StorageFrequency = StorageFrequency.All,
+        numSamplesMemory: StorageSamples = StorageSamples.Number(100),
+        numSamplesDisk: StorageSamples = StorageSamples.None,
+        filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
+        valueSerializer: (T) -> String,
+        valueDeserializer: (String) -> T
+    ) {
+        this.updatable = updatable
+        this.storageFrequency = storageFrequency
+        this.memoryStorageLength = numSamplesMemory
+        this.diskStorageLength = numSamplesDisk
+        this.filterOnRecord = filterOnRecord
+        this.valueSerializer = valueSerializer
+        this.valueDeserializer = valueDeserializer
+
+        this.receiveChannel = updatable.broadcastChannel.openSubscription()
+        this.recordJob = createRecordJob()
+    }
+
 
     /**
      * Gets the data currently stored in RAM by this recorder. The returned list can not be modified,
@@ -206,11 +245,7 @@ class Recorder<out T> internal constructor(
 
     //TODO: Make this return a truly immutable list using a builder
     fun getAllData(): Deferred<List<ValueInstant<T>>> = async(daqcThreadContext) {
-        if (memoryDuration >= diskDuration)
-            getDataInMemory()
-        else {
-            getDataFromDisk { true }
-        }
+        if (memoryStorageLength >= diskStorageLength) getDataInMemory() else getDataFromDisk { true }
     }
 
     //TODO: Make similar extension function for Collection<ValueInstant<T>>
@@ -229,7 +264,7 @@ class Recorder<out T> internal constructor(
             val oldestMemory = _dataInMemory.firstOrNull()
             if (oldestMemory != null && oldestMemory.instant.isBefore(oldestRequested))
                 return@async _dataInMemory.filter(filterFun)
-            else if (diskDuration > memoryDuration)
+            else if (diskStorageLength > memoryStorageLength)
                 getDataFromDisk(filterFun)
             else
                 return@async _dataInMemory.filter(filterFun)
@@ -274,20 +309,25 @@ class Recorder<out T> internal constructor(
 
     private suspend fun recordUpdate(update: ValueInstant<T>) {
         if (filterOnRecord(update)) {
-            if (memoryDuration !is StorageDuration.None)
-                _dataInMemory += update
+            if (memoryStorageLength !== StorageDuration.None) _dataInMemory += update
+
             files.lastOrNull()?.writeEntry(update)
+
+            if (diskStorageLength is StorageSamples.Number) files.forEach { it.samplesSinceCreation++ }
         }
     }
 
-    private suspend fun cleanMemory() {
-        if (memoryDuration is StorageDuration.For) {
+    private fun cleanMemory() {
+        if (memoryStorageLength is StorageDuration.For) {
             val iterator = _dataInMemory.iterator()
             while (iterator.hasNext())
-                if (iterator.next().instant.isOlderThan(memoryDuration.duration))
+                if (iterator.next().instant.isOlderThan(memoryStorageLength.duration))
                     iterator.remove()
                 else
                     break
+        }
+        if (memoryStorageLength is StorageSamples.Number) {
+            if (_dataInMemory.size > memoryStorageLength.numSamples) _dataInMemory.remove(_dataInMemory.first())
         }
     }
 
@@ -299,10 +339,74 @@ class Recorder<out T> internal constructor(
         writeJsonBuffer(jsonObjectString)
     }
 
+    private fun createRecordJob() = launch(daqcThreadContext) {
+        if (diskStorageLength === StorageDuration.Forever)
+            files += RecorderFile(expiresIn = null)
+
+        if (diskStorageLength is StorageDuration.For)
+            launch(coroutineContext) {
+                val fileCreationInterval = diskStorageLength.duration.dividedBy(10)
+                val fileExpiresIn = diskStorageLength.duration + diskStorageLength.duration.dividedBy(9)
+                while (isActive) {
+                    val newRecorderFile = RecorderFile(fileExpiresIn)
+                    files += newRecorderFile
+                    fileCreationBroadcaster.send(newRecorderFile)
+                    delay(fileCreationInterval.toMillis())
+                }
+            }
+
+        if (diskStorageLength is StorageSamples.Number) {
+            launch(coroutineContext) {
+                val fileCreationInterval = diskStorageLength.numSamples / 10
+                val fileExpiresIn = (diskStorageLength.numSamples + diskStorageLength.numSamples / 9) + 1
+
+                files += RecorderFile(fileExpiresIn)
+                val receiveChannel = updatable.broadcastChannel.openSubscription()
+                while (isActive) {
+                    val newRecorderFile = RecorderFile(fileExpiresIn)
+                    if (files.last().samplesSinceCreation == fileCreationInterval) files += newRecorderFile
+                    fileCreationBroadcaster.send(newRecorderFile)
+                    receiveChannel.receive()
+                }
+            }
+        }
+
+        if (storageFrequency is StorageFrequency.Interval)
+            while (isActive) {
+                delay(storageFrequency.interval.toMillis())
+                recordUpdate(updatable.getValue())
+                cleanMemory()
+            }
+        else {
+            var numUnstoredMeasurements = 0
+
+            receiveChannel.consumeEach { update ->
+                if (storageFrequency === StorageFrequency.All) {
+                    recordUpdate(update)
+                    cleanMemory()
+                }
+                if (storageFrequency is StorageFrequency.PerNumMeasurements) {
+                    numUnstoredMeasurements++
+                    if (numUnstoredMeasurements == storageFrequency.number) {
+                        recordUpdate(update)
+                        cleanMemory()
+                        numUnstoredMeasurements = 0
+                    }
+                }
+            }
+        }
+    }
+
+    //TODO: Throw more specific exception if the class cannot be cast.
+    private operator fun StorageLength.compareTo(other: StorageLength): Int = when (this) {
+        is StorageDuration -> this.compareTo(other as StorageDuration)
+        is StorageSamples -> this.compareTo(other as StorageSamples)
+    }
+
     //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
     //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Inner class ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
     //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
-    private inner class RecorderFile internal constructor(val expiresIn: Duration?) {
+    private inner class RecorderFile {
 
         internal val file = async(daqcThreadContext) {
             File("${directoryPath.await()}/${System.currentTimeMillis()}.json")
@@ -322,16 +426,31 @@ class Recorder<out T> internal constructor(
 
         private var isFirstWrite = true
 
-        init {
-            if (expiresIn != null)
+        // Only incremented if the disk storage is set to a specific number of samples.
+        internal var samplesSinceCreation = 0
+
+        internal constructor(expiresIn: Duration?) {
+            if (expiresIn != null) {
                 launch(daqcThreadContext) {
                     delay(expiresIn.toMillis())
-                    files.remove(this@RecorderFile)
 
-                    fileChannel.await().close()
-                    file.await().delete()
+                    suicide()
                 }
+            }
+        }
 
+        internal constructor(expiresAfterNumSamples: Int?) {
+            if (expiresAfterNumSamples != null) {
+                launch(daqcThreadContext) {
+                    val receiveChannel = updatable.broadcastChannel.openSubscription()
+
+                    while (samplesSinceCreation < expiresAfterNumSamples) {
+                        receiveChannel.receive()
+                    }
+
+                    suicide()
+                }
+            }
         }
 
         internal suspend fun writeJsonBuffer(jsonObjectString: String) {
@@ -367,6 +486,12 @@ class Recorder<out T> internal constructor(
                 }
 
             }
+        }
+
+        private suspend fun suicide() {
+            files.remove(this@RecorderFile)
+            fileChannel.await().close()
+            file.await().delete()
         }
 
         internal suspend fun readFromDisk(filter: (ValueInstant<T>) -> Boolean): List<ValueInstant<T>> {

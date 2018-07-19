@@ -3,6 +3,7 @@ package org.tenkiv.daqc
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
+import kotlinx.coroutines.experimental.channels.use
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
@@ -15,6 +16,12 @@ import java.util.zip.DataFormatException
 import javax.measure.Quantity
 import javax.measure.quantity.Frequency
 import kotlin.coroutines.experimental.CoroutineContext
+import org.tenkiv.physikal.core.toByteInSystemUnit as physikalToByteInSystemUnit
+import org.tenkiv.physikal.core.toDoubleInSystemUnit as physikalToDoubleInSystemUnit
+import org.tenkiv.physikal.core.toFloatInSystemUnit as physikalToFloatInSystemUnit
+import org.tenkiv.physikal.core.toIntInSystemUnit as physikalToIntInSystemUnit
+import org.tenkiv.physikal.core.toLongInSystemUnit as physikalToLongInSystemUnit
+import org.tenkiv.physikal.core.toShortInSystemUnit as physikalToShortInSystemUnit
 
 data class ArffDataSetStub(val data: Int)
 
@@ -23,11 +30,58 @@ data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (
     var hasBeenReached: Boolean = false
 }
 
-sealed class DaqcValue
+sealed class DaqcValue {
+
+    fun toShortInSystemUnit(): Short = when (this) {
+        is BinaryState -> this.toShort()
+        is DaqcQuantity<*> -> this.physikalToShortInSystemUnit()
+    }
+
+    fun toIntInSystemUnit(): Int = when (this) {
+        is BinaryState -> this.toInt()
+        is DaqcQuantity<*> -> this.physikalToIntInSystemUnit()
+    }
+
+    fun toLongInSystemUnit(): Long = when (this) {
+        is BinaryState -> this.toLong()
+        is DaqcQuantity<*> -> this.physikalToLongInSystemUnit()
+    }
+
+    fun toByteInSystemUnit(): Byte = when (this) {
+        is BinaryState -> this.toByte()
+        is DaqcQuantity<*> -> this.physikalToByteInSystemUnit()
+    }
+
+    fun toFloatInSystemUnit(): Float = when (this) {
+        is BinaryState -> this.toFloat()
+        is DaqcQuantity<*> -> this.physikalToFloatInSystemUnit()
+    }
+
+    fun toDoubleInSystemUnit(): Double = when (this) {
+        is BinaryState -> this.toDouble()
+        is DaqcQuantity<*> -> this.physikalToDoubleInSystemUnit()
+    }
+
+}
 
 sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
+    abstract fun toShort(): Short
+
+    abstract fun toInt(): Int
+
+    abstract fun toLong(): Long
+
+    abstract fun toByte(): Byte
+
+    abstract fun toFloat(): Float
+
+    abstract fun toDouble(): Double
+
     object On : BinaryState() {
+
+        private const val SHORT_REPRESENTATION: Short = 1
+        private const val BYTE_REPRESENTATION: Byte = 1
 
         override fun compareTo(other: BinaryState) =
             when (other) {
@@ -35,16 +89,43 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
                 is Off -> 1
             }
 
+        override fun toShort() = SHORT_REPRESENTATION
+
+        override fun toInt() = 1
+
+        override fun toLong() = 1L
+
+        override fun toByte() = BYTE_REPRESENTATION
+
+        override fun toFloat() = 1f
+
+        override fun toDouble() = 1.0
+
         override fun toString() = "BinaryState.ON"
     }
 
     object Off : BinaryState() {
+
+        private const val SHORT_REPRESENTATION: Short = 0
+        private const val BYTE_REPRESENTATION: Byte = 0
 
         override fun compareTo(other: BinaryState) =
             when (other) {
                 is On -> -1
                 is Off -> 0
             }
+
+        override fun toShort() = SHORT_REPRESENTATION
+
+        override fun toInt() = 0
+
+        override fun toLong() = 0L
+
+        override fun toByte() = BYTE_REPRESENTATION
+
+        override fun toFloat() = 0f
+
+        override fun toDouble() = 0.0
 
         override fun toString() = "BinaryState.OFF"
 
@@ -121,8 +202,7 @@ sealed class LineNoiseFrequency {
 fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(
     context: CoroutineContext = CommonPool,
     action: suspend (T) -> Unit
-):
-        SubscriptionReceiveChannel<T> {
+): SubscriptionReceiveChannel<T> {
     val subChannel = openSubscription()
     launch(context) {
         subChannel.use { channel -> for (x in channel) action(x) }

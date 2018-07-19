@@ -14,6 +14,38 @@ internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 
 val daqcCriticalErrorBroadcastChannel = ConflatedBroadcastChannel<DaqcCriticalError>()
 
+interface RangedIO<T> : Updatable<ValueInstant<T>> where T : DaqcValue, T : Comparable<T> {
+
+    /**
+     * The range of values that this IO is likely to handle. There is not necessarily a guarantee that there will
+     * never be a value outside this range.
+     */
+    val valueRange: ClosedRange<T>
+
+    /**
+     * @return a [Double] representation of the current value normalised to be between 0 and 1 based on the
+     * [valueRange], null if the updatable does not yet have a value or the value is outside the [valueRange].
+     */
+    fun getNormalisedDoubleOrNull(): Double? {
+        val value = valueOrNull?.value
+
+        if (value is BinaryState?)
+            return value?.toDouble()
+
+        val min = valueRange.start.toDoubleInSystemUnit()
+        val max = valueRange.endInclusive.toDoubleInSystemUnit()
+        val valueDouble = value?.toDoubleInSystemUnit()
+
+        return if (valueDouble != null && valueDouble >= min && valueDouble <= max) {
+            (valueDouble - min) / (max - min)
+        } else {
+            null
+        }
+    }
+
+
+}
+
 sealed class LocatorUpdate<out T : Device>(val wrappedDevice: T) : Device by wrappedDevice
 
 /**

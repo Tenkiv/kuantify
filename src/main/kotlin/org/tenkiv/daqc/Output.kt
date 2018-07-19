@@ -36,15 +36,11 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
 
 }
 
-interface RangedOutput<T> : Output<T> where T : DaqcValue, T : Comparable<T> {
-
-    val possibleOutputRange: ClosedRange<T>
-
-}
+interface RangedOutput<T> : Output<T>, RangedIO<T> where T : DaqcValue, T : Comparable<T>
 
 interface BinaryStateOutput : RangedOutput<BinaryState> {
 
-    override val possibleOutputRange get() = BinaryState.range
+    override val valueRange get() = BinaryState.range
 
 }
 
@@ -54,12 +50,8 @@ interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>,
 
 class RangedQuantityOutputBox<Q : Quantity<Q>>(
     output: QuantityOutput<Q>,
-    private val getPossibleOutputRange: () -> ClosedRange<DaqcQuantity<Q>>
-) : RangedQuantityOutput<Q>, QuantityOutput<Q> by output {
+    override val valueRange: ClosedRange<DaqcQuantity<Q>>
+) : RangedQuantityOutput<Q>, QuantityOutput<Q> by output
 
-    override val possibleOutputRange get() = getPossibleOutputRange()
-
-}
-
-fun <Q : Quantity<Q>> QuantityOutput<Q>.toNewRangedOutput(possibleOutputRange: () -> ClosedRange<DaqcQuantity<Q>>) =
-    RangedQuantityOutputBox(this, possibleOutputRange)
+fun <Q : Quantity<Q>> QuantityOutput<Q>.toNewRangedOutput(valueRange: ClosedRange<DaqcQuantity<Q>>) =
+    RangedQuantityOutputBox(this, valueRange)

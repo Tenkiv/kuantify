@@ -3,13 +3,6 @@ package org.tenkiv.daqc.learning.controller
 import org.deeplearning4j.rl4j.space.Encodable
 import org.tenkiv.daqc.BinaryState
 
-private fun BinaryState?.toDouble(): Double =
-    when (this) {
-        null -> -1.0
-        BinaryState.Off -> 0.0
-        BinaryState.On -> 1.0
-    }
-
 //TODO: Do I need to scale the observations?
 data class ControllerObservation(val channelObservations: List<Encodable>) : Encodable {
 
@@ -34,7 +27,10 @@ data class BinaryStateInputObs(val measurementValue: BinaryState?, val timeSince
 
 }
 
-data class QuantityInputObs(val measurementValue: Double, val valueAcceleration: Double) : Encodable {
+data class QuantityInputObs(
+    val measurementValue: Double,
+    val valueAcceleration: Double
+) : Encodable {
 
     override fun toArray(): DoubleArray = doubleArrayOf(measurementValue, valueAcceleration)
 

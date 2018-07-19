@@ -34,15 +34,11 @@ interface Input<out T : DaqcValue> : Updatable<ValueInstant<T>> {
 
 }
 
-interface RangedInput<T> : Input<T> where T : DaqcValue, T : Comparable<T> {
-
-    val possibleInputRange: ClosedRange<T>
-
-}
+interface RangedInput<T> : Input<T>, RangedIO<T> where T : DaqcValue, T : Comparable<T>
 
 interface BinaryStateInput : RangedInput<BinaryState> {
 
-    override val possibleInputRange get() = BinaryState.range
+    override val valueRange get() = BinaryState.range
 
 }
 
@@ -52,12 +48,8 @@ interface RangedQuantityInput<Q : Quantity<Q>> : RangedInput<DaqcQuantity<Q>>
 
 class RangedQuantityInputBox<Q : Quantity<Q>>(
     input: QuantityInput<Q>,
-    private val getPossibleInputRange: () -> ClosedRange<DaqcQuantity<Q>>
-) : RangedQuantityInput<Q>, QuantityInput<Q> by input {
+    override val valueRange: ClosedRange<DaqcQuantity<Q>>
+) : RangedQuantityInput<Q>, QuantityInput<Q> by input
 
-    override val possibleInputRange get() = getPossibleInputRange()
-
-}
-
-fun <Q : Quantity<Q>> QuantityInput<Q>.toNewRangedInput(possibleInputRange: () -> ClosedRange<DaqcQuantity<Q>>) =
-    RangedQuantityInputBox(this, possibleInputRange)
+fun <Q : Quantity<Q>> QuantityInput<Q>.toNewRangedInput(valueRange: ClosedRange<DaqcQuantity<Q>>) =
+    RangedQuantityInputBox(this, valueRange)
