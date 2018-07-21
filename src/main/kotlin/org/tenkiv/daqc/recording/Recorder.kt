@@ -306,7 +306,7 @@ class Recorder<out T> {
         }
 
     fun stop(shouldDeleteDiskData: Boolean = false) {
-        receiveChannel.close()
+        receiveChannel.cancel(CancellationException("Recorder manually stopped"))
         recordJob.cancel(CancellationException("Recorder manually stopped"))
         files.forEach { it.stop() }
         if (shouldDeleteDiskData)

@@ -32,6 +32,8 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
 
     override val isActive get() = digitalInput.isActiveForTransitionFrequency
 
+    override val sampleRate get() = digitalInput.sampleRate
+
     init {
         digitalInput.transitionFrequencyBroadcastChannel.openNewCoroutineListener(CommonPool) { measurement ->
             val convertedInput = convertInput(measurement.value)
@@ -43,7 +45,8 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
         }
     }
 
-    public var averageTransitionFrequency: DaqcQuantity<Frequency> = 2.hertz.toDaqc()
+    @Volatile
+    var averageTransitionFrequency: DaqcQuantity<Frequency> = 2.hertz.toDaqc()
 
     override fun activate() = digitalInput.activateForTransitionFrequency(averageTransitionFrequency)
 

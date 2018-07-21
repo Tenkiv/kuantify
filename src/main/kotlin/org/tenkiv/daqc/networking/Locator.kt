@@ -24,7 +24,7 @@ object Locator : Updatable<LocatorUpdate<*>> {
     private val currentDevices = HashMap<KClass<*>, HashMap<String, Device>>()
 
     fun addDeviceLocator(locator: DeviceLocator) {
-        if (!locatorList.any { it::class == locator::class }) {
+        if (!locatorList.any { it::class === locator::class }) {
             locatorList.add(locator)
             launch(CommonPool) { locator.broadcastChannel.consumeEach { rebroadcast(it) } }
         } else {

@@ -18,6 +18,8 @@ class SimpleDigitalFrequencySensor internal constructor(val digitalInput: Digita
 
     override val isActive get() = digitalInput.isActiveForTransitionFrequency
 
+    override val sampleRate get() = digitalInput.sampleRate
+
     override fun activate() = digitalInput.activateForTransitionFrequency(avgFrequency)
 
     override fun deactivate() = digitalInput.deactivate()

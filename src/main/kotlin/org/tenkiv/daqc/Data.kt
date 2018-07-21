@@ -2,7 +2,7 @@ package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
-import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.use
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
@@ -202,7 +202,7 @@ sealed class LineNoiseFrequency {
 fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(
     context: CoroutineContext = CommonPool,
     action: suspend (T) -> Unit
-): SubscriptionReceiveChannel<T> {
+): ReceiveChannel<T> {
     val subChannel = openSubscription()
     launch(context) {
         subChannel.use { channel -> for (x in channel) action(x) }

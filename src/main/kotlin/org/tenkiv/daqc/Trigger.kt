@@ -1,6 +1,6 @@
 package org.tenkiv.daqc
 
-import kotlinx.coroutines.experimental.channels.SubscriptionReceiveChannel
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import org.tenkiv.coral.ValueInstant
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -46,14 +46,14 @@ class Trigger<T : DaqcValue>(
                 triggerFunction = triggerFunction
             )
 
-    private val channelList: MutableList<SubscriptionReceiveChannel<ValueInstant<T>>> = ArrayList()
+    private val channelList: MutableList<ReceiveChannel<ValueInstant<T>>> = ArrayList()
 
     fun stop() {
         if (maxTriggerCount is MaxTriggerCount.Limited && maxTriggerCount.atomicCount.get() > 0) {
             maxTriggerCount.atomicCount.decrementAndGet()
 
             if (maxTriggerCount.atomicCount.get() <= 0) {
-                channelList.forEach { it.close() }
+                channelList.forEach { it.cancel() }
             }
         }
     }

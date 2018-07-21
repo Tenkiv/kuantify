@@ -1,7 +1,6 @@
 package org.tenkiv.daqc.hardware.inputs.thermocouples
 
 import arrow.core.Try
-import org.tenkiv.coral.pow
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.inputs.ScAnalogSensor
@@ -14,6 +13,7 @@ import tec.uom.se.unit.Units.CELSIUS
 import tec.uom.se.unit.Units.VOLT
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Temperature
+import kotlin.math.pow
 
 
 class ThermocoupleK(

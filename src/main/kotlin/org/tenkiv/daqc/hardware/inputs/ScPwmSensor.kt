@@ -32,6 +32,8 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(
 
     override val isActive get() = digitalInput.isActiveForPwm
 
+    override val sampleRate get() = digitalInput.sampleRate
+
     init {
         digitalInput.pwmBroadcastChannel.openNewCoroutineListener(CommonPool) { measurement ->
             val convertedInput = convertInput(measurement.value)

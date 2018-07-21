@@ -227,18 +227,19 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
 
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = input.channelNumber
+    @Volatile
     private var currentState = DigitalStatus.DEACTIVATED
 
-    override val isActiveForBinaryState: Boolean = (currentState == DigitalStatus.ACTIVATED_STATE)
-    override val isActiveForPwm: Boolean = (currentState == DigitalStatus.ACTIVATED_PWM)
-    override val isActiveForTransitionFrequency: Boolean = (currentState == DigitalStatus.ACTIVATED_FREQUENCY)
+    override val isActiveForBinaryState get() = (currentState == DigitalStatus.ACTIVATED_STATE)
+    override val isActiveForPwm get() = (currentState == DigitalStatus.ACTIVATED_PWM)
+    override val isActiveForTransitionFrequency get() = (currentState == DigitalStatus.ACTIVATED_FREQUENCY)
 
     override fun activate() {
-        /*input.deactivatePWM();*/ input.activate()
+        input.activate()
     }
 
     override fun deactivate() {
-        /*input.deactivatePWM();*/ input.deactivate()
+        input.deactivate()
     }
 
     init {
@@ -295,14 +296,15 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
 class TekdaqcDigitalOutput(tekdaqc: TekdaqcDevice, val output: com.tenkiv.tekdaqc.hardware.DigitalOutput) :
     DigitalOutput() {
 
+    @Volatile
     private var currentState = DigitalStatus.DEACTIVATED
     override val pwmIsSimulated: Boolean = false
     override val transitionFrequencyIsSimulated: Boolean = false
     override val device: Device = tekdaqc
     override val hardwareNumber: Int = output.channelNumber
-    override val isActiveForBinaryState: Boolean = (currentState == DigitalStatus.ACTIVATED_STATE)
-    override val isActiveForPwm: Boolean = (currentState == DigitalStatus.ACTIVATED_PWM)
-    override val isActiveForTransitionFrequency: Boolean = (currentState == DigitalStatus.ACTIVATED_FREQUENCY)
+    override val isActiveForBinaryState get() = (currentState == DigitalStatus.ACTIVATED_STATE)
+    override val isActiveForPwm get() = (currentState == DigitalStatus.ACTIVATED_PWM)
+    override val isActiveForTransitionFrequency get() = (currentState == DigitalStatus.ACTIVATED_FREQUENCY)
 
     private var frequencyJob: Job? = null
 

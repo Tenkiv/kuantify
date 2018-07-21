@@ -23,6 +23,8 @@ class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInpu
 
     override val isActive get() = digitalInput.isActiveForBinaryState
 
+    override val sampleRate get() = digitalInput.sampleRate
+
     init {
         digitalInput.broadcastChannel.openNewCoroutineListener(CommonPool) { measurement ->
             if (!inverted)
