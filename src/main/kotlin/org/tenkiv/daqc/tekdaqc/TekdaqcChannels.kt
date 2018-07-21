@@ -217,6 +217,14 @@ class TekdaqcAnalogInput(val tekdaqc: TekdaqcDevice, val input: AAnalogInput) : 
 class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.hardware.DigitalInput) :
     DigitalInput(), IDigitalChannelListener, IPWMChannelListener {
 
+    //This is a hack as we have no way to get precise DI sample rate on the Tekdaqc.
+    private var sampleRateCount = 0
+    private var lastSampleRate = 0
+    private var sampleWaitJob: Job? = null
+    private var _sampleRate = 0.hertz
+
+    override val sampleRate: ComparableQuantity<Frequency> = _sampleRate
+
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
 
@@ -235,10 +243,20 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
     override val isActiveForTransitionFrequency get() = (currentState == DigitalStatus.ACTIVATED_FREQUENCY)
 
     override fun activate() {
+        //This is a hack as we have no way to get precise DI sample rate on the Tekdaqc.
+        sampleWaitJob = launch {
+            delay(1, TimeUnit.SECONDS)
+            _sampleRate  = ((sampleRateCount+lastSampleRate)/2).hertz
+            lastSampleRate = sampleRateCount
+            sampleRateCount = 0
+        }
         input.activate()
     }
 
     override fun deactivate() {
+        sampleWaitJob?.cancel()
+        sampleRateCount = 0
+        lastSampleRate = 0
         input.deactivate()
     }
 
@@ -264,7 +282,7 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
     }
 
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
-
+        sampleRateCount++
         when (data.state) {
             true -> {
                 _binaryStateBroadcastChannel.offer(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))

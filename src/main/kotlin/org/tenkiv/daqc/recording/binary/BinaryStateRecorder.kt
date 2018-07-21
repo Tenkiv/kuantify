@@ -2,6 +2,7 @@ package org.tenkiv.daqc.recording.binary
 
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.daqc.*
+import org.tenkiv.daqc.BinaryState.Companion.fromString
 import org.tenkiv.daqc.recording.RecordedUpdatable
 import org.tenkiv.daqc.recording.Recorder
 import org.tenkiv.daqc.recording.StorageDuration

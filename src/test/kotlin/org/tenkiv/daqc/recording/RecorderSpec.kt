@@ -12,11 +12,9 @@ import kotlinx.serialization.json.JSON
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.now
 import org.tenkiv.coral.secondsSpan
-import org.tenkiv.daqc.AnalogGibberingSensor
-import org.tenkiv.daqc.DigitalGibberingSensor
-import org.tenkiv.daqc.Updatable
-import org.tenkiv.daqc.recording.binary.newRecorder
-import org.tenkiv.daqc.recording.quantity.newRecorder
+import org.tenkiv.daqc.*
+import org.tenkiv.daqc.recording.quantity.pairWithNewRecorder
+import org.tenkiv.daqc.recording.binary.pairWithNewRecorder
 import java.lang.Thread.sleep
 
 class RecorderSpec : StringSpec({
@@ -29,12 +27,11 @@ class RecorderSpec : StringSpec({
     }
 
     "Recording daqc values in memory" {
+        val analogRecorder = analogGibberingSensor.pairWithNewRecorder(memoryDuration = StorageDuration.For(10L.secondsSpan),
+            diskDuration = StorageDuration.None).recorder
 
-        val analogRecorder = analogGibberingSensor.newRecorder(memoryDuration = StorageDuration.For(10L.secondsSpan),
-                diskDuration = StorageDuration.None)
-
-        val digitalRecorder = digitalGibberingSensor.newRecorder(memoryDuration = StorageDuration.For(10L.secondsSpan),
-                diskDuration = StorageDuration.None)
+        val digitalRecorder = digitalGibberingSensor.pairWithNewRecorder(memoryDuration = StorageDuration.For(10L.secondsSpan),
+        diskDuration = StorageDuration.None).recorder
 
         sleep(12_000)
 
@@ -50,11 +47,11 @@ class RecorderSpec : StringSpec({
 
     "Recording daqc values in disk" {
 
-        val analogRecorder = analogGibberingSensor.newRecorder(memoryDuration = StorageDuration.None,
-                diskDuration = StorageDuration.For(10L.secondsSpan))
+        val analogRecorder = analogGibberingSensor.pairWithNewRecorder(memoryDuration = StorageDuration.None,
+                diskDuration = StorageDuration.For(10L.secondsSpan)).recorder
 
-        val digitalRecorder = digitalGibberingSensor.newRecorder(memoryDuration = StorageDuration.None,
-                diskDuration = StorageDuration.For(10L.secondsSpan))
+        val digitalRecorder = digitalGibberingSensor.pairWithNewRecorder(memoryDuration = StorageDuration.None,
+                diskDuration = StorageDuration.For(10L.secondsSpan)).recorder
 
         sleep(13_000)
 
@@ -93,9 +90,7 @@ class RecorderSpec : StringSpec({
                     }
                 }
             }
-
-
-        }.newRecorder(
+        }.pairWithNewRecorder(
                 memoryDuration = StorageDuration.None,
                 diskDuration = StorageDuration.For(10L.secondsSpan),
                 valueSerializer = {
@@ -104,7 +99,7 @@ class RecorderSpec : StringSpec({
                 valueDeserializer = {
                     JSON.parse(it)
                 }
-        )
+        ).recorder
 
         sleep(12_000)
 
@@ -116,9 +111,7 @@ class RecorderSpec : StringSpec({
             data.last().instant.epochSecond -
                     data.first().instant.epochSecond shouldBe (10.0 plusOrMinus 1.5)
         }
-
     }
-
 })
 
 @Serializable

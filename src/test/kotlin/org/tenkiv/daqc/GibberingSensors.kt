@@ -18,9 +18,11 @@ import javax.measure.quantity.Frequency
 
 
 class DigitalGibberingSensor : Input<BinaryState> {
+    override val sampleRate: ComparableQuantity<Frequency>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-    override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<BinaryState>>()
+    override val broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
     override val isActive: Boolean = false
 
     val random = Random()
@@ -46,6 +48,9 @@ class DigitalGibberingSensor : Input<BinaryState> {
 }
 
 class DigitalInputGibberingSensor : DigitalInput() {
+    override val sampleRate: ComparableQuantity<Frequency>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+
     override fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -92,6 +97,8 @@ class DigitalInputGibberingSensor : DigitalInput() {
 }
 
 class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
+    override val sampleRate: ComparableQuantity<Frequency>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()

@@ -38,12 +38,12 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
 
     private val subscribtion = output.broadcastChannel.openSubscription()
 
-    private val rangeSpanSystemUnit = output.possibleOutputRange.endInclusive.toDoubleInSystemUnit() -
-            output.possibleOutputRange.start.toDoubleInSystemUnit()
+    private val rangeSpanSystemUnit = output.valueRange.endInclusive.toDoubleInSystemUnit() -
+            output.valueRange.start.toDoubleInSystemUnit()
 
     private val currentValueSystemUnit
         get() = output.valueOrNull?.value?.toDoubleInSystemUnit()
-                ?: output.possibleOutputRange.start.toDoubleInSystemUnit()
+                ?: output.valueRange.start.toDoubleInSystemUnit()
 
     private val systemUnit = output.systemUnit
 
@@ -70,7 +70,7 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
         val increaseSystemUnit = rangeSpanSystemUnit * rangeRatio
         val newSettingSystemUnit = currentValueSystemUnit + increaseSystemUnit
 
-        if (newSettingSystemUnit <= output.possibleOutputRange.endInclusive.toDoubleInSystemUnit())
+        if (newSettingSystemUnit <= output.valueRange.endInclusive.toDoubleInSystemUnit())
             output.setOutputInSystemUnit(newSettingSystemUnit)
 
     }
@@ -80,7 +80,7 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
         val increaseSystemUnit = rangeSpanSystemUnit * rangeRatio
         val newSettingSystemUnit = currentValueSystemUnit + increaseSystemUnit
 
-        if (newSettingSystemUnit >= output.possibleOutputRange.start.toDoubleInSystemUnit())
+        if (newSettingSystemUnit >= output.valueRange.start.toDoubleInSystemUnit())
             output.setOutputInSystemUnit(newSettingSystemUnit)
 
     }

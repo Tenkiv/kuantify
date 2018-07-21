@@ -43,6 +43,9 @@ class EmptyAnalogInput : AnalogInput() {
 }
 
 class EmptyDigitalInput : DigitalInput() {
+    override val sampleRate: ComparableQuantity<Frequency>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+
     override fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

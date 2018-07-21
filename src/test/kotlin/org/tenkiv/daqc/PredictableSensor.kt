@@ -4,11 +4,15 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.physikal.core.volt
+import tec.uom.se.ComparableQuantity
 import java.time.Instant
 import java.util.*
 import javax.measure.quantity.ElectricPotential
+import javax.measure.quantity.Frequency
 
 class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
+    override val sampleRate: ComparableQuantity<Frequency>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val isActive: Boolean = false
@@ -50,6 +54,8 @@ class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
 }
 
 class PredictableDigitalSensor : Input<BinaryState> {
+    override val sampleRate: ComparableQuantity<Frequency>
+        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
     override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<BinaryState>> = ConflatedBroadcastChannel()
