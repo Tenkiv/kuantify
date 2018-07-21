@@ -14,6 +14,31 @@ internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 
 val daqcCriticalErrorBroadcastChannel = ConflatedBroadcastChannel<DaqcCriticalError>()
 
+internal object Daqc {
+
+    /**
+     * @return null if the number to be normalised is outside the range.
+     */
+    fun normaliseOrNull(number: Double, range: ClosedRange<Double>): Double? {
+
+        return if (number in range) {
+            normalise(number, range)
+        } else {
+            null
+        }
+    }
+
+    fun normalise(number: Double, range: ClosedRange<Double>): Double {
+        val min = range.start
+        val max = range.endInclusive
+
+        return normalise(number, min, max)
+    }
+
+    fun normalise(number: Double, min: Double, max: Double): Double = (number - min) / (max - min)
+
+}
+
 interface RangedIO<T> : Updatable<ValueInstant<T>> where T : DaqcValue, T : Comparable<T> {
 
     /**
@@ -37,12 +62,11 @@ interface RangedIO<T> : Updatable<ValueInstant<T>> where T : DaqcValue, T : Comp
         val valueDouble = value?.toDoubleInSystemUnit()
 
         return if (valueDouble != null && valueDouble >= min && valueDouble <= max) {
-            (valueDouble - min) / (max - min)
+            Daqc.normalise(valueDouble, min, max)
         } else {
             null
         }
     }
-
 
 }
 

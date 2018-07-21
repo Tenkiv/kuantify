@@ -25,6 +25,8 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.coroutines.experimental.coroutineContext
 
+typealias ValueSerializer<T> = (T) -> String
+typealias ValueDeserializer<T> = (String) -> T
 
 //TODO: Move default parameter values in recorder creation function to constants
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
@@ -66,6 +68,21 @@ fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
             filterOnRecord,
             valueSerializer,
             valueDeserializer
+        )
+    )
+
+fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
+    storageFrequency: StorageFrequency = StorageFrequency.All,
+    memoryStorageLength: StorageLength = StorageSamples.Number(100),
+    filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true }
+) =
+    RecordedUpdatable(
+        this,
+        Recorder(
+            this,
+            storageFrequency,
+            memoryStorageLength,
+            filterOnRecord
         )
     )
 
@@ -171,8 +188,8 @@ class Recorder<out T> {
     val memoryStorageLength: StorageLength
     val diskStorageLength: StorageLength
     private val filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean
-    private val valueSerializer: (T) -> String
-    private val valueDeserializer: (String) -> T
+    private val valueSerializer: ValueSerializer<T>?
+    private val valueDeserializer: ValueDeserializer<T>?
 
     private val recordJob: Job
 
@@ -199,8 +216,8 @@ class Recorder<out T> {
         memoryDuration: StorageDuration = StorageDuration.For(memoryDurationDefault),
         diskDuration: StorageDuration = StorageDuration.None,
         filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
-        valueSerializer: (T) -> String,
-        valueDeserializer: (String) -> T
+        valueSerializer: ValueSerializer<T>,
+        valueDeserializer: ValueDeserializer<T>
     ) {
         this.updatable = updatable
         this.storageFrequency = storageFrequency
@@ -220,8 +237,8 @@ class Recorder<out T> {
         numSamplesMemory: StorageSamples = StorageSamples.Number(100),
         numSamplesDisk: StorageSamples = StorageSamples.None,
         filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
-        valueSerializer: (T) -> String,
-        valueDeserializer: (String) -> T
+        valueSerializer: ValueSerializer<T>,
+        valueDeserializer: ValueDeserializer<T>
     ) {
         this.updatable = updatable
         this.storageFrequency = storageFrequency
@@ -235,10 +252,28 @@ class Recorder<out T> {
         this.recordJob = createRecordJob()
     }
 
+    constructor(
+        updatable: Updatable<ValueInstant<T>>,
+        storageFrequency: StorageFrequency = StorageFrequency.All,
+        memoryStorageLength: StorageLength = StorageSamples.Number(100),
+        filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true }
+    ) {
+        this.updatable = updatable
+        this.storageFrequency = storageFrequency
+        this.memoryStorageLength = memoryStorageLength
+        this.diskStorageLength = StorageSamples.None
+        this.filterOnRecord = filterOnRecord
+        this.valueSerializer = null
+        this.valueDeserializer = null
+
+        this.receiveChannel = updatable.broadcastChannel.openSubscription()
+        this.recordJob = createRecordJob()
+    }
+
 
     /**
-     * Gets the data currently stored in RAM by this recorder. The returned list can not be modified,
-     * to get an updated list of data in memory, call this function again.
+     * Gets the data currently stored in RAM by this recorder. The returned list can not be modified.
+     * To get an updated list of data in memory, call this function again.
      */
     //TODO: Make this return truly immutable list.
     fun getDataInMemory(): List<ValueInstant<T>> = ArrayList(_dataInMemory)
@@ -333,10 +368,14 @@ class Recorder<out T> {
 
     // This has to be an extension function in order to keep out variance in Recorder class generic
     private suspend fun RecorderFile.writeEntry(entry: ValueInstant<T>) {
-        val jsonObjectString =
-            "{\"$INSTANT_KEY\":${entry.instant.toEpochMilli()}," +
-                    "\"$VALUE_KEY\":${valueSerializer(entry.value)}}"
-        writeJsonBuffer(jsonObjectString)
+        if (valueSerializer != null) {
+            val jsonObjectString =
+                "{\"$INSTANT_KEY\":${entry.instant.toEpochMilli()}," +
+                        "\"$VALUE_KEY\":${valueSerializer.invoke(entry.value)}}"
+            writeJsonBuffer(jsonObjectString)
+        } else {
+            throw IllegalStateException("valueSerializer cannot be null if Recorder is using disk for storage.")
+        }
     }
 
     private fun createRecordJob() = launch(daqcThreadContext) {
@@ -495,66 +534,71 @@ class Recorder<out T> {
         }
 
         internal suspend fun readFromDisk(filter: (ValueInstant<T>) -> Boolean): List<ValueInstant<T>> {
-            val channel = fileChannel.await()
-            var inString = false
-            var numUnclosedBraces = 0
-            var previousCharByte = ' '.toByte()
-            val complyingObjects = ArrayList<ValueInstant<T>>()
-            val currentObject = ArrayList<Byte>()
-            var buffer = ByteBuffer.allocate(100)
-            var position = 0L
+            if (valueDeserializer != null) {
+                val channel = fileChannel.await()
+                var inString = false
+                var numUnclosedBraces = 0
+                var previousCharByte = ' '.toByte()
+                val complyingObjects = ArrayList<ValueInstant<T>>()
+                val currentObject = ArrayList<Byte>()
+                var buffer = ByteBuffer.allocate(100)
+                var position = 0L
 
-            while (channel.isOpen) {
-                mutex.withLock { channel.aRead(buffer, position) }
+                while (channel.isOpen) {
+                    mutex.withLock { channel.aRead(buffer, position) }
 
-                val array = buffer.array()
-                array.forEach { charByte ->
-                    if (charByte == STRING_DELIM && previousCharByte != BREAK)
-                        inString = !inString
+                    val array = buffer.array()
+                    array.forEach { charByte ->
+                        if (charByte == STRING_DELIM && previousCharByte != BREAK)
+                            inString = !inString
 
-                    if (!inString && charByte == OPEN_BRACE)
-                        numUnclosedBraces++
+                        if (!inString && charByte == OPEN_BRACE)
+                            numUnclosedBraces++
 
-                    if (numUnclosedBraces > 1)
-                        currentObject += charByte
-
-
-                    if (!inString && charByte == CLOSE_BRACE) {
-                        numUnclosedBraces--
-                        if (numUnclosedBraces == 0)
-                            return@readFromDisk complyingObjects
-
-                        if (numUnclosedBraces == 1) {
-
-                            println("Byte Array = ${String(currentObject.toByteArray())}")
-
-                            val jsonTree = jacksonMapper.readTree(currentObject.toByteArray())
-                            val epochMilli = jsonTree[INSTANT_KEY].asLong()
-                            val valueTree = jsonTree[VALUE_KEY]
-                            val valueString = if (valueTree.isTextual) valueTree.asText() else valueTree.toString()
-                            println("epochMilli=$epochMilli, valueString=$valueString")
-                            val valueInstant =
-                                PrimitiveValueInstant(epochMilli, valueString)
-                                    .toValueInstant(valueDeserializer)
+                        if (numUnclosedBraces > 1)
+                            currentObject += charByte
 
 
-                            if (filter(valueInstant)) {
-                                complyingObjects += valueInstant
+                        if (!inString && charByte == CLOSE_BRACE) {
+                            numUnclosedBraces--
+                            if (numUnclosedBraces == 0)
+                                return@readFromDisk complyingObjects
+
+                            if (numUnclosedBraces == 1) {
+
+                                println("Byte Array = ${String(currentObject.toByteArray())}")
+
+                                val jsonTree = jacksonMapper.readTree(currentObject.toByteArray())
+                                val epochMilli = jsonTree[INSTANT_KEY].asLong()
+                                val valueTree = jsonTree[VALUE_KEY]
+                                val valueString = if (valueTree.isTextual) valueTree.asText() else valueTree.toString()
+                                println("epochMilli=$epochMilli, valueString=$valueString")
+                                val valueInstant =
+                                    PrimitiveValueInstant(epochMilli, valueString)
+                                        .toValueInstant(valueDeserializer)
+
+
+                                if (filter(valueInstant)) {
+                                    complyingObjects += valueInstant
+                                }
+                                currentObject.clear()
+
                             }
-                            currentObject.clear()
 
                         }
 
+                        previousCharByte = charByte
                     }
+                    position += 100
+                    buffer = ByteBuffer.allocate(100)
 
-                    previousCharByte = charByte
                 }
-                position += 100
-                buffer = ByteBuffer.allocate(100)
-
+                return complyingObjects
+            } else {
+                throw IllegalStateException("valueDeserializer cannot be null if recorder is using disk for storage.")
             }
-            return complyingObjects
         }
+
     }
 
     companion object {

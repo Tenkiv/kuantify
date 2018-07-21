@@ -3,17 +3,17 @@ package org.tenkiv.daqc.learning.controller
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.Sets
 import org.apache.commons.math3.distribution.NormalDistribution
+import org.deeplearning4j.exception.InvalidStepException
 import org.deeplearning4j.gym.StepReply
 import org.deeplearning4j.rl4j.mdp.MDP
 import org.deeplearning4j.rl4j.space.DiscreteSpace
+import org.deeplearning4j.rl4j.space.Encodable
 import org.deeplearning4j.rl4j.space.ObservationSpace
-import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.BinaryStateOutput
-import org.tenkiv.daqc.DaqcValue
-import org.tenkiv.daqc.RangedQuantityOutput
+import org.tenkiv.daqc.*
+import org.tenkiv.daqc.recording.RecordedUpdatable
 
-class ControllerEnvironment<T>(private val controller: LearningController<T>) :
-    MDP<ControllerObservation, Int, DiscreteSpace> where T : DaqcValue, T : Comparable<T> {
+internal class ControllerEnvironment<T>(private val controller: LearningController<T>) :
+    MDP<Encodable, Int, DiscreteSpace> where T : DaqcValue, T : Comparable<T> {
 
     val numQuantityOutputs = controller.outputs.count { it is RangedQuantityOutput<*> }
 
@@ -37,17 +37,17 @@ class ControllerEnvironment<T>(private val controller: LearningController<T>) :
     ).toList()
 
     private val rewardDistribution: NormalDistribution by lazy {
-        val mean = controller.targetInput.getNormalisedDoubleOrNull()
+        val mean = controller.targetInput.updatable.getNormalisedDoubleOrNull()
         if (mean != null) {
             return@lazy NormalDistribution(mean, DIST_SD)
         } else {
-            throw Exception("Tried to access rewardDistribution before setting the learning controller.")
+            throw InvalidStepException("Tried to access rewardDistribution before setting the learning controller.")
         }
     }
 
     override fun getActionSpace() = DiscreteSpace(actionPermutationList.size)
 
-    override fun getObservationSpace(): ObservationSpace<ControllerObservation> {
+    override fun getObservationSpace(): ObservationSpace<Encodable> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -55,7 +55,7 @@ class ControllerEnvironment<T>(private val controller: LearningController<T>) :
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun newInstance(): MDP<ControllerObservation, Int, DiscreteSpace> {
+    override fun newInstance(): MDP<Encodable, Int, DiscreteSpace> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -67,7 +67,7 @@ class ControllerEnvironment<T>(private val controller: LearningController<T>) :
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun step(action: Int): StepReply<ControllerObservation> {
+    override fun step(action: Int): StepReply<Encodable> {
 
         actionPermutationList[action].forEachIndexed { index, individualAction ->
             actionHandlerList[index].takeAction(individualAction)
@@ -76,24 +76,82 @@ class ControllerEnvironment<T>(private val controller: LearningController<T>) :
         Thread.sleep(controller.minTimeBetweenActions.toMillis())
 
         val observationsList = ArrayList<Double>()
-        observationsList += controller.targetInput.getNormalisedDoubleOrNull() ?: NONE
 
+        // Inputs and Outputs won't return null because we wait for them to initialise in LearningController.
+        when (controller.targetInput.updatable.valueOrNull) {
+            is BinaryState -> observationsList += getBinaryStateDoubles(controller.targetInput)
+            is DaqcQuantity<*> -> observationsList += getQuantityInputDoubles(controller.targetInput)
+        }
 
+        controller.correlatedInputs.forEach {
+            when (it.updatable.valueOrNull) {
+                is BinaryState -> observationsList += getBinaryStateDoubles(controller.targetInput)
+                is DaqcQuantity<*> -> observationsList += getQuantityInputDoubles(controller.targetInput)
+            }
+        }
 
-        return StepReply()
+        controller.outputs.forEach {
+            observationsList += it.updatable.getNormalisedDoubleOrNull()!!
+        }
+
+        val observation = Encodable { observationsList.toDoubleArray() }
+
+        return StepReply(observation, getReward(), isDone, null)
+    }
+
+    private fun getBinaryStateDoubles(io: RecordedUpdatable<DaqcValue, RangedInput<*>>)
+            : Double {
+
+        return io.updatable.getNormalisedDoubleOrNull()!!
+    }
+
+    private fun getQuantityInputDoubles(io: RecordedUpdatable<DaqcValue, RangedInput<*>>)
+            : QuantityInputDoubles {
+        val history = io.recorder.getDataInMemory()
+
+        val min = io.updatable.valueRange.start.toDoubleInSystemUnit()
+        val max = io.updatable.valueRange.endInclusive.toDoubleInSystemUnit()
+
+        // This assumes the sample rate is consistent. We could change it to look at the time between each sample as
+        // well if wed are worried about inconsistent sample rates.
+        var totalChange = 0.0
+        history.forEachIndexed { index, sample ->
+            if (index + 1 <= history.size) {
+                totalChange += Daqc.normalise(sample.value.toDoubleInSystemUnit(), min, max) -
+                        Daqc.normalise(history[index + 1].value.toDoubleInSystemUnit(), min, max)
+            }
+        }
+        val rateOfChange = if (history.size < 2) NONE else totalChange / history.size - 1
+
+        val currentValue = io.updatable.getNormalisedDoubleOrNull()
+
+        return QuantityInputDoubles(currentValue ?: NONE, rateOfChange)
+    }
+
+    private fun getQuantityOutputDoubles(io: RecordedUpdatable<DaqcValue, RangedOutput<*>>)
+            : Double {
+
+        return io.updatable.getNormalisedDoubleOrNull()!!
     }
 
     private fun getReward(): Double {
         // Binary state
-        val currentValue = controller.targetInput.valueOrNull?.value
+        val currentValue = controller.targetInput.updatable.valueOrNull?.value
         val targetValue = controller.valueOrNull!!.value
-        if (currentValue is BinaryState) return if (currentValue == targetValue) 1.0 else 0.0
+        if (currentValue is BinaryState) return if (currentValue == targetValue) 1.0 else -1.0
 
         // Quantity
-        val currentValueDouble = controller.targetInput.getNormalisedDoubleOrNull()
+        val currentValueDouble = controller.targetInput.updatable.getNormalisedDoubleOrNull()
 
-        return if (currentValueDouble != null) rewardDistribution.density(currentValueDouble) else 0.0
+        return if (currentValueDouble != null) rewardDistribution.density(currentValueDouble) - 1.0 else 0.0
     }
+
+    private operator fun MutableList<Double>.plusAssign(quantityInputDoubles: QuantityInputDoubles) {
+        this += quantityInputDoubles.currentValue
+        this += quantityInputDoubles.rateOfChange
+    }
+
+    data class QuantityInputDoubles(val currentValue: Double, val rateOfChange: Double)
 
     companion object {
         private const val DIST_SD = 0.035
