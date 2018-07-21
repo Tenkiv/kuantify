@@ -52,15 +52,13 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
     }
 
     override fun isDone(): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return !controller.isActive
     }
 
-    override fun newInstance(): MDP<Encodable, Int, DiscreteSpace> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun newInstance(): MDP<Encodable, Int, DiscreteSpace> = ControllerEnvironment(controller)
 
-    override fun reset(): ControllerObservation {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun reset(): Encodable {
+        return getObservation()
     }
 
     override fun close() {
@@ -68,35 +66,13 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
     }
 
     override fun step(action: Int): StepReply<Encodable> {
-
         actionPermutationList[action].forEachIndexed { index, individualAction ->
             actionHandlerList[index].takeAction(individualAction)
         }
 
         Thread.sleep(controller.minTimeBetweenActions.toMillis())
 
-        val observationsList = ArrayList<Double>()
-
-        // Inputs and Outputs won't return null because we wait for them to initialise in LearningController.
-        when (controller.targetInput.updatable.valueOrNull) {
-            is BinaryState -> observationsList += getBinaryStateDoubles(controller.targetInput)
-            is DaqcQuantity<*> -> observationsList += getQuantityInputDoubles(controller.targetInput)
-        }
-
-        controller.correlatedInputs.forEach {
-            when (it.updatable.valueOrNull) {
-                is BinaryState -> observationsList += getBinaryStateDoubles(controller.targetInput)
-                is DaqcQuantity<*> -> observationsList += getQuantityInputDoubles(controller.targetInput)
-            }
-        }
-
-        controller.outputs.forEach {
-            observationsList += it.updatable.getNormalisedDoubleOrNull()!!
-        }
-
-        val observation = Encodable { observationsList.toDoubleArray() }
-
-        return StepReply(observation, getReward(), isDone, null)
+        return StepReply(getObservation(), getReward(), isDone, null)
     }
 
     private fun getBinaryStateDoubles(io: RecordedUpdatable<DaqcValue, RangedInput<*>>)
@@ -144,6 +120,29 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
         val currentValueDouble = controller.targetInput.updatable.getNormalisedDoubleOrNull()
 
         return if (currentValueDouble != null) rewardDistribution.density(currentValueDouble) - 1.0 else 0.0
+    }
+
+    private fun getObservation(): Encodable {
+        val observationsList = ArrayList<Double>()
+
+        // Inputs and Outputs won't return null because we wait for them to initialise in LearningController.
+        when (controller.targetInput.updatable.valueOrNull) {
+            is BinaryState -> observationsList += getBinaryStateDoubles(controller.targetInput)
+            is DaqcQuantity<*> -> observationsList += getQuantityInputDoubles(controller.targetInput)
+        }
+
+        controller.correlatedInputs.forEach {
+            when (it.updatable.valueOrNull) {
+                is BinaryState -> observationsList += getBinaryStateDoubles(controller.targetInput)
+                is DaqcQuantity<*> -> observationsList += getQuantityInputDoubles(controller.targetInput)
+            }
+        }
+
+        controller.outputs.forEach {
+            observationsList += it.updatable.getNormalisedDoubleOrNull()!!
+        }
+
+        return Encodable { observationsList.toDoubleArray() }
     }
 
     private operator fun MutableList<Double>.plusAssign(quantityInputDoubles: QuantityInputDoubles) {
