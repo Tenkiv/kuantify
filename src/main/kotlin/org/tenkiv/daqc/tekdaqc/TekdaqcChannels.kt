@@ -221,6 +221,7 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
     //This is a hack as we have no way to get precise DI sample rate on the Tekdaqc.
     private var sampleRateCount = AtomicInteger(0)
     private var lastSampleRate = 0
+    @Volatile
     private var sampleWaitJob: Job? = null
 
     override var sampleRate: ComparableQuantity<Frequency> = 2_000.hertz
@@ -245,7 +246,7 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
 
     override fun activate() {
         //This is a hack as we have no way to get precise DI sample rate on the Tekdaqc.
-        if(sampleWaitJob?.isCancelled != false){
+        if (sampleWaitJob?.isCancelled != false) {
             sampleWaitJob = launch(daqcThreadContext) {
                 while (isActive) {
                     delay(1L.secondsSpan)
