@@ -10,6 +10,7 @@ import com.tenkiv.tekdaqc.hardware.AAnalogInput
 import com.tenkiv.tekdaqc.hardware.AAnalogInput.Gain
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD
+import kotlinx.coroutines.experimental.CoroutineStart
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.launch
@@ -33,6 +34,7 @@ import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency
 import javax.measure.quantity.Temperature
+import kotlin.coroutines.experimental.coroutineContext
 import com.tenkiv.tekdaqc.hardware.ATekdaqc.AnalogScale as Scale
 
 
@@ -221,7 +223,6 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
     //This is a hack as we have no way to get precise DI sample rate on the Tekdaqc.
     private var sampleRateCount = AtomicInteger(0)
     private var lastSampleRate = 0
-    @Volatile
     private var sampleWaitJob: Job? = null
 
     override var sampleRate: ComparableQuantity<Frequency> = 2_000.hertz
@@ -246,13 +247,15 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
 
     override fun activate() {
         //This is a hack as we have no way to get precise DI sample rate on the Tekdaqc.
-        if (sampleWaitJob?.isCancelled != false) {
-            sampleWaitJob = launch(daqcThreadContext) {
-                while (isActive) {
-                    delay(1L.secondsSpan)
-                    sampleRate = ((sampleRateCount.get() + lastSampleRate) / 2).hertz
-                    lastSampleRate = sampleRateCount.get()
-                    sampleRateCount.set(0)
+        launch(daqcThreadContext) {
+            if (sampleWaitJob?.isCancelled != false) {
+                sampleWaitJob = launch(coroutineContext) {
+                    while (isActive) {
+                        delay(1L.secondsSpan)
+                        sampleRate = ((sampleRateCount.get() + lastSampleRate) / 2).hertz
+                        lastSampleRate = sampleRateCount.get()
+                        sampleRateCount.set(0)
+                    }
                 }
             }
         }
@@ -260,7 +263,7 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
     }
 
     override fun deactivate() {
-        launch(daqcThreadContext) {
+        launch(daqcThreadContext, CoroutineStart.ATOMIC) {
             sampleWaitJob?.cancel()
             sampleRateCount.set(0)
             lastSampleRate = 0
