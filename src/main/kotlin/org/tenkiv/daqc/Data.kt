@@ -3,7 +3,7 @@ package org.tenkiv.daqc
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import kotlinx.coroutines.experimental.channels.use
+import kotlinx.coroutines.experimental.channels.consume
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
@@ -22,8 +22,6 @@ import org.tenkiv.physikal.core.toFloatInSystemUnit as physikalToFloatInSystemUn
 import org.tenkiv.physikal.core.toIntInSystemUnit as physikalToIntInSystemUnit
 import org.tenkiv.physikal.core.toLongInSystemUnit as physikalToLongInSystemUnit
 import org.tenkiv.physikal.core.toShortInSystemUnit as physikalToShortInSystemUnit
-
-data class ArffDataSetStub(val data: Int)
 
 data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (ValueInstant<T>) -> Boolean) {
     var lastValue: ValueInstant<T>? = null
@@ -205,7 +203,7 @@ fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(
 ): ReceiveChannel<T> {
     val subChannel = openSubscription()
     launch(context) {
-        subChannel.use { channel -> for (x in channel) action(x) }
+        subChannel.consume { for (x in this) action(x) }
     }
     return subChannel
 }

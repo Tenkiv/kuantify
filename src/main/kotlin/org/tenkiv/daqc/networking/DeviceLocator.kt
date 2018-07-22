@@ -2,7 +2,8 @@ package org.tenkiv.daqc.networking
 
 import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.channels.use
+import kotlinx.coroutines.experimental.channels.consume
+import kotlinx.coroutines.experimental.time.delay
 import org.tenkiv.daqc.FoundDevice
 import org.tenkiv.daqc.LocatorUpdate
 import org.tenkiv.daqc.Updatable
@@ -46,7 +47,7 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
         val timeOutJob =
             if (timeout != null)
                 launch(CommonPool) {
-                    delay(timeout.toMillis())
+                    delay(timeout)
                     throw TimeoutException("Awaiting Device: $serialNumber Timed Out")
                 }
             else
@@ -55,7 +56,7 @@ abstract class DeviceLocator : Updatable<LocatorUpdate<*>> {
         while (iterator.hasNext() && job.isActive) {
             val next = iterator.next()
             if (next is FoundDevice<*> && next.serialNumber == serialNumber) {
-                awaitingJob.use {
+                awaitingJob.consume {
                     timeOutJob?.cancel()
                     return next
                 }

@@ -10,6 +10,7 @@ import kotlinx.coroutines.experimental.nio.aRead
 import kotlinx.coroutines.experimental.nio.aWrite
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
+import kotlinx.coroutines.experimental.time.delay
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.isOlderThan
 import org.tenkiv.coral.secondsSpan
@@ -390,7 +391,7 @@ class Recorder<out T> {
                     val newRecorderFile = RecorderFile(fileExpiresIn)
                     files += newRecorderFile
                     fileCreationBroadcaster.send(newRecorderFile)
-                    delay(fileCreationInterval.toMillis())
+                    delay(fileCreationInterval)
                 }
             }
 
@@ -412,7 +413,7 @@ class Recorder<out T> {
 
         if (storageFrequency is StorageFrequency.Interval)
             while (isActive) {
-                delay(storageFrequency.interval.toMillis())
+                delay(storageFrequency.interval)
                 recordUpdate(updatable.getValue())
                 cleanMemory()
             }
@@ -471,7 +472,7 @@ class Recorder<out T> {
         internal constructor(expiresIn: Duration?) {
             if (expiresIn != null) {
                 launch(daqcThreadContext) {
-                    delay(expiresIn.toMillis())
+                    delay(expiresIn)
 
                     suicide()
                 }

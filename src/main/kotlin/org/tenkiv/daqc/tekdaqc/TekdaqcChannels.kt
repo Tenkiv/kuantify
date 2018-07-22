@@ -12,10 +12,11 @@ import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.hardware.AnalogInput_RevD
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.time.delay
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
+import org.tenkiv.coral.secondsSpan
 import org.tenkiv.daqc.*
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
@@ -27,7 +28,6 @@ import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities
 import tec.uom.se.unit.Units.*
 import java.time.Instant
-import java.util.concurrent.TimeUnit
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency
@@ -221,9 +221,9 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
     private var sampleRateCount = 0
     private var lastSampleRate = 0
     private var sampleWaitJob: Job? = null
-    private var _sampleRate = 0.hertz
 
-    override val sampleRate: ComparableQuantity<Frequency> = _sampleRate
+    override var sampleRate: ComparableQuantity<Frequency> = 2_000.hertz
+        private set
 
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
@@ -244,19 +244,23 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
 
     override fun activate() {
         //This is a hack as we have no way to get precise DI sample rate on the Tekdaqc.
-        sampleWaitJob = launch {
-            delay(1, TimeUnit.SECONDS)
-            _sampleRate  = ((sampleRateCount+lastSampleRate)/2).hertz
-            lastSampleRate = sampleRateCount
-            sampleRateCount = 0
+        sampleWaitJob = launch(daqcThreadContext) {
+            while (isActive) {
+                delay(1L.secondsSpan)
+                sampleRate = ((sampleRateCount + lastSampleRate) / 2).hertz
+                lastSampleRate = sampleRateCount
+                sampleRateCount = 0
+            }
         }
         input.activate()
     }
 
     override fun deactivate() {
-        sampleWaitJob?.cancel()
-        sampleRateCount = 0
-        lastSampleRate = 0
+        launch(daqcThreadContext) {
+            sampleWaitJob?.cancel()
+            sampleRateCount = 0
+            lastSampleRate = 0
+        }
         input.deactivate()
     }
 
@@ -349,7 +353,7 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcDevice, val output: com.tenkiv.tekdaq
     override fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>) {
         currentState = DigitalStatus.ACTIVATED_FREQUENCY
         frequencyJob = launch(daqcThreadContext) {
-            val cycleSpeed = ((freq) / 2).toLongIn(HERTZ)
+            val cycleSpeed = (freq / 2) toLongIn HERTZ
             var isOn = false
             while (true) {
                 when {
@@ -361,7 +365,7 @@ class TekdaqcDigitalOutput(tekdaqc: TekdaqcDevice, val output: com.tenkiv.tekdaq
                     }
                 }
                 isOn = !isOn
-                delay(cycleSpeed, TimeUnit.SECONDS)
+                delay(cycleSpeed.secondsSpan)
             }
         }
         _transitionFrequencyBroadcastChannel.offer(freq.at(Instant.now()))

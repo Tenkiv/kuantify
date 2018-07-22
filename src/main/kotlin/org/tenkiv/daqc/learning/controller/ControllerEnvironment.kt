@@ -3,9 +3,9 @@ package org.tenkiv.daqc.learning.controller
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.Sets
 import org.apache.commons.math3.distribution.NormalDistribution
-import org.deeplearning4j.exception.InvalidStepException
 import org.deeplearning4j.gym.StepReply
 import org.deeplearning4j.rl4j.mdp.MDP
+import org.deeplearning4j.rl4j.space.ArrayObservationSpace
 import org.deeplearning4j.rl4j.space.DiscreteSpace
 import org.deeplearning4j.rl4j.space.Encodable
 import org.deeplearning4j.rl4j.space.ObservationSpace
@@ -41,14 +41,17 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
         if (mean != null) {
             return@lazy NormalDistribution(mean, DIST_SD)
         } else {
-            throw InvalidStepException("Tried to access rewardDistribution before setting the learning controller.")
+            throw IllegalStateException("Tried to access rewardDistribution before setting the learning controller.")
         }
     }
 
     override fun getActionSpace() = DiscreteSpace(actionPermutationList.size)
 
     override fun getObservationSpace(): ObservationSpace<Encodable> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val size = getObservation().toArray().size
+        val shape = IntArray(size)
+
+        return ArrayObservationSpace(shape)
     }
 
     override fun isDone(): Boolean {
