@@ -28,6 +28,7 @@ import tec.uom.se.ComparableQuantity
 import tec.uom.se.quantity.Quantities
 import tec.uom.se.unit.Units.*
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicInteger
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency
@@ -218,7 +219,7 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
     DigitalInput(), IDigitalChannelListener, IPWMChannelListener {
 
     //This is a hack as we have no way to get precise DI sample rate on the Tekdaqc.
-    private var sampleRateCount = 0
+    private var sampleRateCount = AtomicInteger(0)
     private var lastSampleRate = 0
     private var sampleWaitJob: Job? = null
 
@@ -244,12 +245,14 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
 
     override fun activate() {
         //This is a hack as we have no way to get precise DI sample rate on the Tekdaqc.
-        sampleWaitJob = launch(daqcThreadContext) {
-            while (isActive) {
-                delay(1L.secondsSpan)
-                sampleRate = ((sampleRateCount + lastSampleRate) / 2).hertz
-                lastSampleRate = sampleRateCount
-                sampleRateCount = 0
+        if(sampleWaitJob?.isCancelled != false){
+            sampleWaitJob = launch(daqcThreadContext) {
+                while (isActive) {
+                    delay(1L.secondsSpan)
+                    sampleRate = ((sampleRateCount.get() + lastSampleRate) / 2).hertz
+                    lastSampleRate = sampleRateCount.get()
+                    sampleRateCount.set(0)
+                }
             }
         }
         input.activate()
@@ -258,7 +261,7 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
     override fun deactivate() {
         launch(daqcThreadContext) {
             sampleWaitJob?.cancel()
-            sampleRateCount = 0
+            sampleRateCount.set(0)
             lastSampleRate = 0
         }
         input.deactivate()
@@ -286,7 +289,7 @@ class TekdaqcDigitalInput(tekdaqc: TekdaqcDevice, val input: com.tenkiv.tekdaqc.
     }
 
     override fun onDigitalDataReceived(input: com.tenkiv.tekdaqc.hardware.DigitalInput?, data: DigitalInputData) {
-        sampleRateCount++
+        sampleRateCount.incrementAndGet()
         when (data.state) {
             true -> {
                 _binaryStateBroadcastChannel.offer(BinaryState.On.at(Instant.ofEpochMilli(data.timestamp)))
