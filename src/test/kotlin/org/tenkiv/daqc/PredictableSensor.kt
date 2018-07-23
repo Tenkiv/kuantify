@@ -4,7 +4,7 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.physikal.core.volt
-import tec.uom.se.ComparableQuantity
+import tec.units.indriya.ComparableQuantity
 import java.time.Instant
 import java.util.*
 import javax.measure.quantity.ElectricPotential

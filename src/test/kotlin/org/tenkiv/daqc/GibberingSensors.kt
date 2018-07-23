@@ -8,9 +8,9 @@ import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.hardware.definitions.device.Device
 import org.tenkiv.physikal.core.hertz
 import org.tenkiv.physikal.core.percent
-import tec.uom.se.ComparableQuantity
-import tec.uom.se.unit.MetricPrefix
-import tec.uom.se.unit.Units
+import tec.units.indriya.ComparableQuantity
+import tec.units.indriya.unit.MetricPrefix.*
+import tec.units.indriya.unit.Units.*
 import java.time.Instant
 import java.util.*
 import javax.measure.quantity.ElectricPotential
@@ -113,7 +113,8 @@ class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
         timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
                 broadcastChannel.offer(
-                        DaqcQuantity.of(random.nextInt(5000), MetricPrefix.MILLI(Units.VOLT)).at(Instant.now()))
+                    DaqcQuantity.of(random.nextInt(5000), MILLI(VOLT)).at(Instant.now())
+                )
 
             }
         }, 100, 100)
@@ -159,7 +160,9 @@ class AnalogInputGibberingSensor : AnalogInput() {
                 broadcastChannel.offer(
                         DaqcQuantity.of(
                                 random.nextInt(5000),
-                                MetricPrefix.MILLI(Units.VOLT)).at(Instant.now()))
+                            MILLI(VOLT)
+                        ).at(Instant.now())
+                )
             }
         }, 100, 100)
     }
