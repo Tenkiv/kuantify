@@ -11,10 +11,10 @@ import org.deeplearning4j.rl4j.util.DataManager
 import org.nd4j.linalg.learning.config.Adam
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.daqc.*
-import org.tenkiv.daqc.lib.toDuration
 import org.tenkiv.daqc.lib.toPeriod
 import org.tenkiv.daqc.recording.*
 import org.tenkiv.physikal.core.times
+import org.tenkiv.physikal.core.toDuration
 import java.time.Duration
 import kotlin.concurrent.thread
 

@@ -9,7 +9,7 @@ import org.tenkiv.daqc.QuantityMeasurement
 import org.tenkiv.daqc.lib.openNewCoroutineListener
 import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.averageOrNull
-import tec.uom.se.ComparableQuantity
+import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 
 //TODO: Make this work with BinaryState or make another version for BinaryState

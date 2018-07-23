@@ -9,8 +9,8 @@ import org.tenkiv.physikal.core.micro
 import org.tenkiv.physikal.core.times
 import org.tenkiv.physikal.core.toFloatIn
 import org.tenkiv.physikal.core.volt
-import tec.uom.se.ComparableQuantity
-import tec.uom.se.unit.Units.HERTZ
+import tec.units.indriya.ComparableQuantity
+import tec.units.indriya.unit.Units.*
 import javax.measure.quantity.ElectricPotential
 
 private val analogNoiseLookupTable =

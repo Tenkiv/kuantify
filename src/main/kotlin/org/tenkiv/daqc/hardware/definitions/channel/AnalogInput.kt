@@ -1,7 +1,7 @@
 package org.tenkiv.daqc.hardware.definitions.channel
 
 import org.tenkiv.daqc.QuantityInput
-import tec.uom.se.ComparableQuantity
+import tec.units.indriya.ComparableQuantity
 import javax.measure.quantity.ElectricPotential
 
 abstract class AnalogInput : QuantityInput<ElectricPotential>, DaqcChannel {

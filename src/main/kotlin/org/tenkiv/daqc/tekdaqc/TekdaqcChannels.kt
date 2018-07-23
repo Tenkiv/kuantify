@@ -25,9 +25,9 @@ import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import org.tenkiv.daqc.hardware.definitions.device.Device
 import org.tenkiv.daqc.hardware.inputs.ScAnalogSensor
 import org.tenkiv.physikal.core.*
-import tec.uom.se.ComparableQuantity
-import tec.uom.se.quantity.Quantities
-import tec.uom.se.unit.Units.*
+import tec.units.indriya.ComparableQuantity
+import tec.units.indriya.quantity.Quantities
+import tec.units.indriya.unit.Units.*
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
 import javax.measure.quantity.Dimensionless

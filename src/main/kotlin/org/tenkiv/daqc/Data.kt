@@ -9,8 +9,8 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.physikal.core.PhysicalUnit
 import org.tenkiv.physikal.core.asType
-import tec.uom.se.ComparableQuantity
-import tec.uom.se.quantity.Quantities
+import tec.units.indriya.ComparableQuantity
+import tec.units.indriya.quantity.Quantities
 import java.time.Instant
 import java.util.zip.DataFormatException
 import javax.measure.Quantity

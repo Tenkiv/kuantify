@@ -3,8 +3,8 @@ package org.tenkiv.daqc
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.physikal.core.PhysicalUnit
 import org.tenkiv.physikal.core.invoke
-import tec.uom.se.ComparableQuantity
-import tec.uom.se.unit.Units
+import tec.units.indriya.ComparableQuantity
+import tec.units.indriya.unit.Units
 import javax.measure.Quantity
 import kotlin.reflect.KClass
 

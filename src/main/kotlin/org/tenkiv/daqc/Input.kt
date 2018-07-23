@@ -2,7 +2,7 @@ package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
-import tec.uom.se.ComparableQuantity
+import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 import javax.measure.quantity.Frequency
 

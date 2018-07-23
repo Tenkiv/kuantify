@@ -7,10 +7,9 @@ import org.tenkiv.daqc.hardware.inputs.ScAnalogSensor
 import org.tenkiv.daqc.lib.ValueOutOfRangeException
 import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.*
-import tec.uom.se.ComparableQuantity
-import tec.uom.se.unit.MetricPrefix.MILLI
-import tec.uom.se.unit.Units.CELSIUS
-import tec.uom.se.unit.Units.VOLT
+import tec.units.indriya.ComparableQuantity
+import tec.units.indriya.unit.MetricPrefix.MILLI
+import tec.units.indriya.unit.Units.*
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Temperature
 import kotlin.math.pow

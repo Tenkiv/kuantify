@@ -45,11 +45,11 @@ dependencies {
     compile "org.nd4j:nd4j-native-platform:$dl4j_version"
 
     //Units of Measurement Library
-    compile 'org.tenkiv.physikal:core:1.1.3.3'
+    compile 'org.tenkiv.physikal:core:2.0.2.0-SNAPSHOT'
 
     //General utilities for Kotlin
     compile "org.jetbrains.kotlin:kotlin-reflect"
-    compile 'org.tenkiv.coral.jdk:core:1.0.1.1'
+    compile 'org.tenkiv.coral:coral:2.0.0.1'
     compile 'io.arrow-kt:arrow-core:0.7.2'
     compile 'org.nield:kotlin-statistics:1.1.0'
 
@@ -59,7 +59,7 @@ dependencies {
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-nio:$coroutines_version"
 
     //Temp Tekdaqc Dependency
-    compile 'com.tenkiv.tekdaqc:java-library:2.2.0.4-SNAPSHOT'
+    compile 'com.tenkiv.tekdaqc:java-library:2.2.0.6-SNAPSHOT'
 
     //JSON
     compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"

@@ -1,7 +1,7 @@
 package org.tenkiv.daqc
 
 
-import tec.uom.se.ComparableQuantity
+import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 
 

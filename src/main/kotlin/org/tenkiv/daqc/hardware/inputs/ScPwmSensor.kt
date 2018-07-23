@@ -12,7 +12,7 @@ import org.tenkiv.daqc.QuantityInput
 import org.tenkiv.daqc.QuantityMeasurement
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.lib.openNewCoroutineListener
-import tec.uom.se.ComparableQuantity
+import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
