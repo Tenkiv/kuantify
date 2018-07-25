@@ -23,6 +23,7 @@ object Locator : Updatable<LocatorUpdate<*>> {
 
     private val currentDevices = HashMap<KClass<*>, HashMap<String, Device>>()
 
+    // TODO: This needs to be made thread safe as it could be called from multiple threads.
     fun addDeviceLocator(locator: DeviceLocator) {
         if (!locatorList.any { it::class === locator::class }) {
             locatorList.add(locator)
@@ -32,6 +33,7 @@ object Locator : Updatable<LocatorUpdate<*>> {
         }
     }
 
+    // TODO: This needs to be made thread safe as it could be called from multiple threads.
     fun removeDeviceLocator(locator: DeviceLocator) {
         locatorList.removeIf { it == locator }
     }

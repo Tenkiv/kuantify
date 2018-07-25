@@ -10,7 +10,7 @@ import kotlin.reflect.KClass
 
 //typealias QuantityOutput<Q> = Output<DaqcQuantity<Q>>
 
-fun <Q : Quantity<Q>> QuantityOutput<Q>.setOutput(setting: ComparableQuantity<Q>) = setOutput(setting.toDaqc())
+//fun <Q : Quantity<Q>> QuantityOutput<Q>.setOutput(setting: ComparableQuantity<Q>) = setOutput(setting.toDaqc())
 
 interface Output<T : DaqcValue> : Updatable<ValueInstant<T>> {
 
@@ -31,6 +31,8 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
 
     //TODO: check to see if getUnit() already returns the systemUnit, making .systemUnit pointless
     val systemUnit: PhysicalUnit<Q> get() = Units.getInstance().getUnit(quantityType.java).systemUnit
+
+    fun setOutput(setting: ComparableQuantity<Q>) = setOutput(setting.toDaqc())
 
     fun setOutputInSystemUnit(setting: Double) = setOutput(setting(systemUnit))
 
