@@ -3,16 +3,14 @@ package org.tenkiv.daqc.tekdaqc
 import com.tenkiv.tekdaqc.hardware.ATekdaqc
 import com.tenkiv.tekdaqc.locator.Locator
 import com.tenkiv.tekdaqc.locator.OnTekdaqcDiscovered
-import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import org.tenkiv.daqc.FoundDevice
-import org.tenkiv.daqc.LocatorUpdate
-import org.tenkiv.daqc.LostDevice
 import org.tenkiv.daqc.networking.DeviceLocator
-import java.time.Duration
+import org.tenkiv.daqc.networking.FoundDevice
+import org.tenkiv.daqc.networking.LocatorUpdate
+import org.tenkiv.daqc.networking.LostDevice
 import java.util.concurrent.CopyOnWriteArrayList
 
-class TekdaqcLocator : DeviceLocator() {
+class TekdaqcLocator : DeviceLocator<TekdaqcDevice>() {
 
     private val _activeDevices = CopyOnWriteArrayList<TekdaqcDevice>()
 
@@ -43,12 +41,6 @@ class TekdaqcLocator : DeviceLocator() {
             }
         })
     }
-
-    override fun getDeviceForSerial(serialNumber: String): TekdaqcDevice? =
-        activeDevices.firstOrNull { it.serialNumber == serialNumber }
-
-    override fun awaitSpecificDevice(serialNumber: String, timeout: Duration?): Deferred<TekdaqcDevice> =
-        _awaitSpecificDevice(serialNumber, timeout)
 
     override fun search() {
         Locator.instance.searchForTekdaqcs()

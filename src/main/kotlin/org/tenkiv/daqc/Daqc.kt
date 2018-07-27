@@ -70,53 +70,6 @@ interface RangedIO<T> : Updatable<ValueInstant<T>> where T : DaqcValue, T : Comp
 
 }
 
-sealed class LocatorUpdate<out T : Device>(val wrappedDevice: T) : Device by wrappedDevice
-
-/**
- * A Device found by a Locator
- */
-class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
-
-    override fun toString() = "FoundDevice: $wrappedDevice"
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as FoundDevice<*>
-
-        if (wrappedDevice != other.wrappedDevice) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return wrappedDevice.hashCode()
-    }
-}
-
-class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
-
-    override fun toString() = "LostDevice: $wrappedDevice"
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as LostDevice<*>
-
-        if (wrappedDevice != other.wrappedDevice) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return wrappedDevice.hashCode()
-    }
-
-
-}
-
 
 open class DaqcException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
 

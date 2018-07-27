@@ -2,10 +2,13 @@ package org.tenkiv.daqc.recording
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.CancellationException
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.nio.aRead
 import kotlinx.coroutines.experimental.nio.aWrite
 import kotlinx.coroutines.experimental.sync.Mutex
@@ -26,17 +29,19 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.coroutines.experimental.coroutineContext
 
-typealias ValueSerializer<T> = (T) -> String
-typealias ValueDeserializer<T> = (String) -> T
+internal typealias ValueSerializer<T> = (T) -> String
+internal typealias ValueDeserializer<T> = (String) -> T
+internal typealias StorageFilter<T> = (ValueInstant<T>) -> Boolean
+internal typealias RecordingFilter<T> = Recorder<T>.(ValueInstant<T>) -> Boolean
 
 //TODO: Move default parameter values in recorder creation function to constants
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
     diskDuration: StorageDuration = StorageDuration.Forever,
-    filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
-    valueSerializer: (T) -> String,
-    valueDeserializer: (String) -> T
+    filterOnRecord: RecordingFilter<T> = { true },
+    valueSerializer: ValueSerializer<T>,
+    valueDeserializer: ValueDeserializer<T>
 ) =
     RecordedUpdatable(
         this,
@@ -55,9 +60,9 @@ fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageSamples = StorageSamples.Number(100),
     diskDuration: StorageSamples = StorageSamples.None,
-    filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
-    valueSerializer: (T) -> String,
-    valueDeserializer: (String) -> T
+    filterOnRecord: RecordingFilter<T> = { true },
+    valueSerializer: ValueSerializer<T>,
+    valueDeserializer: ValueDeserializer<T>
 ) =
     RecordedUpdatable(
         this,
@@ -75,7 +80,7 @@ fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryStorageLength: StorageLength = StorageSamples.Number(100),
-    filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true }
+    filterOnRecord: RecordingFilter<T> = { true }
 ) =
     RecordedUpdatable(
         this,
@@ -87,18 +92,9 @@ fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
         )
     )
 
-fun <T> List<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>):
-        List<ValueInstant<T>> {
-    val oldestRequested = instantRange.start
-    val newestRequested = instantRange.endInclusive
-
-    return this.filter {
-        it.instant.isAfter(oldestRequested) &&
-                it.instant.isBefore(newestRequested) ||
-                it.instant == oldestRequested ||
-                it.instant == newestRequested
-    }
-}
+// TODO: Use this from coral
+fun <T> Iterable<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
+    this.filter { it.instant in instantRange }
 
 
 data class RecordedUpdatable<out T, out U : Updatable<ValueInstant<T>>>(
@@ -196,7 +192,7 @@ class Recorder<out T> {
 
     private val receiveChannel: ReceiveChannel<ValueInstant<T>>
 
-    private val uid = getRecorderUid()
+    private val uid = async(daqcThreadContext) { getRecorderUid() }
     private val directoryPath = async(daqcThreadContext) { "$RECORDERS_PATH/${uid.await()}" }
     private val directoryFile = async(daqcThreadContext) { File(directoryPath.await()).apply { mkdir() } }
 
@@ -279,32 +275,23 @@ class Recorder<out T> {
     //TODO: Make this return truly immutable list.
     fun getDataInMemory(): List<ValueInstant<T>> = ArrayList(_dataInMemory)
 
-    //TODO: Make this return a truly immutable list using a builder
-    fun getAllData(): Deferred<List<ValueInstant<T>>> = async(daqcThreadContext) {
+    suspend fun getAllData(): List<ValueInstant<T>> =
         if (memoryStorageLength >= diskStorageLength) getDataInMemory() else getDataFromDisk { true }
-    }
 
-    //TODO: Make similar extension function for Collection<ValueInstant<T>>
-    fun getDataInRange(instantRange: ClosedRange<Instant>): Deferred<List<ValueInstant<T>>> =
-        async(daqcThreadContext) {
-            val oldestRequested = instantRange.start
-            val newestRequested = instantRange.endInclusive
+    suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> {
+        val oldestRequested = instantRange.start
 
-            val filterFun: (ValueInstant<T>) -> Boolean = {
-                it.instant.isAfter(oldestRequested) &&
-                        it.instant.isBefore(newestRequested) ||
-                        it.instant == oldestRequested ||
-                        it.instant == newestRequested
-            }
+        val filterFun: StorageFilter<T> = { it.instant in instantRange }
 
-            val oldestMemory = _dataInMemory.firstOrNull()
-            if (oldestMemory != null && oldestMemory.instant.isBefore(oldestRequested))
-                return@async _dataInMemory.filter(filterFun)
-            else if (diskStorageLength > memoryStorageLength)
-                getDataFromDisk(filterFun)
-            else
-                return@async _dataInMemory.filter(filterFun)
+        val oldestMemory = _dataInMemory.firstOrNull()
+        return if (oldestMemory != null && oldestMemory.instant.isBefore(oldestRequested)) {
+            _dataInMemory.filter(filterFun)
+        } else if (diskStorageLength > memoryStorageLength) {
+            getDataFromDisk(filterFun)
+        } else {
+            _dataInMemory.filter(filterFun)
         }
+    }
 
     fun stop(shouldDeleteDiskData: Boolean = false) {
         receiveChannel.cancel(CancellationException("Recorder manually stopped"))
@@ -316,7 +303,7 @@ class Recorder<out T> {
             }
     }
 
-    private suspend fun getDataFromDisk(filter: (ValueInstant<T>) -> Boolean): List<ValueInstant<T>> {
+    private suspend fun getDataFromDisk(filter: StorageFilter<T>): List<ValueInstant<T>> {
         //TODO: Change to immutable list using builder
         val result = ArrayList<ValueInstant<T>>()
         val currentFiles: List<RecorderFile> = ArrayList(files)
@@ -628,7 +615,7 @@ class Recorder<out T> {
         private val recorderUidMutex = Mutex()
         private var recorderUid: Long? = null
 
-        private fun getRecorderUid(): Deferred<String> = async(daqcThreadContext) {
+        private suspend fun getRecorderUid(): String =
             recorderUidMutex.withLock {
                 val lastUid = recorderUid
                 val thisUid: Long
@@ -645,8 +632,6 @@ class Recorder<out T> {
                 }
                 thisUid.toString()
             }
-
-        }
 
         /**
          * This is a blocking call.
