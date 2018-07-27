@@ -8,7 +8,7 @@ import org.tenkiv.daqc.lib.ValueOutOfRangeException
 import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
-import tec.units.indriya.unit.MetricPrefix.MILLI
+import tec.units.indriya.unit.MetricPrefix.*
 import tec.units.indriya.unit.Units.*
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Temperature
@@ -37,7 +37,7 @@ class ThermocoupleK(
      */
     @Throws(ValueOutOfRangeException::class, UninitializedPropertyAccessException::class)
     override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Temperature>> {
-        val mv = ep.toDoubleIn(MILLI(VOLT))
+        val mv = ep toDoubleIn MILLI(VOLT)
         val temperatureReferenceValue =
             analogInput.device.temperatureReference.broadcastChannel.valueOrNull?.value
 

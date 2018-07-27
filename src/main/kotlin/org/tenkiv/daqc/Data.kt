@@ -1,10 +1,5 @@
 package org.tenkiv.daqc
 
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.channels.BroadcastChannel
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import kotlinx.coroutines.experimental.channels.consume
-import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.physikal.core.PhysicalUnit
@@ -15,18 +10,12 @@ import java.time.Instant
 import java.util.zip.DataFormatException
 import javax.measure.Quantity
 import javax.measure.quantity.Frequency
-import kotlin.coroutines.experimental.CoroutineContext
 import org.tenkiv.physikal.core.toByteInSystemUnit as physikalToByteInSystemUnit
 import org.tenkiv.physikal.core.toDoubleInSystemUnit as physikalToDoubleInSystemUnit
 import org.tenkiv.physikal.core.toFloatInSystemUnit as physikalToFloatInSystemUnit
 import org.tenkiv.physikal.core.toIntInSystemUnit as physikalToIntInSystemUnit
 import org.tenkiv.physikal.core.toLongInSystemUnit as physikalToLongInSystemUnit
 import org.tenkiv.physikal.core.toShortInSystemUnit as physikalToShortInSystemUnit
-
-data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (ValueInstant<T>) -> Boolean) {
-    var lastValue: ValueInstant<T>? = null
-    var hasBeenReached: Boolean = false
-}
 
 sealed class DaqcValue {
 
@@ -195,17 +184,6 @@ sealed class LineNoiseFrequency {
 
     object Ignore : LineNoiseFrequency()
 
-}
-
-fun <T : ValueInstant<DaqcValue>> BroadcastChannel<T>.consumeAndReturn(
-    context: CoroutineContext = CommonPool,
-    action: suspend (T) -> Unit
-): ReceiveChannel<T> {
-    val subChannel = openSubscription()
-    launch(context) {
-        subChannel.consume { for (x in this) action(x) }
-    }
-    return subChannel
 }
 
 enum class DigitalStatus {

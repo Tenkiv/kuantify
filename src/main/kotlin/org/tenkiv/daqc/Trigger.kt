@@ -2,6 +2,7 @@ package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.daqc.lib.consumeAndReturn
 import java.util.concurrent.atomic.AtomicInteger
 
 class Trigger<T : DaqcValue>(
@@ -97,4 +98,9 @@ sealed class MaxTriggerCount {
     }
 
     object Unlimited : MaxTriggerCount()
+}
+
+data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (ValueInstant<T>) -> Boolean) {
+    var lastValue: ValueInstant<T>? = null
+    var hasBeenReached: Boolean = false
 }
