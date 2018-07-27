@@ -13,7 +13,7 @@ import javax.measure.Quantity
 typealias RecordedQuantityInput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityInput<Q>>
 typealias RecordedQuantityOutput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityOutput<Q>>
 
-//TODO: Using type aliases here seems to crash the compiler, switch to type alias when that is fixed.
+// Using type aliases here still seems to crash the compiler sometimes...
 inline fun <reified Q : Quantity<Q>, U : Updatable<QuantityMeasurement<Q>>>
         U.pairWithNewRecorder(
     storageFrequency: StorageFrequency = StorageFrequency.All,
