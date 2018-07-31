@@ -37,39 +37,38 @@ repositories {
 }
 
 dependencies {
-    compile 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
 
     // DL4J
-    compile "org.deeplearning4j:rl4j-core:$dl4j_version"
-   // compile "org.deeplearning4j:rl4j-gym:$dl4j_version"
-    compile "org.nd4j:nd4j-native-platform:$dl4j_version"
+    implementation "org.deeplearning4j:rl4j-core:$dl4j_version"
+    implementation "org.nd4j:nd4j-native-platform:$dl4j_version"
 
     //Units of Measurement Library
-    compile 'org.tenkiv.physikal:core:2.0.2.0-SNAPSHOT'
+    api 'org.tenkiv.physikal:core:2.0.2.0-SNAPSHOT'
 
     //General utilities for Kotlin
-    compile "org.jetbrains.kotlin:kotlin-reflect"
-    compile 'org.tenkiv.coral:coral:2.0.0.1'
-    compile 'io.arrow-kt:arrow-core:0.7.2'
-    compile 'org.nield:kotlin-statistics:1.1.0'
+    implementation "org.jetbrains.kotlin:kotlin-reflect"
+    api 'org.tenkiv.coral:coral:2.0.0.1'
+    api 'io.arrow-kt:arrow-core:0.7.2'
+    implementation 'org.nield:kotlin-statistics:1.1.0'
 
     //Kotlin Coroutines
-    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
-    compile "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutines_version"
-    compile "org.jetbrains.kotlinx:kotlinx-coroutines-nio:$coroutines_version"
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutines_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-nio:$coroutines_version"
 
     //Temp Tekdaqc Dependency
-    compile 'com.tenkiv.tekdaqc:java-library:2.2.0.6-SNAPSHOT'
+    api 'com.tenkiv.tekdaqc:java-library:2.2.0.6-SNAPSHOT'
 
     //JSON
-    compile "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
-    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
+    implementation "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
 
     //Testing Framework
-    testCompile 'io.kotlintest:kotlintest-runner-junit5:3.1.7'
+    testImplementation 'io.kotlintest:kotlintest-runner-junit5:3.1.7'
 
-    testCompile "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
 }
 
 apply from: 'maven_push.gradle'
