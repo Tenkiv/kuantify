@@ -57,11 +57,11 @@ class RecorderSpec : StringSpec({
 
         runBlocking {
 
-            val analogData = analogRecorder.getAllData().await()
+            val analogData = analogRecorder.getAllData()
             analogData.last().instant.epochSecond -
                     analogData.first().instant.epochSecond shouldBe (10.0 plusOrMinus 2.0)
 
-            val digitalData = digitalRecorder.getAllData().await()
+            val digitalData = digitalRecorder.getAllData()
             digitalData.last().instant.epochSecond -
                     digitalData.first().instant.epochSecond shouldBe (10.0 plusOrMinus 2.0)
 
@@ -104,13 +104,13 @@ class RecorderSpec : StringSpec({
         sleep(12_000)
 
         runBlocking {
-            val data = recorder.getAllData().await()
+            val data = recorder.getAllData()
 
             println(data)
 
             data.last().instant.epochSecond -
                     data.first().instant.epochSecond shouldBe (10.0 plusOrMinus 1.5)
-        }
+    }
     }
 })
 
