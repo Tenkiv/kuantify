@@ -108,8 +108,8 @@ class RecorderSpec : StringSpec({
 
             println(data)
 
-            data.last().instant.epochSecond -
-                    data.first().instant.epochSecond shouldBe (10.0 plusOrMinus 1.5)
+            data.last().instant.epochSecond.toDouble() -
+                    data.first().instant.epochSecond.toDouble() shouldBe (10.0 plusOrMinus 1.5)
     }
     }
 })
