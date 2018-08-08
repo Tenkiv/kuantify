@@ -1,9 +1,8 @@
 package org.tenkiv.daqc.learning.controller
 
 import com.google.common.collect.ImmutableList
-import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.future.asCompletableFuture
+import kotlinx.coroutines.experimental.launch
 import org.deeplearning4j.rl4j.learning.sync.qlearning.QLearning
 import org.deeplearning4j.rl4j.learning.sync.qlearning.discrete.QLearningDiscreteDense
 import org.deeplearning4j.rl4j.network.dqn.DQNFactoryStdDense
@@ -11,6 +10,7 @@ import org.deeplearning4j.rl4j.space.Encodable
 import org.deeplearning4j.rl4j.util.DataManager
 import org.nd4j.linalg.learning.config.Adam
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.coral.now
 import org.tenkiv.daqc.*
 import org.tenkiv.daqc.lib.toPeriod
 import org.tenkiv.daqc.recording.*
@@ -98,18 +98,18 @@ class LearningController<T>(
     }
 
     override fun setOutput(setting: T) {
-        thread {
+        launch {
             // Wait until all inputs have a value. This is hacky and sucks but rl4j makes life difficult.
-            async {
-                targetInput.updatable.getValue()
-            }.asCompletableFuture().join()
+            targetInput.updatable.getValue()
+
             correlatedInputs.forEach {
-                async {
-                    it.updatable.getValue()
-                }.asCompletableFuture().join()
+                it.updatable.getValue()
             }
 
-            agent.train()
+            _broadcastChannel.send(setting.now())
+            thread {
+                agent.train()
+            }
         }
     }
 
