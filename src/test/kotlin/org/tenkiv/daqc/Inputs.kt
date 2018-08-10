@@ -1,3 +1,20 @@
+/*
+ * Copyright 2018 Tenkiv, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
@@ -9,12 +26,9 @@ import tec.units.indriya.ComparableQuantity
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency
 
-/**
- * Created by tenkiv on 7/1/17.
- */
 class EmptyAnalogInput : AnalogInput() {
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = throw Exception("Empty Test Class Exception")
     override val sampleRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override val device: Device
@@ -44,19 +58,19 @@ class EmptyAnalogInput : AnalogInput() {
 
 class EmptyDigitalInput : DigitalInput() {
     override val sampleRate: ComparableQuantity<Frequency>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = throw Exception("Empty Test Class Exception")
 
     override fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        throw Exception("Empty Test Class Exception")
     }
 
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = throw Exception("Empty Test Class Exception")
 
     override val transitionFrequencyIsSimulated: Boolean
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = throw Exception("Empty Test Class Exception")
     override val pwmIsSimulated: Boolean
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = throw Exception("Empty Test Class Exception")
 
     override val isActiveForBinaryState: Boolean
         get() = throw Exception("Empty Test Class Exception")
