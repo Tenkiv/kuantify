@@ -21,16 +21,13 @@ enum class NetworkProtocol {
     UDP,
     TCP,
     SSH,
-    TELNET,
-    COUCHBASE
-
+    TELNET
 }
 
 enum class SharingStatus {
     NONE,
     READ_ALL,
-    READ_WRITE_ALL,
-    CUSTOM
+    READ_WRITE_ALL
 }
 
 class UnsupportedProtocolException : Throwable("Board unable to connect with supplied protocol.")

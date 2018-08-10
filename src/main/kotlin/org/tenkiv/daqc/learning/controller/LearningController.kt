@@ -118,10 +118,12 @@ class LearningController<T>(
         launch {
             // Wait until all inputs have a value. This is hacky and sucks but rl4j makes life difficult.
             targetInput.updatable.activate()
-            targetInput.updatable.getValue()
-
             correlatedInputs.forEach {
                 it.updatable.activate()
+            }
+
+            targetInput.updatable.getValue()
+            correlatedInputs.forEach {
                 it.updatable.getValue()
             }
 
