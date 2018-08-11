@@ -1,0 +1,25 @@
+apply plugin: 'kotlinx-serialization'
+
+buildscript {
+
+    repositories {
+        mavenCentral()
+        maven { url "https://kotlin.bintray.com/kotlinx" }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlinx:kotlinx-gradle-serialization-plugin:$serialization_version"
+    }
+}
+
+dependencies {
+    //JSON
+    implementation "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
+
+    //General utilities for Kotlin
+    implementation 'org.nield:kotlin-statistics:1.1.0'
+
+    testImplementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
+}

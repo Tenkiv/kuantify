@@ -20,7 +20,6 @@ package org.tenkiv.daqc.learning.controller
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.BinaryStateOutput
 import org.tenkiv.daqc.RangedQuantityOutput
-import org.tenkiv.physikal.core.toDoubleInSystemUnit
 
 sealed class OutputActionHandler {
 
