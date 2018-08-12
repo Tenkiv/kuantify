@@ -28,9 +28,7 @@ typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
 /**
  * @param T The type of data given by this Input.
  */
-interface Input<out T : DaqcValue> : Updatable<ValueInstant<T>> {
-
-    val isActive: Boolean
+interface Input<out T : DaqcValue> : IOChannel<T> {
 
     val sampleRate: ComparableQuantity<Frequency>
 
@@ -41,8 +39,7 @@ interface Input<out T : DaqcValue> : Updatable<ValueInstant<T>> {
 
     fun activate()
 
-    fun deactivate()
-
+    //TODO: This should be moved to IOChannel.
     fun addTrigger(condition: (ValueInstant<T>) -> Boolean, onTrigger: () -> Unit): Trigger<out T> =
         Trigger(
             triggerConditions = *arrayOf(TriggerCondition(this@Input, condition)),
@@ -51,7 +48,7 @@ interface Input<out T : DaqcValue> : Updatable<ValueInstant<T>> {
 
 }
 
-interface RangedInput<T> : Input<T>, RangedIO<T> where T : DaqcValue, T : Comparable<T>
+interface RangedInput<T> : Input<T>, RangedIOChannel<T> where T : DaqcValue, T : Comparable<T>
 
 interface BinaryStateInput : RangedInput<BinaryState> {
 

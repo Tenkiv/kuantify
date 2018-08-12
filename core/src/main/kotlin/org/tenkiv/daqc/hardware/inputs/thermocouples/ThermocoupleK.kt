@@ -32,7 +32,7 @@ import javax.measure.quantity.Temperature
 import kotlin.math.pow
 
 
-class ThermocoupleK(
+open class ThermocoupleK(
     channel: AnalogInput,
     acceptableError: ComparableQuantity<Temperature> = 1.celsius
 ) :

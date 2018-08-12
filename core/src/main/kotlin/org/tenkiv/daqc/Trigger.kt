@@ -117,6 +117,7 @@ sealed class MaxTriggerCount {
     object Unlimited : MaxTriggerCount()
 }
 
+//TODO: Should support IOChannel, not just Input
 data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (ValueInstant<T>) -> Boolean) {
     var lastValue: ValueInstant<T>? = null
     var hasBeenReached: Boolean = false

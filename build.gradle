@@ -40,7 +40,7 @@ subprojects {
         compile 'org.tenkiv.physikal:core:2.0.2.0-SNAPSHOT'
 
         //General utilities for Kotlin
-        compile 'org.tenkiv.coral:coral:2.0.1.1'
+        compile 'org.tenkiv.coral:coral:2.1.0.1-SNAPSHOT'
         compile 'io.arrow-kt:arrow-core:0.7.2'
         implementation "org.jetbrains.kotlin:kotlin-reflect"
 

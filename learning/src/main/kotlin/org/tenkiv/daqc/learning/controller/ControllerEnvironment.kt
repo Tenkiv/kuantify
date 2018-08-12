@@ -26,6 +26,7 @@ import org.deeplearning4j.rl4j.space.ArrayObservationSpace
 import org.deeplearning4j.rl4j.space.DiscreteSpace
 import org.deeplearning4j.rl4j.space.Encodable
 import org.deeplearning4j.rl4j.space.ObservationSpace
+import org.tenkiv.coral.normalTo
 import org.tenkiv.daqc.*
 import org.tenkiv.daqc.recording.RecordedUpdatable
 
@@ -113,8 +114,8 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
         var totalChange = 0.0
         history.forEachIndexed { index, sample ->
             if (index + 1 <= history.size) {
-                totalChange += Daqc.normalise(sample.value.toDoubleInSystemUnit(), min, max) -
-                        Daqc.normalise(history[index + 1].value.toDoubleInSystemUnit(), min, max)
+                totalChange += sample.value.toDoubleInSystemUnit().normalTo(min..max) -
+                        history[index + 1].value.toDoubleInSystemUnit().normalTo(min..max)
             }
         }
         val rateOfChange = if (history.size < 2) NONE else totalChange / history.size - 1

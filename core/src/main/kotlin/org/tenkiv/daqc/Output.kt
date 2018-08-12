@@ -17,7 +17,6 @@
 
 package org.tenkiv.daqc
 
-import org.tenkiv.coral.ValueInstant
 import org.tenkiv.physikal.core.PhysicalUnit
 import org.tenkiv.physikal.core.invoke
 import tec.units.indriya.ComparableQuantity
@@ -25,20 +24,12 @@ import tec.units.indriya.unit.Units
 import javax.measure.Quantity
 import kotlin.reflect.KClass
 
-//typealias QuantityOutput<Q> = Output<DaqcQuantity<Q>>
-
-//fun <Q : Quantity<Q>> QuantityOutput<Q>.setOutput(setting: ComparableQuantity<Q>) = setOutput(setting.toDaqc())
-
-interface Output<T : DaqcValue> : Updatable<ValueInstant<T>> {
-
-    val isActive: Boolean
+interface Output<T : DaqcValue> : IOChannel<T> {
 
     /**
      * @throws Throwable if something prevents this output from being set.
      */
     fun setOutput(setting: T)
-
-    fun deactivate()
 
 }
 
@@ -55,7 +46,7 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
 
 }
 
-interface RangedOutput<T> : Output<T>, RangedIO<T> where T : DaqcValue, T : Comparable<T>
+interface RangedOutput<T> : Output<T>, RangedIOChannel<T> where T : DaqcValue, T : Comparable<T>
 
 interface BinaryStateOutput : RangedOutput<BinaryState> {
 

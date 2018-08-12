@@ -29,22 +29,17 @@ import org.nd4j.linalg.learning.config.Adam
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.now
 import org.tenkiv.daqc.*
-import org.tenkiv.daqc.lib.toPeriod
 import org.tenkiv.daqc.recording.*
-import org.tenkiv.physikal.core.times
-import org.tenkiv.physikal.core.toDuration
 import java.time.Duration
 import kotlin.concurrent.thread
 
-/**
- * Initialising this class is a blocking call.
- */
+//TODO: Make correlatedInputs optional, add overloads for optional binaryStateOutputs and quantityOutputs.
 class LearningController<T>(
     targetInput: RangedInput<T>,
     correlatedInputs: Collection<RangedInput<*>>,
     binaryStateOutputs: Collection<RangedOutput<BinaryState>>,
     quantityOutputs: Collection<RangedQuantityOutput<*>>,
-    val minTimeBetweenActions: Duration = targetInput.sampleRate.toPeriod().times(2).toDuration()
+    val minTimeBetweenActions: Duration
 ) : Output<T> where T : DaqcValue, T : Comparable<T> {
 
     private val environment = ControllerEnvironment(this)

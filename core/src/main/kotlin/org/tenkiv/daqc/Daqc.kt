@@ -20,6 +20,7 @@ package org.tenkiv.daqc
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.coral.normalTo
 import org.tenkiv.daqc.hardware.definitions.device.Device
 
 
@@ -31,32 +32,13 @@ internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 
 val daqcCriticalErrorBroadcastChannel = ConflatedBroadcastChannel<DaqcCriticalError>()
 
-internal object Daqc {
+interface IOChannel<out T : DaqcValue> : Updatable<ValueInstant<T>> {
+    val isActive: Boolean
 
-    /**
-     * @return null if the number to be normalised is outside the range.
-     */
-    fun normaliseOrNull(number: Double, range: ClosedRange<Double>): Double? {
-
-        return if (number in range) {
-            normalise(number, range)
-        } else {
-            null
-        }
-    }
-
-    fun normalise(number: Double, range: ClosedRange<Double>): Double {
-        val min = range.start
-        val max = range.endInclusive
-
-        return normalise(number, min, max)
-    }
-
-    fun normalise(number: Double, min: Double, max: Double): Double = (number - min) / (max - min)
-
+    fun deactivate()
 }
 
-interface RangedIO<T> : Updatable<ValueInstant<T>> where T : DaqcValue, T : Comparable<T> {
+interface RangedIOChannel<T> : IOChannel<T> where T : DaqcValue, T : Comparable<T> {
 
     /**
      * The range of values that this IO is likely to handle. There is not necessarily a guarantee that there will
@@ -79,7 +61,7 @@ interface RangedIO<T> : Updatable<ValueInstant<T>> where T : DaqcValue, T : Comp
         val valueDouble = value?.toDoubleInSystemUnit()
 
         return if (valueDouble != null && valueDouble >= min && valueDouble <= max) {
-            Daqc.normalise(valueDouble, min, max)
+            valueDouble normalTo min..max
         } else {
             null
         }
@@ -88,7 +70,7 @@ interface RangedIO<T> : Updatable<ValueInstant<T>> where T : DaqcValue, T : Comp
 }
 
 
-open class DaqcException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
+open class DaqcException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)
 
 
 sealed class DaqcCriticalError : DaqcException() {
