@@ -18,10 +18,18 @@
 package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.coral.isOlderThan
+import org.tenkiv.coral.minutesSpan
+import org.tenkiv.physikal.core.hertz
 import tec.units.indriya.ComparableQuantity
+import java.time.Duration
+import java.time.Instant
 import javax.measure.Quantity
 import javax.measure.quantity.Frequency
+import kotlin.reflect.KProperty
 
 typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
 
@@ -64,6 +72,43 @@ class RangedQuantityInputBox<Q : Quantity<Q>>(
     input: QuantityInput<Q>,
     override val valueRange: ClosedRange<DaqcQuantity<Q>>
 ) : RangedQuantityInput<Q>, QuantityInput<Q> by input
+
+fun Input<*>.runningAverage(avgLength: Duration = 1.minutesSpan): AverageSampleRateDelegate =
+    AverageSampleRateDelegate(this, avgLength)
+
+class AverageSampleRateDelegate internal constructor(input: Input<*>, private val avgLength: Duration) {
+
+    @Volatile
+    var sampleRate = 0.hertz
+
+    init {
+        launch {
+            val sampleInstants = ArrayList<Instant>()
+
+            input.broadcastChannel.consumeEach {
+                sampleInstants += it.instant
+                clean(sampleInstants)
+
+                val sps = sampleInstants.size / (avgLength.toMillis() * 1_000.0)
+                sampleRate = sps.hertz
+            }
+        }
+    }
+
+    private fun clean(sampleInstants: MutableList<Instant>) {
+        val iterator = sampleInstants.listIterator()
+        while (iterator.hasNext()) {
+            val instant = iterator.next()
+            if (instant.isOlderThan(avgLength)) {
+                iterator.remove()
+            } else {
+                break
+            }
+        }
+    }
+
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): ComparableQuantity<Frequency> = sampleRate
+}
 
 fun <Q : Quantity<Q>> QuantityInput<Q>.toNewRangedInput(valueRange: ClosedRange<DaqcQuantity<Q>>) =
     RangedQuantityInputBox(this, valueRange)
