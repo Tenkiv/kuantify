@@ -67,7 +67,7 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
 
     override fun getObservationSpace(): ObservationSpace<Encodable> {
         val size = getObservation().toArray().size
-        val shape = IntArray(size)
+        val shape = IntArray(size) { 1 }
 
         return ArrayObservationSpace(shape)
     }
@@ -118,6 +118,7 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
                         history[index + 1].value.toDoubleInSystemUnit().normalTo(min..max)
             }
         }
+        //TODO: Change the number history.size is compared to to a constant defined somewhere else.
         val rateOfChange = if (history.size < 2) NONE else totalChange / history.size - 1
 
         val currentValue = io.updatable.getNormalisedDoubleOrNull()
