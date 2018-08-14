@@ -1,4 +1,4 @@
-package org.tenkiv.deqc.android
+package org.tenkiv.daqc.android
 
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -11,12 +11,17 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.DaqcValue
 import org.tenkiv.daqc.Input
+import org.tenkiv.daqc.runningAverage
+import tec.units.indriya.ComparableQuantity
 import java.time.Instant
+import javax.measure.quantity.Frequency
 
 
 val androidDaqcContext = newSingleThreadContext("Android Thread")
 
 abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sensor: Sensor) : Input<Q> {
+
+    override val sampleRate: ComparableQuantity<Frequency> by runningAverage()
 
     private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<Q>>()
     final override val broadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Q>>
@@ -34,7 +39,8 @@ abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sens
     var _isActive = false
 
     @Volatile
-    var minimumAccuracy: AndroidSensorAccuracy = AndroidSensorAccuracy.LOW_ACCURACY
+    var minimumAccuracy: AndroidSensorAccuracy =
+        AndroidSensorAccuracy.LOW_ACCURACY
 
     override val isActive: Boolean
         get() = _isActive

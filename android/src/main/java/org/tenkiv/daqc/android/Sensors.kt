@@ -1,4 +1,4 @@
-package org.tenkiv.deqc.android
+package org.tenkiv.daqc.android
 
 import android.hardware.Sensor
 import android.hardware.SensorManager
