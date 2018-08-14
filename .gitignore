@@ -1,4 +1,9 @@
 # Created by .ignore support plugin (hsz.mobi)
+
+learning/build
+android/build
+core/build
+
 ### Java template
 out
 

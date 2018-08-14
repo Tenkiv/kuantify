@@ -1,4 +1,7 @@
+apply plugin: 'kotlin'
 apply plugin: 'kotlinx-serialization'
+apply plugin: 'jacoco'
+apply from: '../maven_push.gradle'
 
 buildscript {
 
@@ -13,10 +16,57 @@ buildscript {
 }
 
 dependencies {
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+
     //JSON
     implementation "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
 
+    //Units of Measurement Library
+    compile 'org.tenkiv.physikal:core:2.0.2.0-SNAPSHOT'
+
+    //General utilities for Kotlin
+    compile 'org.tenkiv.coral:coral:2.1.0.1-SNAPSHOT'
+    compile 'io.arrow-kt:arrow-core:0.7.2'
+    implementation "org.jetbrains.kotlin:kotlin-reflect"
+
+    //Kotlin Coroutines
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutines_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-nio:$coroutines_version"
+
+    //Testing Framework
+    testImplementation 'io.kotlintest:kotlintest-runner-junit5:3.1.7'
     testImplementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
+}
+
+test.finalizedBy jacocoTestReport
+
+task quickTestRun(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "org.tenkiv.daqc.TestKt"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jacoco {
+    toolVersion = '0.8.1'
+}
+
+jacocoTestReport {
+    reports {
+        html.enabled = true
+        xml.enabled = true
+        csv.enabled = false
+    }
+}
+
+sourceCompatibility = 1.8
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
 }
