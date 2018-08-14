@@ -18,8 +18,5 @@ dependencies {
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
 
-    //General utilities for Kotlin
-    implementation 'org.nield:kotlin-statistics:1.1.0'
-
     testImplementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
 }

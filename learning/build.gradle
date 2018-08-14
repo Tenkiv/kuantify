@@ -3,4 +3,7 @@ dependencies{
     // DL4J
     implementation "org.deeplearning4j:rl4j-core:$dl4j_version"
     implementation "org.nd4j:nd4j-native-platform:$dl4j_version"
+
+    // Statistics
+    implementation 'org.nield:kotlin-statistics:1.1.0'
 }
