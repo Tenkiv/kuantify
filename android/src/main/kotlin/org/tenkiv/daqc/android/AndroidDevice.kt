@@ -7,9 +7,9 @@ import android.hardware.SensorManager
 class AndroidDevice(context: Context) {
 
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
-            ?: throw ClassCastException(
-                "Android has somehow returned the wrong system service; this is not our problem."
-            )
+        ?: throw ClassCastException(
+            "Android has somehow returned the wrong system service; this is not our problem."
+        )
 
     val lightSensors: List<AndroidLightSensor> =
         sensorManager.getDynamicSensorList(Sensor.TYPE_LIGHT).map { AndroidLightSensor(sensorManager, it) }
