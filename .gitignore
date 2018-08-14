@@ -48,5 +48,5 @@ TestRecording.json
 
 *.iml
 
-/recorders/
-/src/main/kotlin/org/tenkiv/daqc/Test.kt
+core/recorders/
+local.properties

@@ -82,6 +82,13 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
     abstract fun toDouble(): Double
 
+    // There are only ever 2 possible ranges of binary states.
+    operator fun rangeTo(other: BinaryState): ClosedRange<BinaryState> =
+        when (this) {
+            Off -> FullBinaryStateRange
+            On -> EmptyBinaryStateRange
+        }
+
     object On : BinaryState() {
 
         private const val SHORT_REPRESENTATION: Short = 1
@@ -137,7 +144,7 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
     companion object {
 
-        val range = Off..On
+        val range: ClosedRange<BinaryState> get() = FullBinaryStateRange
 
         fun fromString(input: String): BinaryState {
             if (input == BinaryState.On.toString()) {
@@ -150,6 +157,24 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
         }
     }
 
+}
+
+private object FullBinaryStateRange : ClosedRange<BinaryState> {
+    override val endInclusive get() = BinaryState.On
+    override val start get() = BinaryState.Off
+
+    override fun contains(value: BinaryState) = true
+
+    override fun isEmpty() = false
+}
+
+private object EmptyBinaryStateRange : ClosedRange<BinaryState> {
+    override val endInclusive get() = BinaryState.Off
+    override val start get() = BinaryState.On
+
+    override fun contains(value: BinaryState) = false
+
+    override fun isEmpty() = true
 }
 
 class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuantity<Q>) : DaqcValue(),
