@@ -16,9 +16,6 @@ import tec.units.indriya.ComparableQuantity
 import java.time.Instant
 import javax.measure.quantity.Frequency
 
-
-val androidDaqcContext = newSingleThreadContext("Android Thread")
-
 abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sensor: Sensor) : Input<Q> {
 
     override val sampleRate: ComparableQuantity<Frequency> by runningAverage()
