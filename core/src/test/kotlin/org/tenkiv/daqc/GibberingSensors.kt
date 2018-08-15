@@ -35,7 +35,7 @@ import javax.measure.quantity.Frequency
 
 
 class DigitalGibberingSensor : Input<BinaryState> {
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
@@ -65,7 +65,7 @@ class DigitalGibberingSensor : Input<BinaryState> {
 }
 
 class DigitalInputGibberingSensor : DigitalInput() {
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
 
     override fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {
@@ -114,7 +114,7 @@ class DigitalInputGibberingSensor : DigitalInput() {
 }
 
 class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
@@ -149,7 +149,7 @@ class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
 
 class AnalogInputGibberingSensor : AnalogInput() {
     override var buffer: Boolean = false
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override var maxAcceptableError: ComparableQuantity<ElectricPotential>
         get() = throw Exception("Empty Test Class Exception")

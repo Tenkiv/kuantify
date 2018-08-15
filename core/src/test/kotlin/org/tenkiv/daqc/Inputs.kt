@@ -29,7 +29,7 @@ import javax.measure.quantity.Frequency
 class EmptyAnalogInput : AnalogInput() {
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override val device: Device
         get() = throw Exception("Empty Test Class Exception")
@@ -57,7 +57,7 @@ class EmptyAnalogInput : AnalogInput() {
 }
 
 class EmptyDigitalInput : DigitalInput() {
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
 
     override fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {

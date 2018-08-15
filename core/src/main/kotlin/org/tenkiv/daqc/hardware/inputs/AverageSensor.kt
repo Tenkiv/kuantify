@@ -49,8 +49,8 @@ class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: Quantity
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
 
-    override val sampleRate
-        get() = inputs.map { it.sampleRate }.max()
+    override val updateRate
+        get() = inputs.map { it.updateRate }.max()
                 ?: throw IllegalStateException("AverageQuantitySensor has no inputs, it must have at least 1 input.")
 
     init {

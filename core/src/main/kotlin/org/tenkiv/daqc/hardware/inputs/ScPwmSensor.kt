@@ -49,7 +49,7 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(
 
     override val isActive get() = digitalInput.isActiveForPwm
 
-    override val sampleRate get() = digitalInput.sampleRate
+    override val updateRate get() = digitalInput.updateRate
 
     init {
         digitalInput.pwmBroadcastChannel.openNewCoroutineListener(CommonPool) { measurement ->

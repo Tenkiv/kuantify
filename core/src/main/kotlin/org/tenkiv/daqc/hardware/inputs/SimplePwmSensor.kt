@@ -41,5 +41,5 @@ class SimplePwmSensor internal constructor(val digitalInput: DigitalInput) : Qua
 
     override fun deactivate() = digitalInput.deactivate()
 
-    override val sampleRate get() = digitalInput.sampleRate
+    override val updateRate get() = digitalInput.updateRate
 }

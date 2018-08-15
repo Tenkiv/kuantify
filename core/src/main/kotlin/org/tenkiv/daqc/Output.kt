@@ -24,7 +24,7 @@ import tec.units.indriya.unit.Units
 import javax.measure.Quantity
 import kotlin.reflect.KClass
 
-interface Output<T : DaqcValue> : IOChannel<T> {
+interface Output<T : Kuant> : IOStrand<T> {
 
     //TODO: Maybe change this to return a throwable or something else instead of throwing and exception
     /**
@@ -47,7 +47,7 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
 
 }
 
-interface RangedOutput<T> : Output<T>, RangedIOChannel<T> where T : DaqcValue, T : Comparable<T>
+interface RangedOutput<T> : Output<T>, RangedIOStrand<T> where T : Kuant, T : Comparable<T>
 
 interface BinaryStateOutput : RangedOutput<BinaryState> {
 

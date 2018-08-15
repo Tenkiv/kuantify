@@ -28,7 +28,7 @@ import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency
 
 class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
@@ -71,7 +71,7 @@ class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
 }
 
 class PredictableDigitalSensor : Input<BinaryState> {
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")

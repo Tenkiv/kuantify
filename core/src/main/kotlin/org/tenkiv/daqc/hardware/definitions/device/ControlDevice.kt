@@ -17,7 +17,7 @@
 
 package org.tenkiv.daqc.hardware.definitions.device
 
-import org.tenkiv.daqc.DaqcValue
+import org.tenkiv.daqc.Kuant
 import org.tenkiv.daqc.Output
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
@@ -33,6 +33,6 @@ interface ControlDevice : Device {
 
     val hasDigitalOutputs: Boolean
 
-    val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>>
+    val sharedOutputs: MutableMap<SharingStatus, Output<Kuant>>
 
 }

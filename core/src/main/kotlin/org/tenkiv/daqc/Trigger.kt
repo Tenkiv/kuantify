@@ -22,7 +22,7 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.daqc.lib.consumeAndReturn
 import java.util.concurrent.atomic.AtomicInteger
 
-class Trigger<T : DaqcValue>(
+class Trigger<T : Kuant>(
     val triggerOnSimultaneousValues: Boolean = false,
     val maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
     vararg triggerConditions: TriggerCondition<T>,
@@ -117,8 +117,8 @@ sealed class MaxTriggerCount {
     object Unlimited : MaxTriggerCount()
 }
 
-//TODO: Should support IOChannel, not just Input
-data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (ValueInstant<T>) -> Boolean) {
+//TODO: Should support IOStrand, not just Input
+data class TriggerCondition<T : Kuant>(val input: Input<T>, val condition: (ValueInstant<T>) -> Boolean) {
     var lastValue: ValueInstant<T>? = null
     var hasBeenReached: Boolean = false
 }

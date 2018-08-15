@@ -49,7 +49,7 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
 
     override val isActive get() = digitalInput.isActiveForTransitionFrequency
 
-    override val sampleRate get() = digitalInput.sampleRate
+    override val updateRate get() = digitalInput.updateRate
 
     init {
         digitalInput.transitionFrequencyBroadcastChannel.openNewCoroutineListener(CommonPool) { measurement ->

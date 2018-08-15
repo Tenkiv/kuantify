@@ -49,7 +49,7 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
 
     override val isActive get() = analogInput.isActive
 
-    override val sampleRate get() = analogInput.sampleRate
+    override val updateRate get() = analogInput.updateRate
 
     init {
         analogInput.maxElectricPotential = maximumEp

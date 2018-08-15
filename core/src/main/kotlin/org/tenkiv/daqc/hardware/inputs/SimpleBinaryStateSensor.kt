@@ -40,7 +40,7 @@ class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInpu
 
     override val isActive get() = digitalInput.isActiveForBinaryState
 
-    override val sampleRate get() = digitalInput.sampleRate
+    override val updateRate get() = digitalInput.updateRate
 
     init {
         digitalInput.broadcastChannel.openNewCoroutineListener(CommonPool) { measurement ->
