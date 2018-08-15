@@ -72,7 +72,6 @@ sealed class DaqcValue : DaqcData {
     }
 }
 
-//TODO: Try to turn this into one part of FiniteState sealed class.
 sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
     abstract fun toShort(): Short
