@@ -19,18 +19,14 @@ package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
-import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
-import javax.measure.quantity.Frequency
 
 typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
 
 /**
  * @param T The type of data given by this Input.
  */
-interface Input<out T : DaqcValue> : IOStrand<T>, UpdateRated<T> {
-
-    override val updateRate: ComparableQuantity<Frequency>
+interface Input<out T : DaqcValue> : IOStrand<T>, RatedUpdatable<T> {
 
     /**
      * Exception is sent over this channel when something prevents the input from being received.

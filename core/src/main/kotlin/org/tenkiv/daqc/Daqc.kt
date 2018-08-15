@@ -33,12 +33,24 @@ internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 val daqcCriticalErrorBroadcastChannel = ConflatedBroadcastChannel<DaqcCriticalError>()
 
 interface DaqcGate<out T : DaqcData> : Updatable<ValueInstant<T>> {
+    /**
+     * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcGate]
+     */
+    val daqcDataSize: Int
+
     val isActive: Boolean
 
     fun deactivate()
 }
 
-interface IOStrand<out T : DaqcValue> : DaqcGate<T>
+interface IOStrand<out T : DaqcValue> : DaqcGate<T> {
+    /**
+     * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcGate]
+     *
+     * [IOStrand]s only work with [DaqcValue] so this is always 1 in all [IOStrand]s
+     */
+    override val daqcDataSize get() = 1
+}
 
 interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Comparable<T> {
 

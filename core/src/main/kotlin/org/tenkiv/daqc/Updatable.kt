@@ -45,14 +45,14 @@ interface Updatable<out T> {
         launch(context) { broadcastChannel.consumeEach { onUpdate(it) } }
 }
 
-interface UpdateRated<out T> : Updatable<ValueInstant<T>> {
+interface RatedUpdatable<out T> : Updatable<ValueInstant<T>> {
     val updateRate: ComparableQuantity<Frequency>
 }
 
-fun UpdateRated<*>.runningAverage(avgLength: Duration = 1.minutesSpan): AverageSampleRateDelegate =
+fun RatedUpdatable<*>.runningAverage(avgLength: Duration = 1.minutesSpan): AverageSampleRateDelegate =
     AverageSampleRateDelegate(this, avgLength)
 
-class AverageSampleRateDelegate internal constructor(input: UpdateRated<*>, private val avgLength: Duration) {
+class AverageSampleRateDelegate internal constructor(input: RatedUpdatable<*>, private val avgLength: Duration) {
 
     @Volatile
     var updateRate = 0.hertz
