@@ -35,7 +35,7 @@ import org.tenkiv.physikal.core.toLongInSystemUnit as physikalToLongInSystemUnit
 import org.tenkiv.physikal.core.toShortInSystemUnit as physikalToShortInSystemUnit
 
 interface DaqcData {
-    fun toKuantArray(): Array<DaqcValue>
+    fun toDaqcValueArray(): Array<DaqcValue>
 }
 
 sealed class DaqcValue : DaqcData {
@@ -70,7 +70,7 @@ sealed class DaqcValue : DaqcData {
         is DaqcQuantity<*> -> this.physikalToDoubleInSystemUnit()
     }
 
-    override fun toKuantArray() = arrayOf(this)
+    override fun toDaqcValueArray() = arrayOf(this)
 }
 
 sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
