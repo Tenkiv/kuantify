@@ -34,11 +34,11 @@ import org.tenkiv.physikal.core.toIntInSystemUnit as physikalToIntInSystemUnit
 import org.tenkiv.physikal.core.toLongInSystemUnit as physikalToLongInSystemUnit
 import org.tenkiv.physikal.core.toShortInSystemUnit as physikalToShortInSystemUnit
 
-interface DaqcValue {
-    fun toKuantArray(): Array<Kuant>
+interface DaqcData {
+    fun toKuantArray(): Array<DaqcValue>
 }
 
-sealed class Kuant : DaqcValue {
+sealed class DaqcValue : DaqcData {
 
     fun toShortInSystemUnit(): Short = when (this) {
         is BinaryState -> this.toShort()
@@ -73,7 +73,7 @@ sealed class Kuant : DaqcValue {
     override fun toKuantArray() = arrayOf(this)
 }
 
-sealed class BinaryState : Kuant(), Comparable<BinaryState> {
+sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
     abstract fun toShort(): Short
 
@@ -182,7 +182,7 @@ private object EmptyBinaryStateRange : ClosedRange<BinaryState> {
     override fun isEmpty() = true
 }
 
-class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuantity<Q>) : Kuant(),
+class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuantity<Q>) : DaqcValue(),
     ComparableQuantity<Q> by wrappedQuantity {
 
     override fun toString() = wrappedQuantity.toString()

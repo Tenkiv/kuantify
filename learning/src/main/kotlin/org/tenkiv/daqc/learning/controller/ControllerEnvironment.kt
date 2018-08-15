@@ -31,7 +31,7 @@ import org.tenkiv.daqc.*
 import org.tenkiv.daqc.recording.RecordedUpdatable
 
 internal class ControllerEnvironment<T>(private val controller: LearningController<T>) :
-    MDP<Encodable, Int, DiscreteSpace> where T : Kuant, T : Comparable<T> {
+    MDP<Encodable, Int, DiscreteSpace> where T : DaqcValue, T : Comparable<T> {
 
     val numQuantityOutputs = controller.outputs.count { it is RangedQuantityOutput<*> }
 
@@ -96,13 +96,13 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
         return StepReply(getObservation(), getReward(), isDone, null)
     }
 
-    private fun getBinaryStateDoubles(io: RecordedUpdatable<Kuant, RangedInput<*>>)
+    private fun getBinaryStateDoubles(io: RecordedUpdatable<DaqcValue, RangedInput<*>>)
             : Double {
 
         return io.updatable.getNormalisedDoubleOrNull()!!
     }
 
-    private fun getQuantityInputDoubles(io: RecordedUpdatable<Kuant, RangedInput<*>>)
+    private fun getQuantityInputDoubles(io: RecordedUpdatable<DaqcValue, RangedInput<*>>)
             : QuantityInputDoubles {
         val history = io.recorder.getDataInMemory()
 
@@ -126,7 +126,7 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
         return QuantityInputDoubles(currentValue ?: NONE, rateOfChange)
     }
 
-    private fun getQuantityOutputDoubles(io: RecordedUpdatable<Kuant, RangedOutput<*>>)
+    private fun getQuantityOutputDoubles(io: RecordedUpdatable<DaqcValue, RangedOutput<*>>)
             : Double {
 
         return io.updatable.getNormalisedDoubleOrNull()!!

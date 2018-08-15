@@ -40,7 +40,7 @@ class LearningController<T>(
     binaryStateOutputs: Collection<RangedOutput<BinaryState>>,
     quantityOutputs: Collection<RangedQuantityOutput<*>>,
     val minTimeBetweenActions: Duration
-) : Output<T> where T : Kuant, T : Comparable<T> {
+) : Output<T> where T : DaqcValue, T : Comparable<T> {
 
     private val environment = ControllerEnvironment(this)
 
@@ -48,8 +48,8 @@ class LearningController<T>(
     val correlatedInputs = correlatedInputs.map {
         it.pairWithNewRecorder(StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
     }
-    val outputs: List<RecordedUpdatable<Kuant, RangedOutput<*>>> = kotlin.run {
-        val outputsBuilder = ImmutableList.builder<RecordedUpdatable<Kuant, RangedOutput<*>>>()
+    val outputs: List<RecordedUpdatable<DaqcValue, RangedOutput<*>>> = kotlin.run {
+        val outputsBuilder = ImmutableList.builder<RecordedUpdatable<DaqcValue, RangedOutput<*>>>()
         outputsBuilder.addAll(binaryStateOutputs.map {
             it.pairWithNewRecorder(StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
         })

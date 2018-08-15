@@ -28,7 +28,7 @@ typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
 /**
  * @param T The type of data given by this Input.
  */
-interface Input<out T : Kuant> : IOStrand<T>, UpdateRated<T> {
+interface Input<out T : DaqcValue> : IOStrand<T>, UpdateRated<T> {
 
     override val updateRate: ComparableQuantity<Frequency>
 
@@ -48,7 +48,7 @@ interface Input<out T : Kuant> : IOStrand<T>, UpdateRated<T> {
 
 }
 
-interface RangedInput<T> : Input<T>, RangedIOStrand<T> where T : Kuant, T : Comparable<T>
+interface RangedInput<T> : Input<T>, RangedIOStrand<T> where T : DaqcValue, T : Comparable<T>
 
 interface BinaryStateInput : RangedInput<BinaryState> {
 

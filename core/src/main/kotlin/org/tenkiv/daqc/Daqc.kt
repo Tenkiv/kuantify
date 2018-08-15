@@ -24,7 +24,7 @@ import org.tenkiv.coral.normalToOrNull
 import org.tenkiv.daqc.hardware.definitions.device.Device
 
 
-typealias Measurement = ValueInstant<Kuant>
+typealias Measurement = ValueInstant<DaqcValue>
 typealias BinaryStateMeasurement = ValueInstant<BinaryState>
 typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
 
@@ -32,15 +32,15 @@ internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 
 val daqcCriticalErrorBroadcastChannel = ConflatedBroadcastChannel<DaqcCriticalError>()
 
-interface DaqcGate<out T : DaqcValue> : Updatable<ValueInstant<T>> {
+interface DaqcGate<out T : DaqcData> : Updatable<ValueInstant<T>> {
     val isActive: Boolean
 
     fun deactivate()
 }
 
-interface IOStrand<out T : Kuant> : DaqcGate<T>
+interface IOStrand<out T : DaqcValue> : DaqcGate<T>
 
-interface RangedIOStrand<T> : IOStrand<T> where T : Kuant, T : Comparable<T> {
+interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Comparable<T> {
 
     /**
      * The range of values that this IOStrand is likely to handle. There is not necessarily a guarantee that there will
