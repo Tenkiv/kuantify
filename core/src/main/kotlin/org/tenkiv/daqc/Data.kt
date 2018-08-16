@@ -36,9 +36,6 @@ interface DaqcData {
 
     // TODO: Keep looking / waiting for similar data structure that forces immutability
     fun toDaqcValueList(): List<DaqcValue>
-
-    // TODO: Keep looking / waiting for similar data structure that forces immutability
-    fun toDaqcValueMap(): Map<String, DaqcValue>
 }
 
 sealed class LineNoiseFrequency {

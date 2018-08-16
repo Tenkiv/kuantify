@@ -65,11 +65,6 @@ sealed class DaqcValue : DaqcData {
 
     override fun toDaqcValueList() = listOf(this)
 
-    override fun toDaqcValueMap() = mapOf(SELF_NAME to this)
-
-    companion object {
-        private const val SELF_NAME = "value"
-    }
 }
 
 sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
