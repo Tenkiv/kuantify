@@ -15,22 +15,22 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc.hardware.inputs
+package org.tenkiv.daqc.gate.receive.input
 
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.QuantityInput
 import org.tenkiv.daqc.QuantityMeasurement
+import org.tenkiv.daqc.data.toDaqc
 import org.tenkiv.daqc.lib.openNewCoroutineListener
-import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.averageOrNull
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 
 //TODO: Make this work with BinaryState or make another version for BinaryState
-class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: QuantityInput<Q>) : QuantityInput<Q> {
+class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: QuantityInput<Q>) :
+    QuantityInput<Q> {
 
     override val isActive: Boolean
         get() = run {

@@ -24,12 +24,12 @@ import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.QuantityInput
 import org.tenkiv.daqc.QuantityMeasurement
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.data.toDaqc
+import org.tenkiv.daqc.gate.receive.input.QuantityInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.lib.openNewCoroutineListener
-import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.hertz
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity

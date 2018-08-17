@@ -15,10 +15,18 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc
+package org.tenkiv.daqc.gate.receive.input
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.daqc.RatedUpdatable
+import org.tenkiv.daqc.Trigger
+import org.tenkiv.daqc.TriggerCondition
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.data.DaqcValue
+import org.tenkiv.daqc.gate.IOStrand
+import org.tenkiv.daqc.gate.RangedIOStrand
 import javax.measure.Quantity
 
 typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
@@ -54,7 +62,8 @@ interface BinaryStateInput : RangedInput<BinaryState> {
 
 // Kotlin compiler is getting confused about generics star projections if RangedInput (or a typealias) is used directly
 // TODO: look into changing this to a typealias if generics compiler issue is fixed.
-interface RangedQuantityInput<Q : Quantity<Q>> : RangedInput<DaqcQuantity<Q>>
+interface RangedQuantityInput<Q : Quantity<Q>> :
+    RangedInput<DaqcQuantity<Q>>
 
 class RangedQuantityInputBox<Q : Quantity<Q>>(
     input: QuantityInput<Q>,

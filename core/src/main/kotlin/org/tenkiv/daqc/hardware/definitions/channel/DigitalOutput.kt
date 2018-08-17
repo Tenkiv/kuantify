@@ -17,9 +17,9 @@
 
 package org.tenkiv.daqc.hardware.definitions.channel
 
-import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.BinaryStateOutput
-import org.tenkiv.daqc.DaqcQuantity
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.gate.command.output.BinaryStateOutput
 import org.tenkiv.daqc.hardware.outputs.SimpleBinaryStateController
 import org.tenkiv.daqc.hardware.outputs.SimpleFrequencyController
 import org.tenkiv.daqc.hardware.outputs.SimplePwmController

@@ -17,14 +17,15 @@
 
 package org.tenkiv.daqc.hardware.inputs
 
-import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.QuantityInput
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.data.toDaqc
+import org.tenkiv.daqc.gate.receive.input.QuantityInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
-import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.hertz
 import javax.measure.quantity.Frequency
 
-class SimpleDigitalFrequencySensor internal constructor(val digitalInput: DigitalInput) : QuantityInput<Frequency> {
+class SimpleDigitalFrequencySensor internal constructor(val digitalInput: DigitalInput) :
+    QuantityInput<Frequency> {
 
     @Volatile
     var avgFrequency: DaqcQuantity<Frequency> = 1.hertz.toDaqc()

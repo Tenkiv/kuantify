@@ -15,17 +15,11 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc.hardware.outputs
+package org.tenkiv.daqc.data
 
-import org.tenkiv.daqc.data.DaqcQuantity
-import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
-import javax.measure.quantity.Frequency
 
-class SimpleFrequencyController internal constructor(digitalOutput: DigitalOutput) :
-    ScDigitalFrequencyController<Frequency>(digitalOutput) {
+import tec.units.indriya.ComparableQuantity
+import javax.measure.Quantity
 
-    override val quantityType get() = Frequency::class
 
-    override fun convertOutput(setting: DaqcQuantity<Frequency>) = setting
-
-}
+fun <Q : Quantity<Q>> ComparableQuantity<Q>.toDaqc() = DaqcQuantity(this)

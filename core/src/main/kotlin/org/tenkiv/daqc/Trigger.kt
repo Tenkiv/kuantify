@@ -19,6 +19,8 @@ package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.daqc.data.DaqcValue
+import org.tenkiv.daqc.gate.receive.input.Input
 import org.tenkiv.daqc.lib.consumeAndReturn
 import java.util.concurrent.atomic.AtomicInteger
 

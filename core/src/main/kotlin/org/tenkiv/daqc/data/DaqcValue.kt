@@ -15,8 +15,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc
+package org.tenkiv.daqc.data
 
+import org.tenkiv.daqc.QuantityMeasurement
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import tec.units.indriya.quantity.Quantities
@@ -146,11 +147,11 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
         val range: ClosedRange<BinaryState> get() = FullBinaryStateRange
 
         fun fromString(input: String): BinaryState {
-            if (input == BinaryState.On.toString()) {
-                return BinaryState.On
+            if (input == On.toString()) {
+                return On
             }
-            if (input == BinaryState.Off.toString()) {
-                return BinaryState.Off
+            if (input == Off.toString()) {
+                return Off
             }
             throw DataFormatException("Data with BinaryState not found")
         }
@@ -212,7 +213,7 @@ class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuant
                 input
             ).asType()
             if (quant != null) {
-                return DaqcQuantity.of(quant)
+                return of(quant)
             } else {
                 throw DataFormatException("Data with Quantity value not found")
             }

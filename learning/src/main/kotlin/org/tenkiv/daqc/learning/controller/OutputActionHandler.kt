@@ -17,9 +17,9 @@
 
 package org.tenkiv.daqc.learning.controller
 
-import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.BinaryStateOutput
-import org.tenkiv.daqc.RangedQuantityOutput
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.gate.command.output.BinaryStateOutput
+import org.tenkiv.daqc.gate.command.output.RangedQuantityOutput
 
 sealed class OutputActionHandler {
 

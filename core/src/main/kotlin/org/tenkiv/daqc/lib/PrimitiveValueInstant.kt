@@ -15,11 +15,15 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc
+package org.tenkiv.daqc.lib
 
+import org.tenkiv.coral.ValueInstant
+import org.tenkiv.coral.at
+import java.time.Instant
 
-import tec.units.indriya.ComparableQuantity
-import javax.measure.Quantity
+data class PrimitiveValueInstant(val epochMilli: Long, val value: String) {
 
+    inline fun <T> toValueInstant(deserializeValue: (String) -> T): ValueInstant<T> =
+        deserializeValue(value) at Instant.ofEpochMilli(epochMilli)
 
-fun <Q : Quantity<Q>> ComparableQuantity<Q>.toDaqc() = DaqcQuantity(this)
+}

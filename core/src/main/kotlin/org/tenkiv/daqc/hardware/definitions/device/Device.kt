@@ -17,8 +17,8 @@
 
 package org.tenkiv.daqc.hardware.definitions.device
 
-import org.tenkiv.daqc.LineNoiseFrequency
-import org.tenkiv.daqc.QuantityInput
+import org.tenkiv.daqc.gate.receive.input.QuantityInput
+import org.tenkiv.daqc.hardware.LineNoiseFrequency
 import org.tenkiv.daqc.networking.NetworkProtocol
 import org.tenkiv.daqc.networking.SharingStatus
 import java.net.InetAddress

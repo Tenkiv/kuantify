@@ -20,6 +20,9 @@ package org.tenkiv.daqc
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.gate.receive.input.Input
 import org.tenkiv.physikal.core.volt
 import tec.units.indriya.ComparableQuantity
 import java.time.Instant

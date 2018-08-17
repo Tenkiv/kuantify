@@ -15,8 +15,14 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc
+package org.tenkiv.daqc.gate.command.output
 
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.data.DaqcValue
+import org.tenkiv.daqc.data.toDaqc
+import org.tenkiv.daqc.gate.IOStrand
+import org.tenkiv.daqc.gate.RangedIOStrand
 import org.tenkiv.physikal.core.PhysicalUnit
 import org.tenkiv.physikal.core.invoke
 import tec.units.indriya.ComparableQuantity
@@ -57,7 +63,8 @@ interface BinaryStateOutput : RangedOutput<BinaryState> {
 
 // Kotlin compiler is getting confused about generics star projections if RangedOutput (or a typealias) is used directly
 // TODO: look into changing this to a typealias if generics compiler issue is fixed.
-interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>, QuantityOutput<Q>
+interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>,
+    QuantityOutput<Q>
 
 class RangedQuantityOutputBox<Q : Quantity<Q>>(
     output: QuantityOutput<Q>,

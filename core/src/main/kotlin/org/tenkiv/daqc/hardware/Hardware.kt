@@ -15,28 +15,10 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc
+package org.tenkiv.daqc.hardware
 
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.at
 import tec.units.indriya.ComparableQuantity
-import java.time.Instant
 import javax.measure.quantity.Frequency
-
-/**
- * Interface for anything that can be accurately represented as a [DaqcValue] or multiple [DaqcValue]s.
- *
- * All implementations need to be **completely immutable** to function properly.
- */
-interface DaqcData {
-    /**
-     * The number of [DaqcValue]s this DaqcData is represented by.
-     */
-    val size: Int
-
-    // TODO: Keep looking / waiting for similar data structure that forces immutability
-    fun toDaqcValueList(): List<DaqcValue>
-}
 
 sealed class LineNoiseFrequency {
 
@@ -51,11 +33,4 @@ enum class DigitalStatus {
     ACTIVATED_FREQUENCY,
     ACTIVATED_PWM,
     DEACTIVATED
-}
-
-data class PrimitiveValueInstant(val epochMilli: Long, val value: String) {
-
-    inline fun <T> toValueInstant(deserializeValue: (String) -> T): ValueInstant<T> =
-        deserializeValue(value) at Instant.ofEpochMilli(epochMilli)
-
 }

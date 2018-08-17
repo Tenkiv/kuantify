@@ -9,8 +9,8 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.DaqcValue
-import org.tenkiv.daqc.Input
+import org.tenkiv.daqc.data.DaqcValue
+import org.tenkiv.daqc.gate.receive.input.Input
 import org.tenkiv.daqc.runningAverage
 import tec.units.indriya.ComparableQuantity
 import java.time.Instant
@@ -19,7 +19,8 @@ import javax.measure.quantity.Frequency
 
 val androidDaqcContext = newSingleThreadContext("Android Thread")
 
-abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sensor: Sensor) : Input<Q> {
+abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sensor: Sensor) :
+    Input<Q> {
 
     override val updateRate: ComparableQuantity<Frequency> by runningAverage()
 

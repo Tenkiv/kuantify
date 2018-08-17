@@ -15,17 +15,19 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc.hardware.outputs
+package org.tenkiv.daqc.data
 
-import org.tenkiv.daqc.data.DaqcQuantity
-import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
-import javax.measure.quantity.Frequency
+/**
+ * Interface for anything that can be accurately represented as a [DaqcValue] or multiple [DaqcValue]s.
+ *
+ * All implementations need to be **completely immutable** to function properly.
+ */
+interface DaqcData {
+    /**
+     * The number of [DaqcValue]s this DaqcData is represented by.
+     */
+    val size: Int
 
-class SimpleFrequencyController internal constructor(digitalOutput: DigitalOutput) :
-    ScDigitalFrequencyController<Frequency>(digitalOutput) {
-
-    override val quantityType get() = Frequency::class
-
-    override fun convertOutput(setting: DaqcQuantity<Frequency>) = setting
-
+    // TODO: Keep looking / waiting for similar data structure that forces immutability
+    fun toDaqcValueList(): List<DaqcValue>
 }

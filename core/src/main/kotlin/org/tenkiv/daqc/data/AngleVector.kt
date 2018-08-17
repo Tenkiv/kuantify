@@ -15,7 +15,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc
+package org.tenkiv.daqc.data
 
 import org.tenkiv.physikal.core.*
 import org.tenkiv.physikal.si.degreeAngle
@@ -83,7 +83,8 @@ class Vector<Q : Quantity<Q>>(
         return Vector(scaledMagnitude, angle, axisLabel, positiveDirection)
     }
 
-    operator fun times(scalar: Double): Vector<Q> = Vector(magnitude * scalar, angle, axisLabel, positiveDirection)
+    operator fun times(scalar: Double): Vector<Q> =
+        Vector(magnitude * scalar, angle, axisLabel, positiveDirection)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

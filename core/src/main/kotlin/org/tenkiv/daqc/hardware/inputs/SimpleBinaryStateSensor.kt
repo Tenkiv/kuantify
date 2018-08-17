@@ -20,13 +20,14 @@ package org.tenkiv.daqc.hardware.inputs
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.BinaryStateInput
 import org.tenkiv.daqc.BinaryStateMeasurement
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.gate.receive.input.BinaryStateInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.lib.openNewCoroutineListener
 
-class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInput) : BinaryStateInput {
+class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInput) :
+    BinaryStateInput {
 
     @Volatile
     var inverted: Boolean = false

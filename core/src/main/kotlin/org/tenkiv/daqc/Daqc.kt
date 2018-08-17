@@ -20,7 +20,9 @@ package org.tenkiv.daqc
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.normalToOrNull
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.data.DaqcValue
 import org.tenkiv.daqc.hardware.definitions.device.Device
 
 
@@ -32,55 +34,7 @@ internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 
 val daqcCriticalErrorBroadcastChannel = ConflatedBroadcastChannel<DaqcCriticalError>()
 
-interface DaqcGate<out T : DaqcData> : Updatable<ValueInstant<T>> {
-    /**
-     * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcGate]
-     */
-    val daqcDataSize: Int
-
-    val isActive: Boolean
-
-    fun deactivate()
-}
-
-interface IOStrand<out T : DaqcValue> : DaqcGate<T> {
-    /**
-     * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcGate]
-     *
-     * [IOStrand]s only work with [DaqcValue] so this is always 1 in all [IOStrand]s
-     */
-    override val daqcDataSize get() = 1
-}
-
-interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Comparable<T> {
-
-    /**
-     * The range of values that this IOStrand is likely to handle. There is not necessarily a guarantee that there will
-     * never be a value outside this range.
-     */
-    val valueRange: ClosedRange<T>
-
-    //TODO: Add more versions of this function, like one that suspends until it has a value.
-    /**
-     * @return a [Double] representation of the current value normalised to be between 0 and 1 based on the
-     * [valueRange], null if the updatable does not yet have a value or the value is outside the [valueRange].
-     */
-    fun getNormalisedDoubleOrNull(): Double? {
-        val value = valueOrNull?.value
-
-        if (value is BinaryState?) return value?.toDouble()
-
-        val min = valueRange.start.toDoubleInSystemUnit()
-        val max = valueRange.endInclusive.toDoubleInSystemUnit()
-        val valueDouble = value?.toDoubleInSystemUnit()
-
-        return valueDouble?.normalToOrNull(min..max)
-    }
-
-}
-
 open class DaqcException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)
-
 
 sealed class DaqcCriticalError : DaqcException() {
 

@@ -17,8 +17,8 @@
 
 package org.tenkiv.daqc.hardware.definitions.device
 
-import org.tenkiv.daqc.DaqcValue
-import org.tenkiv.daqc.Output
+import org.tenkiv.daqc.data.DaqcValue
+import org.tenkiv.daqc.gate.command.output.Output
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import org.tenkiv.daqc.networking.SharingStatus

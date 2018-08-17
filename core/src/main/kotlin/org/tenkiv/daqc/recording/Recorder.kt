@@ -34,9 +34,9 @@ import kotlinx.coroutines.experimental.time.delay
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.isOlderThan
 import org.tenkiv.coral.secondsSpan
-import org.tenkiv.daqc.PrimitiveValueInstant
 import org.tenkiv.daqc.Updatable
 import org.tenkiv.daqc.daqcThreadContext
+import org.tenkiv.daqc.lib.PrimitiveValueInstant
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
