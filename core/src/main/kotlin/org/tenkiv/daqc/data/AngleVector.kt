@@ -19,13 +19,12 @@ package org.tenkiv.daqc.data
 
 import org.tenkiv.physikal.core.*
 import org.tenkiv.physikal.si.degreeAngle
+import si.uom.NonSI.DEGREE_ANGLE
 import si.uom.SI.*
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 import javax.measure.quantity.Angle
-import kotlin.math.absoluteValue
-import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.*
 
 private const val DEFAULT_X_LABEL = "X"
 private const val DEFAULT_Z_LABEL = "Z"
@@ -58,21 +57,18 @@ class Vector<Q : Quantity<Q>>(
      * Converts this [Vector] to a [DoubleArray] representing the equivalent components of a Euclidean vector in the
      * system unit.
      */
-    fun toComponentDoubles(): DoubleArray {
-        val array = DoubleArray(2)
+    fun toComponentDoubles(): Pair<Double, Double> {
         val magnitude = this.magnitude.toDoubleInSystemUnit()
         val angle = this.angle toDoubleIn RADIAN
 
-        array[0] = cos(angle) * magnitude
-        array[1] = sin(angle) * magnitude
-
-        return array
+        return Pair(cos(angle) * magnitude, sin(angle) * magnitude)
     }
 
-    fun toComponents(): List<ComparableQuantity<Q>> {
-        val array = toComponentDoubles()
-        val unit = magnitude.unit.systemUnit
-        return listOf(array[0](unit), array[1](unit))
+    fun toComponents(): Pair<ComparableQuantity<Q>, ComparableQuantity<Q>> {
+        val components = toComponentDoubles()
+        val unit = magnitude.unit
+
+        return Pair(components.first(unit), components.second(unit))
     }
 
     infix fun compassScale(scalar: Double): Vector<Q> {
@@ -85,6 +81,55 @@ class Vector<Q : Quantity<Q>>(
 
     operator fun times(scalar: Double): Vector<Q> =
         Vector(magnitude * scalar, angle, axisLabel, positiveDirection)
+
+    operator fun unaryPlus() = Vector(+magnitude, angle, axisLabel, positiveDirection)
+
+    operator fun unaryMinus() = Vector(-magnitude, angle, axisLabel, positiveDirection)
+
+    operator fun plus(other: Vector<Q>): Vector<Q> {
+        val (thisX, thisY) = toComponents()
+        val (otherX, otherY) = other.toComponents()
+
+        val resultX = thisX + otherX
+        val resultY = thisY + otherY
+
+        return Vector.fromComponents(
+            resultX,
+            resultY,
+            other.axisLabel,
+            resultX.unit,
+            other.positiveDirection
+        )
+    }
+
+    operator fun minus(other: Vector<Q>): Vector<Q> {
+        val (thisX, thisY) = toComponents()
+        val (otherX, otherY) = other.toComponents()
+
+        val resultX = thisX - otherX
+        val resultY = thisY - otherY
+
+        return Vector.fromComponents(
+            resultX,
+            resultY,
+            other.axisLabel,
+            resultX.unit,
+            other.positiveDirection
+        )
+    }
+
+    operator fun times(other: Vector<*>): DaqcQuantity<*> {
+        val (thisX, thisY) = toComponents()
+        val (otherX, otherY) = other.toComponents()
+
+        val resultX = thisX * otherX
+        val resultY = thisY * otherY
+        val resultUnit = resultX.getUnit()
+
+
+        //TODO: Find best way to create quantity of unknown type
+        return (resultX.valueToDouble() + resultY.valueToDouble())(resultUnit)
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -111,6 +156,35 @@ class Vector<Q : Quantity<Q>>(
     override fun toString() =
         "Vector($magnitude, $angle $positiveDirection from $axisLabel)"
 
+    data class Components<Q : Quantity<Q>>(val x: ComparableQuantity<Q>, val y: ComparableQuantity<Q>)
+
+    companion object {
+        fun <Q : Quantity<Q>> fromComponents(
+            xComponent: ComparableQuantity<Q>,
+            yComponent: ComparableQuantity<Q>,
+            axisLabel: String,
+            unit: PhysicalUnit<Q> = xComponent.unit.systemUnit,
+            positiveDirection: PolarDirection = PolarDirection.COUNTER_CLOCKWISE
+        ): Vector<Q> {
+            val xComponentDouble = xComponent.toDoubleInSystemUnit()
+            val yComponentDouble = yComponent.toDoubleInSystemUnit()
+
+            return fromComponentDoubles(xComponentDouble, yComponentDouble, axisLabel, unit, positiveDirection)
+        }
+
+        private fun <Q : Quantity<Q>> fromComponentDoubles(
+            xComponent: Double,
+            yComponent: Double,
+            axisLabel: String,
+            unit: PhysicalUnit<Q>,
+            positiveDirection: PolarDirection = PolarDirection.COUNTER_CLOCKWISE
+        ): Vector<Q> {
+            val magnitude = sqrt(xComponent.pow(2) + yComponent.pow(2))(unit)
+            val angle = atan(yComponent / xComponent)(DEGREE_ANGLE)
+
+            return Vector(magnitude, angle, axisLabel, positiveDirection)
+        }
+    }
 }
 
 enum class PolarDirection {
