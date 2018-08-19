@@ -6,7 +6,6 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.hardware.SensorManager.*
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.DaqcValue
@@ -71,7 +70,7 @@ abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sens
     init {
         //This is done as there is only one Android sensor class making compile time safety impossible.
         if (sensor.type != type)
-            throw AndroidSensorException("Sensor supplied was of the incorrect type.")
+            throw AndroidSensorInitializationException("Sensor supplied was of the incorrect type.")
     }
 
     abstract fun convertData(data: FloatArray): Q

@@ -60,4 +60,12 @@ class AndroidDevice(context: Context) {
 
 }
 
-class AndroidSensorException(error: String) : Exception(error)
+/**
+ * Exceptions thrown by [AndroidSensor]s when a fatal error occurs.
+ */
+sealed class AndroidSensorException(error: String) : Exception(error)
+
+/**
+ * Class which is thrown when a sensor is improperly initialized.
+ */
+class AndroidSensorInitializationException(error: String) : AndroidSensorException(error)
