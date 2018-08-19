@@ -45,13 +45,10 @@ class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInpu
 
     init {
         digitalInput.broadcastChannel.openNewCoroutineListener(CommonPool) { measurement ->
-            if (!inverted)
-                _broadcastChannel.send(measurement)
-            else
-                when (measurement.value) {
-                    BinaryState.On -> _broadcastChannel.send(BinaryState.Off at measurement.instant)
-                    BinaryState.Off -> _broadcastChannel.send(BinaryState.On at measurement.instant)
-                }
+            if (!inverted) _broadcastChannel.send(measurement) else when (measurement.value) {
+                BinaryState.On -> _broadcastChannel.send(BinaryState.Off at measurement.instant)
+                BinaryState.Off -> _broadcastChannel.send(BinaryState.On at measurement.instant)
+            }
         }
     }
 
