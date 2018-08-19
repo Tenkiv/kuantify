@@ -15,11 +15,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc.data
+package org.tenkiv.daqc.learning.controller
 
+import org.tenkiv.daqc.gate.command.output.QuantityOutput
+import org.tenkiv.physikal.core.*
 
-import tec.units.indriya.ComparableQuantity
-import javax.measure.Quantity
-
-
-fun <Q : Quantity<Q>> ComparableQuantity<Q>.toDaqc() = DaqcQuantity(this)
+internal fun QuantityOutput<*>.setOutputInSystemUnit(setting: Double) = dynamicSetOutput(setting(systemUnit))

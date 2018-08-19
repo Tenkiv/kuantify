@@ -23,8 +23,7 @@ import org.tenkiv.daqc.data.DaqcValue
 import org.tenkiv.daqc.data.toDaqc
 import org.tenkiv.daqc.gate.IOStrand
 import org.tenkiv.daqc.gate.RangedIOStrand
-import org.tenkiv.physikal.core.PhysicalUnit
-import org.tenkiv.physikal.core.invoke
+import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import tec.units.indriya.unit.Units
 import javax.measure.Quantity
@@ -32,12 +31,21 @@ import kotlin.reflect.KClass
 
 interface Output<T : DaqcValue> : IOStrand<T> {
 
-    //TODO: Maybe change this to return a throwable or something else instead of throwing and exception
-    /**
-     * @throws Throwable if something prevents this output from being set.
-     */
-    fun setOutput(setting: T)
+    fun setOutput(setting: T): SettingValidity
 
+}
+
+/**
+ *
+ * @property isValid is only meant to represent the validity of the setting, not whether or not the implementing the
+ * setting was successful.
+ */
+interface SettingValidity {
+    val isValid: Boolean
+}
+
+object AlwaysValid : SettingValidity {
+    override val isValid get() = true
 }
 
 interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
@@ -49,7 +57,13 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
 
     fun setOutput(setting: ComparableQuantity<Q>) = setOutput(setting.toDaqc())
 
-    fun setOutputInSystemUnit(setting: Double) = setOutput(setting(systemUnit))
+    /**
+     * @throws ClassCastException
+     *           if the dimension of this unit is different from the specified quantity dimension.
+     * @throws UnsupportedOperationException
+     *           if the specified quantity class does not have a SI unit for the quantity.
+     */
+    fun dynamicSetOutput(setting: ComparableQuantity<*>) = setOutput(setting.asType(quantityType.java))
 
 }
 

@@ -118,7 +118,7 @@ class Vector<Q : Quantity<Q>>(
         )
     }
 
-    operator fun times(other: Vector<*>): DaqcQuantity<*> {
+    operator fun times(other: Vector<*>): ComparableQuantity<*> {
         val (thisX, thisY) = toComponents()
         val (otherX, otherY) = other.toComponents()
 
@@ -127,8 +127,8 @@ class Vector<Q : Quantity<Q>>(
         val resultUnit = resultX.getUnit()
 
 
-        //TODO: Find best way to create quantity of unknown type
-        return (resultX.valueToDouble() + resultY.valueToDouble())(resultUnit)
+        //TODO: Find a way to create a Quantity of unknown type without going through a string
+        return (resultX.valueToDouble() + resultY.valueToDouble()).toQuantityWithSymbol(resultUnit.getSymbol())
     }
 
     override fun equals(other: Any?): Boolean {

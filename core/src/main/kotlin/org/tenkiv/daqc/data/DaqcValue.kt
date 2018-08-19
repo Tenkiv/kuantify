@@ -209,14 +209,17 @@ class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuant
             DaqcQuantity(measurement.value)
 
         inline fun <reified Q : Quantity<Q>> fromString(input: String): DaqcQuantity<Q> {
-            val quant: ComparableQuantity<Q>? = Quantities.getQuantity(
+            val quantity: ComparableQuantity<Q>? = Quantities.getQuantity(
                 input
-            ).asType()
-            if (quant != null) {
-                return of(quant)
+            ).asTypeOrNull()
+            if (quantity != null) {
+                return of(quantity)
             } else {
                 throw DataFormatException("Data with Quantity value not found")
             }
         }
     }
 }
+
+fun <Q : Quantity<Q>> ComparableQuantity<Q>.toDaqc() =
+    DaqcQuantity(this)

@@ -86,8 +86,9 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
         val increaseSystemUnit = rangeSpanSystemUnit * rangeRatio
         val newSettingSystemUnit = currentValueSystemUnit + increaseSystemUnit
 
-        if (newSettingSystemUnit <= output.valueRange.endInclusive.toDoubleInSystemUnit())
+        if (newSettingSystemUnit <= output.valueRange.endInclusive.toDoubleInSystemUnit()) {
             output.setOutputInSystemUnit(newSettingSystemUnit)
+        }
 
     }
 
@@ -96,8 +97,9 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
         val increaseSystemUnit = rangeSpanSystemUnit * rangeRatio
         val newSettingSystemUnit = currentValueSystemUnit + increaseSystemUnit
 
-        if (newSettingSystemUnit >= output.valueRange.start.toDoubleInSystemUnit())
+        if (newSettingSystemUnit >= output.valueRange.start.toDoubleInSystemUnit()) {
             output.setOutputInSystemUnit(newSettingSystemUnit)
+        }
 
     }
 
