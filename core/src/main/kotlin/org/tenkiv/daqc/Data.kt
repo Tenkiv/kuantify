@@ -205,8 +205,8 @@ class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuant
         fun <Q : Quantity<Q>> of(quantity: ComparableQuantity<Q>) =
             DaqcQuantity(quantity)
 
-        fun <Q : Quantity<Q>> of(instant: QuantityMeasurement<Q>) =
-            DaqcQuantity(instant.value)
+        fun <Q : Quantity<Q>> of(measurement: QuantityMeasurement<Q>) =
+            DaqcQuantity(measurement.value)
 
         inline fun <reified Q : Quantity<Q>> fromString(input: String): DaqcQuantity<Q> {
             val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType()
