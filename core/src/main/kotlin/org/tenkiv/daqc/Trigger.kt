@@ -22,6 +22,9 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.daqc.lib.consumeAndReturn
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Class which acts as a monitor on an Input to execute a command when a certain state is met.
+ */
 class Trigger<T : DaqcValue>(
     val triggerOnSimultaneousValues: Boolean = false,
     val maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
@@ -105,19 +108,38 @@ class Trigger<T : DaqcValue>(
     }
 }
 
+/**
+ * Sealed class to determine the number of times a [Trigger] should fire.
+ */
 sealed class MaxTriggerCount {
+
+    /**
+     * Class which sets the number of times a [Trigger] can fire.
+     */
     data class Limited(val totalCount: Int) : MaxTriggerCount() {
 
+        /**
+         * The number of charges left in the [Trigger]
+         */
         val remainingCount get() = atomicCount.get()
 
         internal val atomicCount = AtomicInteger(totalCount)
 
     }
 
+    /**
+     * Class which sets a [Trigger] to fire unlimited times.
+     */
     object Unlimited : MaxTriggerCount()
 }
 
 //TODO: Should support IOChannel, not just Input
+/**
+ * The condition upon which the [Trigger] will fire.
+ *
+ * @param input The [Input] to monitor.
+ * @param condition The conditions upon which to execute the [Trigger]'s function.
+ */
 data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (ValueInstant<T>) -> Boolean) {
     var lastValue: ValueInstant<T>? = null
     var hasBeenReached: Boolean = false

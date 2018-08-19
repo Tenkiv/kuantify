@@ -34,33 +34,67 @@ import org.tenkiv.physikal.core.toIntInSystemUnit as physikalToIntInSystemUnit
 import org.tenkiv.physikal.core.toLongInSystemUnit as physikalToLongInSystemUnit
 import org.tenkiv.physikal.core.toShortInSystemUnit as physikalToShortInSystemUnit
 
+/**
+ * The wrapper class representing the different types of data which can be returned from a basic [Updatable].
+ * Either a [BinaryState] or a [DaqcQuantity].
+ */
 sealed class DaqcValue {
 
+    /**
+     * Gets the value of the [DaqcValue] as a [Short] in the default unit representation.
+     *
+     * @return The value of this [DaqcValue] as a [Short].
+     */
     fun toShortInSystemUnit(): Short = when (this) {
         is BinaryState -> this.toShort()
         is DaqcQuantity<*> -> this.physikalToShortInSystemUnit()
     }
 
+    /**
+     * Gets the value of the [DaqcValue] as a [Int] in the default unit representation.
+     *
+     * @return The value of this [DaqcValue] as a [Int].
+     */
     fun toIntInSystemUnit(): Int = when (this) {
         is BinaryState -> this.toInt()
         is DaqcQuantity<*> -> this.physikalToIntInSystemUnit()
     }
 
+    /**
+     * Gets the value of the [DaqcValue] as a [Short] in the default unit representation.
+     *
+     * @return The value of this [DaqcValue] as a [Short].
+     */
     fun toLongInSystemUnit(): Long = when (this) {
         is BinaryState -> this.toLong()
         is DaqcQuantity<*> -> this.physikalToLongInSystemUnit()
     }
 
+    /**
+     * Gets the value of the [DaqcValue] as a [Byte] in the default unit representation.
+     *
+     * @return The value of this [DaqcValue] as a [Byte].
+     */
     fun toByteInSystemUnit(): Byte = when (this) {
         is BinaryState -> this.toByte()
         is DaqcQuantity<*> -> this.physikalToByteInSystemUnit()
     }
 
+    /**
+     * Gets the value of the [DaqcValue] as a [Float] in the default unit representation.
+     *
+     * @return The value of this [DaqcValue] as a [Float].
+     */
     fun toFloatInSystemUnit(): Float = when (this) {
         is BinaryState -> this.toFloat()
         is DaqcQuantity<*> -> this.physikalToFloatInSystemUnit()
     }
 
+    /**
+     * Gets the value of the [DaqcValue] as a [Double] in the default unit representation.
+     *
+     * @return The value of this [DaqcValue] as a [Double].
+     */
     fun toDoubleInSystemUnit(): Double = when (this) {
         is BinaryState -> this.toDouble()
         is DaqcQuantity<*> -> this.physikalToDoubleInSystemUnit()
@@ -68,27 +102,67 @@ sealed class DaqcValue {
 
 }
 
+/**
+ * A [DaqcValue] representing a value which is either on or off.
+ */
 sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
+    /**
+     * Returns the binary value as a [Short]. This will always return a value 1 or 0.
+     *
+     * @return The binary value as a [Short]
+     */
     abstract fun toShort(): Short
 
+    /**
+     * Returns the binary value as a [Int]. This will always return a value 1 or 0.
+     *
+     * @return The binary value as a [Int]
+     */
     abstract fun toInt(): Int
 
+    /**
+     * Returns the binary value as a [Long]. This will always return a value 1 or 0.
+     *
+     * @return The binary value as a [Long]
+     */
     abstract fun toLong(): Long
 
+    /**
+     * Returns the binary value as a [Byte]. This will always return a value 1 or 0.
+     *
+     * @return The binary value as a [Byte]
+     */
     abstract fun toByte(): Byte
 
+    /**
+     * Returns the binary value as a [Float]. This will always return a value 1 or 0.
+     *
+     * @return The binary value as a [Float]
+     */
     abstract fun toFloat(): Float
 
+    /**
+     * Returns the binary value as a [Double]. This will always return a value 1 or 0.
+     *
+     * @return The binary value as a [Double]
+     */
     abstract fun toDouble(): Double
 
-    // There are only ever 2 possible ranges of binary states.
+    /**
+     * Returns a range of [BinaryState]s. There are only two binary states.
+     *
+     * @return A [ClosedRange] of [BinaryState]s.
+     */
     operator fun rangeTo(other: BinaryState): ClosedRange<BinaryState> =
         when (this) {
             Off -> FullBinaryStateRange
             On -> EmptyBinaryStateRange
         }
 
+    /**
+     * The [BinaryState] representing the activated value or the 1 state.
+     */
     object On : BinaryState() {
 
         private const val SHORT_REPRESENTATION: Short = 1
@@ -115,6 +189,9 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
         override fun toString() = "BinaryState.ON"
     }
 
+    /**
+     * The [BinaryState] representing the deactivated value or the 0 state.
+     */
     object Off : BinaryState() {
 
         private const val SHORT_REPRESENTATION: Short = 0
@@ -144,8 +221,18 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
     companion object {
 
+        /**
+         * The [ClosedRange] of all [BinaryState]s.
+         */
         val range: ClosedRange<BinaryState> get() = FullBinaryStateRange
 
+        /**
+         * Gets a [BinaryState] value from a [String] or throws a [DataFormatException] if improperly formatted.
+         *
+         * @param input The string value to convert.
+         * @return The [BinaryState] value of the string.
+         * @throws [DataFormatException] if the [String] is malformed or not a 1 or 0.
+         */
         fun fromString(input: String): BinaryState {
             if (input == BinaryState.On.toString()) {
                 return BinaryState.On
@@ -159,6 +246,9 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
 }
 
+/**
+ * The [ClosedRange] of all [BinaryState]s.
+ */
 private object FullBinaryStateRange : ClosedRange<BinaryState> {
     override val endInclusive get() = BinaryState.On
     override val start get() = BinaryState.Off
@@ -168,6 +258,9 @@ private object FullBinaryStateRange : ClosedRange<BinaryState> {
     override fun isEmpty() = false
 }
 
+/**
+ * An empty [ClosedRange] containing no [BinaryState]s.
+ */
 private object EmptyBinaryStateRange : ClosedRange<BinaryState> {
     override val endInclusive get() = BinaryState.Off
     override val start get() = BinaryState.On
@@ -177,6 +270,9 @@ private object EmptyBinaryStateRange : ClosedRange<BinaryState> {
     override fun isEmpty() = true
 }
 
+/**
+ * The [DaqcValue] representing a value which can be expressed as a [Quantity].
+ */
 class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuantity<Q>) : DaqcValue(),
     ComparableQuantity<Q> by wrappedQuantity {
 
@@ -199,15 +295,42 @@ class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuant
 
 
     companion object {
+
+        /**
+         * Function to create a [DaqcQuantity] from a [Number] and a [Quantity].
+         *
+         * @param value The value of this [DaqcQuantity].
+         * @param unit The [PhysicalUnit] representation of the [value]
+         * @return The [value] in the form of a [DaqcQuantity] in the type of [unit].
+         */
         fun <Q : Quantity<Q>> of(value: Number, unit: PhysicalUnit<Q>) =
             DaqcQuantity(Quantities.getQuantity(value, unit))
 
+        /**
+         * Function to convert a [ComparableQuantity] to a [DaqcQuantity].
+         *
+         * @param quantity The [Quantity] to be converted.
+         * @return The [DaqcQuantity] representation of the [quantity]
+         */
         fun <Q : Quantity<Q>> of(quantity: ComparableQuantity<Q>) =
             DaqcQuantity(quantity)
 
+        /**
+         * Function to create a [DaqcQuantity] from an existing [QuantityMeasurement].
+         *
+         * @param instant The [QuantityMeasurement] to be converted.
+         * @return The [DaqcQuantity] value.
+         */
         fun <Q : Quantity<Q>> of(instant: QuantityMeasurement<Q>) =
             DaqcQuantity(instant.value)
 
+        /**
+         * Function to create a [DaqcQuantity] from a [String] representation.
+         *
+         * @param input The [String] representation of the [DaqcQuantity]
+         * @return The [DaqcQuantity] value of the [String].
+         * @throws DataFormatException If the [input] is malformed, invalid, or null.
+         */
         inline fun <reified Q : Quantity<Q>> fromString(input: String): DaqcQuantity<Q> {
             val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType()
             if (quant != null) {
@@ -219,25 +342,60 @@ class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuant
     }
 }
 
-
+/**
+ * Class representing the line noise frequency of the electrical grid where the [Device] is.
+ */
 sealed class LineNoiseFrequency {
 
+    /**
+     * The frequency of the line noise to account for.
+     */
     data class AccountFor(val frequency: ComparableQuantity<Frequency>) : LineNoiseFrequency()
 
+    /**
+     * Object signifying that the board doesn't require adjustment or that the people using it don't mind the error.
+     */
     object Ignore : LineNoiseFrequency()
 
 }
 
+/**
+ * Enum representing the status of a [BinaryStateOutput].
+ */
 enum class DigitalStatus {
+    /**
+     * State representing activated for a default or constant state.
+     */
     ACTIVATED_STATE,
+    /**
+     * State representing periodic activation.
+     */
     ACTIVATED_FREQUENCY,
+    /**
+     * State representing a binary output simulating an analog output
+     */
     ACTIVATED_PWM,
+    /**
+     * Deactivated state.
+     */
     DEACTIVATED
 }
 
+/**
+ * Class representing a serialized value and a time stamp.
+ *
+ * @param epochMilli The [Long] timestamp in epoch millis.
+ * @param value The deserialized [String] value.
+ */
 data class PrimitiveValueInstant(val epochMilli: Long, val value: String) {
 
+    /**
+     * Function to reserialize the data.
+     *
+     * @param T The type of the [ValueInstant]
+     * @param deserializeValue The function to convert the deserialized value back to a default [ValueInstant].
+     * @return A [ValueInstant] of specified value.
+     */
     inline fun <T> toValueInstant(deserializeValue: (String) -> T): ValueInstant<T> =
         deserializeValue(value) at Instant.ofEpochMilli(epochMilli)
-
 }

@@ -19,10 +19,19 @@ package org.tenkiv.daqc.hardware.definitions.channel
 
 import org.tenkiv.daqc.hardware.definitions.device.Device
 
+/**
+ * Defines the basic features of a channel owned by a [Device].
+ */
 interface DaqcChannel {
 
+    /**
+     * The [Device] which hosts this channel.
+     */
     val device: Device
 
+    /**
+     * The hardware number of the channel on the [device].
+     */
     val hardwareNumber: Int
 
 }

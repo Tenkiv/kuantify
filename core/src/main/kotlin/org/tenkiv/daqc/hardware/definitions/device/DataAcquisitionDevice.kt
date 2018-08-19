@@ -23,16 +23,34 @@ import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.networking.SharingStatus
 
+/**
+ * Interface defining [Device]s which have either [AnalogInput]s, [DigitalInput]s, or both.
+ */
 interface DataAcquisitionDevice : Device {
 
+    /**
+     * List of all [AnalogInput]s that this [DataAcquisitionDevice] has.
+     */
     val analogInputs: List<AnalogInput>
 
+    /**
+     * List of all [DigitalInput]s that this [DataAcquisitionDevice] has.
+     */
     val digitalInputs: List<DigitalInput>
 
+    /**
+     * If this [DataAcquisitionDevice] has any [AnalogInputs]s.
+     */
     val hasAnalogInputs: Boolean
 
+    /**
+     * If this [DataAcquisitionDevice] has any [DigitalInputs]s.
+     */
     val hasDigitalInputs: Boolean
 
+    /**
+     * A [MutableMap] of all inputs shared for remote access.
+     */
     val sharedInputs: MutableMap<SharingStatus, Input<DaqcValue>>
 
 }

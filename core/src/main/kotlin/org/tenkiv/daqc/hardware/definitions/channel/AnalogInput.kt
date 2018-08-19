@@ -21,21 +21,30 @@ import org.tenkiv.daqc.QuantityInput
 import tec.units.indriya.ComparableQuantity
 import javax.measure.quantity.ElectricPotential
 
+/**
+ * Class defining the basic features of an input which reads analog signals.
+ */
 abstract class AnalogInput : QuantityInput<ElectricPotential>, DaqcChannel {
 
     /**
+     * Denotes if the analog input's buffer is activated.
+     *
      * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */
     abstract var buffer: Boolean
 
     /**
+     * Denotes the maximum acceptable error for the [AnalogInput].
+     *
      * Implementing backing field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */
     abstract var maxAcceptableError: ComparableQuantity<ElectricPotential>
 
     /**
+     * Denotes the maximum [ElectricPotential] that the [AnalogInput] can read.
+     *
      * Implementing backing field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */

@@ -24,6 +24,9 @@ import org.tenkiv.daqc.hardware.inputs.SimpleDigitalFrequencySensor
 import org.tenkiv.daqc.hardware.inputs.SimplePwmSensor
 import javax.measure.quantity.Frequency
 
+/**
+ * Class defining the basic features of an input which reads binary signals.
+ */
 abstract class DigitalInput : DigitalChannel(), BinaryStateInput {
 
     override val isActive get() = super.isActive

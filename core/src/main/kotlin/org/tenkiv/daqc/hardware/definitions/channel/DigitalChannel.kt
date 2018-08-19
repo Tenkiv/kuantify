@@ -27,6 +27,9 @@ import org.tenkiv.daqc.lib.openNewCoroutineListener
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
 
+/**
+ * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
+ */
 abstract class DigitalChannel : Updatable<BinaryStateMeasurement>, DaqcChannel {
 
     open val isActive get() = isActiveForBinaryState || isActiveForPwm || isActiveForTransitionFrequency

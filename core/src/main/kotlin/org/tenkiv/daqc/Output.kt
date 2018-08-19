@@ -24,6 +24,11 @@ import tec.units.indriya.unit.Units
 import javax.measure.Quantity
 import kotlin.reflect.KClass
 
+/**
+ * Interface defining classes which act as outputs and send controls or signals to devices.
+ *
+ * @param T The type of signal given by this output.
+ */
 interface Output<T : DaqcValue> : IOChannel<T> {
 
     /**
@@ -33,21 +38,45 @@ interface Output<T : DaqcValue> : IOChannel<T> {
 
 }
 
+/**
+ * An [Output] which sends signals in the form of a [DaqcQuantity].
+ *
+ * @param Q The type of signal sent by this Output.
+ */
 interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
 
+    /**
+     * The [KClass] of [Quantity] which this [QuantityOutput] sends.
+     */
     val quantityType: KClass<Q>
 
     //TODO: check to see if getUnit() already returns the systemUnit, making .systemUnit pointless
     val systemUnit: PhysicalUnit<Q> get() = Units.getInstance().getUnit(quantityType.java).systemUnit
 
+    /**
+     * Sets the signal of this output to the correct value as a [DaqcQuantity].
+     *
+     * @param setting The signal to set as the output.
+     */
     fun setOutput(setting: ComparableQuantity<Q>) = setOutput(setting.toDaqc())
 
+    /**
+     * Sets the signal of this output as the default unit of the type of the [Output].
+     * This is a dangerous method and shouldn't be used in most circumstances. Be absolutely certain you need to use
+     * this function and not [QuantityOutput.setOutput]. You've been warned.
+     */
     fun setOutputInSystemUnit(setting: Double) = setOutput(setting(systemUnit))
 
 }
 
+/**
+ * An [Output] whose type extends both [DaqcValue] and [Comparable] so it can be used in the default learning module.
+ */
 interface RangedOutput<T> : Output<T>, RangedIOChannel<T> where T : DaqcValue, T : Comparable<T>
 
+/**
+ * A [RangedOutput] which uses the [BinaryState] type.
+ */
 interface BinaryStateOutput : RangedOutput<BinaryState> {
 
     override val valueRange get() = BinaryState.range
@@ -63,5 +92,10 @@ class RangedQuantityOutputBox<Q : Quantity<Q>>(
     override val valueRange: ClosedRange<DaqcQuantity<Q>>
 ) : RangedQuantityOutput<Q>, QuantityOutput<Q> by output
 
+/**
+ * Converts a [QuantityOutput] to a [RangedQuantityOutputBox] so it can be used in the default learning module.
+ *
+ * @param valueRange The range of acceptable output values.
+ */
 fun <Q : Quantity<Q>> QuantityOutput<Q>.toNewRangedOutput(valueRange: ClosedRange<DaqcQuantity<Q>>) =
     RangedQuantityOutputBox(this, valueRange)

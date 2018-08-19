@@ -3,6 +3,7 @@ package org.tenkiv.daqc.android
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorManager
+import org.tenkiv.daqc.android.input.*
 
 class AndroidDevice(context: Context) {
 

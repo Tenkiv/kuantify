@@ -1,4 +1,4 @@
-package org.tenkiv.daqc.android
+package org.tenkiv.daqc.android.input
 
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -6,12 +6,9 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.hardware.SensorManager.*
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.DaqcValue
-import org.tenkiv.daqc.Input
-import org.tenkiv.daqc.runningAverage
+import org.tenkiv.daqc.*
 import tec.units.indriya.ComparableQuantity
 import java.time.Instant
 import javax.measure.quantity.Frequency

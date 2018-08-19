@@ -20,6 +20,9 @@ package org.tenkiv.daqc.hardware.definitions.channel
 import org.tenkiv.daqc.QuantityOutput
 import javax.measure.quantity.ElectricPotential
 
+/**
+ * Class defining the basic features of an output which sends analog signals.
+ */
 abstract class AnalogOutput : QuantityOutput<ElectricPotential>, DaqcChannel {
 
     override val quantityType get() = ElectricPotential::class

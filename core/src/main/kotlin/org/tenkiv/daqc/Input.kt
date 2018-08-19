@@ -34,10 +34,16 @@ import kotlin.reflect.KProperty
 typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
 
 /**
+ * Interface defining classes which act as inputs and measure or gather data.
+ *
  * @param T The type of data given by this Input.
  */
 interface Input<out T : DaqcValue> : IOChannel<T> {
 
+    /**
+     * The frequency at which this Input samples. If there doesn't exist an API or setting to measure sample rate from
+     * the input, use [Input.runningAverage] to provide an approximate running average.
+     */
     val sampleRate: ComparableQuantity<Frequency>
 
     /**
@@ -45,6 +51,9 @@ interface Input<out T : DaqcValue> : IOChannel<T> {
      */
     val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
 
+    /**
+     * Activates the input alerting it to begin collecting and sending data.
+     */
     fun activate()
 
     //TODO: This should be moved to IOChannel.
@@ -56,8 +65,15 @@ interface Input<out T : DaqcValue> : IOChannel<T> {
 
 }
 
+/**
+ * An Input whose type is both a [DaqcValue] and [Comparable] allowing it to be used in the default learning module
+ * classes
+ */
 interface RangedInput<T> : Input<T>, RangedIOChannel<T> where T : DaqcValue, T : Comparable<T>
 
+/**
+ * A [RangedInput] which supports the [BinaryState] type.
+ */
 interface BinaryStateInput : RangedInput<BinaryState> {
 
     override val valueRange get() = BinaryState.range
@@ -68,16 +84,28 @@ interface BinaryStateInput : RangedInput<BinaryState> {
 // TODO: look into changing this to a typealias if generics compiler issue is fixed.
 interface RangedQuantityInput<Q : Quantity<Q>> : RangedInput<DaqcQuantity<Q>>
 
+
 class RangedQuantityInputBox<Q : Quantity<Q>>(
     input: QuantityInput<Q>,
     override val valueRange: ClosedRange<DaqcQuantity<Q>>
 ) : RangedQuantityInput<Q>, QuantityInput<Q> by input
 
+/**
+ * Extension function to add an [AverageSampleRateDelegate] to set an [Input]'s [Input.sampleRate].
+ *
+ * @param avgLength The length of time over which to average samples.
+ */
 fun Input<*>.runningAverage(avgLength: Duration = 1.minutesSpan): AverageSampleRateDelegate =
     AverageSampleRateDelegate(this, avgLength)
 
+/**
+ * Class which keeps a running average of the sample's received from an [Input]'s [Updatable.broadcastChannel].
+ */
 class AverageSampleRateDelegate internal constructor(input: Input<*>, private val avgLength: Duration) {
 
+    /**
+     * The measured sample rate in hertz
+     */
     @Volatile
     var sampleRate = 0.hertz
 
@@ -95,6 +123,11 @@ class AverageSampleRateDelegate internal constructor(input: Input<*>, private va
         }
     }
 
+    /**
+     * Private function to clear a [List] of [Instant]s of data that is older than the average length.
+     *
+     * @param sampleInstants The list to be purged of old values.
+     */
     private fun clean(sampleInstants: MutableList<Instant>) {
         val iterator = sampleInstants.listIterator()
         while (iterator.hasNext()) {
@@ -107,8 +140,17 @@ class AverageSampleRateDelegate internal constructor(input: Input<*>, private va
         }
     }
 
+    /**
+     * Gets the current sample rate of the designated [Input]
+     */
     operator fun getValue(thisRef: Any?, property: KProperty<*>): ComparableQuantity<Frequency> = sampleRate
 }
 
+/**
+ * Function to convert a [QuantityInput] to a [RangedQuantityInputBox] so that it can be used in the default
+ * learning package.
+ *
+ * @param valueRange The range of acceptable input values to be received.
+ */
 fun <Q : Quantity<Q>> QuantityInput<Q>.toNewRangedInput(valueRange: ClosedRange<DaqcQuantity<Q>>) =
     RangedQuantityInputBox(this, valueRange)

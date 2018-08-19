@@ -1,10 +1,9 @@
-package org.tenkiv.daqc.android
+package org.tenkiv.daqc.android.input
 
 import android.hardware.Sensor
 import android.hardware.SensorManager
-import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.toDaqc
+import org.tenkiv.daqc.*
+import org.tenkiv.daqc.android.input.AndroidSensor
 import org.tenkiv.physikal.core.*
 import javax.measure.quantity.*
 
@@ -24,7 +23,9 @@ class AndroidPressureSensor(manager: SensorManager, sensor: Sensor) :
 }
 
 class AndroidRelativeHumiditySensor(manager: SensorManager, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Dimensionless>>(manager, sensor) {
+    AndroidSensor<DaqcQuantity<Dimensionless>>(manager, sensor), RangedInput<DaqcQuantity<Dimensionless>> {
+    override val valueRange: ClosedRange<DaqcQuantity<Dimensionless>> = 0.percent.toDaqc()..100.percent.toDaqc()
+
     override fun convertData(data: FloatArray): DaqcQuantity<Dimensionless> = data[0].percent.toDaqc()
 }
 
@@ -49,6 +50,6 @@ class AndroidHeartBeatSensor(manager: SensorManager, sensor: Sensor) :
 }
 
 class AndroidOnBodySensor(manager: SensorManager, sensor: Sensor) :
-    AndroidSensor<BinaryState>(manager, sensor) {
+    AndroidSensor<BinaryState>(manager, sensor), BinaryStateInput {
     override fun convertData(data: FloatArray): BinaryState = if (data[0] == 1.0f) BinaryState.On else BinaryState.Off
 }

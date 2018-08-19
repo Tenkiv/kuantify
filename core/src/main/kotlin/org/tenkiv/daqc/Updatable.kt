@@ -24,14 +24,37 @@ import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import kotlin.coroutines.experimental.CoroutineContext
 
+/**
+ * The base interface which defines objects which have the ability to update their status.
+ */
 interface Updatable<out T> {
 
+    /**
+     * The [ConflatedBroadcastChannel] over which updates are broadcast.
+     */
     val broadcastChannel: ConflatedBroadcastChannel<out T>
 
+    /**
+     * Gets the current value of the [broadcastChannel] or returns Null.
+     *
+     * @return The value of the [broadcastChannel] or null.
+     */
     val valueOrNull get() = broadcastChannel.valueOrNull
 
+    /**
+     * Gets the current value of the [broadcastChannel] or suspends and waits for one to exist.
+     *
+     * @return The value of the [broadcastChannel]
+     */
     suspend fun getValue(): T = broadcastChannel.valueOrNull ?: broadcastChannel.openSubscription().receive()
 
+    /**
+     * Function to open a channel to consume updates of the [broadcastChannel].
+     *
+     * @param context The [CoroutineContext] upon which to consume the updates in.
+     * @param onUpdate The function to execute when an update is received.
+     * @return The [Job] which represents the coroutine consuming the data.
+     */
     fun openNewCoroutineListener(context: CoroutineContext = DefaultDispatcher, onUpdate: suspend (T) -> Unit): Job =
         launch(context) { broadcastChannel.consumeEach { onUpdate(it) } }
 }
