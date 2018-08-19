@@ -30,10 +30,10 @@ import org.tenkiv.coral.normalTo
 import org.tenkiv.daqc.data.BinaryState
 import org.tenkiv.daqc.data.DaqcQuantity
 import org.tenkiv.daqc.data.DaqcValue
-import org.tenkiv.daqc.gate.command.output.BinaryStateOutput
-import org.tenkiv.daqc.gate.command.output.RangedOutput
-import org.tenkiv.daqc.gate.command.output.RangedQuantityOutput
-import org.tenkiv.daqc.gate.receive.input.RangedInput
+import org.tenkiv.daqc.gate.acquire.input.RangedInput
+import org.tenkiv.daqc.gate.control.output.BinaryStateOutput
+import org.tenkiv.daqc.gate.control.output.RangedOutput
+import org.tenkiv.daqc.gate.control.output.RangedQuantityOutput
 import org.tenkiv.daqc.recording.RecordedUpdatable
 
 internal class ControllerEnvironment<T>(private val controller: LearningController<T>) :

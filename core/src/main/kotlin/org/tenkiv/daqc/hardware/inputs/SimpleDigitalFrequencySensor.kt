@@ -19,9 +19,9 @@ package org.tenkiv.daqc.hardware.inputs
 
 import org.tenkiv.daqc.data.DaqcQuantity
 import org.tenkiv.daqc.data.toDaqc
-import org.tenkiv.daqc.gate.receive.input.QuantityInput
+import org.tenkiv.daqc.gate.acquire.input.QuantityInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
-import org.tenkiv.physikal.core.hertz
+import org.tenkiv.physikal.core.*
 import javax.measure.quantity.Frequency
 
 class SimpleDigitalFrequencySensor internal constructor(val digitalInput: DigitalInput) :

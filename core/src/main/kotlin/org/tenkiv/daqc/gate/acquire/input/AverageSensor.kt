@@ -15,7 +15,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc.gate.receive.input
+package org.tenkiv.daqc.gate.acquire.input
 
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
@@ -24,7 +24,7 @@ import org.tenkiv.coral.at
 import org.tenkiv.daqc.QuantityMeasurement
 import org.tenkiv.daqc.data.toDaqc
 import org.tenkiv.daqc.lib.openNewCoroutineListener
-import org.tenkiv.physikal.core.averageOrNull
+import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 

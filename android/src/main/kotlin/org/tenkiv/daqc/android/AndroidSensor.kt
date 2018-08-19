@@ -10,7 +10,7 @@ import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.data.DaqcValue
-import org.tenkiv.daqc.gate.receive.input.Input
+import org.tenkiv.daqc.gate.acquire.input.Input
 import org.tenkiv.daqc.runningAverage
 import tec.units.indriya.ComparableQuantity
 import java.time.Instant

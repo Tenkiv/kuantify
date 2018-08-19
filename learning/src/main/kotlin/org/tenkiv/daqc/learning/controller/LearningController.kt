@@ -30,10 +30,10 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.now
 import org.tenkiv.daqc.data.BinaryState
 import org.tenkiv.daqc.data.DaqcValue
-import org.tenkiv.daqc.gate.command.output.Output
-import org.tenkiv.daqc.gate.command.output.RangedOutput
-import org.tenkiv.daqc.gate.command.output.RangedQuantityOutput
-import org.tenkiv.daqc.gate.receive.input.RangedInput
+import org.tenkiv.daqc.gate.acquire.input.RangedInput
+import org.tenkiv.daqc.gate.control.output.Output
+import org.tenkiv.daqc.gate.control.output.RangedOutput
+import org.tenkiv.daqc.gate.control.output.RangedQuantityOutput
 import org.tenkiv.daqc.recording.*
 import java.time.Duration
 import kotlin.concurrent.thread

@@ -17,7 +17,7 @@
 
 package org.tenkiv.daqc.hardware.definitions.channel
 
-import org.tenkiv.daqc.gate.receive.input.QuantityInput
+import org.tenkiv.daqc.gate.acquire.input.QuantityInput
 import tec.units.indriya.ComparableQuantity
 import javax.measure.quantity.ElectricPotential
 

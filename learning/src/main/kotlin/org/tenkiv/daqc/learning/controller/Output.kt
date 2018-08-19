@@ -17,7 +17,7 @@
 
 package org.tenkiv.daqc.learning.controller
 
-import org.tenkiv.daqc.gate.command.output.QuantityOutput
+import org.tenkiv.daqc.gate.control.output.QuantityOutput
 import org.tenkiv.physikal.core.*
 
 internal fun QuantityOutput<*>.setOutputInSystemUnit(setting: Double) = dynamicSetOutput(setting(systemUnit))

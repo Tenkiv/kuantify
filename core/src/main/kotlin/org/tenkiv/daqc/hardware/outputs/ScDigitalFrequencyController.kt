@@ -21,7 +21,7 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.now
 import org.tenkiv.daqc.QuantityMeasurement
 import org.tenkiv.daqc.data.DaqcQuantity
-import org.tenkiv.daqc.gate.command.output.QuantityOutput
+import org.tenkiv.daqc.gate.control.output.QuantityOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import javax.measure.Quantity
 import javax.measure.quantity.Frequency

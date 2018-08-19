@@ -22,8 +22,8 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.data.BinaryState
 import org.tenkiv.daqc.data.DaqcQuantity
-import org.tenkiv.daqc.gate.receive.input.Input
-import org.tenkiv.physikal.core.volt
+import org.tenkiv.daqc.gate.acquire.input.Input
+import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import java.time.Instant
 import java.util.*

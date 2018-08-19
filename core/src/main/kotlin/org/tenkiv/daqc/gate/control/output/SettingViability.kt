@@ -15,13 +15,21 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc.hardware.definitions.channel
+package org.tenkiv.daqc.gate.control.output
 
-import org.tenkiv.daqc.gate.control.output.QuantityOutput
-import javax.measure.quantity.ElectricPotential
+/**
+ *
+ * @property isViable is only meant to represent if the setting can succeed in the current situation, not whether or not
+ * the implementation of the setting was successful.
+ */
+interface SettingViability {
+    val isViable: Boolean
+}
 
-abstract class AnalogOutput : QuantityOutput<ElectricPotential>, DaqcChannel {
+object Viable : SettingViability {
+    override val isViable get() = true
+}
 
-    override val quantityType get() = ElectricPotential::class
-
+object NotViable : SettingViability {
+    override val isViable get() = false
 }

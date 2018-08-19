@@ -21,8 +21,8 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.daqc.BinaryStateMeasurement
 import org.tenkiv.daqc.Updatable
 import org.tenkiv.daqc.data.BinaryState
-import org.tenkiv.daqc.gate.command.output.BinaryStateOutput
-import org.tenkiv.daqc.gate.receive.input.BinaryStateInput
+import org.tenkiv.daqc.gate.acquire.input.BinaryStateInput
+import org.tenkiv.daqc.gate.control.output.BinaryStateOutput
 import org.tenkiv.daqc.recording.RecordedUpdatable
 import org.tenkiv.daqc.recording.Recorder
 import org.tenkiv.daqc.recording.StorageDuration

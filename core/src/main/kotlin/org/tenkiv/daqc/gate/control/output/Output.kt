@@ -15,7 +15,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc.gate.command.output
+package org.tenkiv.daqc.gate.control.output
 
 import org.tenkiv.daqc.data.BinaryState
 import org.tenkiv.daqc.data.DaqcQuantity
@@ -33,19 +33,6 @@ interface Output<T : DaqcValue> : IOStrand<T> {
 
     fun setOutput(setting: T): SettingViability
 
-}
-
-/**
- *
- * @property isViable is only meant to represent if the setting can succeed in the current situation, not whether or not
- * the implementation of the setting was successful.
- */
-interface SettingViability {
-    val isViable: Boolean
-}
-
-object AlwaysViable : SettingViability {
-    override val isViable get() = true
 }
 
 interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {

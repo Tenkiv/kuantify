@@ -26,7 +26,7 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.QuantityMeasurement
 import org.tenkiv.daqc.data.DaqcQuantity
-import org.tenkiv.daqc.gate.receive.input.QuantityInput
+import org.tenkiv.daqc.gate.acquire.input.QuantityInput
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity

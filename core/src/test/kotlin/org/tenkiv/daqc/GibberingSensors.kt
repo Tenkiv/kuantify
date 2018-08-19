@@ -22,12 +22,11 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.data.BinaryState
 import org.tenkiv.daqc.data.DaqcQuantity
-import org.tenkiv.daqc.gate.receive.input.Input
+import org.tenkiv.daqc.gate.acquire.input.Input
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.hardware.definitions.device.Device
-import org.tenkiv.physikal.core.hertz
-import org.tenkiv.physikal.core.percent
+import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import tec.units.indriya.unit.MetricPrefix.*
 import tec.units.indriya.unit.Units.*
