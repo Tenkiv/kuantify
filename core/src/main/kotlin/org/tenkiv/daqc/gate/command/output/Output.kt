@@ -31,21 +31,21 @@ import kotlin.reflect.KClass
 
 interface Output<T : DaqcValue> : IOStrand<T> {
 
-    fun setOutput(setting: T): SettingValidity
+    fun setOutput(setting: T): SettingViability
 
 }
 
 /**
  *
- * @property isValid is only meant to represent the validity of the setting, not whether or not the implementing the
- * setting was successful.
+ * @property isViable is only meant to represent if the setting can succeed in the current situation, not whether or not
+ * the implementation of the setting was successful.
  */
-interface SettingValidity {
-    val isValid: Boolean
+interface SettingViability {
+    val isViable: Boolean
 }
 
-object AlwaysValid : SettingValidity {
-    override val isValid get() = true
+object AlwaysViable : SettingViability {
+    override val isViable get() = true
 }
 
 interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
