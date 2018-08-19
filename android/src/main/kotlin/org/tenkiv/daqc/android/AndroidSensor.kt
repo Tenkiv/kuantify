@@ -18,6 +18,11 @@ import javax.measure.quantity.Frequency
 
 abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sensor: Sensor) : Input<Q> {
 
+    /**
+     * The sensor constant for the type of Android sensor.
+     */
+    abstract val type: Int
+
     override val sampleRate: ComparableQuantity<Frequency> by runningAverage()
 
     private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<Q>>()
@@ -61,6 +66,12 @@ abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sens
     override fun deactivate() {
         _isActive = false
         manager.unregisterListener(sensorListener)
+    }
+
+    init {
+        //This is done as there is only one Android sensor class making compile time safety impossible.
+        if (sensor.type != type)
+            throw AndroidSensorException("Sensor supplied was of the incorrect type.")
     }
 
     abstract fun convertData(data: FloatArray): Q

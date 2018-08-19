@@ -59,3 +59,5 @@ class AndroidDevice(context: Context) {
     val hasOnBodySensors = stationarySensors.isNotEmpty()
 
 }
+
+class AndroidSensorException(error: String) : Exception(error)
