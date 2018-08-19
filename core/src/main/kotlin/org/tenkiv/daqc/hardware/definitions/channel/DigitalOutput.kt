@@ -20,6 +20,7 @@ package org.tenkiv.daqc.hardware.definitions.channel
 import org.tenkiv.daqc.data.BinaryState
 import org.tenkiv.daqc.data.DaqcQuantity
 import org.tenkiv.daqc.gate.command.output.BinaryStateOutput
+import org.tenkiv.daqc.gate.command.output.SettingViability
 import org.tenkiv.daqc.hardware.outputs.SimpleBinaryStateController
 import org.tenkiv.daqc.hardware.outputs.SimpleFrequencyController
 import org.tenkiv.daqc.hardware.outputs.SimplePwmController
@@ -43,11 +44,13 @@ abstract class DigitalOutput : DigitalChannel(), BinaryStateOutput {
         SimpleFrequencyController(this)
     }
 
-    abstract fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>)
+    abstract fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>): SettingViability
 
-    abstract fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>)
+    abstract fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>): SettingViability
 
-    override fun deactivate() = setOutput(BinaryState.Off)
+    override fun deactivate() {
+        setOutput(BinaryState.Off)
+    }
 
     fun asBinaryStateController(inverted: Boolean = false) = thisAsBinaryStateController.apply {
         this.inverted = inverted
