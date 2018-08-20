@@ -121,10 +121,10 @@ class DigitalThresholdSensor(
 
                 _broadcastChannel.send(
                     if (currentValues.filter { it == state }.size >= threshold) {
-                        BinaryState.On at measurement.instant
+                        BinaryState.On
                     } else {
-                        BinaryState.Off at measurement.instant
-                    }
+                        BinaryState.Off
+                    } at measurement.instant
                 )
             }
 
