@@ -21,15 +21,12 @@ import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.QuantityInput
-import org.tenkiv.daqc.QuantityMeasurement
+import org.tenkiv.daqc.*
 import org.tenkiv.daqc.lib.openNewCoroutineListener
-import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.averageOrNull
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 
-//TODO: Make this work with BinaryState or make another version for BinaryState
 class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: QuantityInput<Q>) : QuantityInput<Q> {
 
     override val isActive: Boolean
@@ -51,7 +48,7 @@ class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: Quantity
 
     override val sampleRate
         get() = inputs.map { it.sampleRate }.max()
-                ?: throw IllegalStateException("AverageQuantitySensor has no inputs, it must have at least 1 input.")
+            ?: throw IllegalStateException("AverageQuantitySensor has no inputs, it must have at least 1 input.")
 
     init {
         inputs.forEach { _ ->
@@ -65,6 +62,70 @@ class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: Quantity
                 currentValues.averageOrNull { it }?.let {
                     _broadcastChannel.send(it.toDaqc() at measurement.instant)
                 }
+            }
+
+            failureBroadcastChannel.openNewCoroutineListener(CommonPool) {
+                _failureBroadcastChannel.send(it)
+            }
+        }
+    }
+
+    override fun activate() = inputs.forEach { it.activate() }
+
+    override fun deactivate() = inputs.forEach { it.deactivate() }
+}
+
+/**
+ * Sensor which notifies if the number of inputs in the group of [BinaryInput]s are toggled to the designated state.
+ * The [BinaryState] equivalent of [AverageQuantitySensor].
+ *
+ * @param inputs The [BinaryInput]s for which samples are to be drawn.
+ * @param threshold The minimum number of [BinaryInput]s which need to be in the desired state.
+ * @param state The state for which the [BinaryInput]s should be checked. Default is [BinaryState.On].
+ */
+class DigitalThresholdSensor(
+    private vararg val inputs: BinaryInput,
+    threshold: Int,
+    val state: BinaryState = BinaryState.On
+) : BinaryInput {
+
+    override val isActive: Boolean
+        get() = run {
+            inputs.forEach {
+                if (!it.isActive)
+                    return@run false
+            }
+            return true
+        }
+
+    private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
+    override val broadcastChannel: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+        get() = _broadcastChannel
+
+    private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
+    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        get() = _failureBroadcastChannel
+
+    override val sampleRate
+        get() = inputs.map { it.sampleRate }.max()
+            ?: throw IllegalStateException("AverageQuantitySensor has no inputs, it must have at least 1 input.")
+
+    init {
+        inputs.forEach { _ ->
+            openNewCoroutineListener(CommonPool) { measurement ->
+                val currentValues = HashSet<BinaryState>()
+
+                inputs.forEach { input ->
+                    input.broadcastChannel.valueOrNull?.let { currentValues += it.value }
+                }
+
+                _broadcastChannel.send(
+                    if (currentValues.filter { it == state }.size >= threshold) {
+                        BinaryState.On at measurement.instant
+                    } else {
+                        BinaryState.Off at measurement.instant
+                    }
+                )
             }
 
             failureBroadcastChannel.openNewCoroutineListener(CommonPool) {

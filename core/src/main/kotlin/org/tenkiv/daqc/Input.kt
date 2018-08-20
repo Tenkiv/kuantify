@@ -32,6 +32,7 @@ import javax.measure.quantity.Frequency
 import kotlin.reflect.KProperty
 
 typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
+typealias BinaryInput = Input<BinaryState>
 
 /**
  * @param T The type of data given by this Input.
