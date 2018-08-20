@@ -28,19 +28,35 @@ import org.tenkiv.daqc.hardware.definitions.device.Device
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
+/**
+ * Class defining functions expected from Device Locators.
+ */
 abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate<T>> {
 
     /**
+     * The list of active devices that are both found and able to be connected to.
+     *
      * Must be thread safe, this will be read from multiple threads.
      */
     abstract val activeDevices: List<T>
 
+    /**
+     * Begins the active search for devices.
+     */
     abstract fun search()
 
+    /**
+     * Stops the active search for devices.
+     */
     abstract fun stop()
 
     /**
-     * @throws [ClosedReceiveChannelException] if the locator was stopped before the specific device could be found.
+     * Gets the device with the specified serial number either from the known active list or suspends and awaits
+     * discovery of the device.
+     *
+     * @param serialNumber The serial number of the device.
+     * @return The device with specified serial number.
+     * @throws [ClosedReceiveChannelException] If the locator was stopped before the specific device could be found.
      */
     @Throws(ClosedReceiveChannelException::class)
     suspend fun getDeviceForSerial(serialNumber: String): T {
@@ -49,6 +65,14 @@ abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate<T>> {
         } ?: awaitBroadcast(serialNumber).getOrElse { throw it }
     }
 
+    /**
+     * Gets the device with the specified serial number either from the known active list or suspends and awaits
+     * discovery of the device.
+     *
+     * @param serialNumber The serial number of the device.
+     * @return A [Try] of a [Device] or an exception.
+     * @throws [ClosedReceiveChannelException] If the locator was stopped before the specific device could be found.
+     */
     suspend fun tryGetDeviceForSerial(serialNumber: String, timeout: Duration? = null): Try<T> {
         val fromMemory = activeDevices.firstOrNull {
             it.serialNumber == serialNumber
@@ -61,6 +85,12 @@ abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate<T>> {
         }
     }
 
+    /**
+     * Gets the device with the specified serial number if it has been found. If not it returns null.
+     *
+     * @param serialNumber The serial number of the device.
+     * @retun The device with the specifeid serial number or null.
+     */
     fun getDeviceForSerialOrNull(serialNumber: String): T? =
         activeDevices.firstOrNull { it.serialNumber == serialNumber }
 
@@ -92,12 +122,18 @@ abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate<T>> {
         }
 
     }
-
 }
 
+/**
+ * Sealed class for notifications to changes in the status of Devices.
+ *
+ * @param wrappedDevice The base device to be wrapped.
+ */
 sealed class LocatorUpdate<out T : Device>(val wrappedDevice: T) : Device by wrappedDevice
 /**
  * A Device found by a Locator
+ *
+ * @param device The located [Device].
  */
 class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
 
@@ -118,7 +154,11 @@ class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
         return wrappedDevice.hashCode()
     }
 }
-
+/**
+ * A Device previously found by a Locator that is no longer able to be connected to.
+ *
+ * @param device The removed [Device].
+ */
 class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
 
     override fun toString() = "LostDevice: $wrappedDevice"
@@ -137,6 +177,4 @@ class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
     override fun hashCode(): Int {
         return wrappedDevice.hashCode()
     }
-
-
 }

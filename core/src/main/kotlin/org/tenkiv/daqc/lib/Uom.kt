@@ -23,6 +23,12 @@ import javax.measure.Quantity
 import javax.measure.quantity.Frequency
 import javax.measure.quantity.Time
 
+/**
+ * Converts a [Quantity] of a [Frequency] to a [Time].
+ */
 fun Quantity<Frequency>.toPeriod(): Quantity<Time> = this.inverse().asType()
 
+/**
+ * Converts a [ComparableQuantity] of a [Frequency] to a [Time].
+ */
 fun ComparableQuantity<Frequency>.toPeriod(): ComparableQuantity<Time> = this.inverse(Time::class.java)

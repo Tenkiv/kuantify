@@ -17,6 +17,7 @@
 
 package org.tenkiv.daqc.hardware.definitions.channel
 
+import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.BinaryStateInput
 import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.inputs.SimpleBinaryStateSensor
@@ -43,20 +44,51 @@ abstract class DigitalInput : DigitalChannel(), BinaryStateInput {
         SimplePwmSensor(this)
     }
 
+    /**
+     * Activates this channel to gather data for transition frequency averaged over a certain period of time.
+     *
+     * @param avgFrequency The period of time to average the transition frequency.
+     */
     abstract fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>)
 
+    /**
+     * Activates this channel to gather data for PWM averaged over a certain period of time.
+     *
+     * @param avgFrequency The period of time to average the PWM frequency.
+     */
     abstract fun activateForPwm(avgFrequency: DaqcQuantity<Frequency>)
 
+    /**
+     * Activates the channel to receive data about the current state of the [DigitalInput]
+     */
     open fun activateForCurrentState() = activate()
 
+    /**
+     * Creates a [SimpleBinaryStateSensor] with the input being this channel.
+     *
+     * @param inverted If the channel has inverted values, ie Off == [BinaryState.On]. Default is false.
+     * @return A [SimpleBinaryStateSensor] with the input as this channel.
+     */
     fun asBinaryStateSensor(inverted: Boolean = false) = thisAsBinaryStateSensor.apply {
         this.inverted = inverted
     }
 
+    /**
+     * Creates a [SimpleDigitalFrequencySensor] with the input being this channel.
+     *
+     * @param avgFrequency The average period of time over which to average.
+     * @return A [SimpleDigitalFrequencySensor] with the input as this channel.
+     */
     fun asTransitionFrequencySensor(avgFrequency: DaqcQuantity<Frequency>) = thisAsTransitionFrequencyInput.apply {
         this.avgFrequency = avgFrequency
     }
 
+    /**
+     * Creates a [SimplePwmSensor] with the input being this channel.
+     *
+     * @param avgFrequency The average period of time over which to average.
+     * @return A [SimplePwmSensor] with the input as this channel.
+     */
     fun asPwmSensor(avgFrequency: DaqcQuantity<Frequency>) = thisAsPwmInput.apply {
         this.avgFrequency = avgFrequency
     }
