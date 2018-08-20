@@ -24,8 +24,16 @@ import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.hertz
 import javax.measure.quantity.Frequency
 
+/**
+ * A simple simple implementation of a binary frequency sensor
+ *
+ * @param digitalInput The [DigitalInput] that is being read from.
+ */
 class SimpleDigitalFrequencySensor internal constructor(val digitalInput: DigitalInput) : QuantityInput<Frequency> {
 
+    /**
+     * The [Frequency] over which to average the samples.
+     */
     @Volatile
     var avgFrequency: DaqcQuantity<Frequency> = 1.hertz.toDaqc()
 

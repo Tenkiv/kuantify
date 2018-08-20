@@ -24,6 +24,11 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Class which acts as a monitor on an Input to execute a command when a certain state is met.
+ *
+ * @param triggerOnSimultaneousValues If the Trigger should fire only when all values are met at the same time.
+ * @param maxTriggerCount The [MaxTriggerCount] for how many times the trigger should fire until it terminates.
+ * @param triggerConditions The [TriggerCondition]s which need to be met for a trigger to fire.
+ * @param triggerFunction The function to be executed when the trigger fires.
  */
 class Trigger<T : DaqcValue>(
     val triggerOnSimultaneousValues: Boolean = false,
@@ -44,13 +49,13 @@ class Trigger<T : DaqcValue>(
             )
 
     constructor(
-        maxTimesTriggered: MaxTriggerCount,
+        maxTriggerCount: MaxTriggerCount,
         vararg triggerConditions: TriggerCondition<T>,
         triggerFunction: () -> Unit
     ) :
             this(
                 false,
-                maxTimesTriggered,
+                maxTriggerCount,
                 *triggerConditions,
                 triggerFunction = triggerFunction
             )
@@ -69,6 +74,9 @@ class Trigger<T : DaqcValue>(
 
     private val channelList: MutableList<ReceiveChannel<ValueInstant<T>>> = ArrayList()
 
+    /**
+     * Stops the [Trigger] and cancels the open channels.
+     */
     fun stop() {
         if (maxTriggerCount is MaxTriggerCount.Limited && maxTriggerCount.atomicCount.get() > 0) {
             maxTriggerCount.atomicCount.decrementAndGet()

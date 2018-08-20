@@ -26,8 +26,16 @@ import org.tenkiv.daqc.BinaryStateMeasurement
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.lib.openNewCoroutineListener
 
+/**
+ * A simple simple implementation of a binary sensor
+ *
+ * @param digitalInput The [DigitalInput] that is being read from.
+ */
 class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInput) : BinaryStateInput {
 
+    /**
+     * Denotes if the [DigitalInput] is inverted; ie Off = [BinaryState.On]
+     */
     @Volatile
     var inverted: Boolean = false
 

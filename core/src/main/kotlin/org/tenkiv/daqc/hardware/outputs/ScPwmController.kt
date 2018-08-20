@@ -25,7 +25,13 @@ import org.tenkiv.daqc.QuantityOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import javax.measure.Quantity
 import javax.measure.quantity.Dimensionless
+import javax.measure.quantity.Frequency
 
+/**
+ * Abstract class for a controller which outputs a percent to a single digital output channel from a [Quantity].
+ *
+ * @param digitalOutput The digital output
+ */
 abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput) :
     QuantityOutput<Q> {
 
@@ -42,6 +48,12 @@ abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput
         _broadcastChannel.offer(setting.now())
     }
 
+    /**
+     * Converts a [DaqcQuantity] to a usable percent for a pwm digital output.
+     *
+     * @param setting The [DaqcQuantity] to be converted into a pwm percentage.
+     * @return The value converted into a pwm percentage.
+     */
     protected abstract fun convertOutput(setting: DaqcQuantity<Q>): DaqcQuantity<Dimensionless>
 
     override fun deactivate() = digitalOutput.deactivate()

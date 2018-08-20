@@ -52,6 +52,18 @@ internal typealias StorageFilter<T> = (ValueInstant<T>) -> Boolean
 internal typealias RecordingFilter<T> = Recorder<T>.(ValueInstant<T>) -> Boolean
 
 //TODO: Move default parameter values in recorder creation function to constants
+/**
+ * Creates a new [Recorder] and paris it with the the provided [Updatable].
+ *
+ * @param storageFrequency Determines how frequently data is stored to the [Recorder].
+ * @param memoryDuration Determines how long samples are stored in memory.
+ * @param diskDuration Determines how long samples are stored on disk.
+ * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
+ * ValueInstant and false if it should not.
+ * @param valueSerializer Function to serialize the data into a parsable format.
+ * @param valueDeserializer Function to deserialize the data into the original object.
+ * @return A [RecordedUpdatable] of the existing [Updatable] with a new [Recorder].
+ */
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
@@ -73,6 +85,18 @@ fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
         )
     )
 
+/**
+ * Creates a new [Recorder] and paris it with the the provided [Updatable].
+ *
+ * @param storageFrequency Determines how frequently data is stored to the [Recorder].
+ * @param memoryDuration Determines how long samples are stored in memory.
+ * @param diskDuration Determines how long samples are stored on disk.
+ * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
+ * ValueInstant and false if it should not.
+ * @param valueSerializer Function to serialize the data into a parsable format.
+ * @param valueDeserializer Function to deserialize the data into the original object.
+ * @return A [RecordedUpdatable] of the existing [Updatable] with a new [Recorder].
+ */
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageSamples = StorageSamples.Number(100),
@@ -94,6 +118,14 @@ fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
         )
     )
 
+/**
+ * Creates a new [Recorder] and paris it with the the provided [Updatable].
+ *
+ * @param storageFrequency Determines how frequently data is stored to the [Recorder].
+ * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
+ * ValueInstant and false if it should not..
+ * @return A [RecordedUpdatable] of the existing [Updatable] with a new [Recorder].
+ */
 fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryStorageLength: StorageLength = StorageSamples.Number(100),
@@ -113,25 +145,55 @@ fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
 fun <T> Iterable<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
     this.filter { it.instant in instantRange }
 
-
+/**
+ * A tuple data class for an [Updatable] and a [Recorder]
+ *
+ * @param updatable The [Updatable] to be recorded.
+ * @param recorder The [Recorder] monotoring the [updatable].
+ */
 data class RecordedUpdatable<out T, out U : Updatable<ValueInstant<T>>>(
     val updatable: U,
     val recorder: Recorder<T>
 )
 
+/**
+ * Sealed class denoting the frequency at which samples should be stored.
+ */
 sealed class StorageFrequency {
 
+    /**
+     * Store all data received.
+     */
     object All : StorageFrequency()
 
+    /**
+     * Store the data within an interval.
+     *
+     * @param interval The [Duration] over which samples will be stored.
+     */
     data class Interval(val interval: Duration) : StorageFrequency()
 
+    /**
+     * Store data per number of measurements received.
+     *
+     * @param number The interval of samples at which to store a new sample.
+     */
     data class PerNumMeasurements(val number: Int) : StorageFrequency()
 }
 
+/**
+ * Sealed class for how long data should be stored either in memory or on disk.
+ */
 sealed class StorageLength
 
+/**
+ * Sealed class denoting the number of samples to be kept in either memory or on disk.
+ */
 sealed class StorageSamples : StorageLength(), Comparable<StorageSamples> {
 
+    /**
+     * Keep all data unless otherwise noted.
+     */
     object All : StorageSamples() {
 
         override fun compareTo(other: StorageSamples): Int =
@@ -142,6 +204,9 @@ sealed class StorageSamples : StorageLength(), Comparable<StorageSamples> {
 
     }
 
+    /**
+     * Keep no data
+     */
     object None : StorageSamples() {
 
         override fun compareTo(other: StorageSamples): Int =
@@ -151,6 +216,11 @@ sealed class StorageSamples : StorageLength(), Comparable<StorageSamples> {
             }
     }
 
+    /**
+     * Keep a specific number of samples in memory or on disk.
+     *
+     * @param numSamples The number of samples to keep in memory or on disk.
+     */
     data class Number(val numSamples: Int) : StorageSamples() {
 
         override fun compareTo(other: StorageSamples): Int =
@@ -163,8 +233,14 @@ sealed class StorageSamples : StorageLength(), Comparable<StorageSamples> {
 
 }
 
+/**
+ * Sealed class denoting the length of time which a sample should be kept in memory or on disk.
+ */
 sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
 
+    /**
+     * Keep the data without respect to time.
+     */
     object Forever : StorageDuration() {
 
         override fun compareTo(other: StorageDuration): Int =
@@ -175,6 +251,9 @@ sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
 
     }
 
+    /**
+     * Keep none of the data.
+     */
     object None : StorageDuration() {
 
         override fun compareTo(other: StorageDuration): Int =
@@ -184,6 +263,11 @@ sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
             }
     }
 
+    /**
+     * Keep the data for a specified duration.
+     *
+     * @param duration The [Duration] with which to keep the data.
+     */
     data class For(val duration: Duration) : StorageDuration() {
 
         override fun compareTo(other: StorageDuration): Int =
@@ -195,6 +279,9 @@ sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
     }
 }
 
+/**
+ * Recorder to store data either in memory or on disk depending on certain parameters.
+ */
 class Recorder<out T> {
 
     val updatable: Updatable<ValueInstant<T>>
@@ -220,9 +307,16 @@ class Recorder<out T> {
     private val fileCreationBroadcaster = ConflatedBroadcastChannel<RecorderFile>()
 
     /**
+     * Recorder to store data either in memory or on disk depending on certain parameters.
+     *
+     * @param updatable The [Updatable] to monitor for samples.
+     * @param storageFrequency Determines how frequently data is stored to the [Recorder].
+     * @param memoryDuration Determines how long samples are stored in memory.
+     * @param diskDuration Determines how long samples are stored on disk.
      * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
      * ValueInstant and false if it should not.
-     * @param valueSerializer returned String will be stored in a JSON file and should be a compliant JSON String.
+     * @param valueSerializer Returned String will be stored in a JSON file and should be a compliant JSON String.
+     * @param valueDeserializer Function to deserialize the data from JSON to the original object.
      */
     constructor(
         updatable: Updatable<ValueInstant<T>>,
@@ -245,6 +339,18 @@ class Recorder<out T> {
         this.recordJob = createRecordJob()
     }
 
+    /**
+     * Recorder to store data either in memory or on disk depending on certain parameters.
+     *
+     * @param updatable The [Updatable] to monitor for samples.
+     * @param storageFrequency Determines how frequently data is stored to the [Recorder].
+     * @param numSamplesMemory Determines how long samples are stored in memory.
+     * @param numSamplesDisk Determines how long samples are stored on disk.
+     * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
+     * ValueInstant and false if it should not.
+     * @param valueSerializer Returned String will be stored in a JSON file and should be a compliant JSON String.
+     * @param valueDeserializer Function to deserialize the data from JSON to the original object.
+     */
     constructor(
         updatable: Updatable<ValueInstant<T>>,
         storageFrequency: StorageFrequency = StorageFrequency.All,
@@ -266,6 +372,15 @@ class Recorder<out T> {
         this.recordJob = createRecordJob()
     }
 
+    /**
+     * Recorder to store data either in memory or on disk depending on certain parameters.
+     *
+     * @param updatable The [Updatable] to monitor for samples.
+     * @param storageFrequency Determines how frequently data is stored to the [Recorder].
+     * @param memoryStorageLength Determines how long samples are stored in memory.
+     * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
+     * ValueInstant and false if it should not.
+     */
     constructor(
         updatable: Updatable<ValueInstant<T>>,
         storageFrequency: StorageFrequency = StorageFrequency.All,
@@ -286,15 +401,30 @@ class Recorder<out T> {
 
 
     /**
-     * Gets the data currently stored in RAM by this recorder. The returned list can not be modified.
+     * Gets the data currently stored in heap memory by this recorder. The returned list can not be modified.
      * To get an updated list of data in memory, call this function again.
+     *
+     * @return A [List] of [ValueInstant]s of the data in heap memory sent by the Recorder's [Updatable].
      */
     //TODO: Make this return truly immutable list.
     fun getDataInMemory(): List<ValueInstant<T>> = ArrayList(_dataInMemory)
 
+    /**
+     * Gets all data both in heap memory and disk. If disk data exists the function will suspend until data is restored
+     * to heap memory.
+     *
+     * @return A [List] of [ValueInstant]s of all the data sent by the Recorder's [Updatable].
+     */
     suspend fun getAllData(): List<ValueInstant<T>> =
         if (memoryStorageLength >= diskStorageLength) getDataInMemory() else getDataFromDisk { true }
 
+    /**
+     * Gets all the data between two points in time denoted by [Instant]s. If disk data is in range the function will
+     * suspend until data is restored to heap memory.
+     *
+     * @param instantRange The range of time over which to get data.
+     * @return A [List] of [ValueInstant]s stored by the recorder within the [ClosedRange].
+     */
     suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> {
         val oldestRequested = instantRange.start
 
@@ -310,6 +440,11 @@ class Recorder<out T> {
         }
     }
 
+    /**
+     * Stops the recorder and cancels all channels.
+     *
+     * @param shouldDeleteDiskData If the recorder should delete the data stored on disk.
+     */
     fun stop(shouldDeleteDiskData: Boolean = false) {
         receiveChannel.cancel(CancellationException("Recorder manually stopped"))
         recordJob.cancel(CancellationException("Recorder manually stopped"))

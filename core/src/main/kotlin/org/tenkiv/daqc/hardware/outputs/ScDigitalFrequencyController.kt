@@ -26,6 +26,11 @@ import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import javax.measure.Quantity
 import javax.measure.quantity.Frequency
 
+/**
+ * Abstract class for a controller which outputs a [Frequency] to a single digital output channel from a [Quantity].
+ *
+ * @param digitalOutput The digital output
+ */
 abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput) :
     QuantityOutput<Q> {
 
@@ -42,6 +47,12 @@ abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: 
         _broadcastChannel.offer(setting.now())
     }
 
+    /**
+     * Converts a [DaqcQuantity] to a usable [Frequency] for a digital output.
+     *
+     * @param setting The [DaqcQuantity] to be converted into a [Frequency].
+     * @return The value converted into a [Frequency].
+     */
     protected abstract fun convertOutput(setting: DaqcQuantity<Q>): DaqcQuantity<Frequency>
 
     override fun deactivate() = digitalOutput.deactivate()
