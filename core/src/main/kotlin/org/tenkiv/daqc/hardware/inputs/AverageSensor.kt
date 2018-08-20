@@ -86,7 +86,7 @@ class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: Quantity
 class DigitalThresholdSensor(
     private vararg val inputs: BinaryInput,
     threshold: Int,
-    val state: BinaryState = BinaryState.On
+    state: BinaryState = BinaryState.On
 ) : BinaryInput {
 
     override val isActive: Boolean
