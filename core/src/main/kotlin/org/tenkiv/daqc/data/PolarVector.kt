@@ -19,15 +19,11 @@ package org.tenkiv.daqc.data
 
 import org.tenkiv.physikal.core.*
 import org.tenkiv.physikal.si.degreeAngle
-import si.uom.NonSI.DEGREE_ANGLE
 import si.uom.SI.*
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 import javax.measure.quantity.Angle
 import kotlin.math.*
-
-private const val DEFAULT_X_LABEL = "X"
-private const val DEFAULT_Z_LABEL = "Z"
 
 private fun ComparableQuantity<Angle>.compassInvert(): DaqcQuantity<Angle> {
     val degree180 = 180.degreeAngle
@@ -39,11 +35,11 @@ private fun ComparableQuantity<Angle>.compassInvert(): DaqcQuantity<Angle> {
     }
 }
 
-class Vector<Q : Quantity<Q>>(
+class PolarVector2D<Q : Quantity<Q>>(
     magnitude: ComparableQuantity<Q>,
     angle: ComparableQuantity<Angle>,
     val axisLabel: String,
-    val positiveDirection: PolarDirection = PolarDirection.COUNTER_CLOCKWISE
+    val positiveDirection: CircularDirection
 ) : DaqcData {
     val magnitude = magnitude.toDaqc()
 
@@ -54,7 +50,7 @@ class Vector<Q : Quantity<Q>>(
     override fun toDaqcValueList() = listOf(magnitude, angle)
 
     /**
-     * Converts this [Vector] to a [DoubleArray] representing the equivalent components of a Euclidean vector in the
+     * Converts this [PolarVector2D] to a [DoubleArray] representing the equivalent components of a Euclidean vector in the
      * system unit.
      */
     fun toComponentDoubles(): Pair<Double, Double> {
@@ -71,29 +67,29 @@ class Vector<Q : Quantity<Q>>(
         return Pair(components.first(unit), components.second(unit))
     }
 
-    infix fun compassScale(scalar: Double): Vector<Q> {
+    infix fun compassScale(scalar: Double): PolarVector2D<Q> {
         val negativeScalar = scalar < 0
         val scaledMagnitude = magnitude * scalar.absoluteValue
         val angle = if (negativeScalar) this.angle.compassInvert() else this.angle
 
-        return Vector(scaledMagnitude, angle, axisLabel, positiveDirection)
+        return PolarVector2D(scaledMagnitude, angle, axisLabel, positiveDirection)
     }
 
-    operator fun times(scalar: Double): Vector<Q> =
-        Vector(magnitude * scalar, angle, axisLabel, positiveDirection)
+    operator fun times(scalar: Double): PolarVector2D<Q> =
+        PolarVector2D(magnitude * scalar, angle, axisLabel, positiveDirection)
 
-    operator fun unaryPlus() = Vector(+magnitude, angle, axisLabel, positiveDirection)
+    operator fun unaryPlus() = PolarVector2D(+magnitude, angle, axisLabel, positiveDirection)
 
-    operator fun unaryMinus() = Vector(-magnitude, angle, axisLabel, positiveDirection)
+    operator fun unaryMinus() = PolarVector2D(-magnitude, angle, axisLabel, positiveDirection)
 
-    operator fun plus(other: Vector<Q>): Vector<Q> {
+    operator fun plus(other: PolarVector2D<Q>): PolarVector2D<Q> {
         val (thisX, thisY) = toComponents()
         val (otherX, otherY) = other.toComponents()
 
         val resultX = thisX + otherX
         val resultY = thisY + otherY
 
-        return Vector.fromComponents(
+        return PolarVector2D.fromComponents(
             resultX,
             resultY,
             other.axisLabel,
@@ -102,14 +98,14 @@ class Vector<Q : Quantity<Q>>(
         )
     }
 
-    operator fun minus(other: Vector<Q>): Vector<Q> {
+    operator fun minus(other: PolarVector2D<Q>): PolarVector2D<Q> {
         val (thisX, thisY) = toComponents()
         val (otherX, otherY) = other.toComponents()
 
         val resultX = thisX - otherX
         val resultY = thisY - otherY
 
-        return Vector.fromComponents(
+        return PolarVector2D.fromComponents(
             resultX,
             resultY,
             other.axisLabel,
@@ -118,7 +114,7 @@ class Vector<Q : Quantity<Q>>(
         )
     }
 
-    operator fun times(other: Vector<*>): ComparableQuantity<*> {
+    operator fun times(other: PolarVector2D<*>): ComparableQuantity<*> {
         val (thisX, thisY) = toComponents()
         val (otherX, otherY) = other.toComponents()
 
@@ -135,7 +131,7 @@ class Vector<Q : Quantity<Q>>(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as Vector<*>
+        other as PolarVector2D<*>
 
         if (axisLabel != other.axisLabel) return false
         if (positiveDirection != other.positiveDirection) return false
@@ -154,9 +150,7 @@ class Vector<Q : Quantity<Q>>(
     }
 
     override fun toString() =
-        "Vector($magnitude, $angle $positiveDirection from $axisLabel)"
-
-    data class Components<Q : Quantity<Q>>(val x: ComparableQuantity<Q>, val y: ComparableQuantity<Q>)
+        "PolarVector2D($magnitude, $angle $positiveDirection from $axisLabel)"
 
     companion object {
         fun <Q : Quantity<Q>> fromComponents(
@@ -164,8 +158,8 @@ class Vector<Q : Quantity<Q>>(
             yComponent: ComparableQuantity<Q>,
             axisLabel: String,
             unit: PhysicalUnit<Q> = xComponent.unit.systemUnit,
-            positiveDirection: PolarDirection = PolarDirection.COUNTER_CLOCKWISE
-        ): Vector<Q> {
+            positiveDirection: CircularDirection
+        ): PolarVector2D<Q> {
             val xComponentDouble = xComponent.toDoubleInSystemUnit()
             val yComponentDouble = yComponent.toDoubleInSystemUnit()
 
@@ -177,34 +171,39 @@ class Vector<Q : Quantity<Q>>(
             yComponent: Double,
             axisLabel: String,
             unit: PhysicalUnit<Q>,
-            positiveDirection: PolarDirection = PolarDirection.COUNTER_CLOCKWISE
-        ): Vector<Q> {
+            positiveDirection: CircularDirection
+        ): PolarVector2D<Q> {
             val magnitude = sqrt(xComponent.pow(2) + yComponent.pow(2))(unit)
-            val angle = atan(yComponent / xComponent)(DEGREE_ANGLE)
+            val angle = atan(yComponent / xComponent)(RADIAN)
 
-            return Vector(magnitude, angle, axisLabel, positiveDirection)
+            return PolarVector2D(magnitude, angle, axisLabel, positiveDirection)
         }
     }
 }
 
-enum class PolarDirection {
+enum class CircularDirection {
     CLOCKWISE,
     COUNTER_CLOCKWISE
 }
 
-class SphericalVector<Q : Quantity<Q>>(
+/**
+ * A [PolarVector3D] is a vector described in terms of two perpendicular polar planes with the same center point.
+ */
+class PolarVector3D<Q : Quantity<Q>>(
     magnitude: ComparableQuantity<Q>,
-    xAngle: ComparableQuantity<Angle>,
-    zAngle: ComparableQuantity<Angle>,
-    val xLabel: String = DEFAULT_X_LABEL,
-    val zLabel: String = DEFAULT_Z_LABEL
+    incline: ComparableQuantity<Angle>,
+    azimuth: ComparableQuantity<Angle>,
+    val inclineAxisLabel: String,
+    val azimuthAxisLabel: String,
+    val inclinePositiveDirection: CircularDirection,
+    val azimuthPositiveDirection: CircularDirection
 ) : DaqcData {
     val magnitude = magnitude.toDaqc()
 
-    val xAngle = xAngle.toDaqc()
-    val zAngle = zAngle.toDaqc()
+    val xyAngle = incline.toDaqc()
+    val zyAngle = azimuth.toDaqc()
 
     override val size get() = 3
 
-    override fun toDaqcValueList() = listOf(magnitude, xAngle, zAngle)
+    override fun toDaqcValueList() = listOf(magnitude, xyAngle, zyAngle)
 }
