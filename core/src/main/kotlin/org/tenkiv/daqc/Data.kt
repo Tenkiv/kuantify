@@ -318,11 +318,11 @@ class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuant
         /**
          * Function to create a [DaqcQuantity] from an existing [QuantityMeasurement].
          *
-         * @param instant The [QuantityMeasurement] to be converted.
+         * @param measurement The [QuantityMeasurement] to be converted.
          * @return The [DaqcQuantity] value.
          */
-        fun <Q : Quantity<Q>> of(instant: QuantityMeasurement<Q>) =
-            DaqcQuantity(instant.value)
+        fun <Q : Quantity<Q>> of(measurement: QuantityMeasurement<Q>) =
+            DaqcQuantity(measurement.value)
 
         /**
          * Function to create a [DaqcQuantity] from a [String] representation.
@@ -398,4 +398,5 @@ data class PrimitiveValueInstant(val epochMilli: Long, val value: String) {
      */
     inline fun <T> toValueInstant(deserializeValue: (String) -> T): ValueInstant<T> =
         deserializeValue(value) at Instant.ofEpochMilli(epochMilli)
+
 }

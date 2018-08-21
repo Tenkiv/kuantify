@@ -20,7 +20,7 @@ package org.tenkiv.daqc
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.normalTo
+import org.tenkiv.coral.normalToOrNull
 import org.tenkiv.daqc.hardware.definitions.device.Device
 
 
@@ -66,6 +66,7 @@ interface RangedIOChannel<T> : IOChannel<T> where T : DaqcValue, T : Comparable<
      */
     val valueRange: ClosedRange<T>
 
+    //TODO: Add more versions of this function, like one that suspends until it has a value.
     /**
      * @return a [Double] representation of the current value normalised to be between 0 and 1 based on the
      * [valueRange], null if the updatable does not yet have a value or the value is outside the [valueRange].
@@ -73,18 +74,13 @@ interface RangedIOChannel<T> : IOChannel<T> where T : DaqcValue, T : Comparable<
     fun getNormalisedDoubleOrNull(): Double? {
         val value = valueOrNull?.value
 
-        if (value is BinaryState?)
-            return value?.toDouble()
+        if (value is BinaryState?) return value?.toDouble()
 
         val min = valueRange.start.toDoubleInSystemUnit()
         val max = valueRange.endInclusive.toDoubleInSystemUnit()
         val valueDouble = value?.toDoubleInSystemUnit()
 
-        return if (valueDouble != null && valueDouble >= min && valueDouble <= max) {
-            valueDouble normalTo min..max
-        } else {
-            null
-        }
+        return valueDouble?.normalToOrNull(min..max)
     }
 
 }

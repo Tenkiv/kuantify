@@ -31,6 +31,7 @@ import kotlin.reflect.KClass
  */
 interface Output<T : DaqcValue> : IOChannel<T> {
 
+    //TODO: Maybe change this to return a throwable or something else instead of throwing and exception
     /**
      * @throws Throwable if something prevents this output from being set.
      */

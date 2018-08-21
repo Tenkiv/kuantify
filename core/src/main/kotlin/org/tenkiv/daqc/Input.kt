@@ -32,6 +32,7 @@ import javax.measure.quantity.Frequency
 import kotlin.reflect.KProperty
 
 typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
+typealias BinaryInput = Input<BinaryState>
 
 /**
  * Interface defining classes which act as inputs and measure or gather data.
