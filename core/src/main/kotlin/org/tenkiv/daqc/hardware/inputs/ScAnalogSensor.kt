@@ -32,7 +32,13 @@ import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 import javax.measure.quantity.ElectricPotential
 
-
+/**
+ * Abstract class for single channel analog sensors.
+ *
+ * @param analogInput The analog input.
+ * @param maximumEp The maximum [ElectricPotential] for the sensor.
+ * @param acceptableError The maximum acceptable error for the sensor in [ElectricPotential].
+ */
 abstract class ScAnalogSensor<Q : Quantity<Q>>(
     val analogInput: AnalogInput,
     maximumEp: ComparableQuantity<ElectricPotential>,
@@ -66,6 +72,12 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
         }
     }
 
+    /**
+     * Function to convert the [ElectricPotential] of the analog input to a [DaqcQuantity] or return an error.
+     *
+     * @param ep The [ElectricPotential] measured by the analog input.
+     * @return A [Try] of either a [DaqcQuantity] or an error.
+     */
     protected abstract fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Q>>
 
     override fun activate() = analogInput.activate()

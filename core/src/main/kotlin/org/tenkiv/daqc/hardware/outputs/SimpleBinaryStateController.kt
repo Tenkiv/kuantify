@@ -24,8 +24,16 @@ import org.tenkiv.daqc.BinaryStateMeasurement
 import org.tenkiv.daqc.BinaryStateOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 
+/**
+ * A simple implementation of a binary state controller.
+ *
+ * @param digitalOutput The [DigitalOutput] that is being controlled.
+ */
 class SimpleBinaryStateController internal constructor(val digitalOutput: DigitalOutput) : BinaryStateOutput {
 
+    /**
+     * Denotes if the [DigitalOutput] is inverted; ie Off = [BinaryState.On]
+     */
     @Volatile
     var inverted: Boolean = false
 

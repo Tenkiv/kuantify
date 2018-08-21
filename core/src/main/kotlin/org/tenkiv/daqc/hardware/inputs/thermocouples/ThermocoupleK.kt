@@ -31,7 +31,9 @@ import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Temperature
 import kotlin.math.pow
 
-
+/**
+ * A common sensor which measures [Temperature] from [ElectricPotential].
+ */
 open class ThermocoupleK(
     channel: AnalogInput,
     acceptableError: ComparableQuantity<Temperature> = 1.celsius
@@ -48,10 +50,6 @@ open class ThermocoupleK(
                     " ${analogInput.device} \n" +
                     "has not yet measured a temperature, thermocouples from this device cannot function until it does."
 
-    /**
-     * @throws ValueOutOfRangeException
-     * @throws UninitializedPropertyAccessException
-     */
     @Throws(ValueOutOfRangeException::class, UninitializedPropertyAccessException::class)
     override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Temperature>> {
         val mv = ep toDoubleIn MILLI(VOLT)

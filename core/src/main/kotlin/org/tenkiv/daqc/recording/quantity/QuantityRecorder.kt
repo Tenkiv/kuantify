@@ -31,6 +31,15 @@ typealias RecordedQuantityInput<Q> = RecordedUpdatable<DaqcQuantity<Q>, Quantity
 typealias RecordedQuantityOutput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityOutput<Q>>
 
 // Using type aliases here still seems to crash the compiler sometimes...
+/**
+ * Pairs a channel which sends [QuantityMeasurement]s with a new [Recorder] to store its data.
+ *
+ * @param storageFrequency Determines how frequently data is stored to the [Recorder].
+ * @param memoryDuration Determines how long samples are stored in memory.
+ * @param diskDuration Determines how long samples are stored on disk.
+ * @param filterOnRecord Acts as a filter for what s recorded.
+ * @return A [Pair] of the existing [Updatable] with a new [Recorder].
+ */
 inline fun <reified Q : Quantity<Q>, U : Updatable<QuantityMeasurement<Q>>>
         U.pairWithNewRecorder(
     storageFrequency: StorageFrequency = StorageFrequency.All,

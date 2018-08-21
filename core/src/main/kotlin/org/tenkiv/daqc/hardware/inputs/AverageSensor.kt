@@ -27,6 +27,14 @@ import org.tenkiv.physikal.core.averageOrNull
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 
+
+/**
+ * Sensor which provides an average of [Quantity] values from a group inputs.
+ * All inputs must be of the same [Quantity] type.
+ *
+ * @param inputs The inputs to be averaged together.
+ * TODO: Make this work with BinaryState or make another version for BinaryState
+ */
 class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: QuantityInput<Q>) : QuantityInput<Q> {
 
     override val isActive: Boolean
@@ -86,7 +94,7 @@ class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: Quantity
 class DigitalThresholdSensor(
     private vararg val inputs: BinaryInput,
     threshold: Int,
-    val state: BinaryState = BinaryState.On
+    state: BinaryState = BinaryState.On
 ) : BinaryInput {
 
     override val isActive: Boolean

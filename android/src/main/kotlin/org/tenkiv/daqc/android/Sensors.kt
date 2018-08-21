@@ -4,6 +4,7 @@ import android.hardware.Sensor
 import android.hardware.SensorManager
 import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.DaqcQuantity
+import org.tenkiv.daqc.android.input.AndroidSensor
 import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.*
 import javax.measure.quantity.*

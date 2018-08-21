@@ -23,16 +23,34 @@ import org.tenkiv.daqc.hardware.definitions.channel.AnalogOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import org.tenkiv.daqc.networking.SharingStatus
 
+/**
+ * Interface defining [Device]s which have either [AnalogOutput]s, [DigitalOutput]s, or both.
+ */
 interface ControlDevice : Device {
 
+    /**
+     * List of all [AnalogOutput]s that this [ControlDevice] has.
+     */
     val analogOutputs: List<AnalogOutput>
 
+    /**
+     * List of all [DigitalOutput]s that this [ControlDevice] has.
+     */
     val digitalOutputs: List<DigitalOutput>
 
+    /**
+     * If this [ControlDevice] has any [AnalogOutput]s.
+     */
     val hasAnalogOutputs: Boolean
 
+    /**
+     * If this [ControlDevice] has any [DigitalOutput]s.
+     */
     val hasDigitalOutputs: Boolean
 
+    /**
+     * A [MutableMap] of all outputs shared for remote access.
+     */
     val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>>
 
 }

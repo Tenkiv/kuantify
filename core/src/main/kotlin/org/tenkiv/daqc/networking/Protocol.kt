@@ -17,17 +17,56 @@
 
 package org.tenkiv.daqc.networking
 
+import org.tenkiv.daqc.Input
+import org.tenkiv.daqc.Output
+import org.tenkiv.daqc.hardware.definitions.device.Device
+
+/**
+ * Enum representing the different network protocols which can be used to connect to devices.
+ */
 enum class NetworkProtocol {
+    /**
+     * Communicate with UDP
+     */
     UDP,
+
+    /**
+     * Communicate with TCP
+     */
     TCP,
+
+    /**
+     * Communicate with SSH
+     */
     SSH,
+
+    /**
+     * Communicate with TELNET
+     */
     TELNET
 }
 
+/**
+ * Enum for declaring the describing the sharing status of [Device]s, [Input]s, and [Output]s
+ */
 enum class SharingStatus {
+    /**
+     * Nothing is shared
+     */
     NONE,
+
+    /**
+     * Reading of all channels is allowed.
+     */
     READ_ALL,
+
+    /**
+     * Reading and Writing of all channels is allowed.
+     */
     READ_WRITE_ALL
 }
 
+/**
+ * The exception thrown when a board cannot communicate via the specified protocol.
+ */
 class UnsupportedProtocolException : Throwable("Board unable to connect with supplied protocol.")

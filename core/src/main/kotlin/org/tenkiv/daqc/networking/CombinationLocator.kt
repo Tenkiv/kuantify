@@ -23,7 +23,11 @@ import kotlinx.coroutines.experimental.launch
 import org.tenkiv.daqc.Updatable
 import org.tenkiv.daqc.daqcThreadContext
 
-// Locators can be turned into a private val if we decide to add get specific device functions to this class later.
+/**
+ * Class to wrap multiple locators into a single broadcast channel.
+ *
+ * @param locators The [DeviceLocator]s to be included.
+ */
 class CombinationLocator(vararg locators: DeviceLocator<*>) : Updatable<LocatorUpdate<*>> {
 
     private val _broadcastChannel = ConflatedBroadcastChannel<LocatorUpdate<*>>()
@@ -38,5 +42,4 @@ class CombinationLocator(vararg locators: DeviceLocator<*>) : Updatable<LocatorU
             }
         }
     }
-
 }

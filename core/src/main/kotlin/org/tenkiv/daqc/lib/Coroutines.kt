@@ -25,18 +25,31 @@ import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import kotlin.coroutines.experimental.CoroutineContext
 
+/**
+ * Opens a coroutine listener and consumes updates with the given function.
+ *
+ * @param context The context for the channel to be opened.
+ * @param onReceive The function to be executed when an update is received.
+ */
 fun <E> BroadcastChannel<E>.openNewCoroutineListener(
     context: CoroutineContext,
     onReceive: suspend (E) -> Unit
 ) = launch(context) { this@openNewCoroutineListener.consumeEach { onReceive(it) } }
 
+/**
+ * Opens a coroutine listener and consumes updates with the given function, also returns the new channel.
+ *
+ * @param context The context for the channel to be opened.
+ * @param onReceive The function to be executed when an update is received.
+ * @return The opened [ReceiveChannel].
+ */
 fun <T> BroadcastChannel<T>.consumeAndReturn(
     context: CoroutineContext = DefaultDispatcher,
-    action: suspend (T) -> Unit
+    onReceive: suspend (T) -> Unit
 ): ReceiveChannel<T> {
     val subChannel = openSubscription()
     launch(context) {
-        subChannel.consume { for (x in this) action(x) }
+        subChannel.consume { for (x in this) onReceive(x) }
     }
     return subChannel
 }

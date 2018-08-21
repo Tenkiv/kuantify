@@ -28,16 +28,36 @@ typealias Measurement = ValueInstant<DaqcValue>
 typealias BinaryStateMeasurement = ValueInstant<BinaryState>
 typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
 
+/**
+ * The default context which the library uses to handle data.
+ */
 internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 
+/**
+ * The [ConflatedBroadcastChannel] which sends [DaqcCriticalError] messages notifying of potentially critical issues.
+ * This channel should be monitored closely.
+ */
 val daqcCriticalErrorBroadcastChannel = ConflatedBroadcastChannel<DaqcCriticalError>()
 
+/**
+ * An [Updatable] which returns values in the form of [ValueInstant]s.
+ */
 interface IOChannel<out T : DaqcValue> : Updatable<ValueInstant<T>> {
+
+    /**
+     * If the channel is activated or not.
+     */
     val isActive: Boolean
 
+    /**
+     * Function to deactivate the channel.
+     */
     fun deactivate()
 }
 
+/**
+ * A [RangedIOChannel] whose type implements both [DaqcValue] and [Comparable].
+ */
 interface RangedIOChannel<T> : IOChannel<T> where T : DaqcValue, T : Comparable<T> {
 
     /**
@@ -65,36 +85,55 @@ interface RangedIOChannel<T> : IOChannel<T> where T : DaqcValue, T : Comparable<
 
 }
 
-
+/**
+ * Base class for Exceptions to be thrown on Channels handling [DaqcValue]s.
+ */
 open class DaqcException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)
 
-
+/**
+ * Class handling a set of errors which are extremely serious and represent major issues to be handled.
+ */
 sealed class DaqcCriticalError : DaqcException() {
 
+    /**
+     * The [Device] which has thrown the error.
+     */
     abstract val device: Device
 
+    /**
+     * Error where a board which was told to restart, reboot, or restore was not recovered or failed in the reboot
+     * process.
+     */
     data class FailedToReinitialize(
         override val device: Device,
         override val message: String? = null,
         override val cause: Throwable? = null
     ) : DaqcCriticalError()
 
+    /**
+     * Error where a command issued to the board was not able to be executed.
+     */
     data class FailedMajorCommand(
         override val device: Device,
         override val message: String? = null,
         override val cause: Throwable? = null
     ) : DaqcCriticalError()
 
+    /**
+     * Error representing a fatal termination of the connection to the [Device].
+     */
     data class TerminalConnectionDisruption(
         override val device: Device,
         override val message: String? = null,
         override val cause: Throwable? = null
     ) : DaqcCriticalError()
 
+    /**
+     * Error representing a serious lapse in the connection to a board, but not terminal.
+     */
     data class PartialDisconnection(
         override val device: Device,
         override val message: String? = null,
         override val cause: Throwable? = null
     ) : DaqcCriticalError()
-
 }

@@ -35,7 +35,11 @@ import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 import javax.measure.quantity.Frequency
 
-
+/**
+ * Abstract class for an input which takes frequency data from a single digital input.
+ *
+ * @param digitalInput The digital input
+ */
 abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: DigitalInput) :
     QuantityInput<Q> {
 
@@ -69,5 +73,11 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
 
     override fun deactivate() = digitalInput.deactivate()
 
+    /**
+     * Function to convert the [Frequency] of the digital input to a [DaqcQuantity] or return an error.
+     *
+     * @param frequency The [Frequency] measured by the digital input.
+     * @return A [Try] of either a [DaqcQuantity] or an error.
+     */
     protected abstract fun convertInput(frequency: ComparableQuantity<Frequency>): Try<DaqcQuantity<Q>>
 }

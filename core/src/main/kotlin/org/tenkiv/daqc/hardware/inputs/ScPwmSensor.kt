@@ -34,6 +34,11 @@ import javax.measure.Quantity
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
 
+/**
+ * Abstract class for an input which takes percentage PWM data from a single digital input.
+ *
+ * @param digitalInput The digital input
+ */
 abstract class ScPwmSensor<Q : Quantity<Q>>(
     val digitalInput: DigitalInput,
     val avgFrequency: DaqcQuantity<Frequency>
@@ -66,5 +71,11 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(
 
     override fun deactivate() = digitalInput.deactivate()
 
+    /**
+     * Function to convert the percent of the digital input to a [DaqcQuantity] or return an error.
+     *
+     * @param percentOn The percent measured by the digital input.
+     * @return A [Try] of either a [DaqcQuantity] or an error.
+     */
     protected abstract fun convertInput(percentOn: ComparableQuantity<Dimensionless>): Try<DaqcQuantity<Q>>
 }

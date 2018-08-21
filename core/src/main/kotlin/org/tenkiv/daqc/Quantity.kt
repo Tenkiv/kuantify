@@ -21,5 +21,8 @@ package org.tenkiv.daqc
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 
-
+/**
+ * Ease of use function to convert a standard [Quantity] to a [DaqcQuantity]. This wrapping is required as there exists
+ * no idiomatic way to represent a [BinaryState] with [Quantity]s.
+ */
 fun <Q : Quantity<Q>> ComparableQuantity<Q>.toDaqc() = DaqcQuantity(this)

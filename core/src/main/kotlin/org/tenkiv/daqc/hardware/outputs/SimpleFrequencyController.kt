@@ -21,6 +21,11 @@ import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import javax.measure.quantity.Frequency
 
+/**
+ * A simple implementation of a binary transition frequency controller.
+ *
+ * @param digitalOutput The [DigitalOutput] that is being controlled.
+ */
 class SimpleFrequencyController internal constructor(digitalOutput: DigitalOutput) :
     ScDigitalFrequencyController<Frequency>(digitalOutput) {
 

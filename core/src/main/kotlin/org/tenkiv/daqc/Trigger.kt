@@ -22,6 +22,14 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.daqc.lib.consumeAndReturn
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Class which acts as a monitor on an Input to execute a command when a certain state is met.
+ *
+ * @param triggerOnSimultaneousValues If the Trigger should fire only when all values are met at the same time.
+ * @param maxTriggerCount The [MaxTriggerCount] for how many times the trigger should fire until it terminates.
+ * @param triggerConditions The [TriggerCondition]s which need to be met for a trigger to fire.
+ * @param triggerFunction The function to be executed when the trigger fires.
+ */
 class Trigger<T : DaqcValue>(
     val triggerOnSimultaneousValues: Boolean = false,
     val maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
@@ -41,13 +49,13 @@ class Trigger<T : DaqcValue>(
             )
 
     constructor(
-        maxTimesTriggered: MaxTriggerCount,
+        maxTriggerCount: MaxTriggerCount,
         vararg triggerConditions: TriggerCondition<T>,
         triggerFunction: () -> Unit
     ) :
             this(
                 false,
-                maxTimesTriggered,
+                maxTriggerCount,
                 *triggerConditions,
                 triggerFunction = triggerFunction
             )
@@ -66,6 +74,9 @@ class Trigger<T : DaqcValue>(
 
     private val channelList: MutableList<ReceiveChannel<ValueInstant<T>>> = ArrayList()
 
+    /**
+     * Stops the [Trigger] and cancels the open channels.
+     */
     fun stop() {
         if (maxTriggerCount is MaxTriggerCount.Limited && maxTriggerCount.atomicCount.get() > 0) {
             maxTriggerCount.atomicCount.decrementAndGet()
@@ -105,19 +116,38 @@ class Trigger<T : DaqcValue>(
     }
 }
 
+/**
+ * Sealed class to determine the number of times a [Trigger] should fire.
+ */
 sealed class MaxTriggerCount {
+
+    /**
+     * Class which sets the number of times a [Trigger] can fire.
+     */
     data class Limited(val totalCount: Int) : MaxTriggerCount() {
 
+        /**
+         * The number of charges left in the [Trigger]
+         */
         val remainingCount get() = atomicCount.get()
 
         internal val atomicCount = AtomicInteger(totalCount)
 
     }
 
+    /**
+     * Class which sets a [Trigger] to fire unlimited times.
+     */
     object Unlimited : MaxTriggerCount()
 }
 
 //TODO: Should support IOChannel, not just Input
+/**
+ * The condition upon which the [Trigger] will fire.
+ *
+ * @param input The [Input] to monitor.
+ * @param condition The conditions upon which to execute the [Trigger]'s function.
+ */
 data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (ValueInstant<T>) -> Boolean) {
     var lastValue: ValueInstant<T>? = null
     var hasBeenReached: Boolean = false

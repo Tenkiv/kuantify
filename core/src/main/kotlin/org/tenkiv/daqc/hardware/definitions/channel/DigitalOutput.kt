@@ -26,7 +26,9 @@ import org.tenkiv.daqc.hardware.outputs.SimplePwmController
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
 
-
+/**
+ * Class defining the basic features of an output which sends binary signals.
+ */
 abstract class DigitalOutput : DigitalChannel(), BinaryStateOutput {
 
     override val isActive get() = super.isActive
@@ -43,19 +45,43 @@ abstract class DigitalOutput : DigitalChannel(), BinaryStateOutput {
         SimpleFrequencyController(this)
     }
 
+    /**
+     * Activates this [DigitalOutput] for pulse width modulation.
+     *
+     * @param percent The percentage of the time the output is supposed to be active.
+     */
     abstract fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>)
 
+    /**
+     * Activates this [DigitalInput] for transitioning states at [freq]
+     *
+     * @param freq The frequency of state change.
+     */
     abstract fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>)
 
     override fun deactivate() = setOutput(BinaryState.Off)
 
+    /**
+     * Ease of use function to create a [SimpleBinaryStateController] from this [DigitalOutput].
+     *
+     * @param inverted Denotes if [BinaryState.ON] is Off as well as the inverse. By default false.
+     * @return A [SimpleBinaryStateController] with this [DigitalOutput] as the controlled output.
+     */
     fun asBinaryStateController(inverted: Boolean = false) = thisAsBinaryStateController.apply {
         this.inverted = inverted
     }
 
+    /**
+     * Ease of use function to create a [SimplePwmController] from this [DigitalOutput].
+     *
+     * @return A [SimplePwmController] with this [DigitalOutput] as the controlled output.
+     */
     fun asPwmController() = thisAsPwmController
 
+    /**
+     * Ease of use function to create a [SimpleFrequencyController] from this [DigitalOutput].
+     *
+     * @return A [SimpleFrequencyController] with this [DigitalOutput] as the controlled output.
+     */
     fun asFrequencyController() = thisAsFrequencyController
-
-
 }

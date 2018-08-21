@@ -30,6 +30,15 @@ import org.tenkiv.daqc.recording.StorageFrequency
 typealias RecordedBinaryStateInput = RecordedUpdatable<BinaryState, BinaryStateInput>
 typealias RecordedBinaryStateOutput = RecordedUpdatable<BinaryState, BinaryStateOutput>
 
+/**
+ * Pairs a channel which sends [BinaryStateMeasurement]s with a new [Recorder] to store its data.
+ *
+ * @param storageFrequency Determines how frequently data is stored to the [Recorder].
+ * @param memoryDuration Determines how long samples are stored in memory.
+ * @param diskDuration Determines how long samples are stored on disk.
+ * @param filterOnRecord Acts as a filter for what s recorded.
+ * @return A [Pair] of the existing [Updatable] with a new [Recorder].
+ */
 fun <U : Updatable<BinaryStateMeasurement>> U.pairWithNewRecorder(
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
