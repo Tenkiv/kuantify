@@ -15,42 +15,19 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc.hardware.definitions.device
-
-import org.tenkiv.daqc.data.DaqcValue
-import org.tenkiv.daqc.gate.control.output.Output
-import org.tenkiv.daqc.hardware.definitions.channel.AnalogOutput
-import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
-import org.tenkiv.daqc.networking.SharingStatus
+package org.tenkiv.daqc.data
 
 /**
- * Interface defining [Device]s which have either [AnalogOutput]s, [DigitalOutput]s, or both.
+ * Interface for anything that can be accurately represented as a [DaqcValue] or multiple [DaqcValue]s.
+ *
+ * All implementations need to be **completely immutable** to function properly.
  */
-interface ControlDevice : Device {
-
+interface DaqcData {
     /**
-     * List of all [AnalogOutput]s that this [ControlDevice] has.
+     * The number of [DaqcValue]s this DaqcData is represented by.
      */
-    val analogOutputs: List<AnalogOutput>
+    val size: Int
 
-    /**
-     * List of all [DigitalOutput]s that this [ControlDevice] has.
-     */
-    val digitalOutputs: List<DigitalOutput>
-
-    /**
-     * If this [ControlDevice] has any [AnalogOutput]s.
-     */
-    val hasAnalogOutputs: Boolean
-
-    /**
-     * If this [ControlDevice] has any [DigitalOutput]s.
-     */
-    val hasDigitalOutputs: Boolean
-
-    /**
-     * A [MutableMap] of all outputs shared for remote access.
-     */
-    val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>>
-
+    // TODO: Keep looking / waiting for similar data structure that forces immutability
+    fun toDaqcValueList(): List<DaqcValue>
 }

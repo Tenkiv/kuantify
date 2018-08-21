@@ -15,25 +15,30 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc.hardware.inputs
+package org.tenkiv.daqc.gate.acquire.input
 
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.*
+import org.tenkiv.daqc.BinaryStateMeasurement
+import org.tenkiv.daqc.QuantityMeasurement
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.data.toDaqc
 import org.tenkiv.daqc.lib.openNewCoroutineListener
-import org.tenkiv.physikal.core.averageOrNull
+import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 
+
+//TODO: Make this work with BinaryState or make another version for BinaryState
 
 /**
  * Sensor which provides an average of [Quantity] values from a group inputs.
  * All inputs must be of the same [Quantity] type.
  *
  * @param inputs The inputs to be averaged together.
- * TODO: Make this work with BinaryState or make another version for BinaryState
+ *
  */
 class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: QuantityInput<Q>) : QuantityInput<Q> {
 
@@ -54,9 +59,9 @@ class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: Quantity
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
 
-    override val sampleRate
-        get() = inputs.map { it.sampleRate }.max()
-            ?: throw IllegalStateException("AverageQuantitySensor has no inputs, it must have at least 1 input.")
+    override val updateRate
+        get() = inputs.map { it.updateRate }.max()
+                ?: throw IllegalStateException("AverageQuantitySensor has no inputs, it must have at least 1 input.")
 
     init {
         inputs.forEach { _ ->

@@ -24,9 +24,9 @@ import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.QuantityInput
 import org.tenkiv.daqc.QuantityMeasurement
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.gate.acquire.input.QuantityInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.lib.openNewCoroutineListener
 import tec.units.indriya.ComparableQuantity
@@ -54,7 +54,7 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(
 
     override val isActive get() = digitalInput.isActiveForPwm
 
-    override val sampleRate get() = digitalInput.sampleRate
+    override val updateRate get() = digitalInput.updateRate
 
     init {
         digitalInput.pwmBroadcastChannel.openNewCoroutineListener(CommonPool) { measurement ->

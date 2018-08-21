@@ -19,9 +19,10 @@ package org.tenkiv.daqc.hardware.outputs
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.now
-import org.tenkiv.daqc.BinaryState
 import org.tenkiv.daqc.BinaryStateMeasurement
-import org.tenkiv.daqc.BinaryStateOutput
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.gate.control.output.BinaryStateOutput
+import org.tenkiv.daqc.gate.control.output.SettingViability
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 
 /**
@@ -29,7 +30,8 @@ import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
  *
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
-class SimpleBinaryStateController internal constructor(val digitalOutput: DigitalOutput) : BinaryStateOutput {
+class SimpleBinaryStateController internal constructor(val digitalOutput: DigitalOutput) :
+    BinaryStateOutput {
 
     /**
      * Denotes if the [DigitalOutput] is inverted; ie Off = [BinaryState.On]
@@ -46,16 +48,15 @@ class SimpleBinaryStateController internal constructor(val digitalOutput: Digita
 
     override fun deactivate() = digitalOutput.deactivate()
 
-    override fun setOutput(setting: BinaryState) {
-        if (!inverted)
-            digitalOutput.setOutput(setting)
-        else
-            when (setting) {
-                BinaryState.On -> digitalOutput.setOutput(BinaryState.Off)
-                BinaryState.Off -> digitalOutput.setOutput(BinaryState.On)
-            }
-        //TODO Change this to broadcast new setting when the board confirms the setting was received.
-        _broadcastChannel.offer(setting.now())
+    override fun setOutput(setting: BinaryState): SettingViability {
+        val viability = if (!inverted) digitalOutput.setOutput(setting) else when (setting) {
+            BinaryState.On -> digitalOutput.setOutput(BinaryState.Off)
+            BinaryState.Off -> digitalOutput.setOutput(BinaryState.On)
+        }
+
+        if (viability.isViable) _broadcastChannel.offer(setting.now())
+
+        return viability
     }
 
 }

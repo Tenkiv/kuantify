@@ -17,7 +17,11 @@
 
 package org.tenkiv.daqc.recording.quantity
 
-import org.tenkiv.daqc.*
+import org.tenkiv.daqc.QuantityMeasurement
+import org.tenkiv.daqc.Updatable
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.gate.acquire.input.QuantityInput
+import org.tenkiv.daqc.gate.control.output.QuantityOutput
 import org.tenkiv.daqc.recording.RecordedUpdatable
 import org.tenkiv.daqc.recording.Recorder
 import org.tenkiv.daqc.recording.StorageDuration

@@ -29,10 +29,12 @@ class GenericSensorsTest : StringSpec() {
 
             val sensorStatus = BooleanArray(3, { false })
 
-            val binaryStateSensor = SimpleBinaryStateSensor(DigitalInputGibberingSensor())
+            val binaryStateSensor =
+                SimpleBinaryStateSensor(DigitalInputGibberingSensor())
             binaryStateSensor.addTrigger({ true }, { sensorStatus[0] = true })
 
-            val digitalFreqStateSensor = SimpleDigitalFrequencySensor(DigitalInputGibberingSensor())
+            val digitalFreqStateSensor =
+                SimpleDigitalFrequencySensor(DigitalInputGibberingSensor())
             digitalFreqStateSensor.addTrigger({ true }, { sensorStatus[1] = true })
 
             val digitalPwmStateSensor = SimplePwmSensor(DigitalInputGibberingSensor())

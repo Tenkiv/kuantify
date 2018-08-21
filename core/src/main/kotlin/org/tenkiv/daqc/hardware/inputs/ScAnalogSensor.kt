@@ -24,9 +24,9 @@ import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.QuantityInput
 import org.tenkiv.daqc.QuantityMeasurement
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.gate.acquire.input.QuantityInput
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
@@ -55,7 +55,7 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
 
     override val isActive get() = analogInput.isActive
 
-    override val sampleRate get() = analogInput.sampleRate
+    override val updateRate get() = analogInput.updateRate
 
     init {
         analogInput.maxElectricPotential = maximumEp

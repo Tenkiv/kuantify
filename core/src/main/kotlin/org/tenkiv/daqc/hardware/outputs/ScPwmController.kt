@@ -19,9 +19,10 @@ package org.tenkiv.daqc.hardware.outputs
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.now
-import org.tenkiv.daqc.DaqcQuantity
 import org.tenkiv.daqc.QuantityMeasurement
-import org.tenkiv.daqc.QuantityOutput
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.gate.control.output.QuantityOutput
+import org.tenkiv.daqc.gate.control.output.SettingViability
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import javax.measure.Quantity
 import javax.measure.quantity.Dimensionless
@@ -42,10 +43,12 @@ abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput
     final override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
-    override fun setOutput(setting: DaqcQuantity<Q>) {
-        digitalOutput.pulseWidthModulate(convertOutput(setting))
-        //TODO Change this to broadcast new setting when the board confirms the setting was received.
-        _broadcastChannel.offer(setting.now())
+    override fun setOutput(setting: DaqcQuantity<Q>): SettingViability {
+        val viability = digitalOutput.pulseWidthModulate(convertOutput(setting))
+
+        if (viability.isViable) _broadcastChannel.offer(setting.now())
+
+        return viability
     }
 
     /**

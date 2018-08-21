@@ -17,9 +17,9 @@
 
 package org.tenkiv.daqc.learning.controller
 
-import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.BinaryStateOutput
-import org.tenkiv.daqc.RangedQuantityOutput
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.gate.control.output.BinaryStateOutput
+import org.tenkiv.daqc.gate.control.output.RangedQuantityOutput
 
 sealed class OutputActionHandler {
 
@@ -86,8 +86,9 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
         val increaseSystemUnit = rangeSpanSystemUnit * rangeRatio
         val newSettingSystemUnit = currentValueSystemUnit + increaseSystemUnit
 
-        if (newSettingSystemUnit <= output.valueRange.endInclusive.toDoubleInSystemUnit())
+        if (newSettingSystemUnit <= output.valueRange.endInclusive.toDoubleInSystemUnit()) {
             output.setOutputInSystemUnit(newSettingSystemUnit)
+        }
 
     }
 
@@ -96,8 +97,9 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
         val increaseSystemUnit = rangeSpanSystemUnit * rangeRatio
         val newSettingSystemUnit = currentValueSystemUnit + increaseSystemUnit
 
-        if (newSettingSystemUnit >= output.valueRange.start.toDoubleInSystemUnit())
+        if (newSettingSystemUnit >= output.valueRange.start.toDoubleInSystemUnit()) {
             output.setOutputInSystemUnit(newSettingSystemUnit)
+        }
 
     }
 

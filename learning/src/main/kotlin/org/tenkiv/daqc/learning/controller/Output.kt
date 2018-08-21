@@ -15,42 +15,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc.hardware.definitions.device
+package org.tenkiv.daqc.learning.controller
 
-import org.tenkiv.daqc.data.DaqcValue
-import org.tenkiv.daqc.gate.control.output.Output
-import org.tenkiv.daqc.hardware.definitions.channel.AnalogOutput
-import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
-import org.tenkiv.daqc.networking.SharingStatus
+import org.tenkiv.daqc.gate.control.output.QuantityOutput
+import org.tenkiv.physikal.core.*
 
-/**
- * Interface defining [Device]s which have either [AnalogOutput]s, [DigitalOutput]s, or both.
- */
-interface ControlDevice : Device {
-
-    /**
-     * List of all [AnalogOutput]s that this [ControlDevice] has.
-     */
-    val analogOutputs: List<AnalogOutput>
-
-    /**
-     * List of all [DigitalOutput]s that this [ControlDevice] has.
-     */
-    val digitalOutputs: List<DigitalOutput>
-
-    /**
-     * If this [ControlDevice] has any [AnalogOutput]s.
-     */
-    val hasAnalogOutputs: Boolean
-
-    /**
-     * If this [ControlDevice] has any [DigitalOutput]s.
-     */
-    val hasDigitalOutputs: Boolean
-
-    /**
-     * A [MutableMap] of all outputs shared for remote access.
-     */
-    val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>>
-
-}
+internal fun QuantityOutput<*>.setOutputInSystemUnit(setting: Double) = dynamicSetOutput(setting(systemUnit))

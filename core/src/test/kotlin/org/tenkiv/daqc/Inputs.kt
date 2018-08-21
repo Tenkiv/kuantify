@@ -19,6 +19,7 @@ package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.daqc.data.DaqcQuantity
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.hardware.definitions.device.Device
@@ -29,7 +30,7 @@ import javax.measure.quantity.Frequency
 class EmptyAnalogInput : AnalogInput() {
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override val device: Device
         get() = throw Exception("Empty Test Class Exception")
@@ -57,7 +58,7 @@ class EmptyAnalogInput : AnalogInput() {
 }
 
 class EmptyDigitalInput : DigitalInput() {
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
 
     override fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {

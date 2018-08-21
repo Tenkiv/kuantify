@@ -19,6 +19,8 @@ package org.tenkiv.daqc
 
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import org.tenkiv.coral.ValueInstant
+import org.tenkiv.daqc.data.DaqcValue
+import org.tenkiv.daqc.gate.acquire.input.Input
 import org.tenkiv.daqc.lib.consumeAndReturn
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -141,7 +143,7 @@ sealed class MaxTriggerCount {
     object Unlimited : MaxTriggerCount()
 }
 
-//TODO: Should support IOChannel, not just Input
+//TODO: Should support IOStrand, not just Input
 /**
  * The condition upon which the [Trigger] will fire.
  *

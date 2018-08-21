@@ -17,9 +17,8 @@
 
 package org.tenkiv.daqc.hardware.definitions.channel
 
-import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.BinaryStateInput
-import org.tenkiv.daqc.DaqcQuantity
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.gate.acquire.input.BinaryStateInput
 import org.tenkiv.daqc.hardware.inputs.SimpleBinaryStateSensor
 import org.tenkiv.daqc.hardware.inputs.SimpleDigitalFrequencySensor
 import org.tenkiv.daqc.hardware.inputs.SimplePwmSensor

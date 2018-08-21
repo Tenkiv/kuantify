@@ -15,10 +15,15 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc
+package org.tenkiv.daqc.gate.control.output
 
-import org.tenkiv.physikal.core.PhysicalUnit
-import org.tenkiv.physikal.core.invoke
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.data.DaqcValue
+import org.tenkiv.daqc.data.toDaqc
+import org.tenkiv.daqc.gate.IOStrand
+import org.tenkiv.daqc.gate.RangedIOStrand
+import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import tec.units.indriya.unit.Units
 import javax.measure.Quantity
@@ -29,13 +34,9 @@ import kotlin.reflect.KClass
  *
  * @param T The type of signal given by this output.
  */
-interface Output<T : DaqcValue> : IOChannel<T> {
+interface Output<T : DaqcValue> : IOStrand<T> {
 
-    //TODO: Maybe change this to return a throwable or something else instead of throwing and exception
-    /**
-     * @throws Throwable if something prevents this output from being set.
-     */
-    fun setOutput(setting: T)
+    fun setOutput(setting: T): SettingViability
 
 }
 
@@ -62,18 +63,19 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
     fun setOutput(setting: ComparableQuantity<Q>) = setOutput(setting.toDaqc())
 
     /**
-     * Sets the signal of this output as the default unit of the type of the [Output].
-     * This is a dangerous method and shouldn't be used in most circumstances. Be absolutely certain you need to use
-     * this function and not [QuantityOutput.setOutput]. You've been warned.
+     * @throws ClassCastException
+     *           if the dimension of this unit is different from the specified quantity dimension.
+     * @throws UnsupportedOperationException
+     *           if the specified quantity class does not have a SI unit for the quantity.
      */
-    fun setOutputInSystemUnit(setting: Double) = setOutput(setting(systemUnit))
+    fun dynamicSetOutput(setting: ComparableQuantity<*>) = setOutput(setting.asType(quantityType.java))
 
 }
 
 /**
  * An [Output] whose type extends both [DaqcValue] and [Comparable] so it can be used in the default learning module.
  */
-interface RangedOutput<T> : Output<T>, RangedIOChannel<T> where T : DaqcValue, T : Comparable<T>
+interface RangedOutput<T> : Output<T>, RangedIOStrand<T> where T : DaqcValue, T : Comparable<T>
 
 /**
  * A [RangedOutput] which uses the [BinaryState] type.

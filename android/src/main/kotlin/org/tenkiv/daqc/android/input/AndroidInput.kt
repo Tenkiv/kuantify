@@ -25,8 +25,10 @@ import android.hardware.SensorManager.*
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.*
 import org.tenkiv.daqc.android.AndroidSensorInitializationException
+import org.tenkiv.daqc.data.DaqcValue
+import org.tenkiv.daqc.gate.acquire.input.Input
+import org.tenkiv.daqc.runningAverage
 import tec.units.indriya.ComparableQuantity
 import java.time.Instant
 import javax.measure.quantity.Frequency
@@ -41,7 +43,7 @@ abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sens
      */
     abstract val type: Int
 
-    override val sampleRate: ComparableQuantity<Frequency> by runningAverage()
+    override val updateRate: ComparableQuantity<Frequency> by runningAverage()
 
     private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<Q>>()
     final override val broadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Q>>

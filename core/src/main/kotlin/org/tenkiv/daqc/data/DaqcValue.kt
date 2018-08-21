@@ -15,18 +15,14 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc
+package org.tenkiv.daqc.data
 
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.at
-import org.tenkiv.physikal.core.PhysicalUnit
-import org.tenkiv.physikal.core.asType
+import org.tenkiv.daqc.QuantityMeasurement
+import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import tec.units.indriya.quantity.Quantities
-import java.time.Instant
 import java.util.zip.DataFormatException
 import javax.measure.Quantity
-import javax.measure.quantity.Frequency
 import org.tenkiv.physikal.core.toByteInSystemUnit as physikalToByteInSystemUnit
 import org.tenkiv.physikal.core.toDoubleInSystemUnit as physikalToDoubleInSystemUnit
 import org.tenkiv.physikal.core.toFloatInSystemUnit as physikalToFloatInSystemUnit
@@ -38,7 +34,9 @@ import org.tenkiv.physikal.core.toShortInSystemUnit as physikalToShortInSystemUn
  * The wrapper class representing the different types of data which can be returned from a basic [Updatable].
  * Either a [BinaryState] or a [DaqcQuantity].
  */
-sealed class DaqcValue {
+sealed class DaqcValue : DaqcData {
+
+    override val size get() = 1
 
     /**
      * Gets the value of the [DaqcValue] as a [Short] in the default unit representation.
@@ -99,6 +97,8 @@ sealed class DaqcValue {
         is BinaryState -> this.toDouble()
         is DaqcQuantity<*> -> this.physikalToDoubleInSystemUnit()
     }
+
+    override fun toDaqcValueList() = listOf(this)
 
 }
 
@@ -234,11 +234,11 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
          * @throws [DataFormatException] if the [String] is malformed or not a 1 or 0.
          */
         fun fromString(input: String): BinaryState {
-            if (input == BinaryState.On.toString()) {
-                return BinaryState.On
+            if (input == On.toString()) {
+                return On
             }
-            if (input == BinaryState.Off.toString()) {
-                return BinaryState.Off
+            if (input == Off.toString()) {
+                return Off
             }
             throw DataFormatException("Data with BinaryState not found")
         }
@@ -332,9 +332,11 @@ class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuant
          * @throws DataFormatException If the [input] is malformed, invalid, or null.
          */
         inline fun <reified Q : Quantity<Q>> fromString(input: String): DaqcQuantity<Q> {
-            val quant: ComparableQuantity<Q>? = Quantities.getQuantity(input).asType()
-            if (quant != null) {
-                return DaqcQuantity.of(quant)
+            val quantity: ComparableQuantity<Q>? = Quantities.getQuantity(
+                input
+            ).asTypeOrNull()
+            if (quantity != null) {
+                return of(quantity)
             } else {
                 throw DataFormatException("Data with Quantity value not found")
             }
@@ -342,61 +344,5 @@ class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuant
     }
 }
 
-/**
- * Class representing the line noise frequency of the electrical grid where the [Device] is.
- */
-sealed class LineNoiseFrequency {
-
-    /**
-     * The frequency of the line noise to account for.
-     */
-    data class AccountFor(val frequency: ComparableQuantity<Frequency>) : LineNoiseFrequency()
-
-    /**
-     * Object signifying that the board doesn't require adjustment or that the people using it don't mind the error.
-     */
-    object Ignore : LineNoiseFrequency()
-
-}
-
-/**
- * Enum representing the status of a [BinaryStateOutput].
- */
-enum class DigitalStatus {
-    /**
-     * State representing activated for a default or constant state.
-     */
-    ACTIVATED_STATE,
-    /**
-     * State representing periodic activation.
-     */
-    ACTIVATED_FREQUENCY,
-    /**
-     * State representing a binary output simulating an analog output
-     */
-    ACTIVATED_PWM,
-    /**
-     * Deactivated state.
-     */
-    DEACTIVATED
-}
-
-/**
- * Class representing a serialized value and a time stamp.
- *
- * @param epochMilli The [Long] timestamp in epoch millis.
- * @param value The deserialized [String] value.
- */
-data class PrimitiveValueInstant(val epochMilli: Long, val value: String) {
-
-    /**
-     * Function to reserialize the data.
-     *
-     * @param T The type of the [ValueInstant]
-     * @param deserializeValue The function to convert the deserialized value back to a default [ValueInstant].
-     * @return A [ValueInstant] of specified value.
-     */
-    inline fun <T> toValueInstant(deserializeValue: (String) -> T): ValueInstant<T> =
-        deserializeValue(value) at Instant.ofEpochMilli(epochMilli)
-
-}
+fun <Q : Quantity<Q>> ComparableQuantity<Q>.toDaqc() =
+    DaqcQuantity(this)

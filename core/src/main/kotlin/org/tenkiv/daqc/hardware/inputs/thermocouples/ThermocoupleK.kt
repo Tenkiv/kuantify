@@ -18,11 +18,11 @@
 package org.tenkiv.daqc.hardware.inputs.thermocouples
 
 import arrow.core.Try
-import org.tenkiv.daqc.DaqcQuantity
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.data.toDaqc
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.inputs.ScAnalogSensor
 import org.tenkiv.daqc.lib.ValueOutOfRangeException
-import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import tec.units.indriya.unit.MetricPrefix.*

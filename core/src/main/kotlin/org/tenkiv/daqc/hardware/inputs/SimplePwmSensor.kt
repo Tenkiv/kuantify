@@ -17,11 +17,11 @@
 
 package org.tenkiv.daqc.hardware.inputs
 
-import org.tenkiv.daqc.DaqcQuantity
-import org.tenkiv.daqc.QuantityInput
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.data.toDaqc
+import org.tenkiv.daqc.gate.acquire.input.QuantityInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
-import org.tenkiv.daqc.toDaqc
-import org.tenkiv.physikal.core.hertz
+import org.tenkiv.physikal.core.*
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
 
@@ -30,7 +30,8 @@ import javax.measure.quantity.Frequency
  *
  * @param digitalInput The [DigitalInput] that is being read from.
  */
-class SimplePwmSensor internal constructor(val digitalInput: DigitalInput) : QuantityInput<Dimensionless> {
+class SimplePwmSensor internal constructor(val digitalInput: DigitalInput) :
+    QuantityInput<Dimensionless> {
 
     /**
      * The [Frequency] over which to average the samples.
@@ -48,5 +49,5 @@ class SimplePwmSensor internal constructor(val digitalInput: DigitalInput) : Qua
 
     override fun deactivate() = digitalInput.deactivate()
 
-    override val sampleRate get() = digitalInput.sampleRate
+    override val updateRate get() = digitalInput.updateRate
 }

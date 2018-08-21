@@ -15,42 +15,21 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc.hardware.definitions.device
-
-import org.tenkiv.daqc.data.DaqcValue
-import org.tenkiv.daqc.gate.control.output.Output
-import org.tenkiv.daqc.hardware.definitions.channel.AnalogOutput
-import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
-import org.tenkiv.daqc.networking.SharingStatus
+package org.tenkiv.daqc.gate.control.output
 
 /**
- * Interface defining [Device]s which have either [AnalogOutput]s, [DigitalOutput]s, or both.
+ *
+ * @property isViable is only meant to represent if the setting can succeed in the current situation, not whether or not
+ * the implementation of the setting was successful.
  */
-interface ControlDevice : Device {
+interface SettingViability {
+    val isViable: Boolean
+}
 
-    /**
-     * List of all [AnalogOutput]s that this [ControlDevice] has.
-     */
-    val analogOutputs: List<AnalogOutput>
+object Viable : SettingViability {
+    override val isViable get() = true
+}
 
-    /**
-     * List of all [DigitalOutput]s that this [ControlDevice] has.
-     */
-    val digitalOutputs: List<DigitalOutput>
-
-    /**
-     * If this [ControlDevice] has any [AnalogOutput]s.
-     */
-    val hasAnalogOutputs: Boolean
-
-    /**
-     * If this [ControlDevice] has any [DigitalOutput]s.
-     */
-    val hasDigitalOutputs: Boolean
-
-    /**
-     * A [MutableMap] of all outputs shared for remote access.
-     */
-    val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>>
-
+object NotViable : SettingViability {
+    override val isViable get() = false
 }

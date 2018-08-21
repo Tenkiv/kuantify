@@ -17,8 +17,6 @@
 
 package org.tenkiv.daqc.networking
 
-import org.tenkiv.daqc.Input
-import org.tenkiv.daqc.Output
 import org.tenkiv.daqc.hardware.definitions.device.Device
 
 /**

@@ -17,7 +17,7 @@
 
 package org.tenkiv.daqc.hardware.definitions.channel
 
-import org.tenkiv.daqc.QuantityOutput
+import org.tenkiv.daqc.gate.control.output.QuantityOutput
 import javax.measure.quantity.ElectricPotential
 
 /**

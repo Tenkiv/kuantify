@@ -15,14 +15,22 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc
-
+package org.tenkiv.daqc.hardware
 
 import tec.units.indriya.ComparableQuantity
-import javax.measure.Quantity
+import javax.measure.quantity.Frequency
 
-/**
- * Ease of use function to convert a standard [Quantity] to a [DaqcQuantity]. This wrapping is required as there exists
- * no idiomatic way to represent a [BinaryState] with [Quantity]s.
- */
-fun <Q : Quantity<Q>> ComparableQuantity<Q>.toDaqc() = DaqcQuantity(this)
+sealed class LineNoiseFrequency {
+
+    data class AccountFor(val frequency: ComparableQuantity<Frequency>) : LineNoiseFrequency()
+
+    object Ignore : LineNoiseFrequency()
+
+}
+
+enum class DigitalStatus {
+    ACTIVATED_STATE,
+    ACTIVATED_FREQUENCY,
+    ACTIVATED_PWM,
+    DEACTIVATED
+}

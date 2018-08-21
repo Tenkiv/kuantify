@@ -20,11 +20,13 @@ package org.tenkiv.daqc
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.gate.acquire.input.Input
 import org.tenkiv.daqc.hardware.definitions.channel.AnalogInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.hardware.definitions.device.Device
-import org.tenkiv.physikal.core.hertz
-import org.tenkiv.physikal.core.percent
+import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import tec.units.indriya.unit.MetricPrefix.*
 import tec.units.indriya.unit.Units.*
@@ -35,7 +37,7 @@ import javax.measure.quantity.Frequency
 
 
 class DigitalGibberingSensor : Input<BinaryState> {
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
@@ -65,7 +67,7 @@ class DigitalGibberingSensor : Input<BinaryState> {
 }
 
 class DigitalInputGibberingSensor : DigitalInput() {
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
 
     override fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {
@@ -114,7 +116,7 @@ class DigitalInputGibberingSensor : DigitalInput() {
 }
 
 class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
@@ -149,7 +151,7 @@ class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
 
 class AnalogInputGibberingSensor : AnalogInput() {
     override var buffer: Boolean = false
-    override val sampleRate: ComparableQuantity<Frequency>
+    override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override var maxAcceptableError: ComparableQuantity<ElectricPotential>
         get() = throw Exception("Empty Test Class Exception")

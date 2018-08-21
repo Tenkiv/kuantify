@@ -20,9 +20,9 @@ package org.tenkiv.daqc.hardware.inputs
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.at
-import org.tenkiv.daqc.BinaryState
-import org.tenkiv.daqc.BinaryStateInput
 import org.tenkiv.daqc.BinaryStateMeasurement
+import org.tenkiv.daqc.data.BinaryState
+import org.tenkiv.daqc.gate.acquire.input.BinaryStateInput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalInput
 import org.tenkiv.daqc.lib.openNewCoroutineListener
 
@@ -31,7 +31,8 @@ import org.tenkiv.daqc.lib.openNewCoroutineListener
  *
  * @param digitalInput The [DigitalInput] that is being read from.
  */
-class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInput) : BinaryStateInput {
+class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInput) :
+    BinaryStateInput {
 
     /**
      * Denotes if the [DigitalInput] is inverted; ie Off = [BinaryState.On]
@@ -48,17 +49,14 @@ class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInpu
 
     override val isActive get() = digitalInput.isActiveForBinaryState
 
-    override val sampleRate get() = digitalInput.sampleRate
+    override val updateRate get() = digitalInput.updateRate
 
     init {
         digitalInput.broadcastChannel.openNewCoroutineListener(CommonPool) { measurement ->
-            if (!inverted)
-                _broadcastChannel.send(measurement)
-            else
-                when (measurement.value) {
-                    BinaryState.On -> _broadcastChannel.send(BinaryState.Off at measurement.instant)
-                    BinaryState.Off -> _broadcastChannel.send(BinaryState.On at measurement.instant)
-                }
+            if (!inverted) _broadcastChannel.send(measurement) else when (measurement.value) {
+                BinaryState.On -> _broadcastChannel.send(BinaryState.Off at measurement.instant)
+                BinaryState.Off -> _broadcastChannel.send(BinaryState.On at measurement.instant)
+            }
         }
     }
 
