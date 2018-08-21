@@ -26,6 +26,7 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.daqc.*
+import org.tenkiv.daqc.android.AndroidSensorInitializationException
 import tec.units.indriya.ComparableQuantity
 import java.time.Instant
 import javax.measure.quantity.Frequency

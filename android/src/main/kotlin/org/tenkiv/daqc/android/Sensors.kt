@@ -9,6 +9,12 @@ import org.tenkiv.daqc.toDaqc
 import org.tenkiv.physikal.core.*
 import javax.measure.quantity.*
 
+/**
+ * Android light sensor.
+ *
+ * @param manager The Android device's [SensorManager].
+ * @param sensor The sensor to be integrated.
+ */
 class AndroidLightSensor(manager: SensorManager, sensor: Sensor) :
     AndroidSensor<DaqcQuantity<Illuminance>>(manager, sensor) {
 
@@ -17,6 +23,12 @@ class AndroidLightSensor(manager: SensorManager, sensor: Sensor) :
     override fun convertData(data: FloatArray): DaqcQuantity<Illuminance> = data[0].lux.toDaqc()
 }
 
+/**
+ * Android proximity sensor.
+ *
+ * @param manager The Android device's [SensorManager].
+ * @param sensor The sensor to be integrated.
+ */
 class AndroidProximitySensor(manager: SensorManager, sensor: Sensor) :
     AndroidSensor<DaqcQuantity<Length>>(manager, sensor) {
 
@@ -25,6 +37,12 @@ class AndroidProximitySensor(manager: SensorManager, sensor: Sensor) :
     override fun convertData(data: FloatArray): DaqcQuantity<Length> = data[0].centi.metre.toDaqc()
 }
 
+/**
+ * Android pressure sensor.
+ *
+ * @param manager The Android device's [SensorManager].
+ * @param sensor The sensor to be integrated.
+ */
 class AndroidPressureSensor(manager: SensorManager, sensor: Sensor) :
     AndroidSensor<DaqcQuantity<Pressure>>(manager, sensor) {
 
@@ -33,6 +51,12 @@ class AndroidPressureSensor(manager: SensorManager, sensor: Sensor) :
     override fun convertData(data: FloatArray): DaqcQuantity<Pressure> = data[0].hecto.pascal.toDaqc()
 }
 
+/**
+ * Android relative humidity sensor.
+ *
+ * @param manager The Android device's [SensorManager].
+ * @param sensor The sensor to be integrated.
+ */
 class AndroidRelativeHumiditySensor(manager: SensorManager, sensor: Sensor) :
     AndroidSensor<DaqcQuantity<Dimensionless>>(manager, sensor) {
 
@@ -41,6 +65,12 @@ class AndroidRelativeHumiditySensor(manager: SensorManager, sensor: Sensor) :
     override fun convertData(data: FloatArray): DaqcQuantity<Dimensionless> = data[0].percent.toDaqc()
 }
 
+/**
+ * Android ambient temperature sensor.
+ *
+ * @param manager The Android device's [SensorManager].
+ * @param sensor The sensor to be integrated.
+ */
 class AndroidAmbientTemperatureSensor(manager: SensorManager, sensor: Sensor) :
     AndroidSensor<DaqcQuantity<Temperature>>(manager, sensor) {
 
@@ -49,6 +79,12 @@ class AndroidAmbientTemperatureSensor(manager: SensorManager, sensor: Sensor) :
     override fun convertData(data: FloatArray): DaqcQuantity<Temperature> = data[0].celsius.toDaqc()
 }
 
+/**
+ * Android stationary sensor.
+ *
+ * @param manager The Android device's [SensorManager].
+ * @param sensor The sensor to be integrated.
+ */
 class AndroidStationarySensor(manager: SensorManager, sensor: Sensor) :
     AndroidSensor<BinaryState>(manager, sensor) {
 
@@ -57,6 +93,12 @@ class AndroidStationarySensor(manager: SensorManager, sensor: Sensor) :
     override fun convertData(data: FloatArray): BinaryState = BinaryState.On
 }
 
+/**
+ * Android motion sensor.
+ *
+ * @param manager The Android device's [SensorManager].
+ * @param sensor The sensor to be integrated.
+ */
 class AndroidMotionSensor(manager: SensorManager, sensor: Sensor) :
     AndroidSensor<BinaryState>(manager, sensor) {
 
@@ -65,6 +107,12 @@ class AndroidMotionSensor(manager: SensorManager, sensor: Sensor) :
     override fun convertData(data: FloatArray): BinaryState = BinaryState.On
 }
 
+/**
+ * Android heartbeat sensor.
+ *
+ * @param manager The Android device's [SensorManager].
+ * @param sensor The sensor to be integrated.
+ */
 class AndroidHeartBeatSensor(manager: SensorManager, sensor: Sensor) :
     AndroidSensor<DaqcQuantity<Dimensionless>>(manager, sensor) {
 
@@ -73,6 +121,12 @@ class AndroidHeartBeatSensor(manager: SensorManager, sensor: Sensor) :
     override fun convertData(data: FloatArray): DaqcQuantity<Dimensionless> = data[0].percent.toDaqc()
 }
 
+/**
+ * Android on-body sensor.
+ *
+ * @param manager The Android device's [SensorManager].
+ * @param sensor The sensor to be integrated.
+ */
 class AndroidOnBodySensor(manager: SensorManager, sensor: Sensor) :
     AndroidSensor<BinaryState>(manager, sensor) {
 
