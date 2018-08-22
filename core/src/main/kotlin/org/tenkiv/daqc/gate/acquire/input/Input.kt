@@ -74,8 +74,7 @@ interface BinaryStateInput : RangedInput<BinaryState> {
 
 // Kotlin compiler is getting confused about generics star projections if RangedInput (or a typealias) is used directly
 // TODO: look into changing this to a typealias if generics compiler issue is fixed.
-interface RangedQuantityInput<Q : Quantity<Q>> :
-    RangedInput<DaqcQuantity<Q>>
+interface RangedQuantityInput<Q : Quantity<Q>> : RangedInput<DaqcQuantity<Q>>
 
 class RangedQuantityInputBox<Q : Quantity<Q>>(
     input: QuantityInput<Q>,

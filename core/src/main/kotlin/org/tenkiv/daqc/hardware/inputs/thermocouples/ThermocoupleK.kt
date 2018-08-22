@@ -37,13 +37,11 @@ import kotlin.math.pow
 open class ThermocoupleK(
     channel: AnalogInput,
     acceptableError: ComparableQuantity<Temperature> = 1.celsius
-) :
-    ScAnalogSensor<Temperature>(
+) : ScAnalogSensor<Temperature>(
         channel,
         maximumEp = 55.milli.volt,
         acceptableError = 18.micro.volt * acceptableError.toDoubleIn(CELSIUS)
     ) {
-
     private val noTempRefValueMsg
         get() =
             "The temperature reference for device:\n" +
