@@ -21,8 +21,8 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.now
 import org.tenkiv.daqc.QuantityMeasurement
 import org.tenkiv.daqc.data.DaqcQuantity
+import org.tenkiv.daqc.gate.control.Attempt
 import org.tenkiv.daqc.gate.control.output.QuantityOutput
-import org.tenkiv.daqc.gate.control.output.SettingViability
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 import javax.measure.Quantity
 import javax.measure.quantity.Frequency
@@ -42,7 +42,7 @@ abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: 
     final override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
-    override fun setOutput(setting: DaqcQuantity<Q>): SettingViability {
+    override fun setOutput(setting: DaqcQuantity<Q>): Attempt {
         val viability = digitalOutput.sustainTransitionFrequency(convertOutput(setting))
 
         if (viability.isViable) _broadcastChannel.offer(setting.now())

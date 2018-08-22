@@ -23,6 +23,7 @@ import org.tenkiv.daqc.data.DaqcValue
 import org.tenkiv.daqc.data.toDaqc
 import org.tenkiv.daqc.gate.IOStrand
 import org.tenkiv.daqc.gate.RangedIOStrand
+import org.tenkiv.daqc.gate.control.Attempt
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import tec.units.indriya.unit.Units
@@ -36,7 +37,7 @@ import kotlin.reflect.KClass
  */
 interface Output<T : DaqcValue> : IOStrand<T> {
 
-    fun setOutput(setting: T): SettingViability
+    fun setOutput(setting: T): Attempt
 
 }
 
