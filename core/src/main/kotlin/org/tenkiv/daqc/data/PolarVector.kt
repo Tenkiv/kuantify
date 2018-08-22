@@ -50,8 +50,8 @@ class PolarVector2D<Q : Quantity<Q>>(
     override fun toDaqcValueList() = listOf(magnitude, angle)
 
     /**
-     * Converts this [PolarVector2D] to a [DoubleArray] representing the equivalent components of a Euclidean vector in the
-     * system unit.
+     * Converts this [PolarVector2D] to a [DoubleArray] representing the equivalent components of a Euclidean vector in
+     * the system unit.
      */
     fun toComponentDoubles(): Pair<Double, Double> {
         val magnitude = this.magnitude.toDoubleInSystemUnit()
