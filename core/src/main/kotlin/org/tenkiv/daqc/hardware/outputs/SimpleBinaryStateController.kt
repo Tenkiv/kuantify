@@ -21,7 +21,7 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.now
 import org.tenkiv.daqc.BinaryStateMeasurement
 import org.tenkiv.daqc.data.BinaryState
-import org.tenkiv.daqc.gate.control.Attempt
+import org.tenkiv.daqc.gate.control.attempt.Viability
 import org.tenkiv.daqc.gate.control.output.BinaryStateOutput
 import org.tenkiv.daqc.hardware.definitions.channel.DigitalOutput
 
@@ -48,7 +48,7 @@ class SimpleBinaryStateController internal constructor(val digitalOutput: Digita
 
     override fun deactivate() = digitalOutput.deactivate()
 
-    override fun setOutput(setting: BinaryState): Attempt {
+    override fun setOutput(setting: BinaryState): Viability {
         val viability = if (!inverted) digitalOutput.setOutput(setting) else when (setting) {
             BinaryState.On -> digitalOutput.setOutput(BinaryState.Off)
             BinaryState.Off -> digitalOutput.setOutput(BinaryState.On)

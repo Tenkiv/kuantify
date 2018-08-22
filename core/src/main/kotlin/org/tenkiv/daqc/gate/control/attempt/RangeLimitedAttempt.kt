@@ -15,21 +15,18 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.daqc.gate.control.output
+package org.tenkiv.daqc.gate.control.attempt
 
-/**
- *
- * @property isViable is only meant to represent if the setting can succeed in the current situation, not whether or not
- * the implementation of the setting was successful.
- */
-interface SettingViability {
-    val isViable: Boolean
-}
+enum class RangeLimitedAttempt : Viability {
+    OK {
+        override val isViable get() = true
 
-object Viable : SettingViability {
-    override val isViable get() = true
-}
+        override val message get() = Viability.OK_MESSAGE
+    },
 
-object NotViable : SettingViability {
-    override val isViable get() = false
+    OUT_OF_RANGE {
+        override val isViable get() = false
+
+        override val message get() = "The setting is not the range accepted by this Output"
+    }
 }

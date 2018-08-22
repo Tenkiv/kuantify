@@ -23,7 +23,8 @@ import org.tenkiv.daqc.data.DaqcValue
 import org.tenkiv.daqc.data.toDaqc
 import org.tenkiv.daqc.gate.IOStrand
 import org.tenkiv.daqc.gate.RangedIOStrand
-import org.tenkiv.daqc.gate.control.Attempt
+import org.tenkiv.daqc.gate.control.attempt.RangeLimitedAttempt
+import org.tenkiv.daqc.gate.control.attempt.Viability
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import tec.units.indriya.unit.Units
@@ -37,7 +38,7 @@ import kotlin.reflect.KClass
  */
 interface Output<T : DaqcValue> : IOStrand<T> {
 
-    fun setOutput(setting: T): Attempt
+    fun setOutput(setting: T): Viability
 
 }
 
@@ -92,9 +93,18 @@ interface BinaryStateOutput : RangedOutput<BinaryState> {
 interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>, QuantityOutput<Q>
 
 class RangedQuantityOutputBox<Q : Quantity<Q>>(
-    output: QuantityOutput<Q>,
+    private val output: QuantityOutput<Q>,
     override val valueRange: ClosedRange<DaqcQuantity<Q>>
-) : RangedQuantityOutput<Q>, QuantityOutput<Q> by output
+) : RangedQuantityOutput<Q>, QuantityOutput<Q> by output {
+    override fun setOutput(setting: DaqcQuantity<Q>): Viability {
+        val inRange = setting in valueRange
+        return if (!inRange) {
+            RangeLimitedAttempt.OUT_OF_RANGE
+        } else {
+            output.setOutput(setting)
+        }
+    }
+}
 
 /**
  * Converts a [QuantityOutput] to a [RangedQuantityOutputBox] so it can be used in the default learning module.
