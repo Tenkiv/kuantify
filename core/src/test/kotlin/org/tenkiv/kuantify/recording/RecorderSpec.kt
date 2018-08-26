@@ -54,11 +54,11 @@ class RecorderSpec : StringSpec({
 
         val analogData = analogRecorder.getDataInMemory()
         analogData.last().instant.epochSecond -
-                analogData.first().instant.epochSecond shouldBe (10.0 plusOrMinus 1.0)
+                analogData.first().instant.epochSecond.toDouble() shouldBe (10.0 plusOrMinus 1.0)
 
         val digitalData = digitalRecorder.getDataInMemory()
         digitalData.last().instant.epochSecond -
-                digitalData.first().instant.epochSecond shouldBe (10.0 plusOrMinus 1.0)
+                digitalData.first().instant.epochSecond.toDouble() shouldBe (10.0 plusOrMinus 1.0)
 
     }
 
@@ -76,11 +76,11 @@ class RecorderSpec : StringSpec({
 
             val analogData = analogRecorder.getAllData()
             analogData.last().instant.epochSecond -
-                    analogData.first().instant.epochSecond shouldBe (10.0 plusOrMinus 2.0)
+                    analogData.first().instant.epochSecond.toDouble() shouldBe (10.0 plusOrMinus 2.0)
 
             val digitalData = digitalRecorder.getAllData()
             digitalData.last().instant.epochSecond -
-                    digitalData.first().instant.epochSecond shouldBe (10.0 plusOrMinus 2.0)
+                    digitalData.first().instant.epochSecond.toDouble() shouldBe (10.0 plusOrMinus 2.0)
 
         }
 
