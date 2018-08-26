@@ -22,4 +22,4 @@ import org.tenkiv.kuantify.gate.control.output.QuantityOutput
 import org.tenkiv.physikal.core.*
 
 internal fun QuantityOutput<*>.setOutputInSystemUnit(setting: Double): Viability =
-    dynamicSetOutput(setting toQuantityWithSymbol systemUnit.getSymbol())
+    dynamicSetOutput(setting withSymbol systemUnit.getSymbol())
