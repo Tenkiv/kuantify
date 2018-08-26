@@ -17,7 +17,9 @@
 
 package org.tenkiv.kuantify.learning.controller
 
+import org.tenkiv.kuantify.gate.control.attempt.Viability
 import org.tenkiv.kuantify.gate.control.output.QuantityOutput
 import org.tenkiv.physikal.core.*
 
-internal fun QuantityOutput<*>.setOutputInSystemUnit(setting: Double) = dynamicSetOutput(setting(systemUnit))
+internal fun QuantityOutput<*>.setOutputInSystemUnit(setting: Double): Viability =
+    dynamicSetOutput(setting toQuantityWithSymbol systemUnit.getSymbol())
