@@ -33,7 +33,7 @@ test.finalizedBy jacocoTestReport
 
 task quickTestRun(type: JavaExec) {
     classpath sourceSets.main.runtimeClasspath
-    main = "org.tenkiv.daqc.TestKt"
+    main = "org.tenkiv.kuantify.TestKt"
 }
 
 test {

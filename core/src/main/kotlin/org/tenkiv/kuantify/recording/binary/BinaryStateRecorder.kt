@@ -1,0 +1,63 @@
+/*
+ * Copyright 2018 Tenkiv, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+package org.tenkiv.kuantify.recording.binary
+
+import org.tenkiv.coral.ValueInstant
+import org.tenkiv.kuantify.BinaryStateMeasurement
+import org.tenkiv.kuantify.Updatable
+import org.tenkiv.kuantify.data.BinaryState
+import org.tenkiv.kuantify.gate.acquire.input.BinaryStateInput
+import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
+import org.tenkiv.kuantify.recording.RecordedUpdatable
+import org.tenkiv.kuantify.recording.Recorder
+import org.tenkiv.kuantify.recording.StorageDuration
+import org.tenkiv.kuantify.recording.StorageFrequency
+
+//TODO: This file shouldn't need to be in a separate package from recording pending changes to kotlin's method signature
+// conflict resolution
+
+typealias RecordedBinaryStateInput = RecordedUpdatable<BinaryState, BinaryStateInput>
+typealias RecordedBinaryStateOutput = RecordedUpdatable<BinaryState, BinaryStateOutput>
+
+/**
+ * Pairs a channel which sends [BinaryStateMeasurement]s with a new [Recorder] to store its data.
+ *
+ * @param storageFrequency Determines how frequently data is stored to the [Recorder].
+ * @param memoryDuration Determines how long samples are stored in memory.
+ * @param diskDuration Determines how long samples are stored on disk.
+ * @param filterOnRecord Acts as a filter for what s recorded.
+ * @return A [Pair] of the existing [Updatable] with a new [Recorder].
+ */
+fun <U : Updatable<BinaryStateMeasurement>> U.pairWithNewRecorder(
+    storageFrequency: StorageFrequency = StorageFrequency.All,
+    memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
+    diskDuration: StorageDuration = StorageDuration.Forever,
+    filterOnRecord: Recorder<BinaryState>.(ValueInstant<BinaryState>) -> Boolean = { true }
+) =
+    RecordedUpdatable(
+        this,
+        Recorder(
+            this,
+            storageFrequency,
+            memoryDuration,
+            diskDuration,
+            filterOnRecord,
+            valueSerializer = { "\"$it\"" },
+            valueDeserializer = BinaryState.Companion::fromString
+        )
+    )
