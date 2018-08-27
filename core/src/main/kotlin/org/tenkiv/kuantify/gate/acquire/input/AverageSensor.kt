@@ -30,9 +30,6 @@ import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
 
-
-//TODO: Make this work with BinaryState or make another version for BinaryState
-
 /**
  * Sensor which provides an average of [Quantity] values from a group inputs.
  * All inputs must be of the same [Quantity] type.
@@ -43,10 +40,9 @@ import javax.measure.Quantity
 class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: QuantityInput<Q>) : QuantityInput<Q> {
 
     override val isActive: Boolean
-        get() = run {
+        get() {
             inputs.forEach {
-                if (!it.isActive)
-                    return@run false
+                if (!it.isActive) return false
             }
             return true
         }
@@ -61,7 +57,7 @@ class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: Quantity
 
     override val updateRate
         get() = inputs.map { it.updateRate }.max()
-                ?: throw IllegalStateException("AverageQuantitySensor has no inputs, it must have at least 1 input.")
+            ?: throw IllegalStateException("AverageQuantitySensor has no inputs, it must have at least 1 input.")
 
     init {
         inputs.forEach { _ ->
@@ -103,10 +99,9 @@ class DigitalThresholdSensor(
 ) : BinaryStateInput {
 
     override val isActive: Boolean
-        get() = run {
+        get() {
             inputs.forEach {
-                if (!it.isActive)
-                    return@run false
+                if (!it.isActive) return false
             }
             return true
         }

@@ -200,10 +200,10 @@ class PolarVector3D<Q : Quantity<Q>>(
 ) : DaqcData {
     val magnitude = magnitude.toDaqc()
 
-    val xyAngle = incline.toDaqc()
-    val zyAngle = azimuth.toDaqc()
+    val incline = incline.toDaqc()
+    val azimuth = azimuth.toDaqc()
 
     override val size get() = 3
 
-    override fun toDaqcValueList() = listOf(magnitude, xyAngle, zyAngle)
+    override fun toDaqcValueList() = listOf(magnitude, incline, azimuth)
 }
