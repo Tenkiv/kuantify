@@ -17,12 +17,8 @@
 
 package org.tenkiv.kuantify.hardware.definitions.device
 
-import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
-import org.tenkiv.kuantify.hardware.LineNoiseFrequency
-import org.tenkiv.kuantify.networking.NetworkProtocol
+import org.tenkiv.kuantify.networking.ConnectionProtocol
 import org.tenkiv.kuantify.networking.SharingStatus
-import java.net.InetAddress
-import javax.measure.quantity.Temperature
 
 /**
  * The interface defining the basic aspects of all devices.
@@ -30,19 +26,9 @@ import javax.measure.quantity.Temperature
 interface Device {
 
     /**
-     * The [InetAddress] of the device.
-     */
-    val inetAddr: InetAddress
-
-    /**
      * The device's serial number. This should be unique.
      */
     val serialNumber: String
-
-    /**
-     * The temperature reference of the board for error correction on samples.
-     */
-    val temperatureReference: QuantityInput<Temperature>
 
     /**
      * Value representing if the Device is connected.
@@ -53,12 +39,12 @@ interface Device {
     val isConnected: Boolean
 
     /**
-     * The [NetworkProtocol] which the Device is connected over.
+     * The [ConnectionProtocol] which the Device is connected over.
      *
      * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */
-    var networkProtocol: NetworkProtocol
+    var connectionProtocol: ConnectionProtocol
 
     /**
      * The [SharingStatus] of the Device showing what channels are available for connection.
@@ -71,17 +57,16 @@ interface Device {
     /**
      * Function to connect to the [Device].
      *
-     * @param lineFrequency The [LineNoiseFrequency] of the electrical grid the [Device] is physically connected to.
-     * @param protocol The [NetworkProtocol] to connect over.
+     * @param protocol The [ConnectionProtocol] to connect over.
      */
-    fun connect(lineFrequency: LineNoiseFrequency, protocol: NetworkProtocol? = null)
+    fun connect(protocol: ConnectionProtocol? = null)
 
     /**
      * Function to disconnect this [Device].
      *
-     * @param The [NetworkProtocol] to disconnect via.
+     * @param The [ConnectionProtocol] to disconnect via.
      */
-    fun disconnect(protocol: NetworkProtocol?)
+    fun disconnect(protocol: ConnectionProtocol?)
 
     /**
      * Function called to initialize the [Device] for first usage if necessary.
