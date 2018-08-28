@@ -31,44 +31,6 @@ interface Device {
     val serialNumber: String
 
     /**
-     * Value representing if the Device is connected.
-     *
-     * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
-     * reads from multiple threads.
-     */
-    val isConnected: Boolean
-
-    /**
-     * The [ConnectionProtocol] which the Device is connected over.
-     *
-     * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
-     * reads from multiple threads.
-     */
-    var connectionProtocol: ConnectionProtocol
-
-    /**
-     * The [SharingStatus] of the Device showing what channels are available for connection.
-     *
-     * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
-     * reads from multiple threads.
-     */
-    var networkSharingStatus: SharingStatus
-
-    /**
-     * Function to connect to the [Device].
-     *
-     * @param protocol The [ConnectionProtocol] to connect over.
-     */
-    fun connect(protocol: ConnectionProtocol? = null)
-
-    /**
-     * Function to disconnect this [Device].
-     *
-     * @param The [ConnectionProtocol] to disconnect via.
-     */
-    fun disconnect(protocol: ConnectionProtocol?)
-
-    /**
      * Function called to initialize the [Device] for first usage if necessary.
      */
     fun initializeDevice()
