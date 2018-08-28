@@ -97,8 +97,8 @@ class PolarVector2D<Q : Quantity<Q>>(
             resultX,
             resultY,
             other.axisLabel,
-            resultX.unit,
-            other.positiveDirection
+            other.positiveDirection,
+            resultX.unit
         )
     }
 
@@ -113,8 +113,8 @@ class PolarVector2D<Q : Quantity<Q>>(
             resultX,
             resultY,
             other.axisLabel,
-            resultX.unit,
-            other.positiveDirection
+            other.positiveDirection,
+            resultX.unit
         )
     }
 
@@ -128,7 +128,7 @@ class PolarVector2D<Q : Quantity<Q>>(
 
 
         //TODO: Find a way to create a Quantity of unknown type without going through a string
-        return (resultX.valueToDouble() + resultY.valueToDouble()).toQuantityWithSymbol(resultUnit.getSymbol())
+        return (resultX.valueToDouble() + resultY.valueToDouble()) withSymbol resultUnit.getSymbol()
     }
 
     override fun equals(other: Any?): Boolean {
@@ -163,24 +163,24 @@ class PolarVector2D<Q : Quantity<Q>>(
             xComponent: ComparableQuantity<Q>,
             yComponent: ComparableQuantity<Q>,
             axisLabel: String,
-            unit: PhysicalUnit<Q> = xComponent.unit.systemUnit,
-            positiveDirection: CircularDirection
+            positiveDirection: CircularDirection,
+            unit: PhysicalUnit<Q> = xComponent.unit.systemUnit
         ): PolarVector2D<Q> {
             val xComponentDouble = xComponent toDoubleIn unit
             val yComponentDouble = yComponent toDoubleIn unit
 
-            return fromComponentDoubles(xComponentDouble, yComponentDouble, axisLabel, unit, positiveDirection)
+            return fromComponentDoubles(xComponentDouble, yComponentDouble, axisLabel, positiveDirection, unit)
         }
 
         private fun <Q : Quantity<Q>> fromComponentDoubles(
             xComponent: Double,
             yComponent: Double,
             axisLabel: String,
-            unit: PhysicalUnit<Q>,
-            positiveDirection: CircularDirection
+            positiveDirection: CircularDirection,
+            unit: PhysicalUnit<Q>
         ): PolarVector2D<Q> {
             val magnitude = sqrt(xComponent.pow(2) + yComponent.pow(2))(unit)
-            val angle = atan(yComponent / xComponent)(RADIAN)
+            val angle = atan2(yComponent, xComponent)(RADIAN)
 
             return PolarVector2D(magnitude, angle, axisLabel, positiveDirection)
         }
@@ -197,30 +197,40 @@ enum class CircularDirection {
  */
 class PolarVector3D<Q : Quantity<Q>>(
     magnitude: ComparableQuantity<Q>,
-    incline: ComparableQuantity<Angle>,
     azimuth: ComparableQuantity<Angle>,
-    val inclineAxisLabel: String,
+    incline: ComparableQuantity<Angle>,
     val azimuthAxisLabel: String,
-    val inclinePositiveDirection: CircularDirection,
-    val azimuthPositiveDirection: CircularDirection
+    val inclineAxisLabel: String,
+    val azimuthPositiveDirection: CircularDirection,
+    val inclinePositiveDirection: CircularDirection
 ) : DaqcData {
     val magnitude = magnitude.toDaqc()
 
-    val incline = incline.toDaqc()
     val azimuth = azimuth.toDaqc()
+    val incline = incline.toDaqc()
 
     override val size get() = 3
 
     private fun toComponentDoubles(): Triple<Double, Double, Double> {
-        val magnitude = magnitude.toDoubleInSystemUnit()
+        val magnitude = magnitude.valueToDouble()
         val incline = incline toDoubleIn RADIAN
         val azimuth = azimuth toDoubleIn RADIAN
 
         val xComponent = magnitude * cos(incline) * sin(azimuth)
-        val yComponent = magnitude * cos(incline) * cos(azimuth)
-        val zComponent = magnitude * sin(incline)
+        var yComponent = magnitude * cos(incline) * cos(azimuth)
+        var zComponent = magnitude * sin(incline)
+
+        if (azimuthPositiveDirection === CircularDirection.CLOCKWISE) yComponent = -yComponent
+        if (inclinePositiveDirection === CircularDirection.CLOCKWISE) zComponent = -zComponent
 
         return Triple(xComponent, yComponent, zComponent)
+    }
+
+    fun toComponents(): Components<Q> {
+        val components = toComponentDoubles()
+        val unit = magnitude.unit
+
+        return Components(components.first(unit), components.second(unit), components.third(unit))
     }
 
     override fun toDaqcValueList() = listOf(magnitude, incline, azimuth)
@@ -230,4 +240,58 @@ class PolarVector3D<Q : Quantity<Q>>(
         val y: ComparableQuantity<Q>,
         val z: ComparableQuantity<Q>
     )
+
+    companion object {
+
+        private fun <Q : Quantity<Q>> fromComponentDoubles(
+            xComponent: Double,
+            yComponent: Double,
+            zComponent: Double,
+            azimuthAxisLabel: String,
+            inclineAxisLabel: String,
+            azimuthPositiveDirection: CircularDirection,
+            inclinePositiveDirection: CircularDirection,
+            unit: PhysicalUnit<Q>
+        ): PolarVector3D<Q> {
+            val azimuthAngle = atan(xComponent / yComponent)
+            val inclineAngle = acos(yComponent / zComponent)
+            val magnitude = zComponent / sin(azimuthAngle)
+
+            return PolarVector3D(
+                magnitude(unit),
+                azimuthAngle(RADIAN),
+                inclineAngle(RADIAN),
+                azimuthAxisLabel,
+                inclineAxisLabel,
+                azimuthPositiveDirection,
+                inclinePositiveDirection
+            )
+        }
+
+        fun <Q : Quantity<Q>> fromComponents(
+            xComponent: ComparableQuantity<Q>,
+            yComponent: ComparableQuantity<Q>,
+            zComponent: ComparableQuantity<Q>,
+            azimuthAxisLabel: String,
+            inclineAxisLabel: String,
+            azimuthPositiveDirection: CircularDirection,
+            inclinePositiveDirection: CircularDirection,
+            unit: PhysicalUnit<Q> = xComponent.unit.systemUnit
+        ): PolarVector3D<Q> {
+            val xComponentDouble = xComponent toDoubleIn unit
+            val yComponentDouble = yComponent toDoubleIn unit
+            val zComponentDouble = zComponent toDoubleIn unit
+
+            return fromComponentDoubles(
+                xComponentDouble,
+                yComponentDouble,
+                zComponentDouble,
+                azimuthAxisLabel,
+                inclineAxisLabel,
+                azimuthPositiveDirection,
+                inclinePositiveDirection,
+                unit
+            )
+        }
+    }
 }
