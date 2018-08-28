@@ -653,11 +653,13 @@ class Recorder<out T> {
         }
 
         internal fun stop() {
-            launch(IO) {
+            launch {
                 val channel = fileChannel.await()
                 mutex.withLock {
-                    channel.force(true)
-                    channel.close()
+                    withContext(IO) {
+                        channel.force(true)
+                        channel.close()
+                    }
                 }
             }
         }
