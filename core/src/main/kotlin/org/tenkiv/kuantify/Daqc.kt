@@ -32,8 +32,10 @@ typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
 
 /**
  * The default context which the library uses to handle data.
+ * This coroutine context uses only a single thread, thus thread blocking calls and long running computations must never
+ * be executed on it.
  */
-internal val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
+val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 
 /**
  * The [ConflatedBroadcastChannel] which sends [DaqcCriticalError] messages notifying of potentially critical issues.
