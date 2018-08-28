@@ -50,27 +50,31 @@ class PolarVector2D<Q : Quantity<Q>>(
     override fun toDaqcValueList() = listOf(magnitude, angle)
 
     /**
-     * Converts this [PolarVector2D] to a [DoubleArray] representing the equivalent components of a Euclidean vector in
+     * Converts this [PolarVector2D] to a [Pair] of [Double]s representing the equivalent components of a Euclidean vector in
      * the system unit.
      */
-    fun toComponentDoubles(): Pair<Double, Double> {
-        val magnitude = this.magnitude.toDoubleInSystemUnit()
-        val angle = this.angle toDoubleIn RADIAN
+    private fun toComponentDoubles(): Pair<Double, Double> {
+        val magnitude = magnitude.valueToDouble()
+        val angle = angle toDoubleIn RADIAN
 
-        return Pair(cos(angle) * magnitude, sin(angle) * magnitude)
+        val xComponent = cos(angle) * magnitude
+        var yComponent = sin(angle) * magnitude
+        if (positiveDirection === CircularDirection.CLOCKWISE) yComponent = -yComponent
+
+        return Pair(xComponent, yComponent)
     }
 
-    fun toComponents(): Pair<ComparableQuantity<Q>, ComparableQuantity<Q>> {
+    fun toComponents(): Components<Q> {
         val components = toComponentDoubles()
         val unit = magnitude.unit
 
-        return Pair(components.first(unit), components.second(unit))
+        return Components(components.first(unit), components.second(unit))
     }
 
     infix fun compassScale(scalar: Double): PolarVector2D<Q> {
         val negativeScalar = scalar < 0
         val scaledMagnitude = magnitude * scalar.absoluteValue
-        val angle = if (negativeScalar) this.angle.compassInvert() else this.angle
+        val angle = if (negativeScalar) angle.compassInvert() else angle
 
         return PolarVector2D(scaledMagnitude, angle, axisLabel, positiveDirection)
     }
@@ -152,6 +156,8 @@ class PolarVector2D<Q : Quantity<Q>>(
     override fun toString() =
         "PolarVector2D($magnitude, $angle $positiveDirection from $axisLabel)"
 
+    data class Components<Q : Quantity<Q>>(val x: ComparableQuantity<Q>, val y: ComparableQuantity<Q>)
+
     companion object {
         fun <Q : Quantity<Q>> fromComponents(
             xComponent: ComparableQuantity<Q>,
@@ -160,8 +166,8 @@ class PolarVector2D<Q : Quantity<Q>>(
             unit: PhysicalUnit<Q> = xComponent.unit.systemUnit,
             positiveDirection: CircularDirection
         ): PolarVector2D<Q> {
-            val xComponentDouble = xComponent.toDoubleInSystemUnit()
-            val yComponentDouble = yComponent.toDoubleInSystemUnit()
+            val xComponentDouble = xComponent toDoubleIn unit
+            val yComponentDouble = yComponent toDoubleIn unit
 
             return fromComponentDoubles(xComponentDouble, yComponentDouble, axisLabel, unit, positiveDirection)
         }
@@ -205,5 +211,23 @@ class PolarVector3D<Q : Quantity<Q>>(
 
     override val size get() = 3
 
+    private fun toComponentDoubles(): Triple<Double, Double, Double> {
+        val magnitude = magnitude.toDoubleInSystemUnit()
+        val incline = incline toDoubleIn RADIAN
+        val azimuth = azimuth toDoubleIn RADIAN
+
+        val xComponent = magnitude * cos(incline) * sin(azimuth)
+        val yComponent = magnitude * cos(incline) * cos(azimuth)
+        val zComponent = magnitude * sin(incline)
+
+        return Triple(xComponent, yComponent, zComponent)
+    }
+
     override fun toDaqcValueList() = listOf(magnitude, incline, azimuth)
+
+    data class Components<Q : Quantity<Q>>(
+        val x: ComparableQuantity<Q>,
+        val y: ComparableQuantity<Q>,
+        val z: ComparableQuantity<Q>
+    )
 }
