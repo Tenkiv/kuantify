@@ -33,7 +33,11 @@ typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
 /**
  * The default context which the library uses to handle data.
  * This coroutine context uses only a single thread, thus thread blocking calls and long running computations must never
- * be executed on it.
+ * be executed on it. It should only be used for suspending IO bound operations where the default multithreaded context
+ * is not a viable option, such as when multiple coroutines share some mutable state that is not thread safe.
+ *
+ * @see <a href="https://github.com/Kotlin/kotlinx.coroutines/blob/master/coroutines-guide.md#thread-confinement-coarse-
+ * grained">Thread confinement coarse-grained</a>
  */
 val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
 
