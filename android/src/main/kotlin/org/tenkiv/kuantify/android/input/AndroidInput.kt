@@ -54,12 +54,19 @@ abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sens
         get() = _failureBroadcastChannel
 
     private val _accuracyBroadcastChannel = ConflatedBroadcastChannel<AndroidSensorAccuracy>()
+
+    /**
+     * Channel which broadcasts the current accuracy of the sensor.
+     */
     val accuracyBroadcastChannel: ConflatedBroadcastChannel<out AndroidSensorAccuracy>
         get() = _accuracyBroadcastChannel
 
     @Volatile
-    var _isActive = false
+    private var _isActive = false
 
+    /**
+     * The minimum acceptable accuracy for samples from the sensor. Samples which fall below it will be discarded.
+     */
     @Volatile
     var minimumAccuracy: AndroidSensorAccuracy =
         AndroidSensorAccuracy.LOW_ACCURACY
