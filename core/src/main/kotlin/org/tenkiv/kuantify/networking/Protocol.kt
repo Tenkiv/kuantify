@@ -18,30 +18,72 @@
 package org.tenkiv.kuantify.networking
 
 import org.tenkiv.kuantify.hardware.definitions.device.Device
+import java.net.InetAddress
 
 /**
- * Enum representing the different network protocols which can be used to connect to devices.
+ * Sealed class representing the different network protocols which can be used to connect to devices.
  */
-enum class NetworkProtocol {
-    /**
-     * Communicate with UDP
-     */
-    UDP,
+sealed class ConnectionProtocol {
 
     /**
-     * Communicate with TCP
+     * Class defining connections that occur across a traditional network.
      */
-    TCP,
+    abstract class NetworkProtocol : ConnectionProtocol() {
+        /**
+         * The ipv4 or ipv6 [InetAddress] of the device.
+         */
+        abstract val inetAddress: InetAddress
+    }
 
     /**
-     * Communicate with SSH
+     * Class specifying communication with UDP
      */
-    SSH,
+    class Udp(override val inetAddress: InetAddress) : NetworkProtocol()
 
     /**
-     * Communicate with TELNET
+     * Class specifying communication with TCP
      */
-    TELNET
+    class Tcp(override val inetAddress: InetAddress) : NetworkProtocol()
+
+    /**
+     * Class specifying communication with SSH
+     */
+    class Ssh(override val inetAddress: InetAddress) : NetworkProtocol()
+
+    /**
+     * Class specifying communication with TELNET
+     */
+    class Telnet(override val inetAddress: InetAddress) : NetworkProtocol()
+
+    /**
+     * Class specifying communication with NFC
+     * As to how or why you would do this I don't know.
+     */
+    class Nfc() : ConnectionProtocol()
+
+    /**
+     * Class specifying communication with Bluetooth
+     */
+    class Bluetooth() : ConnectionProtocol()
+
+    /**
+     * Class specifying communication with SLIP
+     */
+    class Slip() : ConnectionProtocol()
+
+    /**
+     * Class specifying communication with TIA/EIA specified by RS-485 or RS-422
+     *
+     * @param duplexed Specifies if the line is duplexed.
+     * @param isMaster Specifies if the device is a master or a slave.
+     */
+    class Rs485(val duplexed: Boolean, val isMaster: Boolean) : ConnectionProtocol()
+
+    /**
+     * Class specifying serial communication specified by RS-232
+     */
+    class Rs232() : ConnectionProtocol()
+
 }
 
 /**

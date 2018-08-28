@@ -19,14 +19,27 @@ package org.tenkiv.kuantify.hardware.definitions.device
 
 import org.tenkiv.kuantify.data.DaqcValue
 import org.tenkiv.kuantify.gate.acquire.input.Input
+import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
+import org.tenkiv.kuantify.hardware.LineNoiseFrequency
 import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
 import org.tenkiv.kuantify.networking.SharingStatus
+import javax.measure.quantity.Temperature
 
 /**
  * Interface defining [Device]s which have either [AnalogInput]s, [DigitalInput]s, or both.
  */
 interface DataAcquisitionDevice : Device {
+
+    /**
+     * The [LineNoiseFrequency] of the electrical grid the [DataAcquisitionDevice] is physically connected to.
+     */
+    val lineFrequency: LineNoiseFrequency
+
+    /**
+     * The temperature reference of the board for error correction on samples.
+     */
+    val temperatureReference: QuantityInput<Temperature>
 
     /**
      * List of all [AnalogInput]s that this [DataAcquisitionDevice] has.
