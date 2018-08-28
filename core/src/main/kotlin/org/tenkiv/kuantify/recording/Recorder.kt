@@ -19,13 +19,10 @@ package org.tenkiv.kuantify.recording
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import kotlinx.coroutines.experimental.CancellationException
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.nio.aRead
 import kotlinx.coroutines.experimental.nio.aWrite
 import kotlinx.coroutines.experimental.sync.Mutex
@@ -656,14 +653,12 @@ class Recorder<out T> {
         }
 
         internal fun stop() {
-            launch(daqcThreadContext) {
+            launch(IO) {
                 val channel = fileChannel.await()
                 mutex.withLock {
-                    //TODO: Change this to blocking() call in kotlin coroutines.
                     channel.force(true)
                     channel.close()
                 }
-
             }
         }
 
