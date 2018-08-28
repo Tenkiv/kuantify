@@ -607,7 +607,7 @@ class Recorder<out T> {
 
         internal constructor(expiresIn: Duration?) {
             if (expiresIn != null) {
-                launch(daqcThreadContext) {
+                launch {
                     delay(expiresIn)
 
                     suicide()
@@ -653,21 +653,21 @@ class Recorder<out T> {
         }
 
         internal fun stop() {
-            launch {
+            launch(IO) {
                 val channel = fileChannel.await()
                 mutex.withLock {
-                    withContext(IO) {
-                        channel.force(true)
-                        channel.close()
-                    }
+                    channel.force(true)
+                    channel.close()
                 }
             }
         }
 
         private suspend fun suicide() {
             files.remove(this@RecorderFile)
-            fileChannel.await().close()
-            file.await().delete()
+            withContext(IO) {
+                fileChannel.await().close()
+                file.await().delete()
+            }
         }
 
         internal suspend fun readFromDisk(filter: (ValueInstant<T>) -> Boolean): List<ValueInstant<T>> {
@@ -686,34 +686,24 @@ class Recorder<out T> {
 
                     val array = buffer.array()
                     array.forEach { charByte ->
-                        if (charByte == STRING_DELIM && previousCharByte != BREAK)
-                            inString = !inString
+                        if (charByte == STRING_DELIM && previousCharByte != BREAK) inString = !inString
 
-                        if (!inString && charByte == OPEN_BRACE)
-                            numUnclosedBraces++
+                        if (!inString && charByte == OPEN_BRACE) numUnclosedBraces++
 
-                        if (numUnclosedBraces > 1)
-                            currentObject += charByte
+                        if (numUnclosedBraces > 1) currentObject += charByte
 
 
                         if (!inString && charByte == CLOSE_BRACE) {
                             numUnclosedBraces--
-                            if (numUnclosedBraces == 0)
-                                return@readFromDisk complyingObjects
+                            if (numUnclosedBraces == 0) return@readFromDisk complyingObjects
 
                             if (numUnclosedBraces == 1) {
-
-                                println("Byte Array = ${String(currentObject.toByteArray())}")
-
                                 val jsonTree = jacksonMapper.readTree(currentObject.toByteArray())
                                 val epochMilli = jsonTree[INSTANT_KEY].asLong()
                                 val valueTree = jsonTree[VALUE_KEY]
                                 val valueString = if (valueTree.isTextual) valueTree.asText() else valueTree.toString()
-                                println("epochMilli=$epochMilli, valueString=$valueString")
                                 val valueInstant =
-                                    PrimitiveValueInstant(epochMilli, valueString)
-                                        .toValueInstant(valueDeserializer)
-
+                                    PrimitiveValueInstant(epochMilli, valueString).toValueInstant(valueDeserializer)
 
                                 if (filter(valueInstant)) {
                                     complyingObjects += valueInstant
@@ -721,7 +711,6 @@ class Recorder<out T> {
                                 currentObject.clear()
 
                             }
-
                         }
 
                         previousCharByte = charByte
