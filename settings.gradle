@@ -1,2 +1,4 @@
 rootProject.name = 'kuantify'
-include 'core', 'learning', 'android'
+include 'core'
+include 'learning'
+include 'android'
