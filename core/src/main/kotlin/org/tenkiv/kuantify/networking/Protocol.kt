@@ -19,6 +19,8 @@ package org.tenkiv.kuantify.networking
 
 import org.tenkiv.kuantify.hardware.definitions.device.Device
 import java.net.InetAddress
+import javax.measure.Quantity
+import javax.measure.quantity.Frequency
 
 /**
  * Sealed class representing the different network protocols which can be used to connect to devices.
@@ -28,48 +30,55 @@ sealed class ConnectionProtocol {
     /**
      * Class defining connections that occur across a traditional network.
      */
-    abstract class NetworkProtocol : ConnectionProtocol() {
+    sealed class NetworkProtocol : ConnectionProtocol() {
         /**
          * The ipv4 or ipv6 [InetAddress] of the device.
          */
         abstract val inetAddress: InetAddress
+
+        /**
+         * Class specifying communication with UDP
+         */
+        data class Udp(override val inetAddress: InetAddress) : NetworkProtocol()
+
+        /**
+         * Class specifying communication with TCP
+         */
+        data class Tcp(override val inetAddress: InetAddress) : NetworkProtocol()
+
+        /**
+         * Class specifying communication with SSH
+         */
+        data class Ssh(override val inetAddress: InetAddress) : NetworkProtocol()
+
+        /**
+         * Class specifying communication with TELNET
+         */
+        data class Telnet(override val inetAddress: InetAddress) : NetworkProtocol()
     }
 
     /**
-     * Class specifying communication with UDP
+     * Object specifying when the device itself is the host and the [Device] being controlled.
      */
-    class Udp(override val inetAddress: InetAddress) : NetworkProtocol()
+    object Host : ConnectionProtocol()
 
     /**
-     * Class specifying communication with TCP
+     * Object specifying communication with NFC
+     * Probably only used for handshaking. Hopefully.
      */
-    class Tcp(override val inetAddress: InetAddress) : NetworkProtocol()
-
-    /**
-     * Class specifying communication with SSH
-     */
-    class Ssh(override val inetAddress: InetAddress) : NetworkProtocol()
-
-    /**
-     * Class specifying communication with TELNET
-     */
-    class Telnet(override val inetAddress: InetAddress) : NetworkProtocol()
-
-    /**
-     * Class specifying communication with NFC
-     * As to how or why you would do this I don't know.
-     */
-    class Nfc() : ConnectionProtocol()
+    object Nfc : ConnectionProtocol()
 
     /**
      * Class specifying communication with Bluetooth
      */
-    class Bluetooth() : ConnectionProtocol()
+    class Bluetooth() : ConnectionProtocol(){
+        //TODO UID and Encryption handshake info.
+    }
 
     /**
-     * Class specifying communication with SLIP
+     * Object specifying communication with SLIP
      */
-    class Slip() : ConnectionProtocol()
+    object Slip : ConnectionProtocol()
 
     /**
      * Class specifying communication with TIA/EIA specified by RS-485 or RS-422
@@ -77,12 +86,25 @@ sealed class ConnectionProtocol {
      * @param duplexed Specifies if the line is duplexed.
      * @param isMaster Specifies if the device is a master or a slave.
      */
-    class Rs485(val duplexed: Boolean, val isMaster: Boolean) : ConnectionProtocol()
+    class Rs485(val duplexed: Boolean, val isMaster: Boolean) : ConnectionProtocol(){
+        //TODO Dynamic address setting methods & values, Master & Slave values, and
+    }
 
     /**
      * Class specifying serial communication specified by RS-232
      */
-    class Rs232() : ConnectionProtocol()
+    class Rs232() : ConnectionProtocol(){
+        //TODO Methods for serial interface and possibly line numbers.
+    }
+
+    /**
+     * Class specifying data packet communication over radio frequencies.
+     *
+     * @param transmissionFrequency The frequency of the radio signals to be received.
+     */
+    class PacketRadioService(val transmissionFrequency: Quantity<Frequency>) : ConnectionProtocol() {
+        //TODO Methods or values for signal conversion.
+    }
 
 }
 
