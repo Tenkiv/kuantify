@@ -21,6 +21,7 @@ import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.gate.control.attempt.Viability
 import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
+import org.tenkiv.kuantify.hardware.definitions.device.ControlDevice
 import org.tenkiv.kuantify.hardware.outputs.SimpleBinaryStateController
 import org.tenkiv.kuantify.hardware.outputs.SimpleFrequencyController
 import org.tenkiv.kuantify.hardware.outputs.SimplePwmController
@@ -30,7 +31,7 @@ import javax.measure.quantity.Frequency
 /**
  * Class defining the basic features of an output which sends binary signals.
  */
-abstract class DigitalOutput : DigitalChannel(), BinaryStateOutput {
+abstract class DigitalOutput : DigitalChannel<ControlDevice>(), BinaryStateOutput {
 
     override val isActive get() = super.isActive
 

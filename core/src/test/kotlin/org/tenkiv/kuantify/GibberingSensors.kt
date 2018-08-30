@@ -25,11 +25,12 @@ import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.gate.acquire.input.Input
 import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
-import org.tenkiv.kuantify.hardware.definitions.device.Device
-import org.tenkiv.physikal.core.*
+import org.tenkiv.kuantify.hardware.definitions.device.DataAcquisitionDevice
+import org.tenkiv.physikal.core.hertz
+import org.tenkiv.physikal.core.percent
 import tec.units.indriya.ComparableQuantity
-import tec.units.indriya.unit.MetricPrefix.*
-import tec.units.indriya.unit.Units.*
+import tec.units.indriya.unit.MetricPrefix.MILLI
+import tec.units.indriya.unit.Units.VOLT
 import java.time.Instant
 import java.util.*
 import javax.measure.quantity.ElectricPotential
@@ -83,7 +84,7 @@ class DigitalInputGibberingSensor : DigitalInput() {
     override val isActiveForTransitionFrequency: Boolean = false
     override val pwmIsSimulated: Boolean = false
     override val transitionFrequencyIsSimulated: Boolean = false
-    override val device: Device
+    override val device: DataAcquisitionDevice
         get() = throw Exception("Empty Test Class Exception")
     override val hardwareNumber: Int
         get() = throw Exception("Empty Test Class Exception")
@@ -159,7 +160,7 @@ class AnalogInputGibberingSensor : AnalogInput() {
     override var maxElectricPotential: ComparableQuantity<ElectricPotential>
         get() = throw Exception("Empty Test Class Exception")
         set(value) {}
-    override val device: Device
+    override val device: DataAcquisitionDevice
         get() = throw Exception("Empty Test Class Exception")
     override val hardwareNumber: Int
         get() = throw Exception("Empty Test Class Exception")
@@ -177,10 +178,10 @@ class AnalogInputGibberingSensor : AnalogInput() {
         timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
                 broadcastChannel.offer(
-                        DaqcQuantity.of(
-                                random.nextInt(5000),
-                            MILLI(VOLT)
-                        ).at(Instant.now())
+                    DaqcQuantity.of(
+                        random.nextInt(5000),
+                        MILLI(VOLT)
+                    ).at(Instant.now())
                 )
             }
         }, 100, 100)

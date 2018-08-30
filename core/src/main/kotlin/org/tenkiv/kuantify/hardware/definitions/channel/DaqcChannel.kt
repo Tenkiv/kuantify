@@ -22,12 +22,12 @@ import org.tenkiv.kuantify.hardware.definitions.device.Device
 /**
  * Defines the basic features of a channel owned by a [Device].
  */
-interface DaqcChannel {
+interface DaqcChannel<T : Device> {
 
     /**
      * The [Device] which hosts this channel.
      */
-    val device: Device
+    val device: T
 
     /**
      * The hardware number of the channel on the [device].
