@@ -24,7 +24,7 @@ dependencies {
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jackson_version"
 
     //Units of Measurement Library
-    compile 'org.tenkiv.physikal:complete-units:2.0.3.0-SNAPSHOT'
+    compile 'org.tenkiv.physikal:complete-units:2.0.6.0-SNAPSHOT'
 
     //General utilities for Kotlin
     compile 'org.tenkiv.coral:coral:2.1.0.1-SNAPSHOT'

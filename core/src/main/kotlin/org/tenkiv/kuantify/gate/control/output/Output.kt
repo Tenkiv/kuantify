@@ -70,7 +70,7 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
      * @throws UnsupportedOperationException
      *           if the specified quantity class does not have a SI unit for the quantity.
      */
-    fun dynamicSetOutput(setting: ComparableQuantity<*>) = setOutput(setting.asType(quantityType.java))
+    fun dynSetOutput(setting: ComparableQuantity<*>) = setOutput(setting.asType(quantityType.java))
 
 }
 

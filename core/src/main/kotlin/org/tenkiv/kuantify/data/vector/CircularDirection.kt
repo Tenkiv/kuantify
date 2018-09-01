@@ -15,11 +15,10 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.learning.controller
+package org.tenkiv.kuantify.data.vector
 
-import org.tenkiv.kuantify.gate.control.attempt.Viability
-import org.tenkiv.kuantify.gate.control.output.QuantityOutput
-import org.tenkiv.physikal.core.*
+enum class CircularDirection {
+    CLOCKWISE,
+    COUNTER_CLOCKWISE
+}
 
-internal fun QuantityOutput<*>.setOutputInSystemUnit(setting: Double): Viability =
-    dynSetOutput(setting withSymbol systemUnit.getSymbol())
