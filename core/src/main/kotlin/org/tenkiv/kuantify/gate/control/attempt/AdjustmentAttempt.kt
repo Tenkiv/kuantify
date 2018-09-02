@@ -20,8 +20,9 @@ package org.tenkiv.kuantify.gate.control.attempt
 import org.tenkiv.kuantify.gate.control.output.SettingException
 import kotlin.reflect.KClass
 
-sealed class RangeLimitedAttempt : Viability {
-    data class InRange(override val nextStep: Viability? = null) : RangeLimitedAttempt() {
+sealed class AdjustmentAttempt : Viability {
+
+    data class OK(override val nextStep: Viability? = null) : AdjustmentAttempt() {
         override val isViable get() = nextStep?.isViable ?: true
 
         override val parentType: KClass<*>? = null
@@ -29,20 +30,21 @@ sealed class RangeLimitedAttempt : Viability {
         override val message get() = nextStep?.message ?: Viability.OK_MESSAGE
     }
 
-    object OutOfRange : RangeLimitedAttempt() {
+    object UninitialisedSetting : AdjustmentAttempt() {
         override val isViable get() = false
 
         override val nextStep: Viability? = null
 
         override val parentType: KClass<*>? = null
 
-        override val message get() = "The setting is not the range accepted by this Output"
+        override val message
+            get() = "Cannot adjust uninitialised setting, set an initial setting before attempting to adjust."
 
-        fun getOrThrow(throwIfNotViable: Boolean): OutOfRange =
+        fun getOrThrow(throwIfNotViable: Boolean): UninitialisedSetting =
             if (throwIfNotViable) panic() else this
 
-        fun panic(): Nothing = throw OutOfRangeException()
+        fun panic(): Nothing = throw UninitialisedSettingException()
     }
 
-    class OutOfRangeException : SettingException(OutOfRange)
+    class UninitialisedSettingException : SettingException(UninitialisedSetting)
 }

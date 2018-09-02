@@ -59,10 +59,7 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
 
     private val currentValueSystemUnit
         get() = output.valueOrNull?.value?.toDoubleInSystemUnit()
-                ?: output.valueRange.start.toDoubleInSystemUnit()
-
-    private val systemUnit = output.systemUnit
-
+            ?: output.valueRange.start.toDoubleInSystemUnit()
 
     override fun takeAction(action: Int) {
         when (action) {
@@ -81,27 +78,12 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
         }
     }
 
-    private fun increaseByPartOfRange(rangeRatio: Double) {
+    private fun increaseByPartOfRange(rangeRatio: Double) =
+        output.increaseByRatioOfRange(rangeRatio, throwIfNotViable = false)
 
-        val increaseSystemUnit = rangeSpanSystemUnit * rangeRatio
-        val newSettingSystemUnit = currentValueSystemUnit + increaseSystemUnit
+    private fun decreaseByPartOfRange(rangeRatio: Double) =
+        output.decreaseByRatioOfRange(rangeRatio, throwIfNotViable = false)
 
-        if (newSettingSystemUnit <= output.valueRange.endInclusive.toDoubleInSystemUnit()) {
-            output.setOutputInSystemUnit(newSettingSystemUnit)
-        }
-
-    }
-
-    private fun decreaseByPartOfRange(rangeRatio: Double) {
-
-        val increaseSystemUnit = rangeSpanSystemUnit * rangeRatio
-        val newSettingSystemUnit = currentValueSystemUnit + increaseSystemUnit
-
-        if (newSettingSystemUnit >= output.valueRange.start.toDoubleInSystemUnit()) {
-            output.setOutputInSystemUnit(newSettingSystemUnit)
-        }
-
-    }
 
     companion object {
         private const val RANGE_RATIO_1 = 0.000001
