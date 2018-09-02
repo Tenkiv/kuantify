@@ -124,7 +124,7 @@ class PolarVector2D<Q : Quantity<Q>>(
     /**
      * @return The dot product.
      */
-    infix fun dot(other: PolarVector2D<*>): ComparableQuantity<*> {
+    inline infix fun <reified RQ : Quantity<RQ>> dot(other: PolarVector2D<*>): ComparableQuantity<RQ> {
         val (thisX, thisY) = toComponents()
         val (otherX, otherY) = other.toComponents()
 
@@ -132,9 +132,8 @@ class PolarVector2D<Q : Quantity<Q>>(
         val resultY = thisY * otherY
         val resultUnit = resultX.getUnit()
 
-
         //TODO: Find a way to create a Quantity of unknown type without going through a string
-        return (resultX.valueToDouble() + resultY.valueToDouble()) withSymbol resultUnit.getSymbol()
+        return (resultX.valueToDouble() + resultY.valueToDouble()).withSymbol(resultUnit.getSymbol()).asType()
     }
 
     override fun equals(other: Any?): Boolean {

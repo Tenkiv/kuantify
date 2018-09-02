@@ -29,26 +29,28 @@ import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.sin
 
-open class DynPolarVector3D(
-    open val magnitude: ComparableQuantity<*>,
-    open val azimuth: ComparableQuantity<Angle>,
-    open val incline: ComparableQuantity<Angle>,
+/**
+ * A [PolarVector3D] is a vector described in terms of two perpendicular polar planes with the same center point.
+ */
+class PolarVector3D<Q : Quantity<Q>>(
+    magnitude: ComparableQuantity<Q>,
+    azimuth: ComparableQuantity<Angle>,
+    incline: ComparableQuantity<Angle>,
     val azimuthAxisLabel: String,
     val inclineAxisLabel: String,
     val azimuthPositiveDirection: CircularDirection,
     val inclinePositiveDirection: CircularDirection
-) {
-    inline fun <reified Q : Quantity<Q>> asType(): PolarVector3D<Q> = PolarVector3D(
-        magnitude.asType(),
-        azimuth,
-        incline,
-        azimuthAxisLabel,
-        inclineAxisLabel,
-        azimuthPositiveDirection,
-        inclinePositiveDirection
-    )
+) : DaqcData {
+    val magnitude = magnitude.toDaqc()
 
-    internal fun toComponentDoubles(): Triple<Double, Double, Double> {
+    val azimuth = azimuth.toDaqc()
+    val incline = incline.toDaqc()
+
+    override val size get() = 3
+
+    override fun toDaqcValueList() = listOf(magnitude, incline, azimuth)
+
+    private fun toComponentDoubles(): Triple<Double, Double, Double> {
         val magnitude = magnitude.valueToDouble()
         val incline = incline toDoubleIn RADIAN
         val azimuth = azimuth toDoubleIn RADIAN
@@ -63,142 +65,14 @@ open class DynPolarVector3D(
         return Triple(xComponent, yComponent, zComponent)
     }
 
-    open fun toComponents(): Components {
-        val components = toComponentDoubles()
-        val unit = magnitude.getUnit()
-
-        //TODO: replace method of making quantities from unknown unit types
-        val x = components.first withSymbol unit.getSymbol()
-        val y = components.second withSymbol unit.getSymbol()
-        val z = components.third withSymbol unit.getSymbol()
-
-        return Components(x, y, z)
-    }
-
-    open operator fun times(scalar: Double) = DynPolarVector3D(
-        magnitude dynTimes scalar,
-        azimuth,
-        incline,
-        azimuthAxisLabel,
-        inclineAxisLabel,
-        azimuthPositiveDirection,
-        inclinePositiveDirection
-    )
-
-    open operator fun unaryPlus() = DynPolarVector3D(
-        magnitude.dynUnaryPlus(),
-        azimuth,
-        incline,
-        azimuthAxisLabel,
-        inclineAxisLabel,
-        azimuthPositiveDirection,
-        inclinePositiveDirection
-    )
-
-    open operator fun unaryMinus() = DynPolarVector3D(
-        magnitude.dynUnaryMinus(),
-        azimuth,
-        incline,
-        azimuthAxisLabel,
-        inclineAxisLabel,
-        azimuthPositiveDirection,
-        inclinePositiveDirection
-    )
-
-    infix fun dot(other: DynPolarVector3D): ComparableQuantity<*> {
-        val thisAzimuth = azimuth toDoubleIn RADIAN
-        val otherAzimuth = other.azimuth toDoubleIn RADIAN
-        val thisIncline = incline toDoubleIn RADIAN
-        val otherIncline = other.incline toDoubleIn RADIAN
-
-        return (magnitude * other.magnitude) dynTimes
-                (sin(thisAzimuth) * sin(otherAzimuth) * cos(thisIncline - otherIncline) +
-                        cos(thisAzimuth) * cos(otherAzimuth))
-    }
-
-    infix fun cross(other: DynPolarVector3D): DynPolarVector3D {
-        val (thisX, thisY, thisZ) = toComponents()
-        val (otherX, otherY, otherZ) = other.toComponents()
-
-        val resultX = thisY
-    }
-
-    open class Components(
-        open val x: ComparableQuantity<*>,
-        open val y: ComparableQuantity<*>,
-        open val z: ComparableQuantity<*>
-    ) {
-        inline fun <reified Q : Quantity<Q>> asType(): PolarVector3D.Components<Q> =
-            PolarVector3D.Components(x.asType(), y.asType(), z.asType())
-
-        open operator fun component1() = x
-        open operator fun component2() = y
-        open operator fun component3() = z
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as Components
-
-            if (x != other.x) return false
-            if (y != other.y) return false
-            if (z != other.z) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = x.hashCode()
-            result = 31 * result + y.hashCode()
-            result = 31 * result + z.hashCode()
-            return result
-        }
-
-        override fun toString(): String {
-            return "Components(x=$x, y=$y, z=$z)"
-        }
-
-    }
-}
-
-/**
- * A [PolarVector3D] is a vector described in terms of two perpendicular polar planes with the same center point.
- */
-class PolarVector3D<Q : Quantity<Q>>(
-    magnitude: ComparableQuantity<Q>,
-    azimuth: ComparableQuantity<Angle>,
-    incline: ComparableQuantity<Angle>,
-    azimuthAxisLabel: String,
-    inclineAxisLabel: String,
-    azimuthPositiveDirection: CircularDirection,
-    inclinePositiveDirection: CircularDirection
-) : DynPolarVector3D(
-    magnitude,
-    azimuth,
-    incline,
-    azimuthAxisLabel,
-    inclineAxisLabel,
-    azimuthPositiveDirection,
-    inclinePositiveDirection
-), DaqcData {
-    override val magnitude = magnitude.toDaqc()
-
-    override val azimuth = azimuth.toDaqc()
-    override val incline = incline.toDaqc()
-
-    override val size get() = 3
-
-    override fun toDaqcValueList() = listOf(magnitude, incline, azimuth)
-
-    override fun toComponents(): Components<Q> {
+    fun toComponents(): Components<Q> {
         val components = toComponentDoubles()
         val unit = magnitude.unit
 
         return Components(components.first(unit), components.second(unit), components.third(unit))
     }
 
-    override operator fun times(scalar: Double) = PolarVector3D(
+    operator fun times(scalar: Double): PolarVector3D<Q> = PolarVector3D(
         magnitude * scalar,
         azimuth,
         incline,
@@ -208,7 +82,7 @@ class PolarVector3D<Q : Quantity<Q>>(
         inclinePositiveDirection
     )
 
-    override operator fun unaryPlus() = PolarVector3D(
+    operator fun unaryPlus() = PolarVector3D<Q>(
         +magnitude,
         azimuth,
         incline,
@@ -218,7 +92,7 @@ class PolarVector3D<Q : Quantity<Q>>(
         inclinePositiveDirection
     )
 
-    override operator fun unaryMinus() = PolarVector3D(
+    operator fun unaryMinus() = PolarVector3D<Q>(
         -magnitude,
         azimuth,
         incline,
@@ -266,43 +140,41 @@ class PolarVector3D<Q : Quantity<Q>>(
         )
     }
 
-    class Components<Q : Quantity<Q>>(
-        override val x: ComparableQuantity<Q>,
-        override val y: ComparableQuantity<Q>,
-        override val z: ComparableQuantity<Q>
-    ) : DynPolarVector3D.Components(x, y, z) {
+    inline infix fun <reified RQ : Quantity<RQ>> dot(other: PolarVector3D<*>): ComparableQuantity<RQ> {
+        val thisAzimuth = azimuth toDoubleIn RADIAN
+        val otherAzimuth = other.azimuth toDoubleIn RADIAN
+        val thisIncline = incline toDoubleIn RADIAN
+        val otherIncline = other.incline toDoubleIn RADIAN
 
-        override operator fun component1() = x
-        override operator fun component2() = y
-        override operator fun component3() = z
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-            if (!super.equals(other)) return false
-
-            other as Components<*>
-
-            if (x != other.x) return false
-            if (y != other.y) return false
-            if (z != other.z) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = super.hashCode()
-            result = 31 * result + x.hashCode()
-            result = 31 * result + y.hashCode()
-            result = 31 * result + z.hashCode()
-            return result
-        }
-
-        override fun toString(): String {
-            return "Components(x=$x, y=$y, z=$z)"
-        }
-
+        return (magnitude * other.magnitude).asType<RQ>() *
+                (sin(thisAzimuth) * sin(otherAzimuth) * cos(thisIncline - otherIncline) +
+                        cos(thisAzimuth) * cos(otherAzimuth))
     }
+
+    inline infix fun <reified RQ : Quantity<RQ>> cross(other: PolarVector3D<*>): PolarVector3D<RQ> {
+        val (thisX, thisY, thisZ) = toComponents()
+        val (otherX, otherY, otherZ) = other.toComponents()
+
+        val resultX = (thisY * thisZ).asType<RQ>() - (thisZ * thisY).asType()
+        val resultY = (thisZ * otherX).asType<RQ>() - (thisX * otherZ).asType()
+        val resultZ = (thisX * otherY).asType<RQ>() - (thisY * otherX).asType()
+
+        return fromComponents(
+            resultX,
+            resultY,
+            resultZ,
+            azimuthAxisLabel,
+            inclineAxisLabel,
+            azimuthPositiveDirection,
+            inclinePositiveDirection
+        )
+    }
+
+    data class Components<Q : Quantity<Q>>(
+        val x: ComparableQuantity<Q>,
+        val y: ComparableQuantity<Q>,
+        val z: ComparableQuantity<Q>
+    )
 
     companion object {
 
