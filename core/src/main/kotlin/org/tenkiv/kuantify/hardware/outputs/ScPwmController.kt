@@ -21,8 +21,8 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.now
 import org.tenkiv.kuantify.QuantityMeasurement
 import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.gate.control.attempt.Viability
 import org.tenkiv.kuantify.gate.control.output.QuantityOutput
+import org.tenkiv.kuantify.gate.control.output.SettingResult
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalOutput
 import javax.measure.Quantity
 import javax.measure.quantity.Dimensionless
@@ -42,12 +42,12 @@ abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput
     final override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
-    override fun setOutput(setting: DaqcQuantity<Q>): Viability {
-        val viability = digitalOutput.pulseWidthModulate(convertOutput(setting))
+    override fun setOutput(setting: DaqcQuantity<Q>, panicOnFailure: Boolean): SettingResult {
+        val result = digitalOutput.pulseWidthModulate(convertOutput(setting), panicOnFailure)
 
-        if (viability.isViable) _broadcastChannel.offer(setting.now())
+        if (result is SettingResult.Success) _broadcastChannel.offer(setting.now())
 
-        return viability
+        return result
     }
 
     /**

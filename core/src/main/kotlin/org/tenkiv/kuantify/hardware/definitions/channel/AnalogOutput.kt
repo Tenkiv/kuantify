@@ -25,6 +25,4 @@ import javax.measure.quantity.ElectricPotential
  */
 abstract class AnalogOutput : QuantityOutput<ElectricPotential>, DaqcChannel {
 
-    override val quantityType get() = ElectricPotential::class
-
 }

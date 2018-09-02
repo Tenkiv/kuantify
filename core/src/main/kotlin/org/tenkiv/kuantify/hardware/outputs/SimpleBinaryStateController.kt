@@ -21,8 +21,8 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.now
 import org.tenkiv.kuantify.BinaryStateMeasurement
 import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.gate.control.attempt.Viability
 import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
+import org.tenkiv.kuantify.gate.control.output.SettingResult
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalOutput
 
 /**
@@ -48,15 +48,15 @@ class SimpleBinaryStateController internal constructor(val digitalOutput: Digita
 
     override fun deactivate() = digitalOutput.deactivate()
 
-    override fun setOutput(setting: BinaryState): Viability {
-        val viability = if (!inverted) digitalOutput.setOutput(setting) else when (setting) {
-            BinaryState.On -> digitalOutput.setOutput(BinaryState.Off)
-            BinaryState.Off -> digitalOutput.setOutput(BinaryState.On)
+    override fun setOutput(setting: BinaryState, panicOnFailure: Boolean): SettingResult {
+        val result = if (!inverted) digitalOutput.setOutput(setting) else when (setting) {
+            BinaryState.On -> digitalOutput.setOutput(BinaryState.Off, panicOnFailure)
+            BinaryState.Off -> digitalOutput.setOutput(BinaryState.On, panicOnFailure)
         }
 
-        if (viability.isViable) _broadcastChannel.offer(setting.now())
+        if (result is SettingResult.Success) _broadcastChannel.offer(setting.now())
 
-        return viability
+        return result
     }
 
 }

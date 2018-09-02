@@ -79,10 +79,10 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
     }
 
     private fun increaseByPartOfRange(rangeRatio: Double) =
-        output.increaseByRatioOfRange(rangeRatio, throwIfNotViable = false)
+        output.increaseByRatioOfRange(rangeRatio, panicOnFailure = false)
 
     private fun decreaseByPartOfRange(rangeRatio: Double) =
-        output.decreaseByRatioOfRange(rangeRatio, throwIfNotViable = false)
+        output.decreaseByRatioOfRange(rangeRatio, panicOnFailure = false)
 
 
     companion object {

@@ -29,8 +29,6 @@ import javax.measure.quantity.Dimensionless
 class SimplePwmController internal constructor(digitalOutput: DigitalOutput) :
     ScPwmController<Dimensionless>(digitalOutput) {
 
-    override val quantityType get() = Dimensionless::class
-
     override fun convertOutput(setting: DaqcQuantity<Dimensionless>) = setting
 
 }

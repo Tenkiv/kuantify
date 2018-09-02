@@ -29,8 +29,6 @@ import javax.measure.quantity.Frequency
 class SimpleFrequencyController internal constructor(digitalOutput: DigitalOutput) :
     ScDigitalFrequencyController<Frequency>(digitalOutput) {
 
-    override val quantityType get() = Frequency::class
-
     override fun convertOutput(setting: DaqcQuantity<Frequency>) = setting
 
 }

@@ -17,12 +17,11 @@
 
 package org.tenkiv.kuantify.lib
 
-import org.tenkiv.kuantify.DaqcException
-
 /**
  * Exception that denotes that a value received was beyond the acceptable, possible, or safe range.
  *
  * @param message The message specifying the exact issue.
  * @param cause The [Throwable] which caused the issue.
  */
-class ValueOutOfRangeException(message: String? = null, cause: Throwable? = null) : DaqcException(message, cause)
+class ValueOutOfRangeException(message: String? = null, cause: Throwable? = null) :
+    IllegalStateException(message, cause)

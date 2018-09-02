@@ -19,8 +19,8 @@ package org.tenkiv.kuantify.hardware.definitions.channel
 
 import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.gate.control.attempt.Viability
 import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
+import org.tenkiv.kuantify.gate.control.output.SettingResult
 import org.tenkiv.kuantify.hardware.outputs.SimpleBinaryStateController
 import org.tenkiv.kuantify.hardware.outputs.SimpleFrequencyController
 import org.tenkiv.kuantify.hardware.outputs.SimplePwmController
@@ -51,14 +51,14 @@ abstract class DigitalOutput : DigitalChannel(), BinaryStateOutput {
      *
      * @param percent The percentage of the time the output is supposed to be active.
      */
-    abstract fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>): Viability
+    abstract fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>, panicOnFailure: Boolean): SettingResult
 
     /**
      * Activates this [DigitalInput] for transitioning states at [freq]
      *
      * @param freq The frequency of state change.
      */
-    abstract fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>): Viability
+    abstract fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>, panicOnFailure: Boolean): SettingResult
 
     override fun deactivate() {
         setOutput(BinaryState.Off)

@@ -31,11 +31,12 @@ import org.tenkiv.coral.now
 import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.data.DaqcValue
 import org.tenkiv.kuantify.gate.acquire.input.RangedInput
-import org.tenkiv.kuantify.gate.control.attempt.Viable
 import org.tenkiv.kuantify.gate.control.output.Output
 import org.tenkiv.kuantify.gate.control.output.RangedOutput
 import org.tenkiv.kuantify.gate.control.output.RangedQuantityOutput
+import org.tenkiv.kuantify.gate.control.output.SettingResult
 import org.tenkiv.kuantify.recording.*
+import org.tenkiv.physikal.core.*
 import java.time.Duration
 import kotlin.concurrent.thread
 
@@ -85,9 +86,7 @@ class LearningController<T>(
             it.activate()
         }
         quantityOutputs.forEach {
-            val middle = (it.valueRange.start.toDoubleInSystemUnit() +
-                    it.valueRange.endInclusive.toDoubleInSystemUnit()) / 2
-            it.setOutputInSystemUnit(middle)
+            it.setOutputToPercentMaximum(50.percent)
         }
         binaryStateOutputs.forEach {
             it.setOutput(BinaryState.Off)
@@ -115,7 +114,7 @@ class LearningController<T>(
         agent = QLearningDiscreteDense(environment, networkConfig, reinforcementConfig, DataManager(false))
     }
 
-    override fun setOutput(setting: T): Viable {
+    override fun setOutput(setting: T, panicOnFailure: Boolean): SettingResult.Success {
         launch {
             // Wait until all inputs have a value. This is hacky and sucks but rl4j makes life difficult.
             targetInput.updatable.activate()
@@ -134,7 +133,7 @@ class LearningController<T>(
             }
         }
 
-        return Viable
+        return SettingResult.Success
     }
 
     override fun deactivate() {
