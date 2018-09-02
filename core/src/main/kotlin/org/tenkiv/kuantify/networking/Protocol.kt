@@ -28,36 +28,6 @@ import javax.measure.quantity.Frequency
 sealed class ConnectionProtocol {
 
     /**
-     * Class defining connections that occur across a traditional network.
-     */
-    sealed class NetworkProtocol : ConnectionProtocol() {
-        /**
-         * The ipv4 or ipv6 [InetAddress] of the device.
-         */
-        abstract val inetAddress: InetAddress
-
-        /**
-         * Class specifying communication with UDP
-         */
-        data class Udp(override val inetAddress: InetAddress) : NetworkProtocol()
-
-        /**
-         * Class specifying communication with TCP
-         */
-        data class Tcp(override val inetAddress: InetAddress) : NetworkProtocol()
-
-        /**
-         * Class specifying communication with SSH
-         */
-        data class Ssh(override val inetAddress: InetAddress) : NetworkProtocol()
-
-        /**
-         * Class specifying communication with TELNET
-         */
-        data class Telnet(override val inetAddress: InetAddress) : NetworkProtocol()
-    }
-
-    /**
      * Object specifying when the device itself is the host and the [Device] being controlled.
      */
     object Host : ConnectionProtocol()
@@ -106,6 +76,36 @@ sealed class ConnectionProtocol {
         //TODO Methods or values for signal conversion.
     }
 
+}
+
+/**
+ * Class defining connections that occur across a traditional network.
+ */
+sealed class NetworkProtocol : ConnectionProtocol() {
+    /**
+     * The ipv4 or ipv6 [InetAddress] of the device.
+     */
+    abstract val inetAddress: InetAddress
+
+    /**
+     * Class specifying communication with UDP
+     */
+    data class Udp(override val inetAddress: InetAddress) : NetworkProtocol()
+
+    /**
+     * Class specifying communication with TCP
+     */
+    data class Tcp(override val inetAddress: InetAddress) : NetworkProtocol()
+
+    /**
+     * Class specifying communication with SSH
+     */
+    data class Ssh(override val inetAddress: InetAddress) : NetworkProtocol()
+
+    /**
+     * Class specifying communication with TELNET
+     */
+    data class Telnet(override val inetAddress: InetAddress) : NetworkProtocol()
 }
 
 /**

@@ -22,7 +22,7 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
-import org.tenkiv.kuantify.hardware.definitions.device.Device
+import org.tenkiv.kuantify.hardware.definitions.device.DataAcquisitionDevice
 import tec.units.indriya.ComparableQuantity
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency
@@ -32,7 +32,7 @@ class EmptyAnalogInput : AnalogInput() {
         get() = throw Exception("Empty Test Class Exception")
     override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
-    override val device: Device
+    override val device: DataAcquisitionDevice
         get() = throw Exception("Empty Test Class Exception")
     override val hardwareNumber: Int
         get() = throw Exception("Empty Test Class Exception")
@@ -84,7 +84,7 @@ class EmptyDigitalInput : DigitalInput() {
         throw Exception("Empty Test Class Exception")
     }
 
-    override val device: Device get() = throw Exception("Empty Test Class Exception")
+    override val device: DataAcquisitionDevice get() = throw Exception("Empty Test Class Exception")
 
     override val hardwareNumber: Int get() = throw Exception("Empty Test Class Exception")
 

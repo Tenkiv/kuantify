@@ -18,13 +18,14 @@
 package org.tenkiv.kuantify.hardware.definitions.channel
 
 import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
+import org.tenkiv.kuantify.hardware.definitions.device.DataAcquisitionDevice
 import tec.units.indriya.ComparableQuantity
 import javax.measure.quantity.ElectricPotential
 
 /**
  * Class defining the basic features of an input which reads analog signals.
  */
-abstract class AnalogInput : QuantityInput<ElectricPotential>, DaqcChannel {
+abstract class AnalogInput : QuantityInput<ElectricPotential>, DaqcChannel<DataAcquisitionDevice> {
 
     /**
      * Denotes if the analog input's buffer is activated.

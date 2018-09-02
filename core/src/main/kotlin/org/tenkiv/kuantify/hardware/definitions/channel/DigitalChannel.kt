@@ -23,6 +23,7 @@ import org.tenkiv.kuantify.BinaryStateMeasurement
 import org.tenkiv.kuantify.Measurement
 import org.tenkiv.kuantify.QuantityMeasurement
 import org.tenkiv.kuantify.Updatable
+import org.tenkiv.kuantify.hardware.definitions.device.Device
 import org.tenkiv.kuantify.lib.openNewCoroutineListener
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
@@ -30,7 +31,7 @@ import javax.measure.quantity.Frequency
 /**
  * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
  */
-abstract class DigitalChannel : Updatable<BinaryStateMeasurement>, DaqcChannel {
+abstract class DigitalChannel<T : Device> : Updatable<BinaryStateMeasurement>, DaqcChannel<T> {
 
     /**
      * Gets if the channel has been activated for any state
