@@ -1,6 +1,6 @@
 buildscript {
     ext.kotlin_version = '1.2.61'
-    ext.coroutines_version = '0.25.0'
+    ext.coroutines_version = '0.26.0'
     ext.dl4j_version = '1.0.0-beta2'
     ext.serialization_version = '0.6.1'
     ext.jackson_version = '2.9.6'
