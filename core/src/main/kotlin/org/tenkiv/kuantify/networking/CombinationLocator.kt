@@ -21,7 +21,6 @@ import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.kuantify.Updatable
-import org.tenkiv.kuantify.daqcThreadContext
 
 /**
  * Class to wrap multiple locators into a single broadcast channel.
@@ -37,7 +36,7 @@ class CombinationLocator(vararg locators: DeviceLocator<*>) : Updatable<LocatorU
 
     init {
         locators.forEach { locator ->
-            launch(daqcThreadContext) {
+            launch {
                 locator.broadcastChannel.consumeEach { device -> _broadcastChannel.offer(device) }
             }
         }

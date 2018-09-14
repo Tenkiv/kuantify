@@ -31,8 +31,8 @@ import kotlinx.coroutines.experimental.time.delay
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.isOlderThan
 import org.tenkiv.coral.secondsSpan
+import org.tenkiv.kuantify.Daqc
 import org.tenkiv.kuantify.Updatable
-import org.tenkiv.kuantify.daqcThreadContext
 import org.tenkiv.kuantify.lib.PrimitiveValueInstant
 import java.io.File
 import java.nio.ByteBuffer
@@ -41,7 +41,7 @@ import java.nio.charset.Charset
 import java.nio.file.StandardOpenOption
 import java.time.Duration
 import java.time.Instant
-import kotlin.coroutines.experimental.coroutineContext
+import kotlin.coroutines.experimental.CoroutineContext
 
 internal typealias ValueSerializer<T> = (T) -> String
 internal typealias ValueDeserializer<T> = (String) -> T
@@ -277,9 +277,9 @@ sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
 }
 
 /**
- * Recorder to store data either in memory or on disk depending on certain parameters.
+ * Recorder to store data either in memory, on disk, or both depending on certain parameters.
  */
-class Recorder<out T> {
+class Recorder<out T> : CoroutineScope {
 
     val updatable: Updatable<ValueInstant<T>>
     val storageFrequency: StorageFrequency
@@ -289,13 +289,14 @@ class Recorder<out T> {
     private val valueSerializer: ValueSerializer<T>?
     private val valueDeserializer: ValueDeserializer<T>?
 
-    private val recordJob: Job
+    private val job = Job()
+    override val coroutineContext: CoroutineContext = Dispatchers.Default + job
 
     private val receiveChannel: ReceiveChannel<ValueInstant<T>>
 
-    private val uid = async(daqcThreadContext) { getRecorderUid() }
-    private val directoryPath = async(daqcThreadContext) { "$RECORDERS_PATH/${uid.await()}" }
-    private val directoryFile = async(daqcThreadContext) { File(directoryPath.await()).apply { mkdir() } }
+    private val uid = GlobalScope.async(Dispatchers.Daqc) { getRecorderUid() }
+    private val directoryPath = GlobalScope.async(Dispatchers.Daqc) { "$RECORDERS_PATH/${uid.await()}" }
+    private val directoryFile = GlobalScope.async(Dispatchers.Daqc) { File(directoryPath.await()).apply { mkdir() } }
 
     private val _dataInMemory = ArrayList<ValueInstant<T>>()
 
@@ -333,7 +334,6 @@ class Recorder<out T> {
         this.valueDeserializer = valueDeserializer
 
         this.receiveChannel = updatable.broadcastChannel.openSubscription()
-        this.recordJob = createRecordJob()
     }
 
     /**
@@ -366,7 +366,6 @@ class Recorder<out T> {
         this.valueDeserializer = valueDeserializer
 
         this.receiveChannel = updatable.broadcastChannel.openSubscription()
-        this.recordJob = createRecordJob()
     }
 
     /**
@@ -393,9 +392,11 @@ class Recorder<out T> {
         this.valueDeserializer = null
 
         this.receiveChannel = updatable.broadcastChannel.openSubscription()
-        this.recordJob = createRecordJob()
     }
 
+    init {
+        createRecordJob()
+    }
 
     /**
      * Gets the data currently stored in heap memory by this recorder. The returned list can not be modified.
@@ -438,18 +439,25 @@ class Recorder<out T> {
     }
 
     /**
-     * Stops the recorder and cancels all channels.
+     * Stops the recorder.
      *
      * @param shouldDeleteDiskData If the recorder should delete the data stored on disk.
      */
-    fun stop(shouldDeleteDiskData: Boolean = false) {
+    suspend fun stop(shouldDeleteDiskData: Boolean = false) {
         receiveChannel.cancel(CancellationException("Recorder manually stopped"))
-        recordJob.cancel(CancellationException("Recorder manually stopped"))
-        files.forEach { it.stop() }
-        if (shouldDeleteDiskData)
-            launch(daqcThreadContext) {
+
+        val stoppingFiles = ArrayList<Job>()
+        files.forEach { file ->
+            stoppingFiles += launch { file.stop() }
+        }
+        if (shouldDeleteDiskData) {
+            withContext(Dispatchers.IO) {
                 directoryFile.await().delete()
             }
+        }
+
+        stoppingFiles.joinAll()
+        job.cancel(CancellationException("Recorder manually stopped"))
     }
 
     private suspend fun getDataFromDisk(filter: StorageFilter<T>): List<ValueInstant<T>> {
@@ -460,7 +468,7 @@ class Recorder<out T> {
         val bufferMutex = Mutex()
         val buffer = ArrayList<ValueInstant<T>>()
 
-        launch(daqcThreadContext) {
+        launch(Dispatchers.Daqc) {
             fileCreationBroadcaster.openSubscription().receive()
             updatable.broadcastChannel.consumeEach { value ->
                 bufferMutex.withLock {
@@ -515,12 +523,13 @@ class Recorder<out T> {
         }
     }
 
-    private fun createRecordJob() = launch(daqcThreadContext) {
-        if (diskStorageLength === StorageDuration.Forever)
+    private fun createRecordJob() = launch(Dispatchers.Daqc) {
+        if (diskStorageLength === StorageDuration.Forever) {
             files += RecorderFile(expiresIn = null)
+        }
 
-        if (diskStorageLength is StorageDuration.For)
-            launch(coroutineContext) {
+        if (diskStorageLength is StorageDuration.For) {
+            launch {
                 val fileCreationInterval = diskStorageLength.duration.dividedBy(10)
                 val fileExpiresIn = diskStorageLength.duration + diskStorageLength.duration.dividedBy(9)
                 while (isActive) {
@@ -530,9 +539,10 @@ class Recorder<out T> {
                     delay(fileCreationInterval)
                 }
             }
+        }
 
         if (diskStorageLength is StorageSamples.Number) {
-            launch(coroutineContext) {
+            launch {
                 val fileCreationInterval = diskStorageLength.numSamples / 10
                 val fileExpiresIn = (diskStorageLength.numSamples + diskStorageLength.numSamples / 9) + 1
 
@@ -547,13 +557,13 @@ class Recorder<out T> {
             }
         }
 
-        if (storageFrequency is StorageFrequency.Interval)
+        if (storageFrequency is StorageFrequency.Interval) {
             while (isActive) {
                 delay(storageFrequency.interval)
                 recordUpdate(updatable.getValue())
                 cleanMemory()
             }
-        else {
+        } else {
             var numUnstoredMeasurements = 0
 
             receiveChannel.consumeEach { update ->
@@ -584,10 +594,10 @@ class Recorder<out T> {
     //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
     private inner class RecorderFile {
 
-        internal val file = async(daqcThreadContext) {
+        internal val file = async {
             File("${directoryPath.await()}/${System.currentTimeMillis()}.json")
         }
-        internal val fileChannel = async(daqcThreadContext) {
+        internal val fileChannel = async {
             AsynchronousFileChannel.open(
                 file.await().toPath(),
                 StandardOpenOption.CREATE,
@@ -607,7 +617,7 @@ class Recorder<out T> {
 
         internal constructor(expiresIn: Duration?) {
             if (expiresIn != null) {
-                launch {
+                launch(Dispatchers.Daqc) {
                     delay(expiresIn)
 
                     suicide()
@@ -617,7 +627,7 @@ class Recorder<out T> {
 
         internal constructor(expiresAfterNumSamples: Int?) {
             if (expiresAfterNumSamples != null) {
-                launch(daqcThreadContext) {
+                launch(Dispatchers.Daqc) {
                     val receiveChannel = updatable.broadcastChannel.openSubscription()
 
                     while (samplesSinceCreation < expiresAfterNumSamples) {
@@ -652,8 +662,8 @@ class Recorder<out T> {
             }
         }
 
-        internal fun stop() {
-            launch(IO) {
+        internal suspend fun stop() {
+            withContext(Dispatchers.IO) {
                 val channel = fileChannel.await()
                 mutex.withLock {
                     channel.force(true)
@@ -663,10 +673,14 @@ class Recorder<out T> {
         }
 
         private suspend fun suicide() {
-            files.remove(this@RecorderFile)
-            withContext(IO) {
-                fileChannel.await().close()
-                file.await().delete()
+            withContext(Dispatchers.Daqc) {
+                files.remove(this@RecorderFile)
+            }
+            withContext(Dispatchers.IO + NonCancellable) {
+                mutex.withLock {
+                    fileChannel.await().close()
+                    file.await().delete()
+                }
             }
         }
 
@@ -771,10 +785,10 @@ class Recorder<out T> {
                 thisUid.toString()
             }
 
-        /**
-         * This is a blocking call.
-         */
-        fun deleteAllRecordsFromDisk() = recordersDirectory.delete()
+        suspend fun deleteAllRecordsFromDisk() =
+            withContext(Dispatchers.IO) {
+                recordersDirectory.delete()
+            }
 
     }
 }
