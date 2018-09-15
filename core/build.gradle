@@ -4,9 +4,9 @@ apply plugin: 'jacoco'
 apply from: '../maven_push.gradle'
 
 buildscript {
-
     repositories {
         mavenCentral()
+        maven { url 'https://kotlin.bintray.com/ktor' }
         maven { url "https://kotlin.bintray.com/kotlinx" }
     }
 
@@ -17,6 +17,10 @@ buildscript {
 
 dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+
+    //KTOR Networking Libraries
+    compile "io.ktor:ktor-network-tls:$ktor_version"
+    compile "io.ktor:ktor-network:$ktor_version"
 
     //JSON
     implementation "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
