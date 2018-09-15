@@ -53,7 +53,7 @@ class CombinationLocator(vararg val locators: DeviceLocator<*>) : Updatable<Loca
         job = Job()
         locators.forEach { locator ->
             launch {
-                locator.broadcastChannel.consumeEach { device -> _broadcastChannel.offer(device) }
+                locator.broadcastChannel.consumeEach { device -> _broadcastChannel.send(device) }
             }
         }
         true

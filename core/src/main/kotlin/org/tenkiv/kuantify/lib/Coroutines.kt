@@ -17,13 +17,14 @@
 
 package org.tenkiv.kuantify.lib
 
-import kotlinx.coroutines.experimental.DefaultDispatcher
+import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.consume
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.EmptyCoroutineContext
 
 /**
  * Opens a coroutine listener and consumes updates with the given function.
@@ -32,9 +33,10 @@ import kotlin.coroutines.experimental.CoroutineContext
  * @param onReceive The function to be executed when an update is received.
  */
 fun <E> BroadcastChannel<E>.openNewCoroutineListener(
-    context: CoroutineContext,
+    scope: CoroutineScope,
+    context: CoroutineContext = EmptyCoroutineContext,
     onReceive: suspend (E) -> Unit
-) = launch(context) { this@openNewCoroutineListener.consumeEach { onReceive(it) } }
+) = scope.launch(context) { this@openNewCoroutineListener.consumeEach { onReceive(it) } }
 
 /**
  * Opens a coroutine listener and consumes updates with the given function, also returns the new channel.
@@ -44,11 +46,12 @@ fun <E> BroadcastChannel<E>.openNewCoroutineListener(
  * @return The opened [ReceiveChannel].
  */
 fun <T> BroadcastChannel<T>.consumeAndReturn(
-    context: CoroutineContext = DefaultDispatcher,
+    scope: CoroutineScope,
+    context: CoroutineContext = EmptyCoroutineContext,
     onReceive: suspend (T) -> Unit
 ): ReceiveChannel<T> {
     val subChannel = openSubscription()
-    launch(context) {
+    scope.launch(context) {
         subChannel.consume { for (x in this) onReceive(x) }
     }
     return subChannel
