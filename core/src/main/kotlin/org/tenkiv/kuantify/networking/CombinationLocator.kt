@@ -17,28 +17,55 @@
 
 package org.tenkiv.kuantify.networking
 
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.launch
 import org.tenkiv.kuantify.Updatable
 
 /**
  * Class to wrap multiple locators into a single broadcast channel.
+ * Starts automatically upon creation.
  *
  * @param locators The [DeviceLocator]s to be included.
  */
-class CombinationLocator(vararg locators: DeviceLocator<*>) : Updatable<LocatorUpdate<*>> {
+class CombinationLocator(vararg val locators: DeviceLocator<*>) : Updatable<LocatorUpdate<*>>, CoroutineScope {
+
+    @Volatile
+    private var job = Job()
 
     private val _broadcastChannel = ConflatedBroadcastChannel<LocatorUpdate<*>>()
+
+    override val coroutineContext get() = Dispatchers.Default + job
 
     override val broadcastChannel: ConflatedBroadcastChannel<out LocatorUpdate<*>>
         get() = _broadcastChannel
 
     init {
+        start()
+    }
+
+    /**
+     * Starts the combination locator, returning false if it was already running.
+     */
+    fun start(): Boolean = if (isActive) {
+        false
+    } else {
+        job = Job()
         locators.forEach { locator ->
             launch {
                 locator.broadcastChannel.consumeEach { device -> _broadcastChannel.offer(device) }
             }
         }
+        true
+    }
+
+    /**
+     * Stops the combination locator, returning false if it was already stopped.
+     */
+    fun stop(): Boolean = if (!isActive) {
+        false
+    } else {
+        job.cancel()
+        true
     }
 }

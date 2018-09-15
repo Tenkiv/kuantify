@@ -443,7 +443,7 @@ class Recorder<out T> : CoroutineScope {
      *
      * @param shouldDeleteDiskData If the recorder should delete the data stored on disk.
      */
-    suspend fun stop(shouldDeleteDiskData: Boolean = false) {
+    fun stop(shouldDeleteDiskData: Boolean = false) = launch {
         receiveChannel.cancel(CancellationException("Recorder manually stopped"))
 
         val stoppingFiles = ArrayList<Job>()
