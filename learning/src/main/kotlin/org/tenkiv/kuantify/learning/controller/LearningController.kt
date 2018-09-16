@@ -35,6 +35,7 @@ import org.tenkiv.kuantify.gate.control.output.Output
 import org.tenkiv.kuantify.gate.control.output.RangedOutput
 import org.tenkiv.kuantify.gate.control.output.RangedQuantityOutput
 import org.tenkiv.kuantify.gate.control.output.SettingResult
+import org.tenkiv.kuantify.getValue
 import org.tenkiv.kuantify.recording.*
 import org.tenkiv.physikal.core.*
 import java.time.Duration

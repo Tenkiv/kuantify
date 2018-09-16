@@ -33,6 +33,7 @@ import org.tenkiv.coral.isOlderThan
 import org.tenkiv.coral.secondsSpan
 import org.tenkiv.kuantify.Daqc
 import org.tenkiv.kuantify.Updatable
+import org.tenkiv.kuantify.getValue
 import org.tenkiv.kuantify.lib.PrimitiveValueInstant
 import java.io.File
 import java.nio.ByteBuffer
@@ -443,12 +444,12 @@ class Recorder<out T> : CoroutineScope {
      *
      * @param shouldDeleteDiskData If the recorder should delete the data stored on disk.
      */
-    fun stop(shouldDeleteDiskData: Boolean = false) = launch {
+    fun cancel(shouldDeleteDiskData: Boolean = false) = launch {
         receiveChannel.cancel(CancellationException("Recorder manually stopped"))
 
         val stoppingFiles = ArrayList<Job>()
         files.forEach { file ->
-            stoppingFiles += launch { file.stop() }
+            stoppingFiles += launch { file.cancel() }
         }
         if (shouldDeleteDiskData) {
             withContext(Dispatchers.IO) {
@@ -662,7 +663,7 @@ class Recorder<out T> : CoroutineScope {
             }
         }
 
-        internal suspend fun stop() {
+        internal suspend fun cancel() {
             withContext(Dispatchers.IO) {
                 val channel = fileChannel.await()
                 mutex.withLock {

@@ -23,6 +23,8 @@ import org.tenkiv.kuantify.data.DaqcValue
 import org.tenkiv.kuantify.data.toDaqc
 import org.tenkiv.kuantify.gate.IOStrand
 import org.tenkiv.kuantify.gate.RangedIOStrand
+import org.tenkiv.kuantify.getValue
+import org.tenkiv.kuantify.valueOrNull
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import tec.units.indriya.unit.Units.*
@@ -53,6 +55,7 @@ interface Output<T : DaqcValue> : IOStrand<T> {
  * @param Q The type of signal sent by this Output.
  */
 interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
+    //TODO: Maybe we can move all these functions to being extension functions.
 
     /**
      * Sets the signal of this output to the correct value as a [DaqcQuantity].

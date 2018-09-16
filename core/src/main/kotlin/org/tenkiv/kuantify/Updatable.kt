@@ -17,7 +17,7 @@
 
 package org.tenkiv.kuantify
 
-import kotlinx.coroutines.experimental.DefaultDispatcher
+import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
@@ -25,63 +25,69 @@ import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.isOlderThan
 import org.tenkiv.coral.minutesSpan
-import org.tenkiv.physikal.core.hertz
+import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import java.time.Duration
 import java.time.Instant
 import javax.measure.quantity.Frequency
 import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.EmptyCoroutineContext
 import kotlin.reflect.KProperty
 
 /**
  * The base interface which defines objects which have the ability to update their status.
  */
-interface Updatable<out T> {
+interface Updatable<out T> : CoroutineScope {
 
     /**
      * The [ConflatedBroadcastChannel] over which updates are broadcast.
      */
     val broadcastChannel: ConflatedBroadcastChannel<out T>
 
-    /**
-     * Gets the current value of the [broadcastChannel] or returns Null.
-     *
-     * @return The value of the [broadcastChannel] or null.
-     */
-    val valueOrNull get() = broadcastChannel.valueOrNull
-
-    /**
-     * Gets the current value of the [broadcastChannel] or suspends and waits for one to exist.
-     *
-     * @return The value of the [broadcastChannel]
-     */
-    suspend fun getValue(): T = broadcastChannel.valueOrNull ?: broadcastChannel.openSubscription().receive()
-
-    /**
-     * Function to open a channel to consume updates of the [broadcastChannel].
-     *
-     * @param context The [CoroutineContext] upon which to consume the updates in.
-     * @param onUpdate The function to execute when an update is received.
-     * @return The [Job] which represents the coroutine consuming the data.
-     */
-    fun openNewCoroutineListener(context: CoroutineContext = DefaultDispatcher, onUpdate: suspend (T) -> Unit): Job =
-        launch(context) { broadcastChannel.consumeEach { onUpdate(it) } }
 }
+
+/**
+ * Gets the current value of the [broadcastChannel] or returns Null.
+ *
+ * @return The value of the [broadcastChannel] or null.
+ */
+val <T> Updatable<T>.valueOrNull get() = broadcastChannel.valueOrNull
+
+/**
+ * Gets the current value of the [broadcastChannel] or suspends and waits for one to exist.
+ *
+ * @return The value of the [broadcastChannel]
+ */
+suspend fun <T> Updatable<T>.getValue(): T =
+    broadcastChannel.valueOrNull ?: broadcastChannel.openSubscription().receive()
+
+/**
+ * Function to open a channel to consume updates of the [broadcastChannel].
+ *
+ * @param context The [CoroutineContext] upon which to consume the updates in.
+ * @param onUpdate The function to execute when an update is received.
+ * @return The [Job] which represents the coroutine consuming the data.
+ */
+fun <T> Updatable<T>.openNewCoroutineListener(
+    scope: CoroutineScope,
+    context: CoroutineContext = EmptyCoroutineContext,
+    onUpdate: suspend (T) -> Unit
+): Job = scope.launch(context) { broadcastChannel.consumeEach { onUpdate(it) } }
 
 interface RatedUpdatable<out T> : Updatable<ValueInstant<T>> {
     val updateRate: ComparableQuantity<Frequency>
 }
 
-fun RatedUpdatable<*>.runningAverage(avgLength: Duration = 1.minutesSpan): AverageSampleRateDelegate =
-    AverageSampleRateDelegate(this, avgLength)
+fun RatedUpdatable<*>.runningAverage(avgLength: Duration = 1.minutesSpan): AverageUpdateRateDelegate =
+    AverageUpdateRateDelegate(this, avgLength)
 
-class AverageSampleRateDelegate internal constructor(input: RatedUpdatable<*>, private val avgLength: Duration) {
+class AverageUpdateRateDelegate internal constructor(input: RatedUpdatable<*>, private val avgLength: Duration) {
 
     @Volatile
     var updateRate = 0.hertz
 
     init {
-        launch {
+        input.launch {
             val sampleInstants = ArrayList<Instant>()
 
             input.broadcastChannel.consumeEach {

@@ -30,12 +30,11 @@ import org.tenkiv.kuantify.Updatable
  */
 class CombinationLocator(vararg val locators: DeviceLocator<*>) : Updatable<LocatorUpdate<*>>, CoroutineScope {
 
-    @Volatile
-    private var job = Job()
+    private val job = Job()
+
+    override val coroutineContext = Dispatchers.Default + job
 
     private val _broadcastChannel = ConflatedBroadcastChannel<LocatorUpdate<*>>()
-
-    override val coroutineContext get() = Dispatchers.Default + job
 
     override val broadcastChannel: ConflatedBroadcastChannel<out LocatorUpdate<*>>
         get() = _broadcastChannel
@@ -47,10 +46,9 @@ class CombinationLocator(vararg val locators: DeviceLocator<*>) : Updatable<Loca
     /**
      * Starts the combination locator, returning false if it was already running.
      */
-    fun start(): Boolean = if (isActive) {
+    private fun start(): Boolean = if (isActive) {
         false
     } else {
-        job = Job()
         locators.forEach { locator ->
             launch {
                 locator.broadcastChannel.consumeEach { device -> _broadcastChannel.send(device) }
@@ -62,7 +60,7 @@ class CombinationLocator(vararg val locators: DeviceLocator<*>) : Updatable<Loca
     /**
      * Stops the combination locator, returning false if it was already stopped.
      */
-    fun stop(): Boolean = if (!isActive) {
+    fun cancel(): Boolean = if (!isActive) {
         false
     } else {
         job.cancel()
