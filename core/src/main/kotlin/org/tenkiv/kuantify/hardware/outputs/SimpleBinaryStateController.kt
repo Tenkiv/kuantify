@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.hardware.outputs
 
+import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.now
 import org.tenkiv.kuantify.BinaryStateMeasurement
@@ -31,7 +32,7 @@ import org.tenkiv.kuantify.hardware.definitions.channel.DigitalOutput
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
 class SimpleBinaryStateController internal constructor(val digitalOutput: DigitalOutput) :
-    BinaryStateOutput {
+    BinaryStateOutput, CoroutineScope by digitalOutput {
 
     /**
      * Denotes if the [DigitalOutput] is inverted; ie Off = [BinaryState.On]
