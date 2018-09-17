@@ -18,7 +18,6 @@
 package org.tenkiv.kuantify
 
 import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
@@ -30,8 +29,6 @@ import tec.units.indriya.ComparableQuantity
 import java.time.Duration
 import java.time.Instant
 import javax.measure.quantity.Frequency
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.EmptyCoroutineContext
 import kotlin.reflect.KProperty
 
 /**
@@ -60,19 +57,6 @@ val <T> Updatable<T>.valueOrNull get() = broadcastChannel.valueOrNull
  */
 suspend fun <T> Updatable<T>.getValue(): T =
     broadcastChannel.valueOrNull ?: broadcastChannel.openSubscription().receive()
-
-/**
- * Function to open a channel to consume updates of the [broadcastChannel].
- *
- * @param context The [CoroutineContext] upon which to consume the updates in.
- * @param onUpdate The function to execute when an update is received.
- * @return The [Job] which represents the coroutine consuming the data.
- */
-fun <T> Updatable<T>.openNewCoroutineListener(
-    scope: CoroutineScope,
-    context: CoroutineContext = EmptyCoroutineContext,
-    onUpdate: suspend (T) -> Unit
-): Job = scope.launch(context) { broadcastChannel.consumeEach { onUpdate(it) } }
 
 interface RatedUpdatable<out T> : Updatable<ValueInstant<T>> {
     val updateRate: ComparableQuantity<Frequency>

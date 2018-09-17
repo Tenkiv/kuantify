@@ -39,14 +39,14 @@ class SimpleBinaryStateController internal constructor(val digitalOutput: Digita
     @Volatile
     var inverted: Boolean = false
 
-    override val isActive: Boolean = digitalOutput.isActive
+    override val isTransceiving: Boolean = digitalOutput.isTransceiving
 
     private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
 
     override val broadcastChannel: ConflatedBroadcastChannel<out BinaryStateMeasurement>
         get() = _broadcastChannel
 
-    override fun deactivate() = digitalOutput.deactivate()
+    override fun stopTransceiving() = digitalOutput.stopTransceiving()
 
     override fun setOutput(setting: BinaryState, panicOnFailure: Boolean): SettingResult {
         val result = if (!inverted) digitalOutput.setOutput(setting) else when (setting) {

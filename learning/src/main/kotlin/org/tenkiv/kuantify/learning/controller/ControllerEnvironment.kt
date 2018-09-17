@@ -34,6 +34,7 @@ import org.tenkiv.kuantify.gate.acquire.input.RangedInput
 import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
 import org.tenkiv.kuantify.gate.control.output.RangedOutput
 import org.tenkiv.kuantify.gate.control.output.RangedQuantityOutput
+import org.tenkiv.kuantify.gate.getNormalisedDoubleOrNull
 import org.tenkiv.kuantify.recording.RecordedUpdatable
 
 internal class ControllerEnvironment<T>(private val controller: LearningController<T>) :
@@ -79,7 +80,7 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
     }
 
     override fun isDone(): Boolean {
-        return !controller.isActive
+        return !controller.isTransceiving
     }
 
     override fun newInstance(): MDP<Encodable, Int, DiscreteSpace> = ControllerEnvironment(controller)

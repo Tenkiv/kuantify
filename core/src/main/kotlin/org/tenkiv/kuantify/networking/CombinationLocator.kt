@@ -17,9 +17,12 @@
 
 package org.tenkiv.kuantify.networking
 
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.isActive
+import kotlinx.coroutines.experimental.launch
 import org.tenkiv.kuantify.Updatable
 
 /**
@@ -28,11 +31,12 @@ import org.tenkiv.kuantify.Updatable
  *
  * @param locators The [DeviceLocator]s to be included.
  */
-class CombinationLocator(vararg val locators: DeviceLocator<*>) : Updatable<LocatorUpdate<*>>, CoroutineScope {
+class CombinationLocator internal constructor(vararg val locators: DeviceLocator<*>, scope: CoroutineScope) :
+    Updatable<LocatorUpdate<*>> {
 
-    private val job = Job()
+    private val job = Job(scope.coroutineContext[Job])
 
-    override val coroutineContext = Dispatchers.Default + job
+    override val coroutineContext = scope.coroutineContext + job
 
     private val _broadcastChannel = ConflatedBroadcastChannel<LocatorUpdate<*>>()
 
@@ -45,6 +49,7 @@ class CombinationLocator(vararg val locators: DeviceLocator<*>) : Updatable<Loca
 
     /**
      * Starts the combination locator, returning false if it was already running.
+     * @see Job.start
      */
     private fun start(): Boolean = if (isActive) {
         false
@@ -59,6 +64,7 @@ class CombinationLocator(vararg val locators: DeviceLocator<*>) : Updatable<Loca
 
     /**
      * Stops the combination locator, returning false if it was already stopped.
+     * @see Job.cancel
      */
     fun cancel(): Boolean = if (!isActive) {
         false
@@ -67,3 +73,6 @@ class CombinationLocator(vararg val locators: DeviceLocator<*>) : Updatable<Loca
         true
     }
 }
+
+fun CoroutineScope.CombinationLocator(vararg locators: DeviceLocator<*>): CombinationLocator =
+    CombinationLocator(locators = *locators, scope = this)

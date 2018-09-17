@@ -36,15 +36,15 @@ class EmptyAnalogInput : AnalogInput() {
         get() = throw Exception("Empty Test Class Exception")
     override val hardwareNumber: Int
         get() = throw Exception("Empty Test Class Exception")
-    override val isActive: Boolean
+    override val isTransceiving: Boolean
         get() = throw Exception("Empty Test Class Exception")
 
-    override fun activate() {}
+    override fun startSampling() {}
 
     override val broadcastChannel:
             ConflatedBroadcastChannel<QuantityMeasurement<ElectricPotential>> = ConflatedBroadcastChannel()
 
-    override fun deactivate() {}
+    override fun stopTransceiving() {}
 
     override var buffer: Boolean
         get() = throw Exception("Empty Test Class Exception")
@@ -61,7 +61,7 @@ class EmptyDigitalInput : DigitalInput() {
     override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
 
-    override fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {
+    override fun startSamplingTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {
         throw Exception("Empty Test Class Exception")
     }
 
@@ -73,14 +73,14 @@ class EmptyDigitalInput : DigitalInput() {
     override val pwmIsSimulated: Boolean
         get() = throw Exception("Empty Test Class Exception")
 
-    override val isActiveForBinaryState: Boolean
+    override val isTransceivingBinaryState: Boolean
         get() = throw Exception("Empty Test Class Exception")
-    override val isActiveForPwm: Boolean
+    override val isTransceivingPwm: Boolean
         get() = throw Exception("Empty Test Class Exception")
-    override val isActiveForTransitionFrequency: Boolean
+    override val isTransceivingFrequency: Boolean
         get() = throw Exception("Empty Test Class Exception")
 
-    override fun activateForPwm(avgFrequency: DaqcQuantity<Frequency>) {
+    override fun startSamplingPwm(avgFrequency: DaqcQuantity<Frequency>) {
         throw Exception("Empty Test Class Exception")
     }
 
@@ -88,8 +88,8 @@ class EmptyDigitalInput : DigitalInput() {
 
     override val hardwareNumber: Int get() = throw Exception("Empty Test Class Exception")
 
-    override fun activate() {}
+    override fun startSampling() {}
 
-    override fun deactivate() {}
+    override fun stopTransceiving() {}
 
 }

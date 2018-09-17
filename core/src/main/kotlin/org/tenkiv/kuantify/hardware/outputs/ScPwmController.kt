@@ -35,7 +35,7 @@ import javax.measure.quantity.Dimensionless
 abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput) :
     QuantityOutput<Q> {
 
-    override val isActive get() = digitalOutput.isActiveForPwm
+    override val isTransceiving get() = digitalOutput.isTransceivingPwm
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
 
@@ -58,5 +58,5 @@ abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput
      */
     protected abstract fun convertOutput(setting: DaqcQuantity<Q>): DaqcQuantity<Dimensionless>
 
-    override fun deactivate() = digitalOutput.deactivate()
+    override fun stopTransceiving() = digitalOutput.stopTransceiving()
 }

@@ -35,7 +35,7 @@ import javax.measure.quantity.Frequency
 abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput) :
     QuantityOutput<Q> {
 
-    override val isActive get() = digitalOutput.isActiveForTransitionFrequency
+    override val isTransceiving get() = digitalOutput.isTransceivingFrequency
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
 
@@ -58,5 +58,5 @@ abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: 
      */
     protected abstract fun convertOutput(setting: DaqcQuantity<Q>): DaqcQuantity<Frequency>
 
-    override fun deactivate() = digitalOutput.deactivate()
+    override fun stopTransceiving() = digitalOutput.stopTransceiving()
 }

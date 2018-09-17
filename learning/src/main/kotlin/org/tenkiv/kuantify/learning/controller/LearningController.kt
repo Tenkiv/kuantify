@@ -18,8 +18,10 @@
 package org.tenkiv.kuantify.learning.controller
 
 import com.google.common.collect.ImmutableList
+import kotlinx.coroutines.experimental.CoroutineDispatcher
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.deeplearning4j.rl4j.learning.sync.qlearning.QLearning
 import org.deeplearning4j.rl4j.learning.sync.qlearning.discrete.QLearningDiscreteDense
 import org.deeplearning4j.rl4j.network.dqn.DQNFactoryStdDense
@@ -35,11 +37,13 @@ import org.tenkiv.kuantify.gate.control.output.Output
 import org.tenkiv.kuantify.gate.control.output.RangedOutput
 import org.tenkiv.kuantify.gate.control.output.RangedQuantityOutput
 import org.tenkiv.kuantify.gate.control.output.SettingResult
-import org.tenkiv.kuantify.getValue
-import org.tenkiv.kuantify.recording.*
+import org.tenkiv.kuantify.recording.RecordedUpdatable
+import org.tenkiv.kuantify.recording.StorageDuration
+import org.tenkiv.kuantify.recording.StorageFrequency
+import org.tenkiv.kuantify.recording.StorageSamples
+import org.tenkiv.kuantify.recording.binary.pairWithNewRecorder
 import org.tenkiv.physikal.core.*
 import java.time.Duration
-import kotlin.concurrent.thread
 
 //TODO: Make correlatedInputs optional, add overloads for optional binaryStateOutputs and quantityOutputs.
 class LearningController<T>(
@@ -49,6 +53,9 @@ class LearningController<T>(
     quantityOutputs: Collection<RangedQuantityOutput<*>>,
     val minTimeBetweenActions: Duration
 ) : Output<T> where T : DaqcValue, T : Comparable<T> {
+
+    //TODO
+    private val trainingManagementDispatcher: CoroutineDispatcher = newSingleThreadContext("")
 
     private val environment = ControllerEnvironment(this)
 
@@ -70,7 +77,7 @@ class LearningController<T>(
     private val agent: QLearningDiscreteDense<Encodable>
 
     @Volatile
-    override var isActive = false
+    override var isTransceiving = false
 
     private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<T>>()
 
@@ -82,9 +89,9 @@ class LearningController<T>(
             it.pairWithNewRecorder(StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
         }
 
-        targetInput.activate()
+        targetInput.startSampling()
         correlatedInputs.forEach {
-            it.activate()
+            it.startSampling()
         }
         quantityOutputs.forEach {
             it.setOutputToPercentMaximum(50.percent)
@@ -129,7 +136,7 @@ class LearningController<T>(
             }
 
             _broadcastChannel.send(setting.now())
-            thread {
+            launch(trainingManagementDispatcher) {
                 agent.train()
             }
         }
@@ -137,7 +144,7 @@ class LearningController<T>(
         return SettingResult.Success
     }
 
-    override fun deactivate() {
+    override fun stopTransceiving() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

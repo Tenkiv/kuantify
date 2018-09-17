@@ -21,22 +21,9 @@ import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.consume
-import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.EmptyCoroutineContext
-
-/**
- * Opens a coroutine listener and consumes updates with the given function.
- *
- * @param context The context for the channel to be opened.
- * @param onReceive The function to be executed when an update is received.
- */
-fun <E> BroadcastChannel<E>.openNewCoroutineListener(
-    scope: CoroutineScope,
-    context: CoroutineContext = EmptyCoroutineContext,
-    onReceive: suspend (E) -> Unit
-) = scope.launch(context) { this@openNewCoroutineListener.consumeEach { onReceive(it) } }
 
 /**
  * Opens a coroutine listener and consumes updates with the given function, also returns the new channel.

@@ -30,7 +30,7 @@ import javax.measure.quantity.Frequency
  */
 abstract class DigitalInput : DigitalChannel<DataAcquisitionDevice>(), BinaryStateInput {
 
-    override val isActive get() = super.isActive
+    override val isTransceiving get() = super.isTransceiving
 
     private val thisAsBinaryStateSensor by lazy(LazyThreadSafetyMode.PUBLICATION) {
         SimpleBinaryStateSensor(this)
@@ -49,19 +49,19 @@ abstract class DigitalInput : DigitalChannel<DataAcquisitionDevice>(), BinarySta
      *
      * @param avgFrequency The period of time to average the transition frequency.
      */
-    abstract fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>)
+    abstract fun startSamplingTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>)
 
     /**
      * Activates this channel to gather data for PWM averaged over a certain period of time.
      *
      * @param avgFrequency The period of time to average the PWM frequency.
      */
-    abstract fun activateForPwm(avgFrequency: DaqcQuantity<Frequency>)
+    abstract fun startSamplingPwm(avgFrequency: DaqcQuantity<Frequency>)
 
     /**
      * Activates the channel to receive data about the current state of the [DigitalInput]
      */
-    open fun activateForCurrentState() = activate()
+    open fun startSamplingCurrentState() = startSampling()
 
     /**
      * Creates a [SimpleBinaryStateSensor] with the input being this channel.

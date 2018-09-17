@@ -20,8 +20,9 @@ package org.tenkiv.kuantify.hardware.inputs
 import arrow.core.Failure
 import arrow.core.Success
 import arrow.core.Try
-import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.kuantify.QuantityMeasurement
@@ -53,22 +54,23 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
     final override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
 
-    override val isActive get() = analogInput.isActive
+    override val isTransceiving get() = analogInput.isTransceiving
 
     override val updateRate get() = analogInput.updateRate
 
     init {
         analogInput.maxElectricPotential = maximumEp
         analogInput.maxAcceptableError = acceptableError
-        analogInput.openNewCoroutineListener(CommonPool) { measurement ->
 
-            val convertedResult = convertInput(measurement.value)
+        launch {
+            analogInput.broadcastChannel.consumeEach { measurement ->
+                val convertedResult = convertInput(measurement.value)
 
-            when (convertedResult) {
-                is Success -> _broadcastChannel.send(convertedResult.value at measurement.instant)
-                is Failure -> _failureBroadcastChannel.send(convertedResult.exception at measurement.instant)
+                when (convertedResult) {
+                    is Success -> _broadcastChannel.send(convertedResult.value at measurement.instant)
+                    is Failure -> _failureBroadcastChannel.send(convertedResult.exception at measurement.instant)
+                }
             }
-
         }
     }
 
@@ -80,7 +82,7 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
      */
     protected abstract fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Q>>
 
-    override fun activate() = analogInput.activate()
+    override fun startSampling() = analogInput.startSampling()
 
-    override fun deactivate() = analogInput.deactivate()
+    override fun stopTransceiving() = analogInput.stopTransceiving()
 }

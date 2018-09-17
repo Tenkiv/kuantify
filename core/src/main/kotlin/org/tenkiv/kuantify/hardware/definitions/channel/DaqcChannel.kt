@@ -17,21 +17,24 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
+import kotlinx.coroutines.experimental.CoroutineScope
 import org.tenkiv.kuantify.hardware.definitions.device.Device
+import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Defines the basic features of a channel owned by a [Device].
  */
-interface DaqcChannel<T : Device> {
+interface DaqcChannel<out D : Device> : CoroutineScope {
 
     /**
      * The [Device] which hosts this channel.
      */
-    val device: T
+    val device: D
 
     /**
      * The hardware number of the channel on the [device].
      */
     val hardwareNumber: Int
 
+    override val coroutineContext: CoroutineContext get() = device.coroutineContext
 }

@@ -44,100 +44,65 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.coroutines.experimental.CoroutineContext
 
-internal typealias ValueSerializer<T> = (T) -> String
-internal typealias ValueDeserializer<T> = (String) -> T
+typealias ValueSerializer<T> = (T) -> String
+typealias ValueDeserializer<T> = (String) -> T
+typealias RecordingFilter<T> = Recorder<T>.(ValueInstant<T>) -> Boolean
 internal typealias StorageFilter<T> = (ValueInstant<T>) -> Boolean
-internal typealias RecordingFilter<T> = Recorder<T>.(ValueInstant<T>) -> Boolean
 
 //TODO: Move default parameter values in recorder creation function to constants
-/**
- * Creates a new [Recorder] and paris it with the the provided [Updatable].
- *
- * @param storageFrequency Determines how frequently data is stored to the [Recorder].
- * @param memoryDuration Determines how long samples are stored in memory.
- * @param diskDuration Determines how long samples are stored on disk.
- * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
- * ValueInstant and false if it should not.
- * @param valueSerializer Function to serialize the data into a parsable format.
- * @param valueDeserializer Function to deserialize the data into the original object.
- * @return A [RecordedUpdatable] of the existing [Updatable] with a new [Recorder].
- */
-fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
+fun <T> CoroutineScope.Recorder(
+    updatable: Updatable<ValueInstant<T>>,
     storageFrequency: StorageFrequency = StorageFrequency.All,
-    memoryDuration: StorageDuration = StorageDuration.For(30L.secondsSpan),
-    diskDuration: StorageDuration = StorageDuration.Forever,
+    memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
+    diskDuration: StorageDuration = StorageDuration.None,
     filterOnRecord: RecordingFilter<T> = { true },
     valueSerializer: ValueSerializer<T>,
     valueDeserializer: ValueDeserializer<T>
-) =
-    RecordedUpdatable(
-        this,
-        Recorder(
-            this,
-            storageFrequency,
-            memoryDuration,
-            diskDuration,
-            filterOnRecord,
-            valueSerializer,
-            valueDeserializer
-        )
-    )
+): Recorder<T> = Recorder(
+    scope = this,
+    updatable = updatable,
+    storageFrequency = storageFrequency,
+    memoryDuration = memoryDuration,
+    diskDuration = diskDuration,
+    filterOnRecord = filterOnRecord,
+    valueSerializer = valueSerializer,
+    valueDeserializer = valueDeserializer
+)
 
-/**
- * Creates a new [Recorder] and paris it with the the provided [Updatable].
- *
- * @param storageFrequency Determines how frequently data is stored to the [Recorder].
- * @param memoryDuration Determines how long samples are stored in memory.
- * @param diskDuration Determines how long samples are stored on disk.
- * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
- * ValueInstant and false if it should not.
- * @param valueSerializer Function to serialize the data into a parsable format.
- * @param valueDeserializer Function to deserialize the data into the original object.
- * @return A [RecordedUpdatable] of the existing [Updatable] with a new [Recorder].
- */
-fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
+fun <T> CoroutineScope.Recorder(
+    updatable: Updatable<ValueInstant<T>>,
     storageFrequency: StorageFrequency = StorageFrequency.All,
-    memoryDuration: StorageSamples = StorageSamples.Number(100),
-    diskDuration: StorageSamples = StorageSamples.None,
+    numSamplesMemory: StorageSamples = StorageSamples.Number(100),
+    numSamplesDisk: StorageSamples = StorageSamples.None,
     filterOnRecord: RecordingFilter<T> = { true },
     valueSerializer: ValueSerializer<T>,
     valueDeserializer: ValueDeserializer<T>
-) =
-    RecordedUpdatable(
-        this,
-        Recorder(
-            this,
-            storageFrequency,
-            memoryDuration,
-            diskDuration,
-            filterOnRecord,
-            valueSerializer,
-            valueDeserializer
-        )
-    )
+): Recorder<T> = Recorder(
+    scope = this,
+    updatable = updatable,
+    storageFrequency = storageFrequency,
+    numSamplesMemory = numSamplesMemory,
+    numSamplesDisk = numSamplesDisk,
+    filterOnRecord = filterOnRecord,
+    valueSerializer = valueSerializer,
+    valueDeserializer = valueDeserializer
+)
 
-/**
- * Creates a new [Recorder] and paris it with the the provided [Updatable].
- *
- * @param storageFrequency Determines how frequently data is stored to the [Recorder].
- * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
- * ValueInstant and false if it should not..
- * @return A [RecordedUpdatable] of the existing [Updatable] with a new [Recorder].
- */
-fun <T, U : Updatable<ValueInstant<T>>> U.pairWithNewRecorder(
+fun <T> CoroutineScope.Recorder(
+    updatable: Updatable<ValueInstant<T>>,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryStorageLength: StorageLength = StorageSamples.Number(100),
     filterOnRecord: RecordingFilter<T> = { true }
-) =
-    RecordedUpdatable(
-        this,
-        Recorder(
-            this,
-            storageFrequency,
-            memoryStorageLength,
-            filterOnRecord
-        )
-    )
+): Recorder<T> = Recorder(
+    scope = this,
+    updatable = updatable,
+    storageFrequency = storageFrequency,
+    memoryStorageLength = memoryStorageLength,
+    filterOnRecord = filterOnRecord
+)
+
+infix fun <T, U : Updatable<ValueInstant<T>>> U.pairToRecorder(recorder: Recorder<T>): RecordedUpdatable<T, U> =
+    RecordedUpdatable(this, recorder)
 
 // TODO: Use this from coral
 fun <T> Iterable<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
@@ -290,8 +255,8 @@ class Recorder<out T> : CoroutineScope {
     private val valueSerializer: ValueSerializer<T>?
     private val valueDeserializer: ValueDeserializer<T>?
 
-    private val job = Job()
-    override val coroutineContext: CoroutineContext = Dispatchers.Default + job
+    private val job: Job
+    override val coroutineContext: CoroutineContext
 
     private val receiveChannel: ReceiveChannel<ValueInstant<T>>
 
@@ -317,15 +282,19 @@ class Recorder<out T> : CoroutineScope {
      * @param valueSerializer Returned String will be stored in a JSON file and should be a compliant JSON String.
      * @param valueDeserializer Function to deserialize the data from JSON to the original object.
      */
-    constructor(
+    internal constructor(
+        scope: CoroutineScope,
         updatable: Updatable<ValueInstant<T>>,
         storageFrequency: StorageFrequency = StorageFrequency.All,
         memoryDuration: StorageDuration = StorageDuration.For(memoryDurationDefault),
         diskDuration: StorageDuration = StorageDuration.None,
-        filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
+        filterOnRecord: RecordingFilter<T> = { true },
         valueSerializer: ValueSerializer<T>,
         valueDeserializer: ValueDeserializer<T>
     ) {
+        this.job = Job(scope.coroutineContext[Job])
+        this.coroutineContext = scope.coroutineContext + job
+
         this.updatable = updatable
         this.storageFrequency = storageFrequency
         this.memoryStorageLength = memoryDuration
@@ -349,15 +318,19 @@ class Recorder<out T> : CoroutineScope {
      * @param valueSerializer Returned String will be stored in a JSON file and should be a compliant JSON String.
      * @param valueDeserializer Function to deserialize the data from JSON to the original object.
      */
-    constructor(
+    internal constructor(
+        scope: CoroutineScope,
         updatable: Updatable<ValueInstant<T>>,
         storageFrequency: StorageFrequency = StorageFrequency.All,
         numSamplesMemory: StorageSamples = StorageSamples.Number(100),
         numSamplesDisk: StorageSamples = StorageSamples.None,
-        filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true },
+        filterOnRecord: RecordingFilter<T> = { true },
         valueSerializer: ValueSerializer<T>,
         valueDeserializer: ValueDeserializer<T>
     ) {
+        this.job = Job(scope.coroutineContext[Job])
+        this.coroutineContext = scope.coroutineContext + job
+
         this.updatable = updatable
         this.storageFrequency = storageFrequency
         this.memoryStorageLength = numSamplesMemory
@@ -378,12 +351,16 @@ class Recorder<out T> : CoroutineScope {
      * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
      * ValueInstant and false if it should not.
      */
-    constructor(
+    internal constructor(
+        scope: CoroutineScope,
         updatable: Updatable<ValueInstant<T>>,
         storageFrequency: StorageFrequency = StorageFrequency.All,
         memoryStorageLength: StorageLength = StorageSamples.Number(100),
-        filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean = { true }
+        filterOnRecord: RecordingFilter<T> = { true }
     ) {
+        this.job = Job(scope.coroutineContext[Job])
+        this.coroutineContext = scope.coroutineContext + job
+
         this.updatable = updatable
         this.storageFrequency = storageFrequency
         this.memoryStorageLength = memoryStorageLength

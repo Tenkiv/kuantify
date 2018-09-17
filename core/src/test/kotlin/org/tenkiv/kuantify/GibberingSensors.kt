@@ -26,11 +26,10 @@ import org.tenkiv.kuantify.gate.acquire.input.Input
 import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
 import org.tenkiv.kuantify.hardware.definitions.device.DataAcquisitionDevice
-import org.tenkiv.physikal.core.hertz
-import org.tenkiv.physikal.core.percent
+import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
-import tec.units.indriya.unit.MetricPrefix.MILLI
-import tec.units.indriya.unit.Units.VOLT
+import tec.units.indriya.unit.MetricPrefix.*
+import tec.units.indriya.unit.Units.*
 import java.time.Instant
 import java.util.*
 import javax.measure.quantity.ElectricPotential
@@ -43,7 +42,7 @@ class DigitalGibberingSensor : Input<BinaryState> {
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
     override val broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
-    override val isActive: Boolean = false
+    override val isTransceiving: Boolean = false
 
     val random = Random()
 
@@ -57,9 +56,9 @@ class DigitalGibberingSensor : Input<BinaryState> {
         }, 100, 100)
     }
 
-    override fun activate() {}
+    override fun startSampling() {}
 
-    override fun deactivate() {}
+    override fun stopTransceiving() {}
 
     fun cancel() {
         timer.cancel()
@@ -71,17 +70,17 @@ class DigitalInputGibberingSensor : DigitalInput() {
     override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
 
-    override fun activateForTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {
+    override fun startSamplingTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>) {
         throw Exception("Empty Test Class Exception")
     }
 
-    override fun activateForPwm(avgFrequency: DaqcQuantity<Frequency>) {
+    override fun startSamplingPwm(avgFrequency: DaqcQuantity<Frequency>) {
         throw Exception("Empty Test Class Exception")
     }
 
-    override val isActiveForBinaryState: Boolean = false
-    override val isActiveForPwm: Boolean = false
-    override val isActiveForTransitionFrequency: Boolean = false
+    override val isTransceivingBinaryState: Boolean = false
+    override val isTransceivingPwm: Boolean = false
+    override val isTransceivingFrequency: Boolean = false
     override val pwmIsSimulated: Boolean = false
     override val transitionFrequencyIsSimulated: Boolean = false
     override val device: DataAcquisitionDevice
@@ -105,9 +104,9 @@ class DigitalInputGibberingSensor : DigitalInput() {
         }, 100, 100)
     }
 
-    override fun activate() {}
+    override fun startSampling() {}
 
-    override fun deactivate() {}
+    override fun stopTransceiving() {}
 
     fun cancel() {
         timer.cancel()
@@ -123,7 +122,7 @@ class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
         get() = throw Exception("Empty Test Class Exception")
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
 
-    override val isActive: Boolean = false
+    override val isTransceiving: Boolean = false
 
     val random = Random()
 
@@ -140,9 +139,9 @@ class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
         }, 100, 100)
     }
 
-    override fun activate() {}
+    override fun startSampling() {}
 
-    override fun deactivate() {}
+    override fun stopTransceiving() {}
 
     fun cancel() {
         timer.cancel()
@@ -168,7 +167,7 @@ class AnalogInputGibberingSensor : AnalogInput() {
         get() = throw Exception("Empty Test Class Exception")
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
 
-    override val isActive: Boolean = false
+    override val isTransceiving: Boolean = false
 
     val random = Random()
 
@@ -187,9 +186,9 @@ class AnalogInputGibberingSensor : AnalogInput() {
         }, 100, 100)
     }
 
-    override fun activate() {}
+    override fun startSampling() {}
 
-    override fun deactivate() {}
+    override fun stopTransceiving() {}
 
     fun cancel() {
         timer.cancel()
