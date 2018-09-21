@@ -18,10 +18,8 @@
 package org.tenkiv.kuantify.learning.controller
 
 import com.google.common.collect.ImmutableList
-import kotlinx.coroutines.experimental.CoroutineDispatcher
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.deeplearning4j.rl4j.learning.sync.qlearning.QLearning
 import org.deeplearning4j.rl4j.learning.sync.qlearning.discrete.QLearningDiscreteDense
 import org.deeplearning4j.rl4j.network.dqn.DQNFactoryStdDense
@@ -41,14 +39,20 @@ import org.tenkiv.kuantify.recording.StorageFrequency
 import org.tenkiv.kuantify.recording.StorageSamples
 import org.tenkiv.physikal.core.*
 import java.time.Duration
+import kotlin.coroutines.experimental.CoroutineContext
 
 //TODO: Make correlatedInputs optional, add overloads for optional binaryStateOutputs and quantityOutputs.
-class LearningController<T>(
+class LearningController<T> internal constructor(
+    scope: CoroutineScope,
     targetInput: RangedInput<T>,
     correlatedInputs: Collection<RangedInput<*>>,
     outputs: Collection<RangedOutput<*>>,
     val minTimeBetweenActions: Duration
 ) : Output<T> where T : DaqcValue, T : Comparable<T> {
+
+    private val job = Job(scope.coroutineContext[Job])
+
+    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
 
     //TODO
     private val trainingManagementDispatcher: CoroutineDispatcher = newSingleThreadContext("")
@@ -140,5 +144,7 @@ class LearningController<T>(
     override fun stopTransceiving() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
+
+    fun cancel() = job.cancel()
 
 }
