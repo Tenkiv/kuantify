@@ -33,15 +33,12 @@ import org.tenkiv.coral.now
 import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.data.DaqcValue
 import org.tenkiv.kuantify.gate.acquire.input.RangedInput
-import org.tenkiv.kuantify.gate.control.output.Output
-import org.tenkiv.kuantify.gate.control.output.RangedOutput
-import org.tenkiv.kuantify.gate.control.output.RangedQuantityOutput
-import org.tenkiv.kuantify.gate.control.output.SettingResult
-import org.tenkiv.kuantify.recording.RecordedUpdatable
+import org.tenkiv.kuantify.gate.control.output.*
+import org.tenkiv.kuantify.getValue
+import org.tenkiv.kuantify.recording.Recorder
 import org.tenkiv.kuantify.recording.StorageDuration
 import org.tenkiv.kuantify.recording.StorageFrequency
 import org.tenkiv.kuantify.recording.StorageSamples
-import org.tenkiv.kuantify.recording.binary.pairWithNewRecorder
 import org.tenkiv.physikal.core.*
 import java.time.Duration
 
@@ -49,8 +46,7 @@ import java.time.Duration
 class LearningController<T>(
     targetInput: RangedInput<T>,
     correlatedInputs: Collection<RangedInput<*>>,
-    binaryStateOutputs: Collection<RangedOutput<BinaryState>>,
-    quantityOutputs: Collection<RangedQuantityOutput<*>>,
+    outputs: Collection<RangedOutput<*>>,
     val minTimeBetweenActions: Duration
 ) : Output<T> where T : DaqcValue, T : Comparable<T> {
 
@@ -59,17 +55,18 @@ class LearningController<T>(
 
     private val environment = ControllerEnvironment(this)
 
-    val targetInput = targetInput.pairWithNewRecorder(StorageFrequency.All, StorageSamples.Number(3))
+    val targetInput = Recorder(
+        targetInput,
+        StorageFrequency.All,
+        StorageSamples.Number(3)
+    )
     val correlatedInputs = correlatedInputs.map {
-        it.pairWithNewRecorder(StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
+        Recorder(it, StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
     }
-    val outputs: List<RecordedUpdatable<DaqcValue, RangedOutput<*>>> = kotlin.run {
-        val outputsBuilder = ImmutableList.builder<RecordedUpdatable<DaqcValue, RangedOutput<*>>>()
-        outputsBuilder.addAll(binaryStateOutputs.map {
-            it.pairWithNewRecorder(StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
-        })
-        outputsBuilder.addAll(quantityOutputs.map {
-            it.pairWithNewRecorder(StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
+    val outputs: List<Recorder<DaqcValue, RangedOutput<*>>> = kotlin.run {
+        val outputsBuilder = ImmutableList.builder<Recorder<DaqcValue, RangedOutput<*>>>()
+        outputsBuilder.addAll(outputs.map {
+            Recorder(it, StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
         })
         outputsBuilder.build()
     }
@@ -85,19 +82,15 @@ class LearningController<T>(
         get() = _broadcastChannel
 
     init {
-        binaryStateOutputs.map {
-            it.pairWithNewRecorder(StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
-        }
-
         targetInput.startSampling()
         correlatedInputs.forEach {
             it.startSampling()
         }
-        quantityOutputs.forEach {
-            it.setOutputToPercentMaximum(50.percent)
-        }
-        binaryStateOutputs.forEach {
-            it.setOutput(BinaryState.Off)
+        outputs.forEach {
+            when (it) {
+                is RangedQuantityOutput<*> -> it.setOutputToPercentMaximum(50.percent)
+                is BinaryStateOutput -> it.setOutput(BinaryState.Off)
+            }
         }
 
         val reinforcementConfig = QLearning.QLConfiguration(
@@ -125,9 +118,9 @@ class LearningController<T>(
     override fun setOutput(setting: T, panicOnFailure: Boolean): SettingResult.Success {
         launch {
             // Wait until all inputs have a value. This is hacky and sucks but rl4j makes life difficult.
-            targetInput.updatable.activate()
+            targetInput.updatable.startSampling()
             correlatedInputs.forEach {
-                it.updatable.activate()
+                it.updatable.startSampling()
             }
 
             targetInput.updatable.getValue()

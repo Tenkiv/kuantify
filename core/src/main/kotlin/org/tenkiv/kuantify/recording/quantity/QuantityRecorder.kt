@@ -17,49 +17,46 @@
 
 package org.tenkiv.kuantify.recording.quantity
 
+import kotlinx.coroutines.experimental.CoroutineScope
 import org.tenkiv.kuantify.QuantityMeasurement
 import org.tenkiv.kuantify.Updatable
 import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
-import org.tenkiv.kuantify.gate.control.output.QuantityOutput
-import org.tenkiv.kuantify.recording.RecordedUpdatable
-import org.tenkiv.kuantify.recording.Recorder
-import org.tenkiv.kuantify.recording.StorageDuration
-import org.tenkiv.kuantify.recording.StorageFrequency
+import org.tenkiv.kuantify.recording.*
 import javax.measure.Quantity
 
 //TODO: This file shouldn't need to be in a separate package from recording pending changes to kotlin's method signature
 // conflict resolution
 
-typealias RecordedQuantityInput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityInput<Q>>
-typealias RecordedQuantityOutput<Q> = RecordedUpdatable<DaqcQuantity<Q>, QuantityOutput<Q>>
-
-// Using type aliases here still seems to crash the compiler sometimes...
-/**
- * Pairs a channel which sends [QuantityMeasurement]s with a new [Recorder] to store its data.
- *
- * @param storageFrequency Determines how frequently data is stored to the [Recorder].
- * @param memoryDuration Determines how long samples are stored in memory.
- * @param diskDuration Determines how long samples are stored on disk.
- * @param filterOnRecord Acts as a filter for what s recorded.
- * @return A [Pair] of the existing [Updatable] with a new [Recorder].
- */
-inline fun <reified Q : Quantity<Q>, U : Updatable<QuantityMeasurement<Q>>>
-        U.pairWithNewRecorder(
+inline fun <reified Q : Quantity<Q>, U : Updatable<QuantityMeasurement<Q>>> CoroutineScope.Recorder(
+    updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
-    diskDuration: StorageDuration = StorageDuration.Forever,
-    noinline filterOnRecord: Recorder<DaqcQuantity<Q>>.(QuantityMeasurement<Q>) -> Boolean = { true }
-) =
-    RecordedUpdatable(
-        this,
-        Recorder(
-            this,
-            storageFrequency,
-            memoryDuration,
-            diskDuration,
-            filterOnRecord,
-            valueSerializer = { "\"$it\"" },
-            valueDeserializer = DaqcQuantity.Companion::fromString
-        )
-    )
+    diskDuration: StorageDuration = StorageDuration.None,
+    noinline filterOnRecord: RecordingFilter<DaqcQuantity<Q>, U> = { true }
+): Recorder<DaqcQuantity<Q>, U> = Recorder(
+    scope = this,
+    updatable = updatable,
+    storageFrequency = storageFrequency,
+    memoryDuration = memoryDuration,
+    diskDuration = diskDuration,
+    filterOnRecord = filterOnRecord,
+    valueSerializer = { "\"$it\"" },
+    valueDeserializer = DaqcQuantity.Companion::fromString
+)
+
+inline fun <reified Q : Quantity<Q>, U : Updatable<QuantityMeasurement<Q>>> CoroutineScope.Recorder(
+    updatable: U,
+    storageFrequency: StorageFrequency = StorageFrequency.All,
+    numSamplesMemory: StorageSamples = StorageSamples.Number(100),
+    numSamplesDisk: StorageSamples = StorageSamples.None,
+    noinline filterOnRecord: RecordingFilter<DaqcQuantity<Q>, U> = { true }
+): Recorder<DaqcQuantity<Q>, U> = Recorder(
+    scope = this,
+    updatable = updatable,
+    storageFrequency = storageFrequency,
+    numSamplesMemory = numSamplesMemory,
+    numSamplesDisk = numSamplesDisk,
+    filterOnRecord = filterOnRecord,
+    valueSerializer = { "\"$it\"" },
+    valueDeserializer = DaqcQuantity.Companion::fromString
+)

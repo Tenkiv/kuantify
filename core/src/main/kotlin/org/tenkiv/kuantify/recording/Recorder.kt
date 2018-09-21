@@ -46,19 +46,19 @@ import kotlin.coroutines.experimental.CoroutineContext
 
 typealias ValueSerializer<T> = (T) -> String
 typealias ValueDeserializer<T> = (String) -> T
-typealias RecordingFilter<T> = Recorder<T>.(ValueInstant<T>) -> Boolean
+typealias RecordingFilter<T, U> = Recorder<T, U>.(ValueInstant<T>) -> Boolean
 internal typealias StorageFilter<T> = (ValueInstant<T>) -> Boolean
 
 //TODO: Move default parameter values in recorder creation function to constants
-fun <T> CoroutineScope.Recorder(
-    updatable: Updatable<ValueInstant<T>>,
+fun <T, U : Updatable<ValueInstant<T>>> CoroutineScope.Recorder(
+    updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
     diskDuration: StorageDuration = StorageDuration.None,
-    filterOnRecord: RecordingFilter<T> = { true },
+    filterOnRecord: RecordingFilter<T, U> = { true },
     valueSerializer: ValueSerializer<T>,
     valueDeserializer: ValueDeserializer<T>
-): Recorder<T> = Recorder(
+): Recorder<T, U> = Recorder(
     scope = this,
     updatable = updatable,
     storageFrequency = storageFrequency,
@@ -69,15 +69,15 @@ fun <T> CoroutineScope.Recorder(
     valueDeserializer = valueDeserializer
 )
 
-fun <T> CoroutineScope.Recorder(
-    updatable: Updatable<ValueInstant<T>>,
+fun <T, U : Updatable<ValueInstant<T>>> CoroutineScope.Recorder(
+    updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     numSamplesMemory: StorageSamples = StorageSamples.Number(100),
     numSamplesDisk: StorageSamples = StorageSamples.None,
-    filterOnRecord: RecordingFilter<T> = { true },
+    filterOnRecord: RecordingFilter<T, U> = { true },
     valueSerializer: ValueSerializer<T>,
     valueDeserializer: ValueDeserializer<T>
-): Recorder<T> = Recorder(
+): Recorder<T, U> = Recorder(
     scope = this,
     updatable = updatable,
     storageFrequency = storageFrequency,
@@ -88,12 +88,12 @@ fun <T> CoroutineScope.Recorder(
     valueDeserializer = valueDeserializer
 )
 
-fun <T> CoroutineScope.Recorder(
-    updatable: Updatable<ValueInstant<T>>,
+fun <T, U : Updatable<ValueInstant<T>>> CoroutineScope.Recorder(
+    updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryStorageLength: StorageLength = StorageSamples.Number(100),
-    filterOnRecord: RecordingFilter<T> = { true }
-): Recorder<T> = Recorder(
+    filterOnRecord: RecordingFilter<T, U> = { true }
+): Recorder<T, U> = Recorder(
     scope = this,
     updatable = updatable,
     storageFrequency = storageFrequency,
@@ -101,23 +101,9 @@ fun <T> CoroutineScope.Recorder(
     filterOnRecord = filterOnRecord
 )
 
-infix fun <T, U : Updatable<ValueInstant<T>>> U.pairToRecorder(recorder: Recorder<T>): RecordedUpdatable<T, U> =
-    RecordedUpdatable(this, recorder)
-
 // TODO: Use this from coral
 fun <T> Iterable<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
     this.filter { it.instant in instantRange }
-
-/**
- * A tuple data class for an [Updatable] and a [Recorder]
- *
- * @param updatable The [Updatable] to be recorded.
- * @param recorder The [Recorder] monotoring the [updatable].
- */
-data class RecordedUpdatable<out T, out U : Updatable<ValueInstant<T>>>(
-    val updatable: U,
-    val recorder: Recorder<T>
-)
 
 /**
  * Sealed class denoting the frequency at which samples should be stored.
@@ -245,13 +231,13 @@ sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
 /**
  * Recorder to store data either in memory, on disk, or both depending on certain parameters.
  */
-class Recorder<out T> : CoroutineScope {
+class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
 
-    val updatable: Updatable<ValueInstant<T>>
+    val updatable: U
     val storageFrequency: StorageFrequency
     val memoryStorageLength: StorageLength
     val diskStorageLength: StorageLength
-    private val filterOnRecord: Recorder<T>.(ValueInstant<T>) -> Boolean
+    private val filterOnRecord: RecordingFilter<T, U>
     private val valueSerializer: ValueSerializer<T>?
     private val valueDeserializer: ValueDeserializer<T>?
 
@@ -282,13 +268,14 @@ class Recorder<out T> : CoroutineScope {
      * @param valueSerializer Returned String will be stored in a JSON file and should be a compliant JSON String.
      * @param valueDeserializer Function to deserialize the data from JSON to the original object.
      */
+    @PublishedApi
     internal constructor(
         scope: CoroutineScope,
-        updatable: Updatable<ValueInstant<T>>,
+        updatable: U,
         storageFrequency: StorageFrequency = StorageFrequency.All,
         memoryDuration: StorageDuration = StorageDuration.For(memoryDurationDefault),
         diskDuration: StorageDuration = StorageDuration.None,
-        filterOnRecord: RecordingFilter<T> = { true },
+        filterOnRecord: RecordingFilter<T, U> = { true },
         valueSerializer: ValueSerializer<T>,
         valueDeserializer: ValueDeserializer<T>
     ) {
@@ -318,13 +305,14 @@ class Recorder<out T> : CoroutineScope {
      * @param valueSerializer Returned String will be stored in a JSON file and should be a compliant JSON String.
      * @param valueDeserializer Function to deserialize the data from JSON to the original object.
      */
+    @PublishedApi
     internal constructor(
         scope: CoroutineScope,
-        updatable: Updatable<ValueInstant<T>>,
+        updatable: U,
         storageFrequency: StorageFrequency = StorageFrequency.All,
         numSamplesMemory: StorageSamples = StorageSamples.Number(100),
         numSamplesDisk: StorageSamples = StorageSamples.None,
-        filterOnRecord: RecordingFilter<T> = { true },
+        filterOnRecord: RecordingFilter<T, U> = { true },
         valueSerializer: ValueSerializer<T>,
         valueDeserializer: ValueDeserializer<T>
     ) {
@@ -351,12 +339,13 @@ class Recorder<out T> : CoroutineScope {
      * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
      * ValueInstant and false if it should not.
      */
+    @PublishedApi
     internal constructor(
         scope: CoroutineScope,
-        updatable: Updatable<ValueInstant<T>>,
+        updatable: U,
         storageFrequency: StorageFrequency = StorageFrequency.All,
         memoryStorageLength: StorageLength = StorageSamples.Number(100),
-        filterOnRecord: RecordingFilter<T> = { true }
+        filterOnRecord: RecordingFilter<T, U> = { true }
     ) {
         this.job = Job(scope.coroutineContext[Job])
         this.coroutineContext = scope.coroutineContext + job

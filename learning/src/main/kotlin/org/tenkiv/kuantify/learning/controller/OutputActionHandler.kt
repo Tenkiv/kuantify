@@ -20,6 +20,7 @@ package org.tenkiv.kuantify.learning.controller
 import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
 import org.tenkiv.kuantify.gate.control.output.RangedQuantityOutput
+import org.tenkiv.kuantify.valueOrNull
 
 sealed class OutputActionHandler {
 
