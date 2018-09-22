@@ -50,6 +50,7 @@ abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput
         return result
     }
 
+    //TODO: Consider changing this to return SettingResult
     /**
      * Converts a [DaqcQuantity] to a usable percent for a pwm digital output.
      *

@@ -45,7 +45,7 @@ interface Output<T : DaqcValue> : IOStrand<T> {
 
 
     companion object {
-        internal const val DEFAULT_PANIC_ON_FAILURE = true
+        internal const val DEFAULT_PANIC_ON_FAILURE = false
     }
 }
 

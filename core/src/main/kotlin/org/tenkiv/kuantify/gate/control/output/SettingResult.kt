@@ -21,7 +21,10 @@ package org.tenkiv.kuantify.gate.control.output
  * Kuantify handles ensuring delivery of commands and therefore assumes that commands were actually carried out by
  * the daqc device. So Success is not a 100% guarantee that the output was actually set to this. However, if [Success]
  * is returned and there is a failure to set the output in the communication process, the error will be propagated
- * through the daqcCriticalErrorChannel,
+ * through the daqcCriticalErrorChannel.
+ *
+ * setOutput() can still throw exceptions separately from the [SettingResult] pipeline in the event of unexpected
+ * catastrophic problems in the setting process.
  */
 sealed class SettingResult {
 

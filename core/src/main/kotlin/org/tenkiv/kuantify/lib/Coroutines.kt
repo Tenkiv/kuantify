@@ -25,6 +25,7 @@ import kotlinx.coroutines.experimental.launch
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.EmptyCoroutineContext
 
+//TODO: I think this function should be removed. It is only used in trigger and I think there is a more idiomatic way.
 /**
  * Opens a coroutine listener and consumes updates with the given function, also returns the new channel.
  *

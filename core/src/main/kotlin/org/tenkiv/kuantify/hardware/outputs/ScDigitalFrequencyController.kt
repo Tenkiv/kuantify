@@ -50,6 +50,7 @@ abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: 
         return result
     }
 
+    //TODO: Consider changing this to return SettingResult
     /**
      * Converts a [DaqcQuantity] to a usable [Frequency] for a digital output.
      *
