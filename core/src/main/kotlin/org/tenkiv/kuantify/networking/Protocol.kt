@@ -19,6 +19,7 @@ package org.tenkiv.kuantify.networking
 
 import org.tenkiv.kuantify.hardware.definitions.device.Device
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import javax.measure.Quantity
 import javax.measure.quantity.Frequency
 
@@ -41,7 +42,7 @@ sealed class ConnectionProtocol {
     /**
      * Class specifying communication with Bluetooth
      */
-    class Bluetooth() : ConnectionProtocol(){
+    class Bluetooth() : ConnectionProtocol() {
         //TODO UID and Encryption handshake info.
     }
 
@@ -56,14 +57,14 @@ sealed class ConnectionProtocol {
      * @param duplexed Specifies if the line is duplexed.
      * @param isMaster Specifies if the device is a master or a slave.
      */
-    class Rs485(val duplexed: Boolean, val isMaster: Boolean) : ConnectionProtocol(){
+    class Rs485(val duplexed: Boolean, val isMaster: Boolean) : ConnectionProtocol() {
         //TODO Dynamic address setting methods & values, Master & Slave values, and
     }
 
     /**
      * Class specifying serial communication specified by RS-232
      */
-    class Rs232() : ConnectionProtocol(){
+    class Rs232() : ConnectionProtocol() {
         //TODO Methods for serial interface and possibly line numbers.
     }
 
@@ -81,7 +82,7 @@ sealed class ConnectionProtocol {
 /**
  * Class defining connections that occur across a traditional network.
  */
-sealed class NetworkProtocol : ConnectionProtocol() {
+sealed class TransportProtocol : ConnectionProtocol() {
     /**
      * The ipv4 or ipv6 [InetAddress] of the device.
      */
@@ -90,23 +91,50 @@ sealed class NetworkProtocol : ConnectionProtocol() {
     /**
      * Class specifying communication with UDP
      */
-    data class Udp(override val inetAddress: InetAddress) : NetworkProtocol()
+    open class Udp internal constructor(
+        override val inetAddress: InetAddress,
+        val port: Int,
+        val isBroadcast: Boolean
+    ) : TransportProtocol() {
+        internal constructor(socketAddress: InetSocketAddress) : this(socketAddress.address, socketAddress.port, false)
+        internal constructor(inetAddress: InetAddress) : this(inetAddress, 255, true)
+
+        val socketAddress: InetSocketAddress by lazy { InetSocketAddress(inetAddress,port) }
+
+    }
 
     /**
      * Class specifying communication with TCP
      */
-    data class Tcp(override val inetAddress: InetAddress) : NetworkProtocol()
+    open class Tcp internal constructor(override val inetAddress: InetAddress, val port: Int) :
+        TransportProtocol() {
+        internal constructor(socketAddress: InetSocketAddress) : this(socketAddress.address, socketAddress.port)
 
-    /**
-     * Class specifying communication with SSH
-     */
-    data class Ssh(override val inetAddress: InetAddress) : NetworkProtocol()
+        val socketAddress: InetSocketAddress by lazy { InetSocketAddress(inetAddress,port) }
 
-    /**
-     * Class specifying communication with TELNET
-     */
-    data class Telnet(override val inetAddress: InetAddress) : NetworkProtocol()
+    }
 }
+
+/**
+ * Class specifying communication with SSH
+ *
+ * Probably shouldn't be a data class as we'd have a redundant socketAddr
+ */
+class Ssh(socketAddr: InetSocketAddress) : TransportProtocol.Tcp(socketAddr) {
+    //val algorithm: String TODO Ssh algorithm init
+}
+
+/**
+ * Class specifying communication with TELNET
+ *
+ * Probably shouldn't be a data class as we'd have a redundant socketAddr
+ */
+class Telnet(socketAddr: InetSocketAddress) : TransportProtocol.Tcp(socketAddr)
+
+/**
+ * Class specifying communication with REST
+ */
+data class Rest(override val inetAddress: InetAddress) : TransportProtocol()
 
 /**
  * Enum for declaring the describing the sharing status of [Device]s, [Input]s, and [Output]s
