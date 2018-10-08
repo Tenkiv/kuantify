@@ -17,6 +17,8 @@
 
 package org.tenkiv.kuantify
 
+import kotlinx.coroutines.experimental.CoroutineDispatcher
+import kotlinx.coroutines.experimental.Dispatchers
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.newSingleThreadContext
 import org.tenkiv.coral.ValueInstant
@@ -30,17 +32,20 @@ typealias Measurement = ValueInstant<DaqcValue>
 typealias BinaryStateMeasurement = ValueInstant<BinaryState>
 typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
 
+private val daqcDispatcherThread: CoroutineDispatcher = newSingleThreadContext("DaqcSingleThreadDispatcher")
+
 /**
- * The default context which the library uses to handle data.
- * This coroutine context uses only a single thread, thus thread blocking calls and long running computations must never
+ * The default dispatcher which kuantify uses to handle data.
+ * This coroutine dispatcher uses only a single thread,
+ * thus thread blocking calls and long running computations must never
  * be executed on it. It should only be used for suspending IO bound operations where the default multithreaded context
  * is not a viable option, such as when multiple coroutines share some mutable state that is not thread safe. It never
- * has to be used, another single thread context or a UI context could be used just as well if they are available.
+ * has to be used, another single thread dispatcher or a UI dispatcher could be used just as well if they are available.
  *
  * @see <a href="https://github.com/Kotlin/kotlinx.coroutines/blob/master/coroutines-guide.md#thread-confinement-coarse-
  * grained">Thread confinement coarse-grained</a>
  */
-val daqcThreadContext = newSingleThreadContext("Main Daqc Context")
+val Dispatchers.Daqc: CoroutineDispatcher get() = daqcDispatcherThread
 
 /**
  * The [ConflatedBroadcastChannel] which sends [DaqcCriticalError] messages notifying of potentially critical issues.

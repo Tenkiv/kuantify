@@ -20,8 +20,9 @@ package org.tenkiv.kuantify.hardware.inputs
 import arrow.core.Failure
 import arrow.core.Success
 import arrow.core.Try
-import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.kuantify.QuantityMeasurement
@@ -29,7 +30,6 @@ import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.data.toDaqc
 import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
-import org.tenkiv.kuantify.lib.openNewCoroutineListener
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
@@ -51,17 +51,19 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
     final override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
 
-    override val isActive get() = digitalInput.isActiveForTransitionFrequency
+    override val isTransceiving get() = digitalInput.isTransceivingFrequency
 
     override val updateRate get() = digitalInput.updateRate
 
     init {
-        digitalInput.transitionFrequencyBroadcastChannel.openNewCoroutineListener(CommonPool) { measurement ->
-            val convertedInput = convertInput(measurement.value)
+        launch {
+            digitalInput.transitionFrequencyBroadcastChannel.consumeEach { measurement ->
+                val convertedInput = convertInput(measurement.value)
 
-            when (convertedInput) {
-                is Success -> _broadcastChannel.send(convertedInput.value at measurement.instant)
-                is Failure -> _failureBroadcastChannel.send(convertedInput.exception at measurement.instant)
+                when (convertedInput) {
+                    is Success -> _broadcastChannel.send(convertedInput.value at measurement.instant)
+                    is Failure -> _failureBroadcastChannel.send(convertedInput.exception at measurement.instant)
+                }
             }
         }
     }
@@ -69,9 +71,9 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
     @Volatile
     var averageTransitionFrequency: DaqcQuantity<Frequency> = 2.hertz.toDaqc()
 
-    override fun activate() = digitalInput.activateForTransitionFrequency(averageTransitionFrequency)
+    override fun startSampling() = digitalInput.startSamplingTransitionFrequency(averageTransitionFrequency)
 
-    override fun deactivate() = digitalInput.deactivate()
+    override fun stopTransceiving() = digitalInput.stopTransceiving()
 
     /**
      * Function to convert the [Frequency] of the digital input to a [DaqcQuantity] or return an error.

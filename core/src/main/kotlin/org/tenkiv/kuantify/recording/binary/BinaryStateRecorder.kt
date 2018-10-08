@@ -17,47 +17,45 @@
 
 package org.tenkiv.kuantify.recording.binary
 
-import org.tenkiv.coral.ValueInstant
+import kotlinx.coroutines.experimental.CoroutineScope
 import org.tenkiv.kuantify.BinaryStateMeasurement
 import org.tenkiv.kuantify.Updatable
 import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.gate.acquire.input.BinaryStateInput
-import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
-import org.tenkiv.kuantify.recording.RecordedUpdatable
-import org.tenkiv.kuantify.recording.Recorder
-import org.tenkiv.kuantify.recording.StorageDuration
-import org.tenkiv.kuantify.recording.StorageFrequency
+import org.tenkiv.kuantify.recording.*
 
 //TODO: This file shouldn't need to be in a separate package from recording pending changes to kotlin's method signature
 // conflict resolution
 
-typealias RecordedBinaryStateInput = RecordedUpdatable<BinaryState, BinaryStateInput>
-typealias RecordedBinaryStateOutput = RecordedUpdatable<BinaryState, BinaryStateOutput>
-
-/**
- * Pairs a channel which sends [BinaryStateMeasurement]s with a new [Recorder] to store its data.
- *
- * @param storageFrequency Determines how frequently data is stored to the [Recorder].
- * @param memoryDuration Determines how long samples are stored in memory.
- * @param diskDuration Determines how long samples are stored on disk.
- * @param filterOnRecord Acts as a filter for what s recorded.
- * @return A [Pair] of the existing [Updatable] with a new [Recorder].
- */
-fun <U : Updatable<BinaryStateMeasurement>> U.pairWithNewRecorder(
+fun <U : Updatable<BinaryStateMeasurement>> CoroutineScope.Recorder(
+    updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
-    diskDuration: StorageDuration = StorageDuration.Forever,
-    filterOnRecord: Recorder<BinaryState>.(ValueInstant<BinaryState>) -> Boolean = { true }
-) =
-    RecordedUpdatable(
-        this,
-        Recorder(
-            this,
-            storageFrequency,
-            memoryDuration,
-            diskDuration,
-            filterOnRecord,
-            valueSerializer = { "\"$it\"" },
-            valueDeserializer = BinaryState.Companion::fromString
-        )
-    )
+    diskDuration: StorageDuration = StorageDuration.None,
+    filterOnRecord: RecordingFilter<BinaryState, U> = { true }
+): Recorder<BinaryState, U> = Recorder(
+    scope = this,
+    updatable = updatable,
+    storageFrequency = storageFrequency,
+    memoryDuration = memoryDuration,
+    diskDuration = diskDuration,
+    filterOnRecord = filterOnRecord,
+    valueSerializer = { "\"$it\"" },
+    valueDeserializer = BinaryState.Companion::fromString
+)
+
+fun <U : Updatable<BinaryStateMeasurement>> CoroutineScope.Recorder(
+    updatable: U,
+    storageFrequency: StorageFrequency = StorageFrequency.All,
+    numSamplesMemory: StorageSamples = StorageSamples.Number(100),
+    numSamplesDisk: StorageSamples = StorageSamples.None,
+    filterOnRecord: RecordingFilter<BinaryState, U> = { true }
+): Recorder<BinaryState, U> = Recorder(
+    scope = this,
+    updatable = updatable,
+    storageFrequency = storageFrequency,
+    numSamplesMemory = numSamplesMemory,
+    numSamplesDisk = numSamplesDisk,
+    filterOnRecord = filterOnRecord,
+    valueSerializer = { "\"$it\"" },
+    valueDeserializer = BinaryState.Companion::fromString
+)

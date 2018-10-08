@@ -33,7 +33,7 @@ import javax.measure.quantity.Frequency
  */
 abstract class DigitalOutput : DigitalChannel<ControlDevice>(), BinaryStateOutput {
 
-    override val isActive get() = super.isActive
+    override val isTransceiving get() = super.isTransceiving
 
     private val thisAsBinaryStateController by lazy(LazyThreadSafetyMode.PUBLICATION) {
         SimpleBinaryStateController(this)
@@ -61,7 +61,7 @@ abstract class DigitalOutput : DigitalChannel<ControlDevice>(), BinaryStateOutpu
      */
     abstract fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>, panicOnFailure: Boolean): SettingResult
 
-    override fun deactivate() {
+    override fun stopTransceiving() {
         setOutput(BinaryState.Off)
     }
 

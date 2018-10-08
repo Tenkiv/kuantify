@@ -71,7 +71,7 @@ abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sens
     var minimumAccuracy: AndroidSensorAccuracy =
         AndroidSensorAccuracy.LOW_ACCURACY
 
-    override val isActive: Boolean
+    override val isTransceiving: Boolean
         get() = _isActive
 
     private val sensorListener = object : SensorEventListener {
@@ -85,12 +85,12 @@ abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sens
         }
     }
 
-    override fun activate() {
+    override fun startSampling() {
         _isActive = true
         manager.registerListener(sensorListener, sensor, 100, 200)
     }
 
-    override fun deactivate() {
+    override fun stopTransceiving() {
         _isActive = false
         manager.unregisterListener(sensorListener)
     }

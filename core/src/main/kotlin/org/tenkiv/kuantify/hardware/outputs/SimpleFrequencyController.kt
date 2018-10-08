@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.hardware.outputs
 
+import kotlinx.coroutines.experimental.CoroutineScope
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalOutput
 import javax.measure.quantity.Frequency
@@ -27,7 +28,7 @@ import javax.measure.quantity.Frequency
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
 class SimpleFrequencyController internal constructor(digitalOutput: DigitalOutput) :
-    ScDigitalFrequencyController<Frequency>(digitalOutput) {
+    ScDigitalFrequencyController<Frequency>(digitalOutput), CoroutineScope by digitalOutput {
 
     override fun convertOutput(setting: DaqcQuantity<Frequency>) = setting
 

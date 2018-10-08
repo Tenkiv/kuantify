@@ -18,8 +18,8 @@
 package org.tenkiv.kuantify.learning.controller
 
 import com.google.common.collect.ImmutableList
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.launch
 import org.deeplearning4j.rl4j.learning.sync.qlearning.QLearning
 import org.deeplearning4j.rl4j.learning.sync.qlearning.discrete.QLearningDiscreteDense
 import org.deeplearning4j.rl4j.network.dqn.DQNFactoryStdDense
@@ -31,37 +31,46 @@ import org.tenkiv.coral.now
 import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.data.DaqcValue
 import org.tenkiv.kuantify.gate.acquire.input.RangedInput
-import org.tenkiv.kuantify.gate.control.output.Output
-import org.tenkiv.kuantify.gate.control.output.RangedOutput
-import org.tenkiv.kuantify.gate.control.output.RangedQuantityOutput
-import org.tenkiv.kuantify.gate.control.output.SettingResult
-import org.tenkiv.kuantify.recording.*
+import org.tenkiv.kuantify.gate.control.output.*
+import org.tenkiv.kuantify.getValue
+import org.tenkiv.kuantify.recording.Recorder
+import org.tenkiv.kuantify.recording.StorageDuration
+import org.tenkiv.kuantify.recording.StorageFrequency
+import org.tenkiv.kuantify.recording.StorageSamples
 import org.tenkiv.physikal.core.*
 import java.time.Duration
-import kotlin.concurrent.thread
+import kotlin.coroutines.experimental.CoroutineContext
 
 //TODO: Make correlatedInputs optional, add overloads for optional binaryStateOutputs and quantityOutputs.
-class LearningController<T>(
+class LearningController<T> internal constructor(
+    scope: CoroutineScope,
     targetInput: RangedInput<T>,
     correlatedInputs: Collection<RangedInput<*>>,
-    binaryStateOutputs: Collection<RangedOutput<BinaryState>>,
-    quantityOutputs: Collection<RangedQuantityOutput<*>>,
+    outputs: Collection<RangedOutput<*>>,
     val minTimeBetweenActions: Duration
 ) : Output<T> where T : DaqcValue, T : Comparable<T> {
 
+    private val job = Job(scope.coroutineContext[Job])
+
+    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
+
+    //TODO
+    private val trainingManagementDispatcher: CoroutineDispatcher = newSingleThreadContext("")
+
     private val environment = ControllerEnvironment(this)
 
-    val targetInput = targetInput.pairWithNewRecorder(StorageFrequency.All, StorageSamples.Number(3))
+    val targetInput = Recorder(
+        targetInput,
+        StorageFrequency.All,
+        StorageSamples.Number(3)
+    )
     val correlatedInputs = correlatedInputs.map {
-        it.pairWithNewRecorder(StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
+        Recorder(it, StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
     }
-    val outputs: List<RecordedUpdatable<DaqcValue, RangedOutput<*>>> = kotlin.run {
-        val outputsBuilder = ImmutableList.builder<RecordedUpdatable<DaqcValue, RangedOutput<*>>>()
-        outputsBuilder.addAll(binaryStateOutputs.map {
-            it.pairWithNewRecorder(StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
-        })
-        outputsBuilder.addAll(quantityOutputs.map {
-            it.pairWithNewRecorder(StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
+    val outputs: List<Recorder<DaqcValue, RangedOutput<*>>> = kotlin.run {
+        val outputsBuilder = ImmutableList.builder<Recorder<DaqcValue, RangedOutput<*>>>()
+        outputsBuilder.addAll(outputs.map {
+            Recorder(it, StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
         })
         outputsBuilder.build()
     }
@@ -69,7 +78,7 @@ class LearningController<T>(
     private val agent: QLearningDiscreteDense<Encodable>
 
     @Volatile
-    override var isActive = false
+    override var isTransceiving = false
 
     private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<T>>()
 
@@ -77,19 +86,15 @@ class LearningController<T>(
         get() = _broadcastChannel
 
     init {
-        binaryStateOutputs.map {
-            it.pairWithNewRecorder(StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
-        }
-
-        targetInput.activate()
+        targetInput.startSampling()
         correlatedInputs.forEach {
-            it.activate()
+            it.startSampling()
         }
-        quantityOutputs.forEach {
-            it.setOutputToPercentMaximum(50.percent)
-        }
-        binaryStateOutputs.forEach {
-            it.setOutput(BinaryState.Off)
+        outputs.forEach {
+            when (it) {
+                is RangedQuantityOutput<*> -> it.setOutputToPercentMaximum(50.percent)
+                is BinaryStateOutput -> it.setOutput(BinaryState.Off)
+            }
         }
 
         val reinforcementConfig = QLearning.QLConfiguration(
@@ -117,9 +122,9 @@ class LearningController<T>(
     override fun setOutput(setting: T, panicOnFailure: Boolean): SettingResult.Success {
         launch {
             // Wait until all inputs have a value. This is hacky and sucks but rl4j makes life difficult.
-            targetInput.updatable.activate()
+            targetInput.updatable.startSampling()
             correlatedInputs.forEach {
-                it.updatable.activate()
+                it.updatable.startSampling()
             }
 
             targetInput.updatable.getValue()
@@ -128,7 +133,7 @@ class LearningController<T>(
             }
 
             _broadcastChannel.send(setting.now())
-            thread {
+            launch(trainingManagementDispatcher) {
                 agent.train()
             }
         }
@@ -136,8 +141,10 @@ class LearningController<T>(
         return SettingResult.Success
     }
 
-    override fun deactivate() {
+    override fun stopTransceiving() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
+
+    fun cancel() = job.cancel()
 
 }

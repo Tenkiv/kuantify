@@ -46,7 +46,7 @@ interface Input<out T : DaqcValue> : IOStrand<T>, RatedUpdatable<T> {
     /**
      * Activates the input alerting it to begin collecting and sending data.
      */
-    fun activate()
+    fun startSampling()
 
     //TODO: This should be moved to IOStrand.
     fun addTrigger(condition: (ValueInstant<T>) -> Boolean, onTrigger: () -> Unit): Trigger<out T> =

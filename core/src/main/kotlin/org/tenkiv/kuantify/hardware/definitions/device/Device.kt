@@ -17,13 +17,12 @@
 
 package org.tenkiv.kuantify.hardware.definitions.device
 
-import org.tenkiv.kuantify.networking.ConnectionProtocol
-import org.tenkiv.kuantify.networking.SharingStatus
+import kotlinx.coroutines.experimental.CoroutineScope
 
 /**
  * The interface defining the basic aspects of all devices.
  */
-interface Device {
+interface Device : CoroutineScope {
 
     /**
      * The device's serial number. This should be unique.

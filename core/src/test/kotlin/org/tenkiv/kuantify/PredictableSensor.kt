@@ -35,12 +35,12 @@ class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
         get() = throw Exception("Empty Test Class Exception")
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
-    override val isActive: Boolean = false
+    override val isTransceiving: Boolean = false
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
 
-    override fun activate() {}
+    override fun startSampling() {}
 
-    override fun deactivate() {}
+    override fun stopTransceiving() {}
 
     var iteration = 0
 
@@ -79,11 +79,11 @@ class PredictableDigitalSensor : Input<BinaryState> {
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
     override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<BinaryState>> = ConflatedBroadcastChannel()
-    override val isActive: Boolean = true
+    override val isTransceiving: Boolean = true
 
-    override fun activate() {}
+    override fun startSampling() {}
 
-    override fun deactivate() {}
+    override fun stopTransceiving() {}
     var iteration = 0
 
     var sendingOrder = arrayListOf(

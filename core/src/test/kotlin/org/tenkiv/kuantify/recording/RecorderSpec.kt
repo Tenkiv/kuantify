@@ -29,18 +29,20 @@ import kotlinx.serialization.json.JSON
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.now
 import org.tenkiv.coral.secondsSpan
-import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.recording.quantity.pairWithNewRecorder
+import org.tenkiv.kuantify.AnalogGibberingSensor
+import org.tenkiv.kuantify.DigitalGibberingSensor
+import org.tenkiv.kuantify.Updatable
 import org.tenkiv.kuantify.recording.binary.pairWithNewRecorder
+import org.tenkiv.kuantify.recording.quantity.pairWithNewRecorder
 import java.lang.Thread.sleep
 
 class RecorderSpec : StringSpec({
 
     val analogGibberingSensor = AnalogGibberingSensor().apply {
-        activate()
+        startSampling()
     }
     val digitalGibberingSensor = DigitalGibberingSensor().apply {
-        activate()
+        startSampling()
     }
 
     "Recording daqc values in memory" {

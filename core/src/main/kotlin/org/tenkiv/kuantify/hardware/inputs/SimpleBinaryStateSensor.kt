@@ -17,14 +17,15 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
-import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.at
 import org.tenkiv.kuantify.BinaryStateMeasurement
 import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.gate.acquire.input.BinaryStateInput
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
-import org.tenkiv.kuantify.lib.openNewCoroutineListener
 
 /**
  * A simple simple implementation of a binary sensor
@@ -32,7 +33,7 @@ import org.tenkiv.kuantify.lib.openNewCoroutineListener
  * @param digitalInput The [DigitalInput] that is being read from.
  */
 class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInput) :
-    BinaryStateInput {
+    BinaryStateInput, CoroutineScope by digitalInput {
 
     /**
      * Denotes if the [DigitalInput] is inverted; ie Off = [BinaryState.On]
@@ -47,20 +48,22 @@ class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInpu
 
     override val failureBroadcastChannel get() = digitalInput.failureBroadcastChannel
 
-    override val isActive get() = digitalInput.isActiveForBinaryState
+    override val isTransceiving get() = digitalInput.isTransceivingBinaryState
 
     override val updateRate get() = digitalInput.updateRate
 
     init {
-        digitalInput.broadcastChannel.openNewCoroutineListener(CommonPool) { measurement ->
-            if (!inverted) _broadcastChannel.send(measurement) else when (measurement.value) {
-                BinaryState.On -> _broadcastChannel.send(BinaryState.Off at measurement.instant)
-                BinaryState.Off -> _broadcastChannel.send(BinaryState.On at measurement.instant)
+        launch {
+            digitalInput.broadcastChannel.consumeEach { measurement ->
+                if (!inverted) _broadcastChannel.send(measurement) else when (measurement.value) {
+                    BinaryState.On -> _broadcastChannel.send(BinaryState.Off at measurement.instant)
+                    BinaryState.Off -> _broadcastChannel.send(BinaryState.On at measurement.instant)
+                }
             }
         }
     }
 
-    override fun activate() = digitalInput.activateForCurrentState()
+    override fun startSampling() = digitalInput.startSamplingCurrentState()
 
-    override fun deactivate() = digitalInput.deactivate()
+    override fun stopTransceiving() = digitalInput.stopTransceiving()
 }

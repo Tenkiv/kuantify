@@ -17,18 +17,26 @@
 
 package org.tenkiv.kuantify.networking
 
+import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.isActive
 import kotlinx.coroutines.experimental.launch
 import org.tenkiv.kuantify.Updatable
-import org.tenkiv.kuantify.daqcThreadContext
 
 /**
  * Class to wrap multiple locators into a single broadcast channel.
+ * Starts automatically upon creation.
  *
  * @param locators The [DeviceLocator]s to be included.
  */
-class CombinationLocator(vararg locators: DeviceLocator<*>) : Updatable<LocatorUpdate<*>> {
+class CombinationLocator internal constructor(vararg val locators: DeviceLocator<*>, scope: CoroutineScope) :
+    Updatable<LocatorUpdate<*>> {
+
+    private val job = Job(scope.coroutineContext[Job])
+
+    override val coroutineContext = scope.coroutineContext + job
 
     private val _broadcastChannel = ConflatedBroadcastChannel<LocatorUpdate<*>>()
 
@@ -36,10 +44,35 @@ class CombinationLocator(vararg locators: DeviceLocator<*>) : Updatable<LocatorU
         get() = _broadcastChannel
 
     init {
+        start()
+    }
+
+    /**
+     * Starts the combination locator, returning false if it was already running.
+     * @see Job.start
+     */
+    private fun start(): Boolean = if (isActive) {
+        false
+    } else {
         locators.forEach { locator ->
-            launch(daqcThreadContext) {
-                locator.broadcastChannel.consumeEach { device -> _broadcastChannel.offer(device) }
+            launch {
+                locator.broadcastChannel.consumeEach { device -> _broadcastChannel.send(device) }
             }
         }
+        true
+    }
+
+    /**
+     * Stops the combination locator, returning false if it was already stopped.
+     * @see Job.cancel
+     */
+    fun cancel(): Boolean = if (!isActive) {
+        false
+    } else {
+        job.cancel()
+        true
     }
 }
+
+fun CoroutineScope.CombinationLocator(vararg locators: DeviceLocator<*>): CombinationLocator =
+    CombinationLocator(locators = *locators, scope = this)

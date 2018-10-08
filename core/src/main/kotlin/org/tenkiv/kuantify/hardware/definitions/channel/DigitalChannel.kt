@@ -17,26 +17,26 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
-import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.launch
 import org.tenkiv.kuantify.BinaryStateMeasurement
 import org.tenkiv.kuantify.Measurement
 import org.tenkiv.kuantify.QuantityMeasurement
 import org.tenkiv.kuantify.Updatable
 import org.tenkiv.kuantify.hardware.definitions.device.Device
-import org.tenkiv.kuantify.lib.openNewCoroutineListener
 import javax.measure.quantity.Dimensionless
 import javax.measure.quantity.Frequency
 
 /**
  * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
  */
-abstract class DigitalChannel<T : Device> : Updatable<BinaryStateMeasurement>, DaqcChannel<T> {
+abstract class DigitalChannel<D : Device> : Updatable<BinaryStateMeasurement>, DaqcChannel<D> {
 
     /**
      * Gets if the channel has been activated for any state
      */
-    open val isActive get() = isActiveForBinaryState || isActiveForPwm || isActiveForTransitionFrequency
+    open val isTransceiving get() = isTransceivingBinaryState || isTransceivingPwm || isTransceivingFrequency
 
     /**
      * Gets if the channel is active for binary state.
@@ -44,7 +44,7 @@ abstract class DigitalChannel<T : Device> : Updatable<BinaryStateMeasurement>, D
      * Implementing backing  field must be atomic or otherwise provide safety for
      * reads from multiple threads.
      */
-    abstract val isActiveForBinaryState: Boolean
+    abstract val isTransceivingBinaryState: Boolean
 
     /**
      * Gets if the channel is active for pulse width modulation.
@@ -52,7 +52,7 @@ abstract class DigitalChannel<T : Device> : Updatable<BinaryStateMeasurement>, D
      * Implementing backing  field must be atomic or otherwise provide safety for
      * reads from multiple threads.
      */
-    abstract val isActiveForPwm: Boolean
+    abstract val isTransceivingPwm: Boolean
 
     /**
      * Gets if the channel is active for state transitions.
@@ -60,7 +60,7 @@ abstract class DigitalChannel<T : Device> : Updatable<BinaryStateMeasurement>, D
      * Implementing backing  field must be atomic or otherwise provide safety for
      * reads from multiple threads.
      */
-    abstract val isActiveForTransitionFrequency: Boolean
+    abstract val isTransceivingFrequency: Boolean
 
     protected val _binaryStateBroadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
 
@@ -102,14 +102,20 @@ abstract class DigitalChannel<T : Device> : Updatable<BinaryStateMeasurement>, D
     abstract val transitionFrequencyIsSimulated: Boolean
 
     init {
-        broadcastChannel.openNewCoroutineListener(CommonPool) {
-            _unifiedBroadcastChannel.send(it)
+        launch {
+            broadcastChannel.consumeEach {
+                _unifiedBroadcastChannel.send(it)
+            }
         }
-        pwmBroadcastChannel.openNewCoroutineListener(CommonPool) {
-            _unifiedBroadcastChannel.send(it)
+        launch {
+            pwmBroadcastChannel.consumeEach {
+                _unifiedBroadcastChannel.send(it)
+            }
         }
-        transitionFrequencyBroadcastChannel.openNewCoroutineListener(CommonPool) {
-            _unifiedBroadcastChannel.send(it)
+        launch {
+            transitionFrequencyBroadcastChannel.consumeEach {
+                _unifiedBroadcastChannel.send(it)
+            }
         }
     }
 }

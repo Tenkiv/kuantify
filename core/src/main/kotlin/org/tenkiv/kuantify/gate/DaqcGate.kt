@@ -23,6 +23,7 @@ import org.tenkiv.kuantify.Updatable
 import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.data.DaqcData
 import org.tenkiv.kuantify.data.DaqcValue
+import org.tenkiv.kuantify.valueOrNull
 
 /**
  * A general interface for an updatable that returns data.
@@ -33,9 +34,9 @@ interface DaqcGate<out T : DaqcData> : Updatable<ValueInstant<T>> {
      */
     val daqcDataSize: Int
 
-    val isActive: Boolean
+    val isTransceiving: Boolean
 
-    fun deactivate()
+    fun stopTransceiving()
 }
 
 /**
@@ -58,21 +59,21 @@ interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Comparable<T>
      */
     val valueRange: ClosedRange<T>
 
-    //TODO: Add more versions of this function, like one that suspends until it has a value.
-    /**
-     * @return a [Double] representation of the current value normalised to be between 0 and 1 based on the
-     * [valueRange], null if the updatable does not yet have a value or the value is outside the [valueRange].
-     */
-    fun getNormalisedDoubleOrNull(): Double? {
-        val value = valueOrNull?.value
+}
 
-        if (value is BinaryState?) return value?.toDouble()
+//TODO: Add more versions of this function, like one that suspends until it has a value.
+/**
+ * @return a [Double] representation of the current value normalised to be between 0 and 1 based on the
+ * [valueRange], null if the updatable does not yet have a value or the value is outside the [valueRange].
+ */
+fun RangedIOStrand<*>.getNormalisedDoubleOrNull(): Double? {
+    val value = valueOrNull?.value
 
-        val min = valueRange.start.toDoubleInSystemUnit()
-        val max = valueRange.endInclusive.toDoubleInSystemUnit()
-        val valueDouble = value?.toDoubleInSystemUnit()
+    if (value is BinaryState?) return value?.toDouble()
 
-        return valueDouble?.normalToOrNull(min..max)
-    }
+    val min = valueRange.start.toDoubleInSystemUnit()
+    val max = valueRange.endInclusive.toDoubleInSystemUnit()
+    val valueDouble = value?.toDoubleInSystemUnit()
 
+    return valueDouble?.normalToOrNull(min..max)
 }

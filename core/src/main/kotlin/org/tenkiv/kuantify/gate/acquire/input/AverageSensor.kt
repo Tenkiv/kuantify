@@ -17,18 +17,23 @@
 
 package org.tenkiv.kuantify.gate.acquire.input
 
-import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.isActive
+import kotlinx.coroutines.experimental.launch
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.kuantify.BinaryStateMeasurement
 import org.tenkiv.kuantify.QuantityMeasurement
 import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.data.toDaqc
-import org.tenkiv.kuantify.lib.openNewCoroutineListener
+import org.tenkiv.kuantify.runningAverage
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import javax.measure.Quantity
+import kotlin.coroutines.experimental.CoroutineContext
 
 /**
  * Sensor which provides an average of [Quantity] values from a group inputs.
@@ -37,14 +42,21 @@ import javax.measure.Quantity
  * @param inputs The inputs to be averaged together.
  *
  */
-class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: QuantityInput<Q>) : QuantityInput<Q> {
+class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
+    scope: CoroutineScope,
+    private vararg val inputs: QuantityInput<Q>
+) : QuantityInput<Q> {
 
-    override val isActive: Boolean
+    private val job = Job(scope.coroutineContext[Job])
+
+    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
+
+    override val isTransceiving: Boolean
         get() {
             inputs.forEach {
-                if (!it.isActive) return false
+                if (it.isTransceiving && this.isActive) return true
             }
-            return true
+            return false
         }
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
@@ -55,34 +67,42 @@ class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: Quantity
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
 
-    override val updateRate
-        get() = inputs.map { it.updateRate }.max()
-            ?: throw IllegalStateException("AverageQuantitySensor has no inputs, it must have at least 1 input.")
+    override val updateRate by runningAverage()
 
     init {
-        inputs.forEach { _ ->
-            openNewCoroutineListener(CommonPool) { measurement ->
-                val currentValues = HashSet<ComparableQuantity<Q>>()
+        inputs.forEach { changeWatchedInput ->
+            launch {
+                changeWatchedInput.broadcastChannel.consumeEach { measurement ->
+                    val currentValues = HashSet<ComparableQuantity<Q>>()
 
-                inputs.forEach { input ->
-                    input.broadcastChannel.valueOrNull?.let { currentValues += it.value }
-                }
+                    inputs.forEach { input ->
+                        input.broadcastChannel.valueOrNull?.let { currentValues += it.value }
+                    }
 
-                currentValues.averageOrNull { it }?.let {
-                    _broadcastChannel.send(it.toDaqc() at measurement.instant)
+                    currentValues.averageOrNull { it }?.let {
+                        _broadcastChannel.send(it.toDaqc() at measurement.instant)
+                    }
                 }
             }
 
-            failureBroadcastChannel.openNewCoroutineListener(CommonPool) {
-                _failureBroadcastChannel.send(it)
+            launch {
+                failureBroadcastChannel.consumeEach {
+                    _failureBroadcastChannel.send(it)
+                }
             }
         }
     }
 
-    override fun activate() = inputs.forEach { it.activate() }
+    override fun startSampling() = inputs.forEach { it.startSampling() }
 
-    override fun deactivate() = inputs.forEach { it.deactivate() }
+    //TODO: We might not want to actually stop the underlying inputs
+    override fun stopTransceiving() = inputs.forEach { it.stopTransceiving() }
+
+    fun cancel() = job.cancel()
 }
+
+fun <Q : Quantity<Q>> CoroutineScope.AverageQuantitySensor(vararg inputs: QuantityInput<Q>): AverageQuantitySensor<Q> =
+    AverageQuantitySensor(this, *inputs)
 
 /**
  * Sensor which notifies if the number of inputs in the group of [BinaryInput]s are toggled to the designated state.
@@ -92,18 +112,23 @@ class AverageQuantitySensor<Q : Quantity<Q>>(private vararg val inputs: Quantity
  * @param threshold The minimum number of [BinaryInput]s which need to be in the desired state.
  * @param state The state for which the [BinaryInput]s should be checked. Default is [BinaryState.On].
  */
-class DigitalThresholdSensor(
-    private vararg val inputs: BinaryStateInput,
+class BinaryThresholdSensor internal constructor(
+    scope: CoroutineScope,
     threshold: Int,
-    state: BinaryState = BinaryState.On
+    state: BinaryState = BinaryState.On,
+    private vararg val inputs: BinaryStateInput
 ) : BinaryStateInput {
 
-    override val isActive: Boolean
+    private val job = Job(scope.coroutineContext[Job])
+
+    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
+
+    override val isTransceiving: Boolean
         get() {
             inputs.forEach {
-                if (!it.isActive) return false
+                if (it.isTransceiving && this.isActive) return true
             }
-            return true
+            return false
         }
 
     private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
@@ -114,35 +139,43 @@ class DigitalThresholdSensor(
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
 
-    override val updateRate
-        get() = inputs.map { it.updateRate }.max()
-            ?: throw IllegalStateException("AverageQuantitySensor has no inputs, it must have at least 1 input.")
+    override val updateRate by runningAverage()
 
     init {
-        inputs.forEach { _ ->
-            openNewCoroutineListener(CommonPool) { measurement ->
-                val currentValues = HashSet<BinaryState>()
+        inputs.forEach { changeWatchedInput ->
+            launch {
+                changeWatchedInput.broadcastChannel.consumeEach { measurement ->
+                    val currentValues = HashSet<BinaryState>()
 
-                inputs.forEach { input ->
-                    input.broadcastChannel.valueOrNull?.let { currentValues += it.value }
+                    inputs.forEach { input ->
+                        input.broadcastChannel.valueOrNull?.let { currentValues += it.value }
+                    }
+
+                    _broadcastChannel.send(
+                        if (currentValues.filter { it == state }.size >= threshold) {
+                            BinaryState.On
+                        } else {
+                            BinaryState.Off
+                        } at measurement.instant
+                    )
                 }
-
-                _broadcastChannel.send(
-                    if (currentValues.filter { it == state }.size >= threshold) {
-                        BinaryState.On
-                    } else {
-                        BinaryState.Off
-                    } at measurement.instant
-                )
             }
 
-            failureBroadcastChannel.openNewCoroutineListener(CommonPool) {
-                _failureBroadcastChannel.send(it)
+            launch {
+                failureBroadcastChannel.consumeEach {
+                    _failureBroadcastChannel.send(it)
+                }
             }
         }
     }
 
-    override fun activate() = inputs.forEach { it.activate() }
+    override fun startSampling() = inputs.forEach { it.startSampling() }
 
-    override fun deactivate() = inputs.forEach { it.deactivate() }
+    override fun stopTransceiving() = inputs.forEach { it.stopTransceiving() }
 }
+
+fun CoroutineScope.BinaryThresholdSensor(
+    threshold: Int,
+    state: BinaryState = BinaryState.On,
+    vararg inputs: BinaryStateInput
+): BinaryThresholdSensor = BinaryThresholdSensor(this, threshold, state, *inputs)

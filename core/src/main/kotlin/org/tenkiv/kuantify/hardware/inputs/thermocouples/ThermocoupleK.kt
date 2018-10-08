@@ -18,6 +18,8 @@
 package org.tenkiv.kuantify.hardware.inputs.thermocouples
 
 import arrow.core.Try
+import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.experimental.Job
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.data.toDaqc
 import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
@@ -29,26 +31,30 @@ import tec.units.indriya.unit.MetricPrefix.*
 import tec.units.indriya.unit.Units.*
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Temperature
+import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.math.pow
 
 /**
  * A common sensor which measures [Temperature] from [ElectricPotential].
  */
-open class ThermocoupleK(
+class ThermocoupleK internal constructor(
+    scope: CoroutineScope,
     channel: AnalogInput,
     acceptableError: ComparableQuantity<Temperature> = 1.celsius
 ) : ScAnalogSensor<Temperature>(
-        channel,
-        maximumEp = 55.milli.volt,
-        acceptableError = 18.micro.volt * acceptableError.toDoubleIn(CELSIUS)
-    ) {
-    private val noTempRefValueMsg
-        get() =
-            "The temperature reference for device:\n" +
-                    " ${analogInput.device} \n" +
-                    "has not yet measured a temperature, thermocouples from this device cannot function until it does."
+    channel,
+    maximumEp = 55.milli.volt,
+    acceptableError = 18.micro.volt * acceptableError.toDoubleIn(CELSIUS)
+) {
+    private val job = Job(scope.coroutineContext[Job])
 
-    @Throws(ValueOutOfRangeException::class, UninitializedPropertyAccessException::class)
+    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
+
+    private val noTempRefValueMsg =
+        "The temperature reference for device:\n" +
+                " ${analogInput.device} \n" +
+                "has not yet measured a temperature, thermocouples from this device cannot function until it does."
+
     override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Temperature>> {
         val mv = ep toDoubleIn MILLI(VOLT)
         val temperatureReferenceValue =
@@ -95,6 +101,8 @@ open class ThermocoupleK(
 
     }
 
+    fun cancel() = job.cancel()
+
     companion object {
         private const val low1 = 25.173462
         private const val low2 = -1.1662878
@@ -125,3 +133,8 @@ open class ThermocoupleK(
     }
 
 }
+
+fun CoroutineScope.ThermocoupleK(
+    channel: AnalogInput,
+    acceptableError: ComparableQuantity<Temperature> = 1.celsius
+) = ThermocoupleK(this, channel, acceptableError)

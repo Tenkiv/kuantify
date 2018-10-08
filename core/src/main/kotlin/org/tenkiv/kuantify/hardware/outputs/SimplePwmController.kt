@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.hardware.outputs
 
+import kotlinx.coroutines.experimental.CoroutineScope
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalOutput
 import javax.measure.quantity.Dimensionless
@@ -27,7 +28,7 @@ import javax.measure.quantity.Dimensionless
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
 class SimplePwmController internal constructor(digitalOutput: DigitalOutput) :
-    ScPwmController<Dimensionless>(digitalOutput) {
+    ScPwmController<Dimensionless>(digitalOutput), CoroutineScope by digitalOutput {
 
     override fun convertOutput(setting: DaqcQuantity<Dimensionless>) = setting
 

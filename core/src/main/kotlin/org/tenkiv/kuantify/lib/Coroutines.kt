@@ -17,25 +17,15 @@
 
 package org.tenkiv.kuantify.lib
 
-import kotlinx.coroutines.experimental.DefaultDispatcher
+import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.consume
-import kotlinx.coroutines.experimental.channels.consumeEach
 import kotlinx.coroutines.experimental.launch
 import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.EmptyCoroutineContext
 
-/**
- * Opens a coroutine listener and consumes updates with the given function.
- *
- * @param context The context for the channel to be opened.
- * @param onReceive The function to be executed when an update is received.
- */
-fun <E> BroadcastChannel<E>.openNewCoroutineListener(
-    context: CoroutineContext,
-    onReceive: suspend (E) -> Unit
-) = launch(context) { this@openNewCoroutineListener.consumeEach { onReceive(it) } }
-
+//TODO: I think this function should be removed. It is only used in trigger and I think there is a more idiomatic way.
 /**
  * Opens a coroutine listener and consumes updates with the given function, also returns the new channel.
  *
@@ -44,11 +34,12 @@ fun <E> BroadcastChannel<E>.openNewCoroutineListener(
  * @return The opened [ReceiveChannel].
  */
 fun <T> BroadcastChannel<T>.consumeAndReturn(
-    context: CoroutineContext = DefaultDispatcher,
+    scope: CoroutineScope,
+    context: CoroutineContext = EmptyCoroutineContext,
     onReceive: suspend (T) -> Unit
 ): ReceiveChannel<T> {
     val subChannel = openSubscription()
-    launch(context) {
+    scope.launch(context) {
         subChannel.consume { for (x in this) onReceive(x) }
     }
     return subChannel

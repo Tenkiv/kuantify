@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
+import kotlinx.coroutines.experimental.CoroutineScope
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.data.toDaqc
 import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
@@ -30,7 +31,7 @@ import javax.measure.quantity.Frequency
  * @param digitalInput The [DigitalInput] that is being read from.
  */
 class SimpleDigitalFrequencySensor internal constructor(val digitalInput: DigitalInput) :
-    QuantityInput<Frequency> {
+    QuantityInput<Frequency>, CoroutineScope by digitalInput {
 
     /**
      * The [Frequency] over which to average the samples.
@@ -42,12 +43,12 @@ class SimpleDigitalFrequencySensor internal constructor(val digitalInput: Digita
 
     override val failureBroadcastChannel get() = digitalInput.failureBroadcastChannel
 
-    override val isActive get() = digitalInput.isActiveForTransitionFrequency
+    override val isTransceiving get() = digitalInput.isTransceivingFrequency
 
     override val updateRate get() = digitalInput.updateRate
 
-    override fun activate() = digitalInput.activateForTransitionFrequency(avgFrequency)
+    override fun startSampling() = digitalInput.startSamplingTransitionFrequency(avgFrequency)
 
-    override fun deactivate() = digitalInput.deactivate()
+    override fun stopTransceiving() = digitalInput.stopTransceiving()
 
 }

@@ -34,7 +34,9 @@ import org.tenkiv.kuantify.gate.acquire.input.RangedInput
 import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
 import org.tenkiv.kuantify.gate.control.output.RangedOutput
 import org.tenkiv.kuantify.gate.control.output.RangedQuantityOutput
-import org.tenkiv.kuantify.recording.RecordedUpdatable
+import org.tenkiv.kuantify.gate.getNormalisedDoubleOrNull
+import org.tenkiv.kuantify.recording.Recorder
+import org.tenkiv.kuantify.valueOrNull
 
 internal class ControllerEnvironment<T>(private val controller: LearningController<T>) :
     MDP<Encodable, Int, DiscreteSpace> where T : DaqcValue, T : Comparable<T> {
@@ -79,7 +81,7 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
     }
 
     override fun isDone(): Boolean {
-        return !controller.isActive
+        return !controller.isTransceiving
     }
 
     override fun newInstance(): MDP<Encodable, Int, DiscreteSpace> = ControllerEnvironment(controller)
@@ -102,15 +104,15 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
         return StepReply(getObservation(), getReward(), isDone, null)
     }
 
-    private fun getBinaryStateDoubles(io: RecordedUpdatable<DaqcValue, RangedInput<*>>)
+    private fun getBinaryStateDoubles(io: Recorder<DaqcValue, RangedInput<*>>)
             : Double {
 
         return io.updatable.getNormalisedDoubleOrNull()!!
     }
 
-    private fun getQuantityInputDoubles(io: RecordedUpdatable<DaqcValue, RangedInput<*>>)
+    private fun getQuantityInputDoubles(io: Recorder<DaqcValue, RangedInput<*>>)
             : QuantityInputDoubles {
-        val history = io.recorder.getDataInMemory()
+        val history = io.getDataInMemory()
 
         val min = io.updatable.valueRange.start.toDoubleInSystemUnit()
         val max = io.updatable.valueRange.endInclusive.toDoubleInSystemUnit()
@@ -132,7 +134,7 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
         return QuantityInputDoubles(currentValue ?: NONE, rateOfChange)
     }
 
-    private fun getQuantityOutputDoubles(io: RecordedUpdatable<DaqcValue, RangedOutput<*>>)
+    private fun getQuantityOutputDoubles(io: Recorder<DaqcValue, RangedOutput<*>>)
             : Double {
 
         return io.updatable.getNormalisedDoubleOrNull()!!

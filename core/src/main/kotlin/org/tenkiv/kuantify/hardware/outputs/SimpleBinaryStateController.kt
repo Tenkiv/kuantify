@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.hardware.outputs
 
+import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.now
 import org.tenkiv.kuantify.BinaryStateMeasurement
@@ -31,7 +32,7 @@ import org.tenkiv.kuantify.hardware.definitions.channel.DigitalOutput
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
 class SimpleBinaryStateController internal constructor(val digitalOutput: DigitalOutput) :
-    BinaryStateOutput {
+    BinaryStateOutput, CoroutineScope by digitalOutput {
 
     /**
      * Denotes if the [DigitalOutput] is inverted; ie Off = [BinaryState.On]
@@ -39,14 +40,14 @@ class SimpleBinaryStateController internal constructor(val digitalOutput: Digita
     @Volatile
     var inverted: Boolean = false
 
-    override val isActive: Boolean = digitalOutput.isActive
+    override val isTransceiving: Boolean = digitalOutput.isTransceiving
 
     private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
 
     override val broadcastChannel: ConflatedBroadcastChannel<out BinaryStateMeasurement>
         get() = _broadcastChannel
 
-    override fun deactivate() = digitalOutput.deactivate()
+    override fun stopTransceiving() = digitalOutput.stopTransceiving()
 
     override fun setOutput(setting: BinaryState, panicOnFailure: Boolean): SettingResult {
         val result = if (!inverted) digitalOutput.setOutput(setting) else when (setting) {
