@@ -1,15 +1,18 @@
 package org.tenkiv.kuantify.networking
 
 import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.Deferred
 import org.tenkiv.kuantify.hardware.definitions.device.Device
 
-interface ConnectionHandler: CoroutineScope  {
+interface ConnectionHandler<I, O> : CoroutineScope {
 
     /**
      * The [ConnectionProtocol] which the Device has been discovered over.
      */
     val connectionProtocol: ConnectionProtocol
+
+    val outputStream: O
+
+    val inputStream: I
 
     /**
      * Function to connect to the [Device].
