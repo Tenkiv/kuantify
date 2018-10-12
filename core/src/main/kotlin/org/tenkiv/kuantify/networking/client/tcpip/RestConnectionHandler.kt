@@ -2,9 +2,11 @@ package org.tenkiv.kuantify.networking.client.tcpip
 
 import org.tenkiv.kuantify.networking.ConnectionHandler
 
+/*
 abstract class RestConnectionHandler: ConnectionHandler {
 
-    /*private val client = HttpClient(CIO)
+    */
+/*private val client = HttpClient(CIO)
 
     private val _responseChannel = ConflatedBroadcastChannel<Pair<HttpRequestData,String>>()
 
@@ -19,6 +21,7 @@ abstract class RestConnectionHandler: ConnectionHandler {
         launch {
             _responseChannel.offer(Pair(builder.build(),client.get(builder)))
         }
-    }*/
+    }*//*
 
-}
+
+}*/

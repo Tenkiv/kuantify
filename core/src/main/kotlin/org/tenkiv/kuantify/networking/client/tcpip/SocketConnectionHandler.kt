@@ -7,21 +7,21 @@ import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.CoroutineDispatcher
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.cancel
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import kotlinx.coroutines.experimental.channels.SendChannel
+import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.io.ByteReadChannel
 import kotlinx.coroutines.experimental.io.ByteWriteChannel
 import kotlinx.coroutines.experimental.launch
-import org.tenkiv.kuantify.networking.ConnectionHandler
-import org.tenkiv.kuantify.networking.ConnectionProtocol
-import org.tenkiv.kuantify.networking.TransportProtocol
-import org.tenkiv.kuantify.networking.UnsupportedProtocolException
+import kotlinx.io.core.IoBuffer
+import org.tenkiv.kuantify.networking.*
+import java.nio.ByteBuffer
 import kotlin.coroutines.experimental.CoroutineContext
 
 abstract class SocketConnectionHandler<T : ASocket, I, O>(final override val connectionProtocol: ConnectionProtocol) :
     ConnectionHandler<I, O> {
 
     override val coroutineContext: CoroutineContext = Job()
+
+    override var handlerStatus: HandlerConnectionStatus = UnconnectedHandler
 
     init {
         if (!(connectionProtocol is TransportProtocol.Udp ||
@@ -30,38 +30,61 @@ abstract class SocketConnectionHandler<T : ASocket, I, O>(final override val con
             throw UnsupportedProtocolException()
     }
 
-    override fun disconnect() {
+    override suspend fun disconnect(): HandlerConnectionStatus {
         coroutineContext.cancel()
+        handlerStatus = UnconnectedHandler
+        return handlerStatus
     }
 
     protected abstract suspend fun buildSocket(dispatcher: CoroutineDispatcher = ioCoroutineDispatcher): T
 
 }
 
-open class TcpSocketHandler<T>(
+open class TcpSocketHandler<I, O>(
     connectionProtocol: ConnectionProtocol,
-    val tlsEnabled: Boolean
+    val tlsEnabled: Boolean,
+    val sendHandler: (I) -> ByteBuffer,
+    val receiveSize: Int,
+    val receiveHandler: (IoBuffer?) -> O
 ) :
-    SocketConnectionHandler<Socket, ByteReadChannel, ByteWriteChannel>(connectionProtocol) {
+    SocketConnectionHandler<Socket, I, O>(connectionProtocol) {
     val tcpConnectionProtocol: TransportProtocol.Tcp = connectionProtocol as TransportProtocol.Tcp
 
-    override lateinit var inputStream: ByteReadChannel
 
-    override lateinit var outputStream: ByteWriteChannel
+    override suspend fun connect(): HandlerConnectionStatus {
 
-    override fun connect() {
-        launch {
-            val socket = buildSocket()
-            inputStream = socket.openReadChannel()
-            outputStream = socket.openWriteChannel(true)
+        val socket = buildSocket()
 
+        val inputStream = socket.openWriteChannel(true)
+
+        val outputStream = socket.openReadChannel()
+
+        val sender = actor<I> {
+            consumeEach {
+                inputStream.writeAvailable(sendHandler(it))
+            }
         }
+
+        val receiver = produce<O> {
+            outputStream.readSuspendableSession {
+                this.await(receiveSize)
+                send(receiveHandler(this.request(receiveSize)))
+            }
+        }
+
+        val status = ConnectedHandler(receiver, sender)
+
+        handlerStatus = status
+
+        return status
+
     }
 
 
     override suspend fun buildSocket(dispatcher: CoroutineDispatcher): Socket {
 
-        val socket = aSocket(ActorSelectorManager(dispatcher)).tcp().connect(tcpConnectionProtocol.socketAddress)
+        val socket =
+            aSocket(ActorSelectorManager(dispatcher)).tcp().connect(tcpConnectionProtocol.socketAddress)
 
         return if (tlsEnabled)
             socket.tls()
@@ -74,28 +97,21 @@ open class TcpSocketHandler<T>(
 
 }
 
-class Utf8TcpSocket(
-    connectionProtocol: ConnectionProtocol,
-    tlsEnabled: Boolean
-) : TcpSocketHandler<String>(connectionProtocol, tlsEnabled)
-
-open class UdpSocketHandler<T>(
-    connectionProtocol: ConnectionProtocol
-) :
-    SocketConnectionHandler<ConnectedDatagramSocket, ReceiveChannel<Datagram>, SendChannel<Datagram>>(connectionProtocol) {
+open class UdpSocketHandler(connectionProtocol: ConnectionProtocol) :
+    SocketConnectionHandler<ConnectedDatagramSocket, Datagram, Datagram>(connectionProtocol) {
 
     val udpConnectionProtocol: TransportProtocol.Udp = connectionProtocol as TransportProtocol.Udp
 
-    override lateinit var inputStream: ReceiveChannel<Datagram>
+    override suspend fun connect(): HandlerConnectionStatus {
 
-    override lateinit var outputStream: SendChannel<Datagram>
+        val socket = buildSocket()
 
-    override fun connect() {
-        launch {
-            val socket = buildSocket()
-            inputStream = socket.incoming
-            outputStream = socket.outgoing
-        }
+        val status = ConnectedHandler(socket.incoming, socket.outgoing)
+
+        handlerStatus = status
+
+        return status
+
     }
 
     override suspend fun buildSocket(dispatcher: CoroutineDispatcher): ConnectedDatagramSocket {

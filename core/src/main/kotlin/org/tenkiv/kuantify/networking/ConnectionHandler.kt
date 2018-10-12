@@ -1,6 +1,8 @@
 package org.tenkiv.kuantify.networking
 
 import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlinx.coroutines.experimental.channels.SendChannel
 import org.tenkiv.kuantify.hardware.definitions.device.Device
 
 interface ConnectionHandler<I, O> : CoroutineScope {
@@ -10,24 +12,29 @@ interface ConnectionHandler<I, O> : CoroutineScope {
      */
     val connectionProtocol: ConnectionProtocol
 
-    val outputStream: O
-
-    val inputStream: I
+    var handlerStatus: HandlerConnectionStatus
 
     /**
      * Function to connect to the [Device].
      *
      * @param protocol The [ConnectionProtocol] to connect over.
      */
-    fun connect()
+    suspend fun connect(): HandlerConnectionStatus
 
     /**
      * Function to disconnect this [Device].
      *
      * @param The [ConnectionProtocol] to disconnect via.
      */
-    fun disconnect()
+    suspend fun disconnect(): HandlerConnectionStatus
 
     fun isValidProtocol(connectionProtocol: ConnectionProtocol): Boolean
 
 }
+
+sealed class HandlerConnectionStatus
+
+data class ConnectedHandler<I, O>(val receiver: ReceiveChannel<O>, val sender: SendChannel<I>) :
+    HandlerConnectionStatus()
+
+object UnconnectedHandler : HandlerConnectionStatus()
