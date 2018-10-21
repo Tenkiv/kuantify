@@ -4,20 +4,17 @@ import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
 import io.ktor.network.tls.tls
 import io.ktor.network.util.ioCoroutineDispatcher
-import kotlinx.coroutines.experimental.CoroutineDispatcher
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.cancel
-import kotlinx.coroutines.experimental.channels.*
-import kotlinx.coroutines.experimental.io.ByteReadChannel
-import kotlinx.coroutines.experimental.io.ByteWriteChannel
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.actor
+import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.channels.produce
 import kotlinx.io.core.IoBuffer
 import org.tenkiv.kuantify.networking.*
 import java.nio.ByteBuffer
 import kotlin.coroutines.experimental.CoroutineContext
 
-abstract class SocketConnectionHandler<T : ASocket, I, O>(final override val connectionProtocol: ConnectionProtocol) :
-    ConnectionHandler<I, O> {
+abstract class SocketConnectionHandler<T : ASocket, I, O>(override val connectionProtocol: ConnectionProtocol) :
+    ConnectionHandler {
 
     override val coroutineContext: CoroutineContext = Job()
 
@@ -50,8 +47,7 @@ open class TcpSocketHandler<I, O>(
     SocketConnectionHandler<Socket, I, O>(connectionProtocol) {
     val tcpConnectionProtocol: TransportProtocol.Tcp = connectionProtocol as TransportProtocol.Tcp
 
-
-    override suspend fun connect(): HandlerConnectionStatus {
+    override suspend fun connect(): ConnectedHandler<I, O> {
 
         val socket = buildSocket()
 
@@ -61,14 +57,17 @@ open class TcpSocketHandler<I, O>(
 
         val sender = actor<I> {
             consumeEach {
-                inputStream.writeAvailable(sendHandler(it))
+                inputStream.writeFully(sendHandler(it))
+                inputStream.flush()
             }
         }
 
         val receiver = produce<O> {
             outputStream.readSuspendableSession {
-                this.await(receiveSize)
-                send(receiveHandler(this.request(receiveSize)))
+                while (isActive) {
+                    await(receiveSize)
+                    send(receiveHandler(request(receiveSize)))
+                }
             }
         }
 
@@ -97,10 +96,8 @@ open class TcpSocketHandler<I, O>(
 
 }
 
-open class UdpSocketHandler(connectionProtocol: ConnectionProtocol) :
+open class UdpSocketHandler(override val connectionProtocol: TransportProtocol.Udp) :
     SocketConnectionHandler<ConnectedDatagramSocket, Datagram, Datagram>(connectionProtocol) {
-
-    val udpConnectionProtocol: TransportProtocol.Udp = connectionProtocol as TransportProtocol.Udp
 
     override suspend fun connect(): HandlerConnectionStatus {
 
@@ -115,7 +112,7 @@ open class UdpSocketHandler(connectionProtocol: ConnectionProtocol) :
     }
 
     override suspend fun buildSocket(dispatcher: CoroutineDispatcher): ConnectedDatagramSocket {
-        return aSocket(ActorSelectorManager(dispatcher)).udp().connect(udpConnectionProtocol.socketAddress)
+        return aSocket(ActorSelectorManager(dispatcher)).udp().connect(connectionProtocol.socketAddress)
     }
 
     override fun isValidProtocol(connectionProtocol: ConnectionProtocol): Boolean =

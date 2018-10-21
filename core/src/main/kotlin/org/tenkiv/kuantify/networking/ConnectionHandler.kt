@@ -5,7 +5,7 @@ import kotlinx.coroutines.experimental.channels.ReceiveChannel
 import kotlinx.coroutines.experimental.channels.SendChannel
 import org.tenkiv.kuantify.hardware.definitions.device.Device
 
-interface ConnectionHandler<I, O> : CoroutineScope {
+interface ConnectionHandler : CoroutineScope {
 
     /**
      * The [ConnectionProtocol] which the Device has been discovered over.
