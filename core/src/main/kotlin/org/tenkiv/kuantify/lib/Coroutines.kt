@@ -34,12 +34,11 @@ import kotlin.coroutines.experimental.EmptyCoroutineContext
  * @return The opened [ReceiveChannel].
  */
 fun <T> BroadcastChannel<T>.consumeAndReturn(
-    scope: CoroutineScope,
     context: CoroutineContext = EmptyCoroutineContext,
     onReceive: suspend (T) -> Unit
 ): ReceiveChannel<T> {
     val subChannel = openSubscription()
-    scope.launch(context) {
+    launch(context) {
         subChannel.consume { for (x in this) onReceive(x) }
     }
     return subChannel
