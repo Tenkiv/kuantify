@@ -432,6 +432,7 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
         job.cancel(CancellationException("Recorder manually stopped"))
     }
 
+    // Can only be called from Contexts.Daqc
     private suspend fun getDataFromDisk(filter: StorageFilter<T>): List<ValueInstant<T>> {
         //TODO: Change to immutable list using builder
         val result = ArrayList<ValueInstant<T>>()
@@ -446,6 +447,7 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
             }
         }
 
+        //FIXME: It is possible for a major error here because the contents of a file could be deleted.
         currentFiles.forEach {
             result.addAll(it.readFromDisk(filter))
         }
@@ -470,11 +472,13 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
     private fun cleanMemory() {
         if (memoryStorageLength is StorageDuration.For) {
             val iterator = _dataInMemory.iterator()
-            while (iterator.hasNext())
-                if (iterator.next().instant.isOlderThan(memoryStorageLength.duration))
+            while (iterator.hasNext()) {
+                if (iterator.next().instant.isOlderThan(memoryStorageLength.duration)) {
                     iterator.remove()
-                else
+                } else {
                     break
+                }
+            }
         }
         if (memoryStorageLength is StorageSamples.Number) {
             if (_dataInMemory.size > memoryStorageLength.numSamples) _dataInMemory.remove(_dataInMemory.first())

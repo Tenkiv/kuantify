@@ -33,9 +33,6 @@ hs_err_pid*
 # Ignore Gradle GUI config
 gradle-app.setting
 
-# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
-!gradle-wrapper.jar
-
 # Cache of project
 .gradletasknamecache
 
@@ -50,3 +47,6 @@ TestRecording.json
 
 core/recorders/
 local.properties
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
