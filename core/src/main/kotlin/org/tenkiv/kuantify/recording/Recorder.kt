@@ -448,7 +448,7 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
         }
 
         currentFiles.forEach {
-            if (!it.closed) result.addAll(it.readFromDisk(filter))
+            if (it.isOpen.await()) result.addAll(it.readFromDisk(filter))
         }
 
         result.addAll(buffer.filter(filter))
@@ -579,9 +579,8 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
             )
         }
 
-        internal var closed = false
+        internal val isOpen get() = async { fileChannel.await().isOpen }
 
-        //TODO: This mutex exists because I'm not exactly sure how aRead() and aWrite() work.
         private val mutex = Mutex()
 
         private var arrayLastPosition = 0L
@@ -643,7 +642,6 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
                 val channel = fileChannel.await()
                 mutex.withLock {
                     channel.force(true)
-                    closed = true
                     channel.close()
                 }
             }
@@ -656,7 +654,6 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
             withContext(Dispatchers.IO + NonCancellable) {
                 mutex.withLock {
                     fileChannel.await().close()
-                    closed = true
                     file.await().delete()
                 }
             }
