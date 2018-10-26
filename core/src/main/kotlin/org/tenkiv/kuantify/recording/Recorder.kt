@@ -390,20 +390,21 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
      * @param instantRange The range of time over which to get data.
      * @return A [List] of [ValueInstant]s stored by the recorder within the [ClosedRange].
      */
-    suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> {
-        val oldestRequested = instantRange.start
+    suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
+        withContext(coroutineContext + Dispatchers.Daqc) {
+            val oldestRequested = instantRange.start
 
-        val filterFun: StorageFilter<T> = { it.instant in instantRange }
+            val filterFun: StorageFilter<T> = { it.instant in instantRange }
 
-        val oldestMemory = _dataInMemory.firstOrNull()
-        return if (oldestMemory != null && oldestMemory.instant.isBefore(oldestRequested)) {
-            _dataInMemory.filter(filterFun)
-        } else if (diskStorageLength > memoryStorageLength) {
-            getDataFromDisk(filterFun)
-        } else {
-            _dataInMemory.filter(filterFun)
+            val oldestMemory = _dataInMemory.firstOrNull()
+            return@withContext if (oldestMemory != null && oldestMemory.instant.isBefore(oldestRequested)) {
+                _dataInMemory.filter(filterFun)
+            } else if (diskStorageLength > memoryStorageLength) {
+                getDataFromDisk(filterFun)
+            } else {
+                _dataInMemory.filter(filterFun)
+            }
         }
-    }
 
     /**
      * Stops the recorder.
@@ -432,25 +433,23 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
         val result = ArrayList<ValueInstant<T>>()
         val currentFiles: List<RecorderFile> = ArrayList(files)
 
-        val bufferMutex = Mutex()
         val buffer = ArrayList<ValueInstant<T>>()
 
-        launch(Dispatchers.Daqc) {
+        val bufferJob = launch(Dispatchers.Daqc) {
             fileCreationBroadcaster.openSubscription().receive()
             updatable.broadcastChannel.consumeEach { value ->
-                bufferMutex.withLock {
-                    buffer += value
-                }
+                buffer += value
             }
         }
 
         currentFiles.forEach {
             result.addAll(it.readFromDisk(filter))
         }
-        bufferMutex.withLock {
-            result.addAll(buffer.filter(filter))
-        }
 
+        result.addAll(buffer.filter(filter))
+
+
+        bufferJob.cancel()
         return result
     }
 
