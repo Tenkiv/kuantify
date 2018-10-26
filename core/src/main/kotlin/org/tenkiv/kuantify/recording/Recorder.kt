@@ -381,7 +381,11 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
      * @return A [List] of [ValueInstant]s of all the data sent by the Recorder's [Updatable].
      */
     suspend fun getAllData(): List<ValueInstant<T>> =
-        if (memoryStorageLength >= diskStorageLength) getDataInMemory() else getDataFromDisk { true }
+        if (memoryStorageLength >= diskStorageLength) {
+            getDataInMemory()
+        } else {
+            withContext(coroutineContext + Dispatchers.Daqc) { getDataFromDisk { true } }
+        }
 
     /**
      * Gets all the data between two points in time denoted by [Instant]s. If disk data is in range the function will
