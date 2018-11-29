@@ -381,7 +381,11 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
      * @return A [List] of [ValueInstant]s of all the data sent by the Recorder's [Updatable].
      */
     suspend fun getAllData(): List<ValueInstant<T>> =
-        if (memoryStorageLength >= diskStorageLength) getDataInMemory() else getDataFromDisk { true }
+        if (memoryStorageLength >= diskStorageLength) {
+            getDataInMemory()
+        } else {
+            withContext(coroutineContext + Dispatchers.Daqc) { getDataFromDisk { true } }
+        }
 
     /**
      * Gets all the data between two points in time denoted by [Instant]s. If disk data is in range the function will
@@ -390,20 +394,21 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
      * @param instantRange The range of time over which to get data.
      * @return A [List] of [ValueInstant]s stored by the recorder within the [ClosedRange].
      */
-    suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> {
-        val oldestRequested = instantRange.start
+    suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
+        withContext(coroutineContext + Dispatchers.Daqc) {
+            val oldestRequested = instantRange.start
 
-        val filterFun: StorageFilter<T> = { it.instant in instantRange }
+            val filterFun: StorageFilter<T> = { it.instant in instantRange }
 
-        val oldestMemory = _dataInMemory.firstOrNull()
-        return if (oldestMemory != null && oldestMemory.instant.isBefore(oldestRequested)) {
-            _dataInMemory.filter(filterFun)
-        } else if (diskStorageLength > memoryStorageLength) {
-            getDataFromDisk(filterFun)
-        } else {
-            _dataInMemory.filter(filterFun)
+            val oldestMemory = _dataInMemory.firstOrNull()
+            return@withContext if (oldestMemory != null && oldestMemory.instant.isBefore(oldestRequested)) {
+                _dataInMemory.filter(filterFun)
+            } else if (diskStorageLength > memoryStorageLength) {
+                getDataFromDisk(filterFun)
+            } else {
+                _dataInMemory.filter(filterFun)
+            }
         }
-    }
 
     /**
      * Stops the recorder.
@@ -427,30 +432,29 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
         job.cancel(CancellationException("Recorder manually stopped"))
     }
 
+    // Can only be called from Contexts.Daqc
     private suspend fun getDataFromDisk(filter: StorageFilter<T>): List<ValueInstant<T>> {
         //TODO: Change to immutable list using builder
         val result = ArrayList<ValueInstant<T>>()
         val currentFiles: List<RecorderFile> = ArrayList(files)
 
-        val bufferMutex = Mutex()
         val buffer = ArrayList<ValueInstant<T>>()
 
-        launch(Dispatchers.Daqc) {
+        val bufferJob = launch(Dispatchers.Daqc) {
             fileCreationBroadcaster.openSubscription().receive()
             updatable.broadcastChannel.consumeEach { value ->
-                bufferMutex.withLock {
-                    buffer += value
-                }
+                buffer += value
             }
         }
 
         currentFiles.forEach {
-            result.addAll(it.readFromDisk(filter))
-        }
-        bufferMutex.withLock {
-            result.addAll(buffer.filter(filter))
+            if (it.isOpen.await()) result.addAll(it.readFromDisk(filter))
         }
 
+        result.addAll(buffer.filter(filter))
+
+
+        bufferJob.cancel()
         return result
     }
 
@@ -467,11 +471,13 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
     private fun cleanMemory() {
         if (memoryStorageLength is StorageDuration.For) {
             val iterator = _dataInMemory.iterator()
-            while (iterator.hasNext())
-                if (iterator.next().instant.isOlderThan(memoryStorageLength.duration))
+            while (iterator.hasNext()) {
+                if (iterator.next().instant.isOlderThan(memoryStorageLength.duration)) {
                     iterator.remove()
-                else
+                } else {
                     break
+                }
+            }
         }
         if (memoryStorageLength is StorageSamples.Number) {
             if (_dataInMemory.size > memoryStorageLength.numSamples) _dataInMemory.remove(_dataInMemory.first())
@@ -572,6 +578,8 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
                 StandardOpenOption.WRITE
             )
         }
+
+        internal val isOpen get() = async { fileChannel.await().isOpen }
 
         private val mutex = Mutex()
 
