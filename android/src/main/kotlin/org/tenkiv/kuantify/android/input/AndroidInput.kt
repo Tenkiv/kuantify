@@ -22,7 +22,8 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.hardware.SensorManager.*
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.kuantify.android.AndroidSensorInitializationException
@@ -32,6 +33,7 @@ import org.tenkiv.kuantify.runningAverage
 import tec.units.indriya.ComparableQuantity
 import java.time.Instant
 import javax.measure.quantity.Frequency
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Class which defines the basic aspects of any Android Sensor.
@@ -42,6 +44,8 @@ abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sens
      * The sensor constant for the type of Android sensor.
      */
     abstract val type: Int
+
+    override val coroutineContext: CoroutineContext = Job()
 
     override val updateRate: ComparableQuantity<Frequency> by runningAverage()
 

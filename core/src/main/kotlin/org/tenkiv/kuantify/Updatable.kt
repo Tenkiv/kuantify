@@ -17,10 +17,10 @@
 
 package org.tenkiv.kuantify
 
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.launch
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.isOlderThan
 import org.tenkiv.coral.minutesSpan

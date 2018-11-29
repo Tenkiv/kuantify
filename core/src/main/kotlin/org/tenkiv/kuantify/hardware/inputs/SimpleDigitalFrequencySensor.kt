@@ -17,7 +17,7 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
-import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.CoroutineScope
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.data.toDaqc
 import org.tenkiv.kuantify.gate.acquire.input.QuantityInput

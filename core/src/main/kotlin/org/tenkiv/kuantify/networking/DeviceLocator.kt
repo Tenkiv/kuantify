@@ -20,9 +20,10 @@ package org.tenkiv.kuantify.networking
 import arrow.core.Success
 import arrow.core.Try
 import arrow.core.getOrElse
-import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.withTimeout
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.withTimeout
 import org.tenkiv.kuantify.Updatable
 import org.tenkiv.kuantify.hardware.definitions.device.Device
 import java.time.Duration
@@ -114,7 +115,7 @@ abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate<T>> {
         }
 
         if (timeout != null) {
-            withTimeout(timeout.toMillis(), TimeUnit.MILLISECONDS) {
+            withTimeout(timeout.toMillis()) {
                 getDevice()
             }
         } else {

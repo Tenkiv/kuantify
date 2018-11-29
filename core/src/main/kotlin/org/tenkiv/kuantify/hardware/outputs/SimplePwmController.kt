@@ -17,7 +17,7 @@
 
 package org.tenkiv.kuantify.hardware.outputs
 
-import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.CoroutineScope
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalOutput
 import javax.measure.quantity.Dimensionless

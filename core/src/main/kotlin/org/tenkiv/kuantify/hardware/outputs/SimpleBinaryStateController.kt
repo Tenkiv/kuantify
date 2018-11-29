@@ -17,8 +17,8 @@
 
 package org.tenkiv.kuantify.hardware.outputs
 
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.now
 import org.tenkiv.kuantify.BinaryStateMeasurement
 import org.tenkiv.kuantify.data.BinaryState

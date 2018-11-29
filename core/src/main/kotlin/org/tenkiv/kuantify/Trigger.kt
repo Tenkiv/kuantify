@@ -17,12 +17,16 @@
 
 package org.tenkiv.kuantify
 
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.ReceiveChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.kuantify.data.DaqcValue
 import org.tenkiv.kuantify.gate.acquire.input.Input
 import org.tenkiv.kuantify.lib.consumeAndReturn
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Class which acts as a monitor on an Input to execute a command when a certain state is met.
@@ -37,7 +41,8 @@ class Trigger<T : DaqcValue>(
     val maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
     vararg triggerConditions: TriggerCondition<T>,
     triggerFunction: () -> Unit
-) {
+) : CoroutineScope {
+    override val coroutineContext: CoroutineContext = Job()
 
     constructor(
         vararg triggerConditions: TriggerCondition<T>,
@@ -92,7 +97,7 @@ class Trigger<T : DaqcValue>(
     init {
         if (!(maxTriggerCount is MaxTriggerCount.Limited && maxTriggerCount.atomicCount.get() == 0)) {
             triggerConditions.forEach {
-                channelList.add(it.input.broadcastChannel.consumeAndReturn { update ->
+                channelList.add(it.input.broadcastChannel.consumeAndReturn(this) { update ->
                     val currentVal = update
 
                     it.lastValue = currentVal

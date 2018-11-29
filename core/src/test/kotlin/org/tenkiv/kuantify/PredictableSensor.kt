@@ -17,7 +17,8 @@
 
 package org.tenkiv.kuantify
 
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.kuantify.data.BinaryState
@@ -29,6 +30,7 @@ import java.time.Instant
 import java.util.*
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency
+import kotlin.coroutines.CoroutineContext
 
 class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
     override val updateRate: ComparableQuantity<Frequency>
@@ -37,6 +39,7 @@ class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
         get() = throw Exception("Empty Test Class Exception")
     override val isTransceiving: Boolean = false
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
+    override val coroutineContext: CoroutineContext = Job()
 
     override fun startSampling() {}
 
@@ -80,6 +83,7 @@ class PredictableDigitalSensor : Input<BinaryState> {
         get() = throw Exception("Empty Test Class Exception")
     override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<BinaryState>> = ConflatedBroadcastChannel()
     override val isTransceiving: Boolean = true
+    override val coroutineContext: CoroutineContext = Job()
 
     override fun startSampling() {}
 

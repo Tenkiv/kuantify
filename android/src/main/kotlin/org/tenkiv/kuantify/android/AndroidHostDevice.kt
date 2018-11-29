@@ -5,10 +5,14 @@ import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.provider.Settings
+import kotlinx.coroutines.Job
 import org.tenkiv.kuantify.android.input.AndroidSensor
 import org.tenkiv.kuantify.hardware.definitions.device.Device
+import kotlin.coroutines.CoroutineContext
 
 class AndroidHostDevice(context: Context) : Device {
+
+    override val coroutineContext: CoroutineContext = Job()
 
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         ?: throw ClassCastException(

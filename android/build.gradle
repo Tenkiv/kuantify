@@ -28,7 +28,10 @@ android {
 
 repositories {
     google()
+    mavenCentral()
     jcenter()
+    maven { url 'https://kotlin.bintray.com/ktor' }
+    maven { url "https://kotlin.bintray.com/kotlinx" }
 
     maven {
         url "https://oss.sonatype.org/content/repositories/snapshots/"
@@ -40,6 +43,6 @@ dependencies {
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
-
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
     testImplementation 'junit:junit:4.12'
 }

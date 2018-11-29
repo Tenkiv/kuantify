@@ -17,7 +17,7 @@
 
 package org.tenkiv.kuantify.recording.binary
 
-import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.CoroutineScope
 import org.tenkiv.kuantify.BinaryStateMeasurement
 import org.tenkiv.kuantify.Updatable
 import org.tenkiv.kuantify.data.BinaryState

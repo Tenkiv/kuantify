@@ -17,7 +17,8 @@
 
 package org.tenkiv.kuantify
 
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.kuantify.data.BinaryState
@@ -34,9 +35,11 @@ import java.time.Instant
 import java.util.*
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency
+import kotlin.coroutines.CoroutineContext
 
 
 class DigitalGibberingSensor : Input<BinaryState> {
+    override val coroutineContext: CoroutineContext = Job()
     override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
@@ -121,6 +124,7 @@ class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
     override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
+    override val coroutineContext: CoroutineContext = Job()
 
     override val isTransceiving: Boolean = false
 

@@ -17,13 +17,11 @@
 
 package org.tenkiv.kuantify.lib
 
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.channels.BroadcastChannel
-import kotlinx.coroutines.experimental.channels.ReceiveChannel
-import kotlinx.coroutines.experimental.channels.consume
-import kotlinx.coroutines.experimental.launch
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.EmptyCoroutineContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.consume
+import kotlinx.coroutines.launch
 
 //TODO: I think this function should be removed. It is only used in trigger and I think there is a more idiomatic way.
 /**
@@ -34,11 +32,11 @@ import kotlin.coroutines.experimental.EmptyCoroutineContext
  * @return The opened [ReceiveChannel].
  */
 fun <T> BroadcastChannel<T>.consumeAndReturn(
-    context: CoroutineContext = EmptyCoroutineContext,
+    scope: CoroutineScope,
     onReceive: suspend (T) -> Unit
 ): ReceiveChannel<T> {
     val subChannel = openSubscription()
-    launch(context) {
+    scope.launch {
         subChannel.consume { for (x in this) onReceive(x) }
     }
     return subChannel

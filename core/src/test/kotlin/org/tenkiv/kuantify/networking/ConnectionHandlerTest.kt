@@ -1,16 +1,7 @@
 package org.tenkiv.kuantify.networking
 
 import io.kotlintest.specs.StringSpec
-import io.ktor.network.sockets.openReadChannel
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.io.ByteReadChannel
-import kotlinx.coroutines.experimental.io.SuspendableReadSession
-import kotlinx.coroutines.experimental.io.readRemaining
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.newSingleThreadContext
-import kotlinx.io.core.IoBuffer
-import org.tenkiv.kuantify.networking.client.tcpip.TcpSocketHandler
-import java.net.InetSocketAddress
+import kotlinx.coroutines.io.ByteReadChannel
 
 class ConnectionHandlerTest : StringSpec({
     "Test TCP Connection"{

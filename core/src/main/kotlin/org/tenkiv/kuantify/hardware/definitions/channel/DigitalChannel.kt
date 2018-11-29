@@ -17,9 +17,9 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.launch
 import org.tenkiv.kuantify.BinaryStateMeasurement
 import org.tenkiv.kuantify.Measurement
 import org.tenkiv.kuantify.QuantityMeasurement

@@ -17,7 +17,7 @@
 
 package org.tenkiv.kuantify.hardware.definitions.device
 
-import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * The interface defining the basic aspects of all devices.

@@ -17,10 +17,10 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.experimental.channels.consumeEach
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.launch
 import org.tenkiv.coral.at
 import org.tenkiv.kuantify.BinaryStateMeasurement
 import org.tenkiv.kuantify.data.BinaryState

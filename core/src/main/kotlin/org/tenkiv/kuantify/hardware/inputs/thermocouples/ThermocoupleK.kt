@@ -18,8 +18,8 @@
 package org.tenkiv.kuantify.hardware.inputs.thermocouples
 
 import arrow.core.Try
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.data.toDaqc
 import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
@@ -31,7 +31,7 @@ import tec.units.indriya.unit.MetricPrefix.*
 import tec.units.indriya.unit.Units.*
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Temperature
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.pow
 
 /**

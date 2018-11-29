@@ -18,8 +18,8 @@
 package org.tenkiv.kuantify.learning.controller
 
 import com.google.common.collect.ImmutableList
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import org.deeplearning4j.rl4j.learning.sync.qlearning.QLearning
 import org.deeplearning4j.rl4j.learning.sync.qlearning.discrete.QLearningDiscreteDense
 import org.deeplearning4j.rl4j.network.dqn.DQNFactoryStdDense
@@ -39,7 +39,7 @@ import org.tenkiv.kuantify.recording.StorageFrequency
 import org.tenkiv.kuantify.recording.StorageSamples
 import org.tenkiv.physikal.core.*
 import java.time.Duration
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.CoroutineContext
 
 //TODO: Make correlatedInputs optional, add overloads for optional binaryStateOutputs and quantityOutputs.
 class LearningController<T> internal constructor(

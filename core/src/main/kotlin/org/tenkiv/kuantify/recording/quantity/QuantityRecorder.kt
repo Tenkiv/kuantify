@@ -17,7 +17,7 @@
 
 package org.tenkiv.kuantify.recording.quantity
 
-import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.CoroutineScope
 import org.tenkiv.kuantify.QuantityMeasurement
 import org.tenkiv.kuantify.Updatable
 import org.tenkiv.kuantify.data.DaqcQuantity
