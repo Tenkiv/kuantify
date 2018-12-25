@@ -22,8 +22,8 @@ plugins {
 dependencies {
     compile(project(":core"))
 
-    implementation(group = "org.deeplearning4j", name = "rl4j-core", version = Versions.dl4j)
+    implementation(group = "org.deeplearning4j", name = "rl4j-core", version = Vof.dl4j)
     implementation(group = "org.nield", name = "kotlin-statistics", version = "1.1.0")
 
-    testImplementation(group = "org.nd4j", name = "nd4j-native-platform", version = Versions.dl4j)
+    testImplementation(group = "org.nd4j", name = "nd4j-native-platform", version = Vof.dl4j)
 }

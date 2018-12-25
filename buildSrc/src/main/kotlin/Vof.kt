@@ -15,7 +15,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-object Versions {
+object Vof {
     const val kotlin = "1.3.11"
     const val coroutinesX = "1.0.1"
     const val ktor = "1.0.1"

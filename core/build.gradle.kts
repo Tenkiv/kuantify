@@ -22,18 +22,18 @@ plugins {
     id("kotlinx-serialization")
 }
 
-//apply(from = "../maven_push.gradle")
+apply(from = "../maven_push.gradle")
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
     // Networking
-    compile(group = "io.ktor", name = "ktor-network", version = Versions.ktor)
-    compile(group = "io.ktor", name = "ktor-network-tls", version = Versions.ktor)
+    compile(group = "io.ktor", name = "ktor-network", version = Vof.ktor)
+    compile(group = "io.ktor", name = "ktor-network-tls", version = Vof.ktor)
 
     //Serialization
-    implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = Versions.jackson)
-    implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = Versions.jackson)
+    implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = Vof.jackson)
+    implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = Vof.jackson)
 
     //Units of measurement
     compile(group = "org.tenkiv.physikal", name = "complete-units", version = "2.0.6.3-SNAPSHOT")
@@ -44,14 +44,14 @@ dependencies {
     implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect")
 
     //Coroutines
-    compile(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = Versions.coroutinesX)
+    compile(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = Vof.coroutinesX)
 
 
     //Test dependencies
     testImplementation(
         group = "org.jetbrains.kotlinx",
         name = "kotlinx-serialization-runtime",
-        version = Versions.serializationX
+        version = Vof.serializationX
     )
 }
 

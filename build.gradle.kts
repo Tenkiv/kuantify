@@ -19,12 +19,12 @@
 
 plugins {
     base
-    kotlin("jvm") version Versions.kotlin apply false
-    kotlin("android") version Versions.kotlin apply false
-    kotlin("android.extensions") version Versions.kotlin apply false
-    id("kotlinx-serialization") version Versions.kotlin apply false
+    kotlin("jvm") version Vof.kotlin apply false
+    kotlin("android") version Vof.kotlin apply false
+    kotlin("android.extensions") version Vof.kotlin apply false
+    id("kotlinx-serialization") version Vof.kotlin apply false
 
-    //  id("com.android.library") version Versions.androidLibrary apply false
+    //  id("com.android.library") version Vof.androidLibrary apply false
 }
 
 buildscript {
@@ -51,6 +51,7 @@ subprojects {
     repositories {
         mavenCentral()
         jcenter()
+        google()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
         maven(url = "https://kotlin.bintray.com/ktor")
         maven(url = "https://kotlin.bintray.com/kotlinx")

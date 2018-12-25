@@ -44,7 +44,7 @@ dependencies {
 
     api(project(":core"))
 
-    implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version = Versions.coroutinesX)
+    implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version = Vof.coroutinesX)
 
     testImplementation(group = "junit", name = "junit", version = "4.12")
 }
