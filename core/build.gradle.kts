@@ -22,7 +22,7 @@ plugins {
     id("kotlinx-serialization")
 }
 
-apply(from = "../maven_push.gradle")
+//apply(from = "../maven_push.gradle")
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
@@ -36,11 +36,11 @@ dependencies {
     implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = Versions.jackson)
 
     //Units of measurement
-    compile(group = "org.tenkiv.physikal", name = "complete-units", version = "2.0.6.0-SNAPSHOT")
+    compile(group = "org.tenkiv.physikal", name = "complete-units", version = "2.0.6.3-SNAPSHOT")
 
     //General kotlin utilities
-    compile(group = "org.tenkiv.coral", name = "coral", version = "2.1.0.1-SNAPSHOT")
-    compile(group = "io.arrow-kt", name = "arrow-core", version = "0.7.2")
+    compile(group = "org.tenkiv.coral", name = "coral", version = "2.1.2.3-SNAPSHOT")
+    compile(group = "io.arrow-kt", name = "arrow-core", version = "0.8.1")
     implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect")
 
     //Coroutines

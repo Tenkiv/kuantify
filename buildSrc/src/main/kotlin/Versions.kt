@@ -16,9 +16,9 @@
  */
 
 object Versions {
-    const val kotlin = "1.3.10"
+    const val kotlin = "1.3.11"
     const val coroutinesX = "1.0.1"
-    const val ktor = "1.0.0"
+    const val ktor = "1.0.1"
     const val dl4j = "1.0.0-beta3"
     const val serializationX = "0.9.1"
     const val jackson = "2.9.6"
