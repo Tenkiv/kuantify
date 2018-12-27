@@ -46,5 +46,5 @@ dependencies {
 
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version = Vof.coroutinesX)
 
-    testImplementation(group = "junit", name = "junit", version = "4.12")
+    testImplementation(group = "junit", name = "junit", version = Vof.junit)
 }

@@ -36,11 +36,11 @@ dependencies {
     implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = Vof.jackson)
 
     //Units of measurement
-    compile(group = "org.tenkiv.physikal", name = "complete-units", version = "2.0.6.3-SNAPSHOT")
+    compile(group = "org.tenkiv.physikal", name = "complete-units", version = Vof.physikal)
 
     //General kotlin utilities
-    compile(group = "org.tenkiv.coral", name = "coral", version = "2.1.2.3-SNAPSHOT")
-    compile(group = "io.arrow-kt", name = "arrow-core", version = "0.8.1")
+    compile(group = "org.tenkiv.coral", name = "coral", version = Vof.coral)
+    compile(group = "io.arrow-kt", name = "arrow-core", version = Vof.arrow)
     implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect")
 
     //Coroutines

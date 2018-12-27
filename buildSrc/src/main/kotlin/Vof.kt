@@ -17,10 +17,25 @@
 
 object Vof {
     const val kotlin = "1.3.11"
+
+    // Kotlin extensions
     const val coroutinesX = "1.0.1"
-    const val ktor = "1.0.1"
-    const val dl4j = "1.0.0-beta3"
     const val serializationX = "0.9.1"
+
+    // Jetbrains
+    const val ktor = "1.0.1"
+
+    // Tenkiv
+    const val coral = "2.1.2.3-SNAPSHOT"
+    const val physikal = "2.0.6.3-SNAPSHOT"
+
+    // Other
+    const val arrow = "0.8.1"
+    const val statistics = "1.1.0"
+    const val dl4j = "1.0.0-beta3"
     const val jackson = "2.9.6"
     const val androidLibrary = "3.2.1"
+
+    // Test
+    const val junit = "4.12"
 }
