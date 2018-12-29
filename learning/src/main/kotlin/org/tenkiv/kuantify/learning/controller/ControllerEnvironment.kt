@@ -152,7 +152,7 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
         return if (currentValueDouble != null) rewardDistribution.density(currentValueDouble) - 1.0 else 0.0
     }
 
-    private fun getObservation(): Encodable {
+    fun getObservation(): Encodable {
         val observationsList = ArrayList<Double>()
 
         // Inputs and Outputs won't return null because we wait for them to initialise in LearningController.

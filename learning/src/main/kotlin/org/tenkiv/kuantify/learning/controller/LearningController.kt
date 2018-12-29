@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import org.deeplearning4j.rl4j.learning.sync.qlearning.QLearning
-import org.deeplearning4j.rl4j.learning.sync.qlearning.discrete.QLearningDiscreteDense
 import org.deeplearning4j.rl4j.network.dqn.DQNFactoryStdDense
 import org.deeplearning4j.rl4j.space.Encodable
 import org.deeplearning4j.rl4j.util.DataManager
@@ -33,6 +32,7 @@ import org.tenkiv.kuantify.data.DaqcValue
 import org.tenkiv.kuantify.gate.acquire.input.RangedInput
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.getValue
+import org.tenkiv.kuantify.learning.lib.OnlineQlDiscreteDense
 import org.tenkiv.kuantify.recording.Recorder
 import org.tenkiv.kuantify.recording.StorageDuration
 import org.tenkiv.kuantify.recording.StorageFrequency
@@ -75,7 +75,7 @@ class LearningController<T> internal constructor(
         outputsBuilder.build()
     }
 
-    private val agent: QLearningDiscreteDense<Encodable>
+    private val agent: OnlineQlDiscreteDense<Encodable>
 
     @Volatile
     override var isTransceiving = false
@@ -116,7 +116,7 @@ class LearningController<T> internal constructor(
         val networkConfig: DQNFactoryStdDense.Configuration = DQNFactoryStdDense.Configuration.builder()
             .l2(0.001).updater(Adam(0.001)).numHiddenNodes(16).numLayer(3).build()
 
-        agent = QLearningDiscreteDense(environment, networkConfig, reinforcementConfig, DataManager(false))
+        agent = OnlineQlDiscreteDense(environment, networkConfig, reinforcementConfig, DataManager(false))
     }
 
     override fun setOutput(setting: T, panicOnFailure: Boolean): SettingResult.Success {
