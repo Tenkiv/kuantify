@@ -20,6 +20,7 @@ package org.tenkiv.kuantify.learning.controller
 import com.google.common.collect.ImmutableList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.time.delay
 import org.deeplearning4j.rl4j.learning.sync.qlearning.QLearning
 import org.deeplearning4j.rl4j.network.dqn.DQNFactoryStdDense
 import org.deeplearning4j.rl4j.space.Encodable
@@ -27,6 +28,7 @@ import org.deeplearning4j.rl4j.util.DataManager
 import org.nd4j.linalg.learning.config.Adam
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.now
+import org.tenkiv.kuantify.CombinedUpdatable
 import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.data.DaqcValue
 import org.tenkiv.kuantify.gate.acquire.input.RangedInput
@@ -75,10 +77,14 @@ class LearningController<T> internal constructor(
         outputsBuilder.build()
     }
 
+    private val combinedInputs = CombinedUpdatable(targetInput, *correlatedInputs.toTypedArray())
+
     private val agent: OnlineQlDiscreteDense<Encodable>
 
     @Volatile
-    override var isTransceiving = false
+    private var agentRunner: Job? = null
+
+    override val isTransceiving get() = agentRunner != null
 
     private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<T>>()
 
@@ -120,7 +126,7 @@ class LearningController<T> internal constructor(
     }
 
     override fun setOutput(setting: T, panicOnFailure: Boolean): SettingResult.Success {
-        launch {
+        launch(trainingManagementDispatcher) {
             // Wait until all inputs have a value. This is hacky and sucks but rl4j makes life difficult.
             targetInput.updatable.startSampling()
             correlatedInputs.forEach {
@@ -133,8 +139,11 @@ class LearningController<T> internal constructor(
             }
 
             _broadcastChannel.send(setting.now())
-            launch(trainingManagementDispatcher) {
-                agent.train()
+            agentRunner = launch(trainingManagementDispatcher) {
+                while (true) {
+                    agent.trainStep()
+                    delay(minTimeBetweenActions)
+                }
             }
         }
 
@@ -142,7 +151,8 @@ class LearningController<T> internal constructor(
     }
 
     override fun stopTransceiving() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        agentRunner?.cancel()
+        agentRunner = null
     }
 
     fun cancel() = job.cancel()

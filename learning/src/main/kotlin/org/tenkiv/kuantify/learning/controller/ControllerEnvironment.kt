@@ -99,8 +99,6 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
             actionHandlerList[index].takeAction(individualAction)
         }
 
-        Thread.sleep(controller.minTimeBetweenActions.toMillis())
-
         return StepReply(getObservation(), getReward(), isDone, null)
     }
 

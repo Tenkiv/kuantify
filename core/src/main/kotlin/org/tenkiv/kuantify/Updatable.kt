@@ -18,6 +18,7 @@
 package org.tenkiv.kuantify
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
@@ -29,6 +30,7 @@ import tec.units.indriya.ComparableQuantity
 import java.time.Duration
 import java.time.Instant
 import javax.measure.quantity.Frequency
+import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.KProperty
 
 /**
@@ -98,3 +100,30 @@ class AverageUpdateRateDelegate internal constructor(input: RatedUpdatable<*>, p
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>): ComparableQuantity<Frequency> = updateRate
 }
+
+private class CombinedUpdatable<out T>(scope: CoroutineScope, updatables: Array<out Updatable<T>>) :
+    Updatable<T> {
+
+    private val job = Job(scope.coroutineContext[Job])
+
+    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
+
+    private val _broadcastChannel = ConflatedBroadcastChannel<T>()
+
+    override val broadcastChannel: ConflatedBroadcastChannel<out T> get() = _broadcastChannel
+
+    init {
+        updatables.forEach { updatable ->
+            launch {
+                updatable.broadcastChannel.consumeEach { update ->
+                    _broadcastChannel.send(update)
+                }
+            }
+        }
+    }
+
+    fun cancel() = job.cancel()
+}
+
+fun <T> CoroutineScope.CombinedUpdatable(vararg updatables: Updatable<T>): Updatable<T> =
+    CombinedUpdatable(this, updatables)
