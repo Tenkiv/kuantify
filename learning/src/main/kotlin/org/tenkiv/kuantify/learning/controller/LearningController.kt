@@ -28,7 +28,6 @@ import org.deeplearning4j.rl4j.util.DataManager
 import org.nd4j.linalg.learning.config.Adam
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.now
-import org.tenkiv.kuantify.CombinedUpdatable
 import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.data.DaqcValue
 import org.tenkiv.kuantify.gate.acquire.input.RangedInput
@@ -49,7 +48,17 @@ class LearningController<T> internal constructor(
     targetInput: RangedInput<T>,
     correlatedInputs: Collection<RangedInput<*>>,
     outputs: Collection<RangedOutput<*>>,
-    val minTimeBetweenActions: Duration
+    val minTimeBetweenActions: Duration,
+    expRepMaxSize: Int = 500_000,
+    batchSize: Int = 32,
+    targetDqnUpdateFreq: Int = 500,
+    updateStart: Int = 10,
+    rewardFactor: Double = 0.01,
+    gamma: Double = 0.99,
+    errorClamp: Double = 1.0,
+    minEpsilon: Float = 0.00001f,
+    epsilonNbStep: Int = 1_000,
+    doubleDqn: Boolean = true
 ) : Output<T> where T : DaqcValue, T : Comparable<T> {
 
     private val job = Job(scope.coroutineContext[Job])
@@ -76,8 +85,6 @@ class LearningController<T> internal constructor(
         })
         outputsBuilder.build()
     }
-
-    private val combinedInputs = CombinedUpdatable(targetInput, *correlatedInputs.toTypedArray())
 
     private val agent: OnlineQlDiscreteDense<Encodable>
 
@@ -107,22 +114,29 @@ class LearningController<T> internal constructor(
             123, //Random seed
             Int.MAX_VALUE, //Max step By epoch
             Int.MAX_VALUE, //Max step
-            500000, //Max size of experience replay
-            32, //size of batches
-            500, //target update (hard)
-            10, //num step noop warmup
-            0.01, //reward scaling (Reward discount factor I think)
-            0.99, //gamma
-            1.0, //td-error clipping
-            0.00001f, //min epsilon (why is this min and not just epsilon? maybe because it starts higher and comes down every epsilonNbStep)
-            1000, //num step for eps greedy anneal (number of steps before reducing epsilon (reducing exploration))
-            true    //double DQN
+            expRepMaxSize, //Max size of experience replay
+            batchSize, //size of batches
+            targetDqnUpdateFreq, //target update (hard)
+            updateStart, //num step noop warmup
+            rewardFactor, //reward scaling (Reward discount factor I think)
+            gamma, //gamma
+            errorClamp, //td-error clipping
+            minEpsilon, //min epsilon (why is this min and not just epsilon? maybe because it starts higher and comes down every epsilonNbStep)
+            epsilonNbStep, //num step for eps greedy anneal (number of steps before reducing epsilon (reducing exploration))
+            doubleDqn    //double DQN
         )
 
         val networkConfig: DQNFactoryStdDense.Configuration = DQNFactoryStdDense.Configuration.builder()
             .l2(0.001).updater(Adam(0.001)).numHiddenNodes(16).numLayer(3).build()
 
-        agent = OnlineQlDiscreteDense(environment, networkConfig, reinforcementConfig, DataManager(false))
+        agent = OnlineQlDiscreteDense(
+            environment,
+            networkConfig,
+            reinforcementConfig,
+            DataManager(false)
+        ).apply {
+            initMdp()
+        }
     }
 
     override fun setOutput(setting: T, panicOnFailure: Boolean): SettingResult.Success {
@@ -141,7 +155,7 @@ class LearningController<T> internal constructor(
             _broadcastChannel.send(setting.now())
             agentRunner = launch(trainingManagementDispatcher) {
                 while (true) {
-                    agent.trainStep()
+                    agent.trainStep(environment.getObservation())
                     delay(minTimeBetweenActions)
                 }
             }
