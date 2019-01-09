@@ -1,5 +1,3 @@
-import org.gradle.internal.impldep.com.amazonaws.PredefinedClientConfigurations.defaultConfig
-
 /*
  * Copyright 2018 Tenkiv, Inc.
  *
@@ -37,6 +35,12 @@ android {
             isMinifyEnabled = false
         }
     }
+
+    sourceSets {
+        getByName("main").java.srcDirs("src/main/kotlin")
+        getByName("test").java.srcDirs("src/test/kotlin")
+    }
+
 }
 
 dependencies {
