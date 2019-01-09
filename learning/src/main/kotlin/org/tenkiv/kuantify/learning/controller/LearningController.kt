@@ -42,7 +42,7 @@ import org.tenkiv.physikal.core.*
 import java.time.Duration
 import kotlin.coroutines.CoroutineContext
 
-//TODO: Make correlatedInputs optional, add overloads for optional binaryStateOutputs and quantityOutputs.
+//TODO: Make correlatedInputs optional.
 class LearningController<T> internal constructor(
     scope: CoroutineScope,
     targetInput: RangedInput<T>,

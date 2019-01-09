@@ -17,13 +17,10 @@
 
 package org.tenkiv.kuantify.hardware.definitions.device
 
-import org.tenkiv.kuantify.data.DaqcValue
-import org.tenkiv.kuantify.gate.acquire.input.Input
 import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
 import org.tenkiv.kuantify.hardware.LineNoiseFrequency
 import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
-import org.tenkiv.kuantify.networking.SharingStatus
 import javax.measure.quantity.Temperature
 
 /**
@@ -60,10 +57,5 @@ interface DataAcquisitionDevice : Device {
      * If this [DataAcquisitionDevice] has any [DigitalInputs]s.
      */
     val hasDigitalInputs: Boolean
-
-    /**
-     * A [MutableMap] of all inputs shared for remote access.
-     */
-    val sharedInputs: MutableMap<SharingStatus, Input<DaqcValue>>
 
 }

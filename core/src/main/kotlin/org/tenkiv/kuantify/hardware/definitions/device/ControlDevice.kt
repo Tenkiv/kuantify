@@ -17,11 +17,8 @@
 
 package org.tenkiv.kuantify.hardware.definitions.device
 
-import org.tenkiv.kuantify.data.DaqcValue
-import org.tenkiv.kuantify.gate.control.output.Output
 import org.tenkiv.kuantify.hardware.definitions.channel.AnalogOutput
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalOutput
-import org.tenkiv.kuantify.networking.SharingStatus
 
 /**
  * Interface defining [Device]s which have either [AnalogOutput]s, [DigitalOutput]s, or both.
@@ -47,10 +44,5 @@ interface ControlDevice : Device {
      * If this [ControlDevice] has any [DigitalOutput]s.
      */
     val hasDigitalOutputs: Boolean
-
-    /**
-     * A [MutableMap] of all outputs shared for remote access.
-     */
-    val sharedOutputs: MutableMap<SharingStatus, Output<DaqcValue>>
 
 }

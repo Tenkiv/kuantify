@@ -29,8 +29,4 @@ interface Device : CoroutineScope {
      */
     val serialNumber: String
 
-    /**
-     * Function called to initialize the [Device] for first usage if necessary.
-     */
-    fun initializeDevice()
 }
