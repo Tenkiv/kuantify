@@ -77,10 +77,6 @@ class AndroidHostDevice(context: Context) : Device {
     override val serialNumber: String = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
 
-    override fun initializeDevice() {
-        //TODO INIT SSH server.
-    }
-
 }
 
 /**
