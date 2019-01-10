@@ -26,7 +26,6 @@ import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.gate.acquire.input.Input
 import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
-import org.tenkiv.kuantify.hardware.definitions.device.DataAcquisitionDevice
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.ComparableQuantity
 import tec.units.indriya.unit.MetricPrefix.*

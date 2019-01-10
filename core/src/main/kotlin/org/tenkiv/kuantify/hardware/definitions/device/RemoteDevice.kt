@@ -4,7 +4,7 @@ package org.tenkiv.kuantify.hardware.definitions.device
  * Interface defining the basic features of a device that can be connected to. This is in most cases a device located
  * across a network or serial connection.
  */
-interface ConnectableDevice : Device {
+interface RemoteDevice : Device {
 
     /**
      * Value representing if the Device is connected.

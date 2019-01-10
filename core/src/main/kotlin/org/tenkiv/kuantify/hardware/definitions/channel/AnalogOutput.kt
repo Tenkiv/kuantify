@@ -18,7 +18,6 @@
 package org.tenkiv.kuantify.hardware.definitions.channel
 
 import org.tenkiv.kuantify.gate.control.output.QuantityOutput
-import org.tenkiv.kuantify.hardware.definitions.device.ControlDevice
 import javax.measure.quantity.ElectricPotential
 
 /**

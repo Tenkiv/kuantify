@@ -5,16 +5,16 @@ import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.provider.Settings
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineScope
 import org.tenkiv.kuantify.android.input.AndroidSensor
-import org.tenkiv.kuantify.hardware.definitions.device.Device
+import org.tenkiv.kuantify.hardware.definitions.device.LocalDevice
 import kotlin.coroutines.CoroutineContext
 
-class AndroidHostDevice(context: Context) : Device {
+open class LocalAndroidDevice(scope: CoroutineScope, context: Context) : LocalDevice {
 
-    override val coroutineContext: CoroutineContext = Job()
+    final override val coroutineContext: CoroutineContext = scope.coroutineContext
 
-    private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+    internal val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         ?: throw ClassCastException(
             "Android has somehow returned the wrong system service; this is not our problem."
         )
@@ -35,32 +35,35 @@ class AndroidHostDevice(context: Context) : Device {
     val hasPressureSensors = pressureSensors.isNotEmpty()
 
     val relativeHumiditySensors: List<AndroidRelativeHumiditySensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE)
+        sensorManager.getDynamicSensorList(Sensor.TYPE_RELATIVE_HUMIDITY)
             .map { AndroidRelativeHumiditySensor(sensorManager, it) }
 
     val hasRelativeHumiditySensors = relativeHumiditySensors.isNotEmpty()
 
     val ambientTemperatureSensors: List<AndroidAmbientTemperatureSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE)
+        sensorManager.getDynamicSensorList(Sensor.TYPE_AMBIENT_TEMPERATURE)
             .map { AndroidAmbientTemperatureSensor(sensorManager, it) }
 
     val hasAmbientTemperatureSensors = ambientTemperatureSensors.isNotEmpty()
 
     val stationarySensors: List<AndroidStationarySensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE).map { AndroidStationarySensor(sensorManager, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_STATIONARY_DETECT)
+            .map { AndroidStationarySensor(sensorManager, it) }
 
     val hasStationarySensors = stationarySensors.isNotEmpty()
 
     val motionSensors: List<AndroidMotionSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE).map { AndroidMotionSensor(sensorManager, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_MOTION_DETECT).map { AndroidMotionSensor(sensorManager, it) }
 
     val hasMotionSensors = motionSensors.isNotEmpty()
 
+    //DEBUG: What is the difference between heart beat and heart rate?
     val heartBeatSensors: List<AndroidHeartBeatSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE).map { AndroidHeartBeatSensor(sensorManager, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_HEART_BEAT).map { AndroidHeartBeatSensor(sensorManager, it) }
 
     val hasHeartBeatSensors = heartBeatSensors.isNotEmpty()
 
+    //DEBUG: What is this?
     val onBodySensors: List<AndroidOnBodySensor> =
         sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE).map { AndroidOnBodySensor(sensorManager, it) }
 
@@ -74,7 +77,8 @@ class AndroidHostDevice(context: Context) : Device {
      * More Info: https://developer.android.com/training/articles/user-data-ids
      */
     @SuppressLint("HardwareIds")
-    override val serialNumber: String = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+    final override val serialNumber: String =
+        Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
 
 }

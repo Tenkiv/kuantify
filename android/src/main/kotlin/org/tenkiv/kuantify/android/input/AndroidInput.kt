@@ -22,11 +22,11 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.hardware.SensorManager.*
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import org.tenkiv.coral.ValueInstant
 import org.tenkiv.coral.at
 import org.tenkiv.kuantify.android.AndroidSensorInitializationException
+import org.tenkiv.kuantify.android.LocalAndroidDevice
 import org.tenkiv.kuantify.data.DaqcValue
 import org.tenkiv.kuantify.gate.acquire.input.Input
 import org.tenkiv.kuantify.runningAverage
@@ -38,14 +38,16 @@ import kotlin.coroutines.CoroutineContext
 /**
  * Class which defines the basic aspects of any Android Sensor.
  */
-abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sensor: Sensor) : Input<Q> {
+abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val sensor: Sensor) : Input<Q> {
+
+    private val manager: SensorManager get() = device.sensorManager
 
     /**
      * The sensor constant for the type of Android sensor.
      */
     abstract val type: Int
 
-    override val coroutineContext: CoroutineContext = Job()
+    override val coroutineContext: CoroutineContext get() = device.coroutineContext
 
     override val updateRate: ComparableQuantity<Frequency> by runningAverage()
 
@@ -89,6 +91,12 @@ abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sens
         }
     }
 
+    init {
+        //This is done as there is only one Android sensor class making compile time safety impossible.
+        if (sensor.type != type)
+            throw AndroidSensorInitializationException("Sensor supplied was of the incorrect type.")
+    }
+
     override fun startSampling() {
         _isActive = true
         manager.registerListener(sensorListener, sensor, 100, 200)
@@ -97,12 +105,6 @@ abstract class AndroidSensor<Q : DaqcValue>(val manager: SensorManager, val sens
     override fun stopTransceiving() {
         _isActive = false
         manager.unregisterListener(sensorListener)
-    }
-
-    init {
-        //This is done as there is only one Android sensor class making compile time safety impossible.
-        if (sensor.type != type)
-            throw AndroidSensorInitializationException("Sensor supplied was of the incorrect type.")
     }
 
     /**

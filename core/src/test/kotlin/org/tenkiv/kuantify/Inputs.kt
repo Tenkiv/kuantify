@@ -22,7 +22,6 @@ import org.tenkiv.coral.ValueInstant
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
 import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
-import org.tenkiv.kuantify.hardware.definitions.device.DataAcquisitionDevice
 import tec.units.indriya.ComparableQuantity
 import javax.measure.quantity.ElectricPotential
 import javax.measure.quantity.Frequency

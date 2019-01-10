@@ -18,7 +18,6 @@
 package org.tenkiv.kuantify.hardware.definitions.channel
 
 import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
-import org.tenkiv.kuantify.hardware.definitions.device.DataAcquisitionDevice
 import tec.units.indriya.ComparableQuantity
 import javax.measure.quantity.ElectricPotential
 

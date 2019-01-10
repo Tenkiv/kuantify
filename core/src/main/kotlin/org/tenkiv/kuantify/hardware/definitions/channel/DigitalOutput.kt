@@ -21,7 +21,6 @@ import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
 import org.tenkiv.kuantify.gate.control.output.SettingResult
-import org.tenkiv.kuantify.hardware.definitions.device.ControlDevice
 import org.tenkiv.kuantify.hardware.outputs.SimpleBinaryStateController
 import org.tenkiv.kuantify.hardware.outputs.SimpleFrequencyController
 import org.tenkiv.kuantify.hardware.outputs.SimplePwmController
