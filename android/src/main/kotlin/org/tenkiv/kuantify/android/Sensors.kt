@@ -3,6 +3,7 @@ package org.tenkiv.kuantify.android
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import org.tenkiv.kuantify.android.input.AndroidSensor
+import org.tenkiv.kuantify.android.lib.beatsPerMinute
 import org.tenkiv.kuantify.data.BinaryState
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.data.toDaqc
@@ -114,11 +115,11 @@ class AndroidMotionSensor(manager: SensorManager, sensor: Sensor) :
  * @param sensor The sensor to be integrated.
  */
 class AndroidHeartBeatSensor(manager: SensorManager, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Dimensionless>>(manager, sensor) {
+    AndroidSensor<DaqcQuantity<Frequency>>(manager, sensor) {
 
     override val type: Int = Sensor.TYPE_HEART_BEAT
 
-    override fun convertData(data: FloatArray): DaqcQuantity<Dimensionless> = data[0].percent.toDaqc()
+    override fun convertData(data: FloatArray): DaqcQuantity<Frequency> = data[0].beatsPerMinute.toDaqc()
 }
 
 /**
