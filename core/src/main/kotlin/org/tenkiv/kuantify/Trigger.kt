@@ -18,7 +18,6 @@
 package org.tenkiv.kuantify
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ReceiveChannel
 import org.tenkiv.coral.ValueInstant
@@ -28,6 +27,54 @@ import org.tenkiv.kuantify.lib.consumeAndReturn
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 
+fun <T : DaqcValue> CoroutineScope.Trigger(
+    triggerOnSimultaneousValues: Boolean = false,
+    maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
+    vararg triggerConditions: TriggerCondition<T>,
+    triggerFunction: () -> Unit
+): Trigger<T> = Trigger(
+    scope = this,
+    triggerOnSimultaneousValues = triggerOnSimultaneousValues,
+    maxTriggerCount = maxTriggerCount,
+    triggerConditions = *triggerConditions,
+    triggerFunction = triggerFunction
+)
+
+fun <T : DaqcValue> CoroutineScope.Trigger(
+    vararg triggerConditions: TriggerCondition<T>,
+    triggerFunction: () -> Unit
+): Trigger<T> = Trigger(
+    this,
+    false,
+    MaxTriggerCount.Limited(1),
+    *triggerConditions,
+    triggerFunction = triggerFunction
+)
+
+fun <T : DaqcValue> CoroutineScope.Trigger(
+    maxTriggerCount: MaxTriggerCount,
+    vararg triggerConditions: TriggerCondition<T>,
+    triggerFunction: () -> Unit
+): Trigger<T> = Trigger(
+    this,
+    false,
+    maxTriggerCount,
+    *triggerConditions,
+    triggerFunction = triggerFunction
+)
+
+fun <T : DaqcValue> CoroutineScope.Trigger(
+    triggerOnSimultaneousValues: Boolean,
+    vararg triggerConditions: TriggerCondition<T>,
+    triggerFunction: () -> Unit
+): Trigger<T> = Trigger(
+    this,
+    triggerOnSimultaneousValues,
+    MaxTriggerCount.Limited(1),
+    *triggerConditions,
+    triggerFunction = triggerFunction
+)
+
 /**
  * Class which acts as a monitor on an Input to execute a command when a certain state is met.
  *
@@ -36,55 +83,23 @@ import kotlin.coroutines.CoroutineContext
  * @param triggerConditions The [TriggerCondition]s which need to be met for a trigger to fire.
  * @param triggerFunction The function to be executed when the trigger fires.
  */
-class Trigger<T : DaqcValue>(
+class Trigger<T : DaqcValue> internal constructor(
+    scope: CoroutineScope,
     val triggerOnSimultaneousValues: Boolean = false,
     val maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
     vararg triggerConditions: TriggerCondition<T>,
     triggerFunction: () -> Unit
 ) : CoroutineScope {
-    override val coroutineContext: CoroutineContext = Job()
+    private val job = Job(scope.coroutineContext[Job])
 
-    constructor(
-        vararg triggerConditions: TriggerCondition<T>,
-        triggerFunction: () -> Unit
-    ) :
-            this(
-                false,
-                MaxTriggerCount.Limited(1),
-                *triggerConditions,
-                triggerFunction = triggerFunction
-            )
-
-    constructor(
-        maxTriggerCount: MaxTriggerCount,
-        vararg triggerConditions: TriggerCondition<T>,
-        triggerFunction: () -> Unit
-    ) :
-            this(
-                false,
-                maxTriggerCount,
-                *triggerConditions,
-                triggerFunction = triggerFunction
-            )
-
-    constructor(
-        triggerOnSimultaneousValues: Boolean,
-        vararg triggerConditions: TriggerCondition<T>,
-        triggerFunction: () -> Unit
-    ) :
-            this(
-                triggerOnSimultaneousValues,
-                MaxTriggerCount.Limited(1),
-                *triggerConditions,
-                triggerFunction = triggerFunction
-            )
+    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
 
     private val channelList: MutableList<ReceiveChannel<ValueInstant<T>>> = ArrayList()
 
     /**
      * Stops the [Trigger] and cancels the open channels.
      */
-    fun stop() {
+    fun cancel() {
         if (maxTriggerCount is MaxTriggerCount.Limited && maxTriggerCount.atomicCount.get() > 0) {
             maxTriggerCount.atomicCount.decrementAndGet()
 
@@ -92,6 +107,7 @@ class Trigger<T : DaqcValue>(
                 channelList.forEach { it.cancel() }
             }
         }
+        job.cancel()
     }
 
     init {
@@ -106,14 +122,14 @@ class Trigger<T : DaqcValue>(
                         it.hasBeenReached = true
 
                         if (triggerOnSimultaneousValues) {
-                            stop()
+                            cancel()
                             triggerConditions.all {
                                 val value = it.lastValue ?: return@all false
                                 it.condition(value)
                             }.apply { triggerFunction() }
 
                         } else {
-                            stop()
+                            cancel()
                             triggerConditions.all { it.hasBeenReached }.apply { triggerFunction() }
                         }
                     }

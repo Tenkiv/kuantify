@@ -95,7 +95,7 @@ class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
 
     override fun startSampling() = inputs.forEach { it.startSampling() }
 
-    //TODO: We might not want to actually stop the underlying inputs
+    //TODO: We might not want to actually cancel the underlying inputs
     override fun stopTransceiving() = inputs.forEach { it.stopTransceiving() }
 
     fun cancel() = job.cancel()
