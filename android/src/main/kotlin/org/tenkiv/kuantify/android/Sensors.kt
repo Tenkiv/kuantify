@@ -16,8 +16,8 @@ import javax.measure.quantity.*
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidLightSensor(manager: SensorManager, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Illuminance>>(manager, sensor) {
+class AndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor) :
+    AndroidSensor<DaqcQuantity<Illuminance>>(device, sensor) {
 
     override val type: Int = Sensor.TYPE_LIGHT
 
@@ -30,8 +30,8 @@ class AndroidLightSensor(manager: SensorManager, sensor: Sensor) :
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidProximitySensor(manager: SensorManager, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Length>>(manager, sensor) {
+class AndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor) :
+    AndroidSensor<DaqcQuantity<Length>>(device, sensor) {
 
     override val type: Int = Sensor.TYPE_PROXIMITY
 
@@ -44,8 +44,8 @@ class AndroidProximitySensor(manager: SensorManager, sensor: Sensor) :
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidPressureSensor(manager: SensorManager, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Pressure>>(manager, sensor) {
+class AndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor) :
+    AndroidSensor<DaqcQuantity<Pressure>>(device, sensor) {
 
     override val type: Int = Sensor.TYPE_PRESSURE
 
@@ -58,8 +58,8 @@ class AndroidPressureSensor(manager: SensorManager, sensor: Sensor) :
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidRelativeHumiditySensor(manager: SensorManager, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Dimensionless>>(manager, sensor) {
+class AndroidRelativeHumiditySensor(device: LocalAndroidDevice, sensor: Sensor) :
+    AndroidSensor<DaqcQuantity<Dimensionless>>(device, sensor) {
 
     override val type: Int = Sensor.TYPE_RELATIVE_HUMIDITY
 
@@ -72,8 +72,8 @@ class AndroidRelativeHumiditySensor(manager: SensorManager, sensor: Sensor) :
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidAmbientTemperatureSensor(manager: SensorManager, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Temperature>>(manager, sensor) {
+class AndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: Sensor) :
+    AndroidSensor<DaqcQuantity<Temperature>>(device, sensor) {
 
     override val type: Int = Sensor.TYPE_AMBIENT_TEMPERATURE
 
@@ -86,8 +86,8 @@ class AndroidAmbientTemperatureSensor(manager: SensorManager, sensor: Sensor) :
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidStationarySensor(manager: SensorManager, sensor: Sensor) :
-    AndroidSensor<BinaryState>(manager, sensor) {
+class AndroidStationarySensor(device: LocalAndroidDevice, sensor: Sensor) :
+    AndroidSensor<BinaryState>(device, sensor) {
 
     override val type: Int = Sensor.TYPE_STATIONARY_DETECT
 
@@ -100,8 +100,8 @@ class AndroidStationarySensor(manager: SensorManager, sensor: Sensor) :
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidMotionSensor(manager: SensorManager, sensor: Sensor) :
-    AndroidSensor<BinaryState>(manager, sensor) {
+class AndroidMotionSensor(device: LocalAndroidDevice, sensor: Sensor) :
+    AndroidSensor<BinaryState>(device, sensor) {
 
     override val type: Int = Sensor.TYPE_MOTION_DETECT
 
@@ -114,8 +114,8 @@ class AndroidMotionSensor(manager: SensorManager, sensor: Sensor) :
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidHeartBeatSensor(manager: SensorManager, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Frequency>>(manager, sensor) {
+class AndroidHeartBeatSensor(device: LocalAndroidDevice, sensor: Sensor) :
+    AndroidSensor<DaqcQuantity<Frequency>>(device, sensor) {
 
     override val type: Int = Sensor.TYPE_HEART_BEAT
 
@@ -128,8 +128,8 @@ class AndroidHeartBeatSensor(manager: SensorManager, sensor: Sensor) :
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidOnBodySensor(manager: SensorManager, sensor: Sensor) :
-    AndroidSensor<BinaryState>(manager, sensor) {
+class AndroidOnBodySensor(device: LocalAndroidDevice, sensor: Sensor) :
+    AndroidSensor<BinaryState>(device, sensor) {
 
     override val type: Int = Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT
 

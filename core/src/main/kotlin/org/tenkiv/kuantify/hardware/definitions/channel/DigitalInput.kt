@@ -19,6 +19,7 @@ package org.tenkiv.kuantify.hardware.definitions.channel
 
 import org.tenkiv.kuantify.data.DaqcQuantity
 import org.tenkiv.kuantify.gate.acquire.input.BinaryStateInput
+import org.tenkiv.kuantify.hardware.definitions.device.DigitalDaqDevice
 import org.tenkiv.kuantify.hardware.inputs.SimpleBinaryStateSensor
 import org.tenkiv.kuantify.hardware.inputs.SimpleDigitalFrequencySensor
 import org.tenkiv.kuantify.hardware.inputs.SimplePwmSensor
@@ -27,7 +28,7 @@ import javax.measure.quantity.Frequency
 /**
  * Class defining the basic features of an input which reads binary signals.
  */
-abstract class DigitalInput : DigitalChannel<DataAcquisitionDevice>(), BinaryStateInput {
+abstract class DigitalInput : DigitalChannel<DigitalDaqDevice>(), BinaryStateInput {
 
     override val isTransceiving get() = super.isTransceiving
 
