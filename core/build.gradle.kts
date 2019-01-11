@@ -32,6 +32,11 @@ dependencies {
     compile(group = "io.ktor", name = "ktor-network-tls", version = Vof.ktor)
 
     //Serialization
+    implementation(
+        group = "org.jetbrains.kotlinx",
+        name = "kotlinx-serialization-runtime",
+        version = Vof.serializationX
+    )
     implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = Vof.jackson)
     implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = Vof.jackson)
 
@@ -46,13 +51,6 @@ dependencies {
     //Coroutines
     compile(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = Vof.coroutinesX)
 
-
-    //Test dependencies
-    testImplementation(
-        group = "org.jetbrains.kotlinx",
-        name = "kotlinx-serialization-runtime",
-        version = Vof.serializationX
-    )
 }
 
 tasks.withType<KotlinCompile> {

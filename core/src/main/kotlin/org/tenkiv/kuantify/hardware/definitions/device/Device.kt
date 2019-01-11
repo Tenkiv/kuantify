@@ -29,4 +29,10 @@ interface Device : CoroutineScope {
      */
     val serialNumber: String
 
+    val isHosting: Boolean
+
+    fun startHosting()
+
+    fun stopHosting()
+
 }
