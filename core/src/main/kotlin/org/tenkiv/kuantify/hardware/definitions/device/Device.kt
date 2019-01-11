@@ -24,15 +24,6 @@ import kotlinx.coroutines.CoroutineScope
  */
 interface Device : CoroutineScope {
 
-    /**
-     * The device's serial number. This should be unique.
-     */
-    val serialNumber: String
-
-    val isHosting: Boolean
-
-    fun startHosting()
-
-    fun stopHosting()
+    val uid: String
 
 }

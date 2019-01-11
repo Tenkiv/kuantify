@@ -15,19 +15,17 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.networking
+package org.tenkiv.kuantify.networking.location
 
 import arrow.core.Success
 import arrow.core.Try
 import arrow.core.getOrElse
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.withTimeout
 import org.tenkiv.kuantify.Updatable
 import org.tenkiv.kuantify.hardware.definitions.device.Device
 import java.time.Duration
-import java.util.concurrent.TimeUnit
 
 /**
  * Class defining functions expected from Device Locators.
@@ -62,7 +60,7 @@ abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate<T>> {
     @Throws(ClosedReceiveChannelException::class)
     suspend fun getDeviceForSerial(serialNumber: String): T {
         return activeDevices.firstOrNull {
-            it.serialNumber == serialNumber
+            it.uid == serialNumber
         } ?: awaitBroadcast(serialNumber).getOrElse { throw it }
     }
 
@@ -76,7 +74,7 @@ abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate<T>> {
      */
     suspend fun tryGetDeviceForSerial(serialNumber: String, timeout: Duration? = null): Try<T> {
         val fromMemory = activeDevices.firstOrNull {
-            it.serialNumber == serialNumber
+            it.uid == serialNumber
         }
 
         return if (fromMemory != null) {
@@ -93,7 +91,7 @@ abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate<T>> {
      * @retun The device with the specifeid serial number or null.
      */
     fun getDeviceForSerialOrNull(serialNumber: String): T? =
-        activeDevices.firstOrNull { it.serialNumber == serialNumber }
+        activeDevices.firstOrNull { it.uid == serialNumber }
 
     @Suppress("MemberVisibilityCanBePrivate") // it's a lie, PublishedApi must be internal
     @PublishedApi
@@ -105,7 +103,7 @@ abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate<T>> {
 
         suspend fun getDevice(): T {
             subscription.consumeEach {
-                if (it is FoundDevice<*> && it.serialNumber == serialNumber) return it.wrappedDevice
+                if (it is FoundDevice<*> && it.uid == serialNumber) return it.wrappedDevice
             }
 
             throw ClosedReceiveChannelException(

@@ -20,52 +20,52 @@ open class LocalAndroidDevice(scope: CoroutineScope, context: Context) : LocalDe
         )
 
     val lightSensors: List<AndroidLightSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_LIGHT).map { AndroidLightSensor(sensorManager, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_LIGHT).map { AndroidLightSensor(this, it) }
 
     val hasLightSensors = lightSensors.isNotEmpty()
 
     val proximitySensors: List<AndroidProximitySensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PROXIMITY).map { AndroidProximitySensor(sensorManager, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_PROXIMITY).map { AndroidProximitySensor(this, it) }
 
     val hasProximitySensors = proximitySensors.isNotEmpty()
 
     val pressureSensors: List<AndroidPressureSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE).map { AndroidPressureSensor(sensorManager, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE).map { AndroidPressureSensor(this, it) }
 
     val hasPressureSensors = pressureSensors.isNotEmpty()
 
     val relativeHumiditySensors: List<AndroidRelativeHumiditySensor> =
         sensorManager.getDynamicSensorList(Sensor.TYPE_RELATIVE_HUMIDITY)
-            .map { AndroidRelativeHumiditySensor(sensorManager, it) }
+            .map { AndroidRelativeHumiditySensor(this, it) }
 
     val hasRelativeHumiditySensors = relativeHumiditySensors.isNotEmpty()
 
     val ambientTemperatureSensors: List<AndroidAmbientTemperatureSensor> =
         sensorManager.getDynamicSensorList(Sensor.TYPE_AMBIENT_TEMPERATURE)
-            .map { AndroidAmbientTemperatureSensor(sensorManager, it) }
+            .map { AndroidAmbientTemperatureSensor(this, it) }
 
     val hasAmbientTemperatureSensors = ambientTemperatureSensors.isNotEmpty()
 
     val stationarySensors: List<AndroidStationarySensor> =
         sensorManager.getDynamicSensorList(Sensor.TYPE_STATIONARY_DETECT)
-            .map { AndroidStationarySensor(sensorManager, it) }
+            .map { AndroidStationarySensor(this, it) }
 
     val hasStationarySensors = stationarySensors.isNotEmpty()
 
     val motionSensors: List<AndroidMotionSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_MOTION_DETECT).map { AndroidMotionSensor(sensorManager, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_MOTION_DETECT).map { AndroidMotionSensor(this, it) }
 
     val hasMotionSensors = motionSensors.isNotEmpty()
 
     //DEBUG: What is the difference between heart beat and heart rate?
     val heartBeatSensors: List<AndroidHeartBeatSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_HEART_BEAT).map { AndroidHeartBeatSensor(sensorManager, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_HEART_BEAT).map { AndroidHeartBeatSensor(this, it) }
 
     val hasHeartBeatSensors = heartBeatSensors.isNotEmpty()
 
     //DEBUG: What is this?
     val onBodySensors: List<AndroidOnBodySensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE).map { AndroidOnBodySensor(sensorManager, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE).map { AndroidOnBodySensor(this, it) }
 
     val hasOnBodySensors = stationarySensors.isNotEmpty()
 
@@ -77,7 +77,7 @@ open class LocalAndroidDevice(scope: CoroutineScope, context: Context) : LocalDe
      * More Info: https://developer.android.com/training/articles/user-data-ids
      */
     @SuppressLint("HardwareIds")
-    final override val serialNumber: String =
+    final override val uid: String =
         Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
 
