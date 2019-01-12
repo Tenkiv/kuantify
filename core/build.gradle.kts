@@ -53,15 +53,14 @@ dependencies {
     //ktor
     implementation(group = "io.ktor", name = "ktor-server-netty", version = Vof.ktor)
     implementation(group = "io.ktor", name = "ktor-websockets", version = Vof.ktor)
-    implementation(group = "io.ktor", name = "ktor-server-sessions", version = Vof.ktor)
 
-    implementation(group = "io.ktor", name = "ktor-client-cio", version = Vof.ktor)
+    implementation(group = "io.ktor", name = "ktor-client-core", version = Vof.ktor)
     implementation(group = "io.ktor", name = "ktor-client-websocket", version = Vof.ktor)
-    implementation(group = "io.ktor", name = "ktor-client-json", version = Vof.ktor)
 
 
     //Test
     testImplementation(group = "org.slf4j", name = "slf4j-simple", version = Vof.slf4j)
+    testImplementation(group = "io.ktor", name = "ktor-client-cio", version = Vof.ktor)
 
 }
 
