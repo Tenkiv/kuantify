@@ -17,24 +17,20 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
-import arrow.core.Failure
-import arrow.core.Success
-import arrow.core.Try
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.launch
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.at
-import org.tenkiv.kuantify.QuantityMeasurement
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
-import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
-import tec.units.indriya.ComparableQuantity
-import javax.measure.Quantity
-import javax.measure.quantity.ElectricPotential
+import arrow.core.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.hardware.definitions.channel.*
+import tec.units.indriya.*
+import javax.measure.*
+import javax.measure.quantity.*
 
 /**
- * Abstract class for single channel analog sensors.
+ * Abstract class for single channel analog sensorMap.
  *
  * @param analogInput The analog input.
  * @param maximumEp The maximum [ElectricPotential] for the sensor.

@@ -1,9 +1,9 @@
 package org.tenkiv.kuantify.hardware.definitions.device
 
-import org.tenkiv.kuantify.gate.acquire.input.Input
+import org.tenkiv.kuantify.gate.acquire.input.*
 
 interface SensorDevice : Device {
 
-    val sensors: Map<Int, Input<*>>
+    val sensorMap: Map<String, Input<*>>
 
 }

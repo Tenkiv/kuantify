@@ -1,10 +1,9 @@
 package org.tenkiv.kuantify.hardware.definitions.device
 
-import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
-import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
-import tec.units.indriya.ComparableQuantity
-import javax.measure.quantity.Frequency
-import javax.measure.quantity.Temperature
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.hardware.definitions.channel.*
+import tec.units.indriya.*
+import javax.measure.quantity.*
 
 interface AnalogDaqDevice : SensorDevice {
 
@@ -21,6 +20,6 @@ interface AnalogDaqDevice : SensorDevice {
     /**
      * List of all [AnalogInput]s that this device has.
      */
-    val analogInputs: Map<Int, AnalogInput>
+    val analogInputMap: Map<String, AnalogInput>
 
 }

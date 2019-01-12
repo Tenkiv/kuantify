@@ -27,9 +27,16 @@ apply(from = "../maven_push.gradle")
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
-    // Networking
-    compile(group = "io.ktor", name = "ktor-network", version = Vof.ktor)
-    compile(group = "io.ktor", name = "ktor-network-tls", version = Vof.ktor)
+    //General kotlin utilities
+    compile(group = "org.tenkiv.coral", name = "coral", version = Vof.coral)
+    compile(group = "io.arrow-kt", name = "arrow-core", version = Vof.arrow)
+    implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect")
+
+    //Coroutines
+    compile(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = Vof.coroutinesX)
+
+    //Logging
+    implementation(group = "io.github.microutils", name = "kotlin-logging", version = Vof.logging)
 
     //Serialization
     implementation(
@@ -43,18 +50,21 @@ dependencies {
     //Units of measurement
     compile(group = "org.tenkiv.physikal", name = "complete-units", version = Vof.physikal)
 
-    //General kotlin utilities
-    compile(group = "org.tenkiv.coral", name = "coral", version = Vof.coral)
-    compile(group = "io.arrow-kt", name = "arrow-core", version = Vof.arrow)
-    implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect")
+    //ktor
+    implementation(group = "io.ktor", name = "ktor-server-netty", version = Vof.ktor)
+    implementation(group = "io.ktor", name = "ktor-websockets", version = Vof.ktor)
+    implementation(group = "io.ktor", name = "ktor-server-sessions", version = Vof.ktor)
 
-    //Coroutines
-    compile(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = Vof.coroutinesX)
+    implementation(group = "io.ktor", name = "ktor-client-cio", version = Vof.ktor)
+    implementation(group = "io.ktor", name = "ktor-client-websocket", version = Vof.ktor)
+    implementation(group = "io.ktor", name = "ktor-client-json", version = Vof.ktor)
+
+
+    //Test
+    testImplementation(group = "org.slf4j", name = "slf4j-simple", version = Vof.slf4j)
 
 }
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
-
-    kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
 }
