@@ -17,17 +17,16 @@
 
 package org.tenkiv.kuantify.recording.quantity
 
-import kotlinx.coroutines.CoroutineScope
-import org.tenkiv.kuantify.QuantityMeasurement
-import org.tenkiv.kuantify.Updatable
-import org.tenkiv.kuantify.data.DaqcQuantity
+import kotlinx.coroutines.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.recording.*
-import javax.measure.Quantity
+import javax.measure.*
 
 //TODO: This file shouldn't need to be in a separate package from recording pending changes to kotlin's method signature
 // conflict resolution
 
-inline fun <reified Q : Quantity<Q>, U : Updatable<QuantityMeasurement<Q>>> CoroutineScope.Recorder(
+inline fun <reified Q : Quantity<Q>, U : Trackable<QuantityMeasurement<Q>>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
@@ -44,7 +43,7 @@ inline fun <reified Q : Quantity<Q>, U : Updatable<QuantityMeasurement<Q>>> Coro
     valueDeserializer = DaqcQuantity.Companion::fromString
 )
 
-inline fun <reified Q : Quantity<Q>, U : Updatable<QuantityMeasurement<Q>>> CoroutineScope.Recorder(
+inline fun <reified Q : Quantity<Q>, U : Trackable<QuantityMeasurement<Q>>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     numSamplesMemory: StorageSamples = StorageSamples.Number(100),

@@ -17,10 +17,8 @@
 
 package org.tenkiv.kuantify.recording
 
-import io.kotlintest.specs.StringSpec
-import kotlinx.serialization.Serializable
-import org.tenkiv.kuantify.AnalogGibberingSensor
-import org.tenkiv.kuantify.DigitalGibberingSensor
+import kotlinx.serialization.*
+import org.tenkiv.kuantify.*
 
 class RecorderSpec : StringSpec({
 
@@ -78,7 +76,7 @@ class RecorderSpec : StringSpec({
 
         val subthing = SubThing("some info", 42, listOf("1", "2", "3"))
 
-        val recorder = object : Updatable<ValueInstant<Thing>> {
+        val recorder = object : Trackable<ValueInstant<Thing>> {
             override val coroutineContext: CoroutineContext = Job()
 
             override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<Thing>>()

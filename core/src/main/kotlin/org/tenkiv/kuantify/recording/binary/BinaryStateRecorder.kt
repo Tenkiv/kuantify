@@ -17,16 +17,15 @@
 
 package org.tenkiv.kuantify.recording.binary
 
-import kotlinx.coroutines.CoroutineScope
-import org.tenkiv.kuantify.BinaryStateMeasurement
-import org.tenkiv.kuantify.Updatable
-import org.tenkiv.kuantify.data.BinaryState
+import kotlinx.coroutines.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.recording.*
 
 //TODO: This file shouldn't need to be in a separate package from recording pending changes to kotlin's method signature
 // conflict resolution
 
-fun <U : Updatable<BinaryStateMeasurement>> CoroutineScope.Recorder(
+fun <U : Trackable<BinaryStateMeasurement>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
@@ -43,7 +42,7 @@ fun <U : Updatable<BinaryStateMeasurement>> CoroutineScope.Recorder(
     valueDeserializer = BinaryState.Companion::fromString
 )
 
-fun <U : Updatable<BinaryStateMeasurement>> CoroutineScope.Recorder(
+fun <U : Trackable<BinaryStateMeasurement>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     numSamplesMemory: StorageSamples = StorageSamples.Number(100),

@@ -17,13 +17,9 @@
 
 package org.tenkiv.kuantify.networking.location
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import org.tenkiv.kuantify.Updatable
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.kuantify.*
 
 /**
  * Class to wrap multiple locators into a single broadcast channel.
@@ -32,7 +28,7 @@ import org.tenkiv.kuantify.Updatable
  * @param locators The [DeviceLocator]s to be included.
  */
 class CombinationLocator internal constructor(vararg val locators: DeviceLocator<*>, scope: CoroutineScope) :
-    Updatable<LocatorUpdate<*>> {
+    Trackable<LocatorUpdate<*>> {
 
     private val job = Job(scope.coroutineContext[Job])
 

@@ -17,18 +17,14 @@
 
 package org.tenkiv.kuantify.gate
 
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.normalToOrNull
-import org.tenkiv.kuantify.Updatable
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.data.DaqcData
-import org.tenkiv.kuantify.data.DaqcValue
-import org.tenkiv.kuantify.valueOrNull
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
 
 /**
  * A general interface for an updatable that returns data.
  */
-interface DaqcGate<out T : DaqcData> : Updatable<ValueInstant<T>> {
+interface DaqcGate<out T : DaqcData> : Trackable<ValueInstant<T>> {
     /**
      * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcGate]
      */

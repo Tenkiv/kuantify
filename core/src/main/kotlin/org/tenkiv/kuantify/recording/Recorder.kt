@@ -17,32 +17,22 @@
 
 package org.tenkiv.kuantify.recording
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.module.kotlin.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.time.delay
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.isOlderThan
-import org.tenkiv.coral.secondsSpan
-import org.tenkiv.kuantify.Daqc
-import org.tenkiv.kuantify.Updatable
-import org.tenkiv.kuantify.getValue
-import org.tenkiv.kuantify.lib.PrimitiveValueInstant
-import org.tenkiv.kuantify.lib.aRead
-import org.tenkiv.kuantify.lib.aWrite
-import java.io.File
-import java.nio.ByteBuffer
-import java.nio.channels.AsynchronousFileChannel
-import java.nio.charset.Charset
-import java.nio.file.StandardOpenOption
-import java.time.Duration
-import java.time.Instant
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.sync.*
+import kotlinx.coroutines.time.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.lib.*
+import java.io.*
+import java.nio.*
+import java.nio.channels.*
+import java.nio.charset.*
+import java.nio.file.*
+import java.time.*
+import kotlin.coroutines.*
 
 typealias ValueSerializer<T> = (T) -> String
 typealias ValueDeserializer<T> = (String) -> T
@@ -50,7 +40,7 @@ typealias RecordingFilter<T, U> = Recorder<T, U>.(ValueInstant<T>) -> Boolean
 internal typealias StorageFilter<T> = (ValueInstant<T>) -> Boolean
 
 //TODO: Move default parameter values in recorder creation function to constants
-fun <T, U : Updatable<ValueInstant<T>>> CoroutineScope.Recorder(
+fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
@@ -69,7 +59,7 @@ fun <T, U : Updatable<ValueInstant<T>>> CoroutineScope.Recorder(
     valueDeserializer = valueDeserializer
 )
 
-fun <T, U : Updatable<ValueInstant<T>>> CoroutineScope.Recorder(
+fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     numSamplesMemory: StorageSamples = StorageSamples.Number(100),
@@ -88,7 +78,7 @@ fun <T, U : Updatable<ValueInstant<T>>> CoroutineScope.Recorder(
     valueDeserializer = valueDeserializer
 )
 
-fun <T, U : Updatable<ValueInstant<T>>> CoroutineScope.Recorder(
+fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryStorageLength: StorageLength = StorageSamples.Number(100),
@@ -231,7 +221,7 @@ sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
 /**
  * Recorder to store data either in memory, on disk, or both depending on certain parameters.
  */
-class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
+class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
 
     val updatable: U
     val storageFrequency: StorageFrequency
@@ -259,7 +249,7 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
     /**
      * Recorder to store data either in memory or on disk depending on certain parameters.
      *
-     * @param updatable The [Updatable] to monitor for samples.
+     * @param updatable The [Trackable] to monitor for samples.
      * @param storageFrequency Determines how frequently data is stored to the [Recorder].
      * @param memoryDuration Determines how long samples are stored in memory.
      * @param diskDuration Determines how long samples are stored on disk.
@@ -296,7 +286,7 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
     /**
      * Recorder to store data either in memory or on disk depending on certain parameters.
      *
-     * @param updatable The [Updatable] to monitor for samples.
+     * @param updatable The [Trackable] to monitor for samples.
      * @param storageFrequency Determines how frequently data is stored to the [Recorder].
      * @param numSamplesMemory Determines how long samples are stored in memory.
      * @param numSamplesDisk Determines how long samples are stored on disk.
@@ -333,7 +323,7 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
     /**
      * Recorder to store data either in memory or on disk depending on certain parameters.
      *
-     * @param updatable The [Updatable] to monitor for samples.
+     * @param updatable The [Trackable] to monitor for samples.
      * @param storageFrequency Determines how frequently data is stored to the [Recorder].
      * @param memoryStorageLength Determines how long samples are stored in memory.
      * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
@@ -369,7 +359,7 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
      * Gets the data currently stored in heap memory by this recorder. The returned list can not be modified.
      * To get an updated list of data in memory, call this function again.
      *
-     * @return A [List] of [ValueInstant]s of the data in heap memory sent by the Recorder's [Updatable].
+     * @return A [List] of [ValueInstant]s of the data in heap memory sent by the Recorder's [Trackable].
      */
     //TODO: Make this return truly immutable list.
     fun getDataInMemory(): List<ValueInstant<T>> = ArrayList(_dataInMemory)
@@ -378,7 +368,7 @@ class Recorder<out T, out U : Updatable<ValueInstant<T>>> : CoroutineScope {
      * Gets all data both in heap memory and disk. If disk data exists the function will suspend until data is restored
      * to heap memory.
      *
-     * @return A [List] of [ValueInstant]s of all the data sent by the Recorder's [Updatable].
+     * @return A [List] of [ValueInstant]s of all the data sent by the Recorder's [Trackable].
      */
     suspend fun getAllData(): List<ValueInstant<T>> =
         if (memoryStorageLength >= diskStorageLength) {

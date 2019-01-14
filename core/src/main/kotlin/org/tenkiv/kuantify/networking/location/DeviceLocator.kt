@@ -17,20 +17,17 @@
 
 package org.tenkiv.kuantify.networking.location
 
-import arrow.core.Success
-import arrow.core.Try
-import arrow.core.getOrElse
-import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.withTimeout
-import org.tenkiv.kuantify.Updatable
-import org.tenkiv.kuantify.hardware.definitions.device.Device
-import java.time.Duration
+import arrow.core.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.hardware.definitions.device.*
+import java.time.*
 
 /**
  * Class defining functions expected from Device Locators.
  */
-abstract class DeviceLocator<T : Device> : Updatable<LocatorUpdate<T>> {
+abstract class DeviceLocator<T : Device> : Trackable<LocatorUpdate<T>> {
 
     /**
      * The list of active devices that are both found and able to be connected to.

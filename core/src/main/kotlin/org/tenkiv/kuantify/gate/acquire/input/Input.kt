@@ -17,17 +17,12 @@
 
 package org.tenkiv.kuantify.gate.acquire.input
 
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.kuantify.RatedUpdatable
-import org.tenkiv.kuantify.Trigger
-import org.tenkiv.kuantify.TriggerCondition
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.data.DaqcValue
-import org.tenkiv.kuantify.gate.IOStrand
-import org.tenkiv.kuantify.gate.RangedIOStrand
-import javax.measure.Quantity
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.*
+import javax.measure.*
 
 typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
 
@@ -36,7 +31,7 @@ typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
  *
  * @param T The type of data given by this Input.
  */
-interface Input<out T : DaqcValue> : IOStrand<T>, RatedUpdatable<T> {
+interface Input<out T : DaqcValue> : IOStrand<T>, RatedTrackable<T> {
 
     /**
      * Exception is sent over this channel when something prevents the input from being received.

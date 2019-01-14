@@ -17,21 +17,16 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.launch
-import org.tenkiv.kuantify.BinaryStateMeasurement
-import org.tenkiv.kuantify.Measurement
-import org.tenkiv.kuantify.QuantityMeasurement
-import org.tenkiv.kuantify.Updatable
-import org.tenkiv.kuantify.hardware.definitions.device.Device
-import javax.measure.quantity.Dimensionless
-import javax.measure.quantity.Frequency
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.hardware.definitions.device.*
+import javax.measure.quantity.*
 
 /**
  * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
  */
-abstract class DigitalChannel<D : Device> : Updatable<BinaryStateMeasurement>, DaqcChannel<D> {
+abstract class DigitalChannel<D : Device> : Trackable<BinaryStateMeasurement>, DaqcChannel<D> {
 
     /**
      * Gets if the channel has been activated for any state

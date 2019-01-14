@@ -17,26 +17,20 @@
 
 package org.tenkiv.kuantify
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.launch
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.isOlderThan
-import org.tenkiv.coral.minutesSpan
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
 import org.tenkiv.physikal.core.*
-import tec.units.indriya.ComparableQuantity
-import java.time.Duration
-import java.time.Instant
-import javax.measure.quantity.Frequency
-import kotlin.coroutines.CoroutineContext
-import kotlin.reflect.KProperty
+import tec.units.indriya.*
+import java.time.*
+import javax.measure.quantity.*
+import kotlin.coroutines.*
+import kotlin.reflect.*
 
 /**
  * The base interface which defines objects which have the ability to update their status.
  */
-interface Updatable<out T> : CoroutineScope {
+interface Trackable<out T> : CoroutineScope {
 
     /**
      * The [ConflatedBroadcastChannel] over which updates are broadcast.
@@ -50,24 +44,24 @@ interface Updatable<out T> : CoroutineScope {
  *
  * @return The value of the [broadcastChannel] or null.
  */
-val <T> Updatable<T>.valueOrNull get() = broadcastChannel.valueOrNull
+val <T> Trackable<T>.valueOrNull get() = broadcastChannel.valueOrNull
 
 /**
  * Gets the current value of the [broadcastChannel] or suspends and waits for one to exist.
  *
  * @return The value of the [broadcastChannel]
  */
-suspend fun <T> Updatable<T>.getValue(): T =
+suspend fun <T> Trackable<T>.getValue(): T =
     broadcastChannel.valueOrNull ?: broadcastChannel.openSubscription().receive()
 
-interface RatedUpdatable<out T> : Updatable<ValueInstant<T>> {
+interface RatedTrackable<out T> : Trackable<ValueInstant<T>> {
     val updateRate: ComparableQuantity<Frequency>
 }
 
-fun RatedUpdatable<*>.runningAverage(avgLength: Duration = 1.minutesSpan): AverageUpdateRateDelegate =
+fun RatedTrackable<*>.runningAverage(avgLength: Duration = 1.minutesSpan): AverageUpdateRateDelegate =
     AverageUpdateRateDelegate(this, avgLength)
 
-class AverageUpdateRateDelegate internal constructor(input: RatedUpdatable<*>, private val avgLength: Duration) {
+class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, private val avgLength: Duration) {
 
     @Volatile
     var updateRate = 0.hertz
@@ -101,8 +95,8 @@ class AverageUpdateRateDelegate internal constructor(input: RatedUpdatable<*>, p
     operator fun getValue(thisRef: Any?, property: KProperty<*>): ComparableQuantity<Frequency> = updateRate
 }
 
-private class CombinedUpdatable<out T>(scope: CoroutineScope, updatables: Array<out Updatable<T>>) :
-    Updatable<T> {
+private class CombinedTrackable<out T>(scope: CoroutineScope, trackables: Array<out Trackable<T>>) :
+    Trackable<T> {
 
     private val job = Job(scope.coroutineContext[Job])
 
@@ -113,7 +107,7 @@ private class CombinedUpdatable<out T>(scope: CoroutineScope, updatables: Array<
     override val broadcastChannel: ConflatedBroadcastChannel<out T> get() = _broadcastChannel
 
     init {
-        updatables.forEach { updatable ->
+        trackables.forEach { updatable ->
             launch {
                 updatable.broadcastChannel.consumeEach { update ->
                     _broadcastChannel.send(update)
@@ -125,5 +119,5 @@ private class CombinedUpdatable<out T>(scope: CoroutineScope, updatables: Array<
     fun cancel() = job.cancel()
 }
 
-fun <T> CoroutineScope.CombinedUpdatable(vararg updatables: Updatable<T>): Updatable<T> =
-    CombinedUpdatable(this, updatables)
+fun <T> CoroutineScope.CombinedUpdatable(vararg trackables: Trackable<T>): Trackable<T> =
+    CombinedTrackable(this, trackables)
