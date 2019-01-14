@@ -43,7 +43,7 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
 ) : QuantityInput<Q> {
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    final override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
     private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
@@ -59,7 +59,7 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
         analogInput.maxAcceptableError = acceptableError
 
         launch {
-            analogInput.broadcastChannel.consumeEach { measurement ->
+            analogInput.updateBroadcaster.consumeEach { measurement ->
                 val convertedResult = convertInput(measurement.value)
 
                 when (convertedResult) {

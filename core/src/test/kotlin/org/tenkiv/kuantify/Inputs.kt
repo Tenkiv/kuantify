@@ -17,14 +17,12 @@
 
 package org.tenkiv.kuantify
 
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
-import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
-import tec.units.indriya.ComparableQuantity
-import javax.measure.quantity.ElectricPotential
-import javax.measure.quantity.Frequency
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.hardware.definitions.channel.*
+import tec.units.indriya.*
+import javax.measure.quantity.*
 
 class EmptyAnalogInput : AnalogInput() {
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
@@ -40,7 +38,7 @@ class EmptyAnalogInput : AnalogInput() {
 
     override fun startSampling() {}
 
-    override val broadcastChannel:
+    override val updateBroadcaster:
             ConflatedBroadcastChannel<QuantityMeasurement<ElectricPotential>> = ConflatedBroadcastChannel()
 
     override fun stopTransceiving() {}

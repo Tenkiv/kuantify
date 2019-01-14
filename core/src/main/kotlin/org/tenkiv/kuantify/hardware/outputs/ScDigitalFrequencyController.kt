@@ -17,15 +17,14 @@
 
 package org.tenkiv.kuantify.hardware.outputs
 
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import org.tenkiv.coral.now
-import org.tenkiv.kuantify.QuantityMeasurement
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.gate.control.output.QuantityOutput
-import org.tenkiv.kuantify.gate.control.output.SettingResult
-import org.tenkiv.kuantify.hardware.definitions.channel.DigitalOutput
-import javax.measure.Quantity
-import javax.measure.quantity.Frequency
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.control.output.*
+import org.tenkiv.kuantify.hardware.definitions.channel.*
+import javax.measure.*
+import javax.measure.quantity.*
 
 /**
  * Abstract class for a controller which outputs a [Frequency] to a single digital output channel from a [Quantity].
@@ -39,7 +38,7 @@ abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: 
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
 
-    final override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
     override fun setOutput(setting: DaqcQuantity<Q>, panicOnFailure: Boolean): SettingResult {

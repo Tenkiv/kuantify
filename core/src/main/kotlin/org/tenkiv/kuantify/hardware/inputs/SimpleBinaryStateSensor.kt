@@ -17,15 +17,13 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.launch
-import org.tenkiv.coral.at
-import org.tenkiv.kuantify.BinaryStateMeasurement
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.gate.acquire.input.BinaryStateInput
-import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.hardware.definitions.channel.*
 
 /**
  * A simple simple implementation of a binary sensor
@@ -43,7 +41,7 @@ class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInpu
 
     private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
 
-    override val broadcastChannel: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+    override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
         get() = _broadcastChannel
 
     override val failureBroadcastChannel get() = digitalInput.failureBroadcastChannel
@@ -54,7 +52,7 @@ class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInpu
 
     init {
         launch {
-            digitalInput.broadcastChannel.consumeEach { measurement ->
+            digitalInput.updateBroadcaster.consumeEach { measurement ->
                 if (!inverted) _broadcastChannel.send(measurement) else when (measurement.value) {
                     BinaryState.On -> _broadcastChannel.send(BinaryState.Off at measurement.instant)
                     BinaryState.Off -> _broadcastChannel.send(BinaryState.On at measurement.instant)

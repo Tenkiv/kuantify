@@ -17,30 +17,25 @@
 
 package org.tenkiv.kuantify.learning.controller
 
-import com.google.common.collect.ImmutableList
+import com.google.common.collect.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.time.delay
-import org.deeplearning4j.rl4j.learning.sync.qlearning.QLearning
-import org.deeplearning4j.rl4j.network.dqn.DQNFactoryStdDense
-import org.deeplearning4j.rl4j.space.Encodable
-import org.deeplearning4j.rl4j.util.DataManager
-import org.nd4j.linalg.learning.config.Adam
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.now
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.data.DaqcValue
-import org.tenkiv.kuantify.gate.acquire.input.RangedInput
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.time.*
+import org.deeplearning4j.rl4j.learning.sync.qlearning.*
+import org.deeplearning4j.rl4j.network.dqn.*
+import org.deeplearning4j.rl4j.space.*
+import org.deeplearning4j.rl4j.util.*
+import org.nd4j.linalg.learning.config.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.gate.control.output.*
-import org.tenkiv.kuantify.getValue
-import org.tenkiv.kuantify.learning.lib.OnlineQlDiscreteDense
-import org.tenkiv.kuantify.recording.Recorder
-import org.tenkiv.kuantify.recording.StorageDuration
-import org.tenkiv.kuantify.recording.StorageFrequency
-import org.tenkiv.kuantify.recording.StorageSamples
+import org.tenkiv.kuantify.learning.lib.*
+import org.tenkiv.kuantify.recording.*
 import org.tenkiv.physikal.core.*
-import java.time.Duration
-import kotlin.coroutines.CoroutineContext
+import java.time.*
+import kotlin.coroutines.*
 
 //TODO: Make correlatedInputs optional.
 class LearningController<T> internal constructor(
@@ -95,7 +90,7 @@ class LearningController<T> internal constructor(
 
     private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<T>>()
 
-    override val broadcastChannel: ConflatedBroadcastChannel<out ValueInstant<T>>
+    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = _broadcastChannel
 
     init {

@@ -36,7 +36,7 @@ class CombinationLocator internal constructor(vararg val locators: DeviceLocator
 
     private val _broadcastChannel = ConflatedBroadcastChannel<LocatorUpdate<*>>()
 
-    override val broadcastChannel: ConflatedBroadcastChannel<out LocatorUpdate<*>>
+    override val updateBroadcaster: ConflatedBroadcastChannel<out LocatorUpdate<*>>
         get() = _broadcastChannel
 
     init {
@@ -52,7 +52,7 @@ class CombinationLocator internal constructor(vararg val locators: DeviceLocator
     } else {
         locators.forEach { locator ->
             launch {
-                locator.broadcastChannel.consumeEach { device -> _broadcastChannel.send(device) }
+                locator.updateBroadcaster.consumeEach { device -> _broadcastChannel.send(device) }
             }
         }
         true

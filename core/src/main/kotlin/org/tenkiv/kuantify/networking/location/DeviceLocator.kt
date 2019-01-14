@@ -96,7 +96,7 @@ abstract class DeviceLocator<T : Device> : Trackable<LocatorUpdate<T>> {
         serialNumber: String,
         timeout: Duration? = null
     ): Try<T> = Try {
-        val subscription = broadcastChannel.openSubscription()
+        val subscription = updateBroadcaster.openSubscription()
 
         suspend fun getDevice(): T {
             subscription.consumeEach {

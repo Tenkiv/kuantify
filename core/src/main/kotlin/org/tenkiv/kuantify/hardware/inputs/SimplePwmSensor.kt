@@ -17,14 +17,12 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
-import kotlinx.coroutines.CoroutineScope
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.data.toDaqc
-import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
-import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
+import kotlinx.coroutines.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.hardware.definitions.channel.*
 import org.tenkiv.physikal.core.*
-import javax.measure.quantity.Dimensionless
-import javax.measure.quantity.Frequency
+import javax.measure.quantity.*
 
 /**
  * A simple simple implementation of a binary pulse width modulation sensor
@@ -40,7 +38,7 @@ class SimplePwmSensor internal constructor(val digitalInput: DigitalInput) :
     @Volatile
     var avgFrequency: DaqcQuantity<Frequency> = 1.hertz.toDaqc()
 
-    override val broadcastChannel get() = digitalInput.pwmBroadcastChannel
+    override val updateBroadcaster get() = digitalInput.pwmBroadcastChannel
 
     override val failureBroadcastChannel get() = digitalInput.failureBroadcastChannel
 

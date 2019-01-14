@@ -280,7 +280,7 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
         this.valueSerializer = valueSerializer
         this.valueDeserializer = valueDeserializer
 
-        this.receiveChannel = updatable.broadcastChannel.openSubscription()
+        this.receiveChannel = updatable.updateBroadcaster.openSubscription()
     }
 
     /**
@@ -317,7 +317,7 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
         this.valueSerializer = valueSerializer
         this.valueDeserializer = valueDeserializer
 
-        this.receiveChannel = updatable.broadcastChannel.openSubscription()
+        this.receiveChannel = updatable.updateBroadcaster.openSubscription()
     }
 
     /**
@@ -348,7 +348,7 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
         this.valueSerializer = null
         this.valueDeserializer = null
 
-        this.receiveChannel = updatable.broadcastChannel.openSubscription()
+        this.receiveChannel = updatable.updateBroadcaster.openSubscription()
     }
 
     init {
@@ -432,7 +432,7 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
 
         val bufferJob = launch(Dispatchers.Daqc) {
             fileCreationBroadcaster.openSubscription().receive()
-            updatable.broadcastChannel.consumeEach { value ->
+            updatable.updateBroadcaster.consumeEach { value ->
                 buffer += value
             }
         }
@@ -510,7 +510,7 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
                 val fileExpiresIn = (diskStorageLength.numSamples + diskStorageLength.numSamples / 9) + 1
 
                 files += RecorderFile(fileExpiresIn)
-                val receiveChannel = updatable.broadcastChannel.openSubscription()
+                val receiveChannel = updatable.updateBroadcaster.openSubscription()
                 while (isActive) {
                     val newRecorderFile = RecorderFile(fileExpiresIn)
                     if (files.last().samplesSinceCreation == fileCreationInterval) files += newRecorderFile
@@ -593,7 +593,7 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
         internal constructor(expiresAfterNumSamples: Int?) {
             if (expiresAfterNumSamples != null) {
                 launch(Dispatchers.Daqc) {
-                    val receiveChannel = updatable.broadcastChannel.openSubscription()
+                    val receiveChannel = updatable.updateBroadcaster.openSubscription()
 
                     while (samplesSinceCreation < expiresAfterNumSamples) {
                         receiveChannel.receive()

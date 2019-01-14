@@ -34,6 +34,8 @@ dependencies {
 
     //Coroutines
     compile(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = Vof.coroutinesX)
+    compile(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-jdk8", version = Vof.coroutinesX)
+    compile(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-slf4j", version = Vof.coroutinesX)
 
     //Logging
     implementation(group = "io.github.microutils", name = "kotlin-logging", version = Vof.logging)

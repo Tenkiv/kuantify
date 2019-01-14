@@ -35,24 +35,24 @@ interface Trackable<out T> : CoroutineScope {
     /**
      * The [ConflatedBroadcastChannel] over which updates are broadcast.
      */
-    val broadcastChannel: ConflatedBroadcastChannel<out T>
+    val updateBroadcaster: ConflatedBroadcastChannel<out T>
 
 }
 
 /**
- * Gets the current value of the [broadcastChannel] or returns Null.
+ * Gets the current value or returns Null.
  *
- * @return The value of the [broadcastChannel] or null.
+ * @return The value or null.
  */
-val <T> Trackable<T>.valueOrNull get() = broadcastChannel.valueOrNull
+val <T> Trackable<T>.valueOrNull get() = updateBroadcaster.valueOrNull
 
 /**
- * Gets the current value of the [broadcastChannel] or suspends and waits for one to exist.
+ * Gets the current value or suspends and waits for one to exist.
  *
- * @return The value of the [broadcastChannel]
+ * @return The current value.
  */
 suspend fun <T> Trackable<T>.getValue(): T =
-    broadcastChannel.valueOrNull ?: broadcastChannel.openSubscription().receive()
+    updateBroadcaster.valueOrNull ?: updateBroadcaster.openSubscription().receive()
 
 interface RatedTrackable<out T> : Trackable<ValueInstant<T>> {
     val updateRate: ComparableQuantity<Frequency>
@@ -70,7 +70,7 @@ class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, p
         input.launch {
             val sampleInstants = ArrayList<Instant>()
 
-            input.broadcastChannel.consumeEach {
+            input.updateBroadcaster.consumeEach {
                 sampleInstants += it.instant
                 clean(sampleInstants)
 
@@ -104,12 +104,12 @@ private class CombinedTrackable<out T>(scope: CoroutineScope, trackables: Array<
 
     private val _broadcastChannel = ConflatedBroadcastChannel<T>()
 
-    override val broadcastChannel: ConflatedBroadcastChannel<out T> get() = _broadcastChannel
+    override val updateBroadcaster: ConflatedBroadcastChannel<out T> get() = _broadcastChannel
 
     init {
         trackables.forEach { updatable ->
             launch {
-                updatable.broadcastChannel.consumeEach { update ->
+                updatable.updateBroadcaster.consumeEach { update ->
                     _broadcastChannel.send(update)
                 }
             }

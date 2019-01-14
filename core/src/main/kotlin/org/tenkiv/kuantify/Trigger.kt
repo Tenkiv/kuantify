@@ -17,15 +17,14 @@
 
 package org.tenkiv.kuantify
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.ReceiveChannel
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.kuantify.data.DaqcValue
-import org.tenkiv.kuantify.gate.acquire.input.Input
-import org.tenkiv.kuantify.lib.consumeAndReturn
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.lib.*
+import java.util.concurrent.atomic.*
+import kotlin.coroutines.*
 
 fun <T : DaqcValue> CoroutineScope.Trigger(
     triggerOnSimultaneousValues: Boolean = false,
@@ -113,7 +112,7 @@ class Trigger<T : DaqcValue> internal constructor(
     init {
         if (!(maxTriggerCount is MaxTriggerCount.Limited && maxTriggerCount.atomicCount.get() == 0)) {
             triggerConditions.forEach {
-                channelList.add(it.input.broadcastChannel.consumeAndReturn(this) { update ->
+                channelList.add(it.input.updateBroadcaster.consumeAndReturn(this) { update ->
                     val currentVal = update
 
                     it.lastValue = currentVal

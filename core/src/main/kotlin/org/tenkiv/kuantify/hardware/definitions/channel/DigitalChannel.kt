@@ -59,7 +59,7 @@ abstract class DigitalChannel<D : Device> : Trackable<BinaryStateMeasurement>, D
 
     protected val _binaryStateBroadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
 
-    final override val broadcastChannel: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+    final override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
         get() = _binaryStateBroadcastChannel
 
     protected val _pwmBroadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Dimensionless>>()
@@ -98,7 +98,7 @@ abstract class DigitalChannel<D : Device> : Trackable<BinaryStateMeasurement>, D
 
     init {
         launch {
-            broadcastChannel.consumeEach {
+            updateBroadcaster.consumeEach {
                 _unifiedBroadcastChannel.send(it)
             }
         }

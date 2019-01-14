@@ -17,23 +17,18 @@
 
 package org.tenkiv.kuantify.android.input
 
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
+import android.hardware.*
 import android.hardware.SensorManager.*
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.at
-import org.tenkiv.kuantify.android.AndroidSensorInitializationException
-import org.tenkiv.kuantify.android.LocalAndroidDevice
-import org.tenkiv.kuantify.data.DaqcValue
-import org.tenkiv.kuantify.gate.acquire.input.Input
-import org.tenkiv.kuantify.runningAverage
-import tec.units.indriya.ComparableQuantity
-import java.time.Instant
-import javax.measure.quantity.Frequency
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.android.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import tec.units.indriya.*
+import java.time.*
+import javax.measure.quantity.*
+import kotlin.coroutines.*
 
 /**
  * Class which defines the basic aspects of any Android Sensor.
@@ -52,7 +47,7 @@ abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val 
     override val updateRate: ComparableQuantity<Frequency> by runningAverage()
 
     private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<Q>>()
-    final override val broadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Q>>
+    final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Q>>
         get() = _broadcastChannel
 
     private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()

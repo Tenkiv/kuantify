@@ -17,10 +17,9 @@
 
 package org.tenkiv.kuantify.learning.controller
 
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
-import org.tenkiv.kuantify.gate.control.output.RangedQuantityOutput
-import org.tenkiv.kuantify.valueOrNull
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.control.output.*
 
 sealed class OutputActionHandler {
 
@@ -53,7 +52,7 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
 
     override val actionSet get() = setOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
-    private val subscribtion = output.broadcastChannel.openSubscription()
+    private val subscribtion = output.updateBroadcaster.openSubscription()
 
     private val rangeSpanSystemUnit = output.valueRange.endInclusive.toDoubleInSystemUnit() -
             output.valueRange.start.toDoubleInSystemUnit()

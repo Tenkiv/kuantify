@@ -17,14 +17,13 @@
 
 package org.tenkiv.kuantify.hardware.outputs
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import org.tenkiv.coral.now
-import org.tenkiv.kuantify.BinaryStateMeasurement
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
-import org.tenkiv.kuantify.gate.control.output.SettingResult
-import org.tenkiv.kuantify.hardware.definitions.channel.DigitalOutput
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.control.output.*
+import org.tenkiv.kuantify.hardware.definitions.channel.*
 
 /**
  * A simple implementation of a binary state controller.
@@ -44,7 +43,7 @@ class SimpleBinaryStateController internal constructor(val digitalOutput: Digita
 
     private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
 
-    override val broadcastChannel: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+    override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
         get() = _broadcastChannel
 
     override fun stopTransceiving() = digitalOutput.stopTransceiving()

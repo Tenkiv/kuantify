@@ -17,23 +17,15 @@
 
 package org.tenkiv.kuantify.gate.acquire.input
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.at
-import org.tenkiv.kuantify.BinaryStateMeasurement
-import org.tenkiv.kuantify.QuantityMeasurement
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.data.toDaqc
-import org.tenkiv.kuantify.runningAverage
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.physikal.core.*
-import tec.units.indriya.ComparableQuantity
-import javax.measure.Quantity
-import kotlin.coroutines.CoroutineContext
+import tec.units.indriya.*
+import javax.measure.*
+import kotlin.coroutines.*
 
 /**
  * Sensor which provides an average of [Quantity] values from a group inputs.
@@ -60,7 +52,7 @@ class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
         }
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
     private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
@@ -72,11 +64,11 @@ class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
     init {
         inputs.forEach { changeWatchedInput ->
             launch {
-                changeWatchedInput.broadcastChannel.consumeEach { measurement ->
+                changeWatchedInput.updateBroadcaster.consumeEach { measurement ->
                     val currentValues = HashSet<ComparableQuantity<Q>>()
 
                     inputs.forEach { input ->
-                        input.broadcastChannel.valueOrNull?.let { currentValues += it.value }
+                        input.updateBroadcaster.valueOrNull?.let { currentValues += it.value }
                     }
 
                     currentValues.averageOrNull { it }?.let {
@@ -132,7 +124,7 @@ class BinaryThresholdSensor internal constructor(
         }
 
     private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
-    override val broadcastChannel: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+    override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
         get() = _broadcastChannel
 
     private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
@@ -144,11 +136,11 @@ class BinaryThresholdSensor internal constructor(
     init {
         inputs.forEach { changeWatchedInput ->
             launch {
-                changeWatchedInput.broadcastChannel.consumeEach { measurement ->
+                changeWatchedInput.updateBroadcaster.consumeEach { measurement ->
                     val currentValues = HashSet<BinaryState>()
 
                     inputs.forEach { input ->
-                        input.broadcastChannel.valueOrNull?.let { currentValues += it.value }
+                        input.updateBroadcaster.valueOrNull?.let { currentValues += it.value }
                     }
 
                     _broadcastChannel.send(

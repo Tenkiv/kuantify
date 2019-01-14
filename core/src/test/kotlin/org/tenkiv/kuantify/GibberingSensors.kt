@@ -17,24 +17,20 @@
 
 package org.tenkiv.kuantify
 
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.at
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.gate.acquire.input.Input
-import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
-import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.hardware.definitions.channel.*
 import org.tenkiv.physikal.core.*
-import tec.units.indriya.ComparableQuantity
+import tec.units.indriya.*
 import tec.units.indriya.unit.MetricPrefix.*
 import tec.units.indriya.unit.Units.*
-import java.time.Instant
+import java.time.*
 import java.util.*
-import javax.measure.quantity.ElectricPotential
-import javax.measure.quantity.Frequency
-import kotlin.coroutines.CoroutineContext
+import javax.measure.quantity.*
+import kotlin.coroutines.*
 
 
 class DigitalGibberingSensor : Input<BinaryState> {
@@ -43,7 +39,7 @@ class DigitalGibberingSensor : Input<BinaryState> {
         get() = throw Exception("Empty Test Class Exception")
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
-    override val broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
+    override val updateBroadcaster = ConflatedBroadcastChannel<BinaryStateMeasurement>()
     override val isTransceiving: Boolean = false
 
     val random = Random()
@@ -53,7 +49,7 @@ class DigitalGibberingSensor : Input<BinaryState> {
     init {
         timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
-                broadcastChannel.offer(BinaryState.On.at(Instant.now()))
+                updateBroadcaster.offer(BinaryState.On.at(Instant.now()))
             }
         }, 100, 100)
     }
@@ -64,7 +60,7 @@ class DigitalGibberingSensor : Input<BinaryState> {
 
     fun cancel() {
         timer.cancel()
-        broadcastChannel.close()
+        updateBroadcaster.close()
     }
 }
 
@@ -112,7 +108,7 @@ class DigitalInputGibberingSensor : DigitalInput() {
 
     fun cancel() {
         timer.cancel()
-        broadcastChannel.close()
+        updateBroadcaster.close()
     }
 
 }
@@ -122,7 +118,7 @@ class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
         get() = throw Exception("Empty Test Class Exception")
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
-    override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
+    override val updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
     override val coroutineContext: CoroutineContext = Job()
 
     override val isTransceiving: Boolean = false
@@ -134,7 +130,7 @@ class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
     init {
         timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
-                broadcastChannel.offer(
+                updateBroadcaster.offer(
                     DaqcQuantity.of(random.nextInt(5000), MILLI(VOLT)).at(Instant.now())
                 )
 
@@ -148,7 +144,7 @@ class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
 
     fun cancel() {
         timer.cancel()
-        broadcastChannel.close()
+        updateBroadcaster.close()
     }
 }
 
@@ -168,7 +164,7 @@ class AnalogInputGibberingSensor : AnalogInput() {
         get() = throw Exception("Empty Test Class Exception")
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
-    override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
+    override val updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
 
     override val isTransceiving: Boolean = false
 
@@ -179,7 +175,7 @@ class AnalogInputGibberingSensor : AnalogInput() {
     init {
         timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
-                broadcastChannel.offer(
+                updateBroadcaster.offer(
                     DaqcQuantity.of(
                         random.nextInt(5000),
                         MILLI(VOLT)
@@ -195,6 +191,6 @@ class AnalogInputGibberingSensor : AnalogInput() {
 
     fun cancel() {
         timer.cancel()
-        broadcastChannel.close()
+        updateBroadcaster.close()
     }
 }

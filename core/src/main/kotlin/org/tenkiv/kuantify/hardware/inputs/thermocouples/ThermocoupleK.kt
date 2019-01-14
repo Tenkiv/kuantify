@@ -17,22 +17,19 @@
 
 package org.tenkiv.kuantify.hardware.inputs.thermocouples
 
-import arrow.core.Try
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.data.toDaqc
-import org.tenkiv.kuantify.hardware.definitions.channel.AnalogInput
-import org.tenkiv.kuantify.hardware.inputs.ScAnalogSensor
-import org.tenkiv.kuantify.lib.ValueOutOfRangeException
+import arrow.core.*
+import kotlinx.coroutines.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.hardware.definitions.channel.*
+import org.tenkiv.kuantify.hardware.inputs.*
+import org.tenkiv.kuantify.lib.*
 import org.tenkiv.physikal.core.*
-import tec.units.indriya.ComparableQuantity
+import tec.units.indriya.*
 import tec.units.indriya.unit.MetricPrefix.*
 import tec.units.indriya.unit.Units.*
-import javax.measure.quantity.ElectricPotential
-import javax.measure.quantity.Temperature
-import kotlin.coroutines.CoroutineContext
-import kotlin.math.pow
+import javax.measure.quantity.*
+import kotlin.coroutines.*
+import kotlin.math.*
 
 /**
  * A common sensor which measures [Temperature] from [ElectricPotential].
@@ -58,7 +55,7 @@ class ThermocoupleK internal constructor(
     override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Temperature>> {
         val mv = ep toDoubleIn MILLI(VOLT)
         val temperatureReferenceValue =
-            analogInput.device.temperatureReference.broadcastChannel.valueOrNull?.value
+            analogInput.device.temperatureReference.updateBroadcaster.valueOrNull?.value
 
         fun calculate(
             c0: Double,

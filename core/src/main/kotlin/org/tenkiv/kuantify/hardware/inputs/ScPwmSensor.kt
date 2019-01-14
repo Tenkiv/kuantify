@@ -17,22 +17,17 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
-import arrow.core.Failure
-import arrow.core.Success
-import arrow.core.Try
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.launch
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.at
-import org.tenkiv.kuantify.QuantityMeasurement
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
-import org.tenkiv.kuantify.hardware.definitions.channel.DigitalInput
-import tec.units.indriya.ComparableQuantity
-import javax.measure.Quantity
-import javax.measure.quantity.Dimensionless
-import javax.measure.quantity.Frequency
+import arrow.core.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.hardware.definitions.channel.*
+import tec.units.indriya.*
+import javax.measure.*
+import javax.measure.quantity.*
 
 /**
  * Abstract class for an input which takes percentage PWM data from a single digital input.
@@ -45,7 +40,7 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(
 ) : QuantityInput<Q> {
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    final override val broadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
     private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()

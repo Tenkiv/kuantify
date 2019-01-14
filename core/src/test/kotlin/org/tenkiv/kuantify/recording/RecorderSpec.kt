@@ -79,12 +79,12 @@ class RecorderSpec : StringSpec({
         val recorder = object : Trackable<ValueInstant<Thing>> {
             override val coroutineContext: CoroutineContext = Job()
 
-            override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<Thing>>()
+            override val updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<Thing>>()
 
             init {
                 launch {
                     while (true) {
-                        broadcastChannel.send(Thing(
+                        updateBroadcaster.send(Thing(
                                 "a name",
                                 subthing,
                                 4,

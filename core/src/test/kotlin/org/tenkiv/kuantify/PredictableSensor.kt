@@ -17,20 +17,17 @@
 
 package org.tenkiv.kuantify
 
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import org.tenkiv.coral.ValueInstant
-import org.tenkiv.coral.at
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.gate.acquire.input.Input
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.physikal.core.*
-import tec.units.indriya.ComparableQuantity
-import java.time.Instant
+import tec.units.indriya.*
+import java.time.*
 import java.util.*
-import javax.measure.quantity.ElectricPotential
-import javax.measure.quantity.Frequency
-import kotlin.coroutines.CoroutineContext
+import javax.measure.quantity.*
+import kotlin.coroutines.*
 
 class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
     override val updateRate: ComparableQuantity<Frequency>
@@ -38,7 +35,7 @@ class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
     override val isTransceiving: Boolean = false
-    override val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
+    override val updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
     override val coroutineContext: CoroutineContext = Job()
 
     override fun startSampling() {}
@@ -65,7 +62,7 @@ class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
         timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
                 if (iteration < sendingOrder.size) {
-                    broadcastChannel.offer(sendingOrder[iteration].at(Instant.now()))
+                    updateBroadcaster.offer(sendingOrder[iteration].at(Instant.now()))
                     iteration++
                 } else {
                     timer.cancel()
@@ -81,7 +78,7 @@ class PredictableDigitalSensor : Input<BinaryState> {
         get() = throw Exception("Empty Test Class Exception")
     override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
-    override val broadcastChannel: ConflatedBroadcastChannel<ValueInstant<BinaryState>> = ConflatedBroadcastChannel()
+    override val updateBroadcaster: ConflatedBroadcastChannel<ValueInstant<BinaryState>> = ConflatedBroadcastChannel()
     override val isTransceiving: Boolean = true
     override val coroutineContext: CoroutineContext = Job()
 
@@ -108,7 +105,7 @@ class PredictableDigitalSensor : Input<BinaryState> {
         timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
                 if (iteration < sendingOrder.size) {
-                    broadcastChannel.offer(sendingOrder[iteration].at(Instant.now()))
+                    updateBroadcaster.offer(sendingOrder[iteration].at(Instant.now()))
                     iteration++
                 } else {
                     timer.cancel()
