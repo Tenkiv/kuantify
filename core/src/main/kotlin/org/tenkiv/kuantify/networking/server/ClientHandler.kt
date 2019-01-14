@@ -1,49 +1,43 @@
 package org.tenkiv.kuantify.networking.server
 
 import io.ktor.http.cio.websocket.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-import kotlin.coroutines.*
 
-// Only one instance of this should ever be created. Use as singleton.
-internal class ClientHandler(scope: CoroutineScope) : CoroutineScope {
+// Must only be accessed from Daqc dispatcher.
+internal object ClientHandler {
 
-    override val coroutineContext: CoroutineContext = scope.coroutineContext
+    private val clients: MutableMap<String, HostedClient> = HashMap()
 
-    private val clientsActor = actor<Msg> {
-        val sessions: MutableMap<String, HostedClient> = HashMap()
-
-
+    fun connectionOpened(clientId: String, session: WebSocketSession) {
+        if (clients.containsKey(clientId)) {
+            clients[clientId]?.addSession(session)
+        } else {
+            clients[clientId] = HostedClient(clientId).apply {
+                addSession(session)
+            }
+        }
     }
 
-
-    suspend fun connectionOpened(clientId: String, websocket: WebSocketSession) =
-        clientsActor.send(Msg.ConnectionOpened(clientId, websocket))
-
-    private suspend fun _connectionOpened(clientId: String, websocket: WebSocketSession) {
-
-    }
-
-    suspend fun connectionClosed(clientId: String, websocket: WebSocketSession) =
-        clientsActor.send(Msg.ConnectionClosed(clientId, websocket))
-
-    private suspend fun _connectionClosed(clientId: String, websocket: WebSocketSession) {
-
-    }
-
-    sealed class Msg {
-        data class ConnectionOpened(val clientId: String, val websocket: WebSocketSession) : Msg()
-        data class ConnectionClosed(val clientId: String, val websocket: WebSocketSession) : Msg()
+    fun connectionClosed(clientId: String, session: WebSocketSession) {
+        clients[clientId]?.removeSession(session, clients)
     }
 
 }
 
-internal class HostedClient {
+internal class HostedClient(val id: String) {
 
-    val websockets: List<WebSocketSession> = ArrayList()
+    private val websocketSessions: MutableList<WebSocketSession> = ArrayList()
 
-
-    sealed class Msg {
-
+    fun addSession(session: WebSocketSession) {
+        websocketSessions += session
     }
+
+    fun removeSession(session: WebSocketSession, clients: MutableMap<String, HostedClient>) {
+        websocketSessions -= session
+        if (websocketSessions.isEmpty()) clients -= id
+    }
+
+    suspend fun sendMessage(message: String) {
+        websocketSessions.forEach { it.send(Frame.Text(message)) }
+    }
+
 }

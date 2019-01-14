@@ -1,18 +1,13 @@
 package org.tenkiv.kuantify.android
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.hardware.Sensor
-import android.hardware.SensorManager
-import android.provider.Settings
-import kotlinx.coroutines.CoroutineScope
-import org.tenkiv.kuantify.android.input.AndroidSensor
-import org.tenkiv.kuantify.hardware.definitions.device.LocalDevice
-import kotlin.coroutines.CoroutineContext
+import android.annotation.*
+import android.content.*
+import android.hardware.*
+import android.provider.*
+import org.tenkiv.kuantify.android.input.*
+import org.tenkiv.kuantify.hardware.definitions.device.*
 
-open class LocalAndroidDevice(scope: CoroutineScope, context: Context) : LocalDevice {
-
-    final override val coroutineContext: CoroutineContext = scope.coroutineContext
+open class LocalAndroidDevice internal constructor(context: Context) : LocalDevice {
 
     internal val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         ?: throw ClassCastException(
@@ -80,6 +75,18 @@ open class LocalAndroidDevice(scope: CoroutineScope, context: Context) : LocalDe
     final override val uid: String =
         Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
+    companion object {
+        @Volatile
+        private var device: LocalAndroidDevice? = null
+
+        fun get(applicationContext: Context): LocalAndroidDevice {
+            return device ?: run {
+                val newDevice = LocalAndroidDevice(applicationContext)
+                device = newDevice
+                newDevice
+            }
+        }
+    }
 
 }
 
