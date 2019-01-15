@@ -8,7 +8,9 @@ internal object HostedDeviceManager {
     val hostedDevices: MutableMap<LocalDevice, HostDeviceCommunicator> = HashMap()
 
     fun registerDevice(device: LocalDevice, communicator: HostDeviceCommunicator) {
-        hostedDevices += device to communicator
+        if (hostedDevices[device] == null) {
+            hostedDevices += device to communicator
+        }
     }
 
     fun unregisterDevice(device: LocalDevice) {

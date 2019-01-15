@@ -10,21 +10,22 @@ interface LocalDevice : Device {
     override val coroutineContext: CoroutineContext
         get() = GlobalScope.coroutineContext
 
-    fun getNewCommunicator(): HostDeviceCommunicator = DefaultHostDeviceCommunicator(this)
-
-    //TODO
-    val isHosting: Boolean
+    fun getNewCommunicator(): HostDeviceCommunicator = DefaultHostDeviceCommunicator(this, this)
 
 }
 
-fun LocalDevice.startHosting() {
-    launch(Dispatchers.Daqc) {
+suspend fun LocalDevice.isHosting(): Boolean = withContext(Dispatchers.Daqc) {
+    HostedDeviceManager.hostedDevices.containsKey(this)
+}
+
+suspend fun LocalDevice.startHosting() {
+    withContext(Dispatchers.Daqc) {
         HostedDeviceManager.registerDevice(this@startHosting, getNewCommunicator())
     }
 }
 
-fun LocalDevice.stopHosting() {
-    launch(Dispatchers.Daqc) {
+suspend fun LocalDevice.stopHosting() {
+    withContext(Dispatchers.Daqc) {
         HostedDeviceManager.unregisterDevice(this@stopHosting)
     }
 }
