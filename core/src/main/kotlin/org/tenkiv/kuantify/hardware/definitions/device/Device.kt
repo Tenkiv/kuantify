@@ -17,12 +17,15 @@
 
 package org.tenkiv.kuantify.hardware.definitions.device
 
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
+import org.tenkiv.kuantify.gate.*
 
 /**
  * The interface defining the basic aspects of all devices.
  */
 interface Device : CoroutineScope {
+
+    val ioStrandMap: Map<String, IOStrand<*>>
 
     val uid: String
 

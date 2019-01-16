@@ -5,7 +5,7 @@ import org.tenkiv.kuantify.hardware.definitions.channel.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
 
-interface AnalogDaqDevice : SensorDevice {
+interface AnalogDaqDevice : Device {
 
     /**
      * The line frequency of the local electrical.
