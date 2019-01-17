@@ -10,7 +10,7 @@ interface LocalDevice : Device {
     override val coroutineContext: CoroutineContext
         get() = GlobalScope.coroutineContext
 
-    fun getNewCommunicator(): HostDeviceCommunicator = DefaultHostDeviceCommunicator(this, this)
+    fun getNewCommunicator(): HostDeviceCommunicator = HostDeviceCommunicator(this, this)
 
 }
 

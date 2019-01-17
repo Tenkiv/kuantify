@@ -17,12 +17,12 @@
 
 package org.tenkiv.kuantify.data
 
-import org.tenkiv.kuantify.QuantityMeasurement
+import org.tenkiv.kuantify.*
 import org.tenkiv.physikal.core.*
-import tec.units.indriya.ComparableQuantity
-import tec.units.indriya.quantity.Quantities
-import java.util.zip.DataFormatException
-import javax.measure.Quantity
+import tec.units.indriya.*
+import tec.units.indriya.quantity.*
+import java.util.zip.*
+import javax.measure.*
 import org.tenkiv.physikal.core.toByteInSystemUnit as physikalToByteInSystemUnit
 import org.tenkiv.physikal.core.toDoubleInSystemUnit as physikalToDoubleInSystemUnit
 import org.tenkiv.physikal.core.toFloatInSystemUnit as physikalToFloatInSystemUnit
@@ -108,6 +108,13 @@ sealed class DaqcValue : DaqcData {
 sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
     /**
+     * Returns the binary value as a [Boolean]. This will return true for [On] and false for [Off]
+     *
+     * @return The binary value as a [Boolean]
+     */
+    abstract fun toBoolean(): Boolean
+
+    /**
      * Returns the binary value as a [Short]. This will always return a value 1 or 0.
      *
      * @return The binary value as a [Short]
@@ -174,6 +181,8 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
                 is Off -> 1
             }
 
+        override fun toBoolean(): Boolean = true
+
         override fun toShort() = SHORT_REPRESENTATION
 
         override fun toInt() = 1
@@ -202,6 +211,8 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
                 is On -> -1
                 is Off -> 0
             }
+
+        override fun toBoolean(): Boolean = false
 
         override fun toShort() = SHORT_REPRESENTATION
 

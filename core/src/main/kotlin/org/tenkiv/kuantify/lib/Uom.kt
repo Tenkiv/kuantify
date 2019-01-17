@@ -17,11 +17,47 @@
 
 package org.tenkiv.kuantify.lib
 
-import org.tenkiv.physikal.core.asType
-import tec.units.indriya.ComparableQuantity
-import javax.measure.Quantity
-import javax.measure.quantity.Frequency
-import javax.measure.quantity.Time
+import kotlinx.serialization.*
+import kotlinx.serialization.internal.*
+import org.tenkiv.physikal.core.*
+import tec.units.indriya.*
+import javax.measure.*
+import javax.measure.quantity.*
+
+@Serializer(forClass = ComparableQuantity::class)
+object ComparableQuantitySerializer : KSerializer<ComparableQuantity<*>> {
+
+    override val descriptor: SerialDescriptor = object : SerialClassDescImpl("Quantity") {
+        init {
+            addElement("value")
+            addElement("unit")
+        }
+    }
+
+    override fun deserialize(input: Decoder): ComparableQuantity<*> {
+        val inp: CompositeDecoder = input.beginStructure(descriptor)
+        var value = 0.0
+        lateinit var unit: String
+        loop@ while (true) {
+            when (val i = inp.decodeElementIndex(descriptor)) {
+                CompositeDecoder.READ_DONE -> break@loop
+                0 -> value = inp.decodeDoubleElement(descriptor, i)
+                1 -> unit = inp.decodeStringElement(descriptor, i)
+                else -> throw SerializationException("Unknown index $i")
+            }
+        }
+        inp.endStructure(descriptor)
+        return (value withSymbol unit)
+    }
+
+    override fun serialize(output: Encoder, obj: ComparableQuantity<*>) {
+        val compositeOutput: CompositeEncoder = output.beginStructure(descriptor)
+        //TODO: Probably change this to encodeSerializableElement so we can accommodate for numbers other than Double
+        compositeOutput.encodeDoubleElement(descriptor, 0, obj.getValue().toDouble())
+        compositeOutput.encodeStringElement(descriptor, 1, obj.getUnit().toString())
+        compositeOutput.endStructure(descriptor)
+    }
+}
 
 /**
  * Converts a [Quantity] of a [Frequency] to a [Time].

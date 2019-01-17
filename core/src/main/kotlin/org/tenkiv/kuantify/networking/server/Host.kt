@@ -63,7 +63,7 @@ private class KuantifyHost {
 
     private suspend fun receiveMessage(clientId: String, message: String) {
         when {
-            message.startsWith(DEVICE_CMD) -> // Send to host device communicator
+
         }
     }
 
