@@ -27,7 +27,7 @@ import javax.measure.quantity.*
 @Serializer(forClass = ComparableQuantity::class)
 object ComparableQuantitySerializer : KSerializer<ComparableQuantity<*>> {
 
-    override val descriptor: SerialDescriptor = object : SerialClassDescImpl("Quantity") {
+    override val descriptor: SerialDescriptor = object : SerialClassDescImpl("ComparableQuantity") {
         init {
             addElement("value")
             addElement("unit")
@@ -47,7 +47,7 @@ object ComparableQuantitySerializer : KSerializer<ComparableQuantity<*>> {
             }
         }
         inp.endStructure(descriptor)
-        return (value withSymbol unit)
+        return value withSymbol unit
     }
 
     override fun serialize(output: Encoder, obj: ComparableQuantity<*>) {

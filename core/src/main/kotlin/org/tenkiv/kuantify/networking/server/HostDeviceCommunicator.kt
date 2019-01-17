@@ -25,9 +25,9 @@ open class HostDeviceCommunicator(
             device.ioStrandMap.forEach { id, strand ->
                 launch {
                     strand.updateBroadcaster.consumeEach {
-                        when (it.value) {
-                            is BinaryState -> it.value
-                            is DaqcQuantity<*> -> it.value
+                        when (val value = it.value) {
+                            is DaqcQuantity<*> -> value // send as ComparableQuantity
+                            is BinaryState -> value
                         }
 
                     }

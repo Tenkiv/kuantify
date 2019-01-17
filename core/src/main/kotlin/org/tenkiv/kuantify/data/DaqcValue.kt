@@ -17,6 +17,8 @@
 
 package org.tenkiv.kuantify.data
 
+import kotlinx.serialization.*
+import kotlinx.serialization.internal.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
@@ -105,6 +107,7 @@ sealed class DaqcValue : DaqcData {
 /**
  * A [DaqcValue] representing a value which is either on or off.
  */
+@Serializable
 sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
     /**
@@ -172,8 +175,8 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
      */
     object On : BinaryState() {
 
-        private const val SHORT_REPRESENTATION: Short = 1
-        private const val BYTE_REPRESENTATION: Byte = 1
+        const val SHORT_REPRESENTATION: Short = 1
+        const val BYTE_REPRESENTATION: Byte = 1
 
         override fun compareTo(other: BinaryState) =
             when (other) {
@@ -203,8 +206,8 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
      */
     object Off : BinaryState() {
 
-        private const val SHORT_REPRESENTATION: Short = 0
-        private const val BYTE_REPRESENTATION: Byte = 0
+        const val SHORT_REPRESENTATION: Short = 0
+        const val BYTE_REPRESENTATION: Byte = 0
 
         override fun compareTo(other: BinaryState) =
             when (other) {
@@ -230,7 +233,10 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
     }
 
-    companion object {
+    @Serializer(forClass = BinaryState::class)
+    companion object : KSerializer<BinaryState> {
+
+        override val descriptor: SerialDescriptor = ByteDescriptor.withName("BinaryState")
 
         /**
          * The [ClosedRange] of all [BinaryState]s.
@@ -253,6 +259,19 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
             }
             throw DataFormatException("Data with BinaryState not found")
         }
+
+        override fun deserialize(input: Decoder): BinaryState {
+            return when (input.decodeByte()) {
+                On.BYTE_REPRESENTATION -> On
+                Off.BYTE_REPRESENTATION -> Off
+                else -> throw SerializationException("Data with BinaryState not found")
+            }
+        }
+
+        override fun serialize(output: Encoder, obj: BinaryState) {
+            output.encodeByte(obj.toByte())
+        }
+
     }
 
 }
