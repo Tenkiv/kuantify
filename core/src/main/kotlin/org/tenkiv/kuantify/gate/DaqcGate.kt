@@ -30,7 +30,7 @@ interface DaqcGate<out T : DaqcData> : Trackable<ValueInstant<T>> {
      */
     val daqcDataSize: Int
 
-    val isTransceiving: Trackable<Boolean>
+    val isTransceiving: InitializedTrackable<Boolean>
 
     fun stopTransceiving()
 }

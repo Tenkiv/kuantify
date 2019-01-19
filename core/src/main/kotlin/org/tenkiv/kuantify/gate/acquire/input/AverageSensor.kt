@@ -43,13 +43,9 @@ class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
 
     override val coroutineContext: CoroutineContext = scope.coroutineContext + job
 
-    override val isTransceiving: Boolean
-        get() {
-            inputs.forEach {
-                if (it.isTransceiving && this.isActive) return true
-            }
-            return false
-        }
+    private val _isTransceiving = Updatable(false)
+    override val isTransceiving: InitializedTrackable<Boolean>
+        get() = _isTransceiving
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
     override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
@@ -62,26 +58,49 @@ class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
     override val updateRate by runningAverage()
 
     init {
-        inputs.forEach { changeWatchedInput ->
-            launch {
-                changeWatchedInput.updateBroadcaster.consumeEach { measurement ->
-                    val currentValues = HashSet<ComparableQuantity<Q>>()
-
-                    inputs.forEach { input ->
-                        input.updateBroadcaster.valueOrNull?.let { currentValues += it.value }
-                    }
-
-                    currentValues.averageOrNull { it }?.let {
-                        _broadcastChannel.send(it.toDaqc() at measurement.instant)
-                    }
+        launch(Dispatchers.Daqc) {
+            val transceivingStatuses = HashMap<QuantityInput<Q>, Boolean>().apply {
+                inputs.forEach { input ->
+                    put(input, input.isTransceiving.value)
                 }
             }
 
-            launch {
-                failureBroadcaster.consumeEach {
-                    _failureBroadcastChannel.send(it)
+            inputs.forEach { changeWatchedInput ->
+                launch(Dispatchers.Default) {
+                    changeWatchedInput.updateBroadcaster.consumeEach { measurement ->
+                        val currentValues = HashSet<ComparableQuantity<Q>>()
+
+                        inputs.forEach { input ->
+                            input.updateBroadcaster.valueOrNull?.let { currentValues += it.value }
+                        }
+
+                        currentValues.averageOrNull { it }?.let {
+                            _broadcastChannel.send(it.toDaqc() at measurement.instant)
+                        }
+                    }
+                }
+
+                //TODO: Consider moving this to reusable function
+                launch(Dispatchers.Daqc) {
+                    changeWatchedInput.isTransceiving.updateBroadcaster.consumeEach { newStatus ->
+                        transceivingStatuses += changeWatchedInput to newStatus
+                        if (_isTransceiving.value && !transceivingStatuses.values.contains(true)) {
+                            _isTransceiving.value = false
+                        } else if (!_isTransceiving.value && transceivingStatuses.values.contains(true)) {
+                            _isTransceiving.value = true
+                        }
+                    }
+                }
+
+                launch(Dispatchers.Default) {
+                    failureBroadcaster.consumeEach {
+                        _failureBroadcastChannel.send(it)
+                    }
                 }
             }
+        }
+        job.invokeOnCompletion {
+            _isTransceiving.value = false
         }
     }
 
@@ -115,13 +134,9 @@ class BinaryThresholdSensor internal constructor(
 
     override val coroutineContext: CoroutineContext = scope.coroutineContext + job
 
-    override val isTransceiving: Boolean
-        get() {
-            inputs.forEach {
-                if (it.isTransceiving && this.isActive) return true
-            }
-            return false
-        }
+    private val _isTransceiving = Updatable(false)
+    override val isTransceiving: InitializedTrackable<Boolean>
+        get() = _isTransceiving
 
     private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
     override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
@@ -134,36 +149,66 @@ class BinaryThresholdSensor internal constructor(
     override val updateRate by runningAverage()
 
     init {
-        inputs.forEach { changeWatchedInput ->
-            launch {
-                changeWatchedInput.updateBroadcaster.consumeEach { measurement ->
-                    val currentValues = HashSet<BinaryState>()
+        launch(Dispatchers.Daqc) {
+            val transceivingStatuses = HashMap<BinaryStateInput, Boolean>().apply {
+                inputs.forEach { input ->
+                    put(input, input.isTransceiving.value)
+                }
+            }
 
-                    inputs.forEach { input ->
-                        input.updateBroadcaster.valueOrNull?.let { currentValues += it.value }
+            inputs.forEach { changeWatchedInput ->
+                launch(Dispatchers.Default) {
+                    changeWatchedInput.updateBroadcaster.consumeEach { measurement ->
+                        val currentValues = HashSet<BinaryState>()
+
+                        inputs.forEach { input ->
+                            input.updateBroadcaster.valueOrNull?.let { currentValues += it.value }
+                        }
+
+                        _broadcastChannel.send(
+                            if (currentValues.filter { it == state }.size >= threshold) {
+                                BinaryState.On
+                            } else {
+                                BinaryState.Off
+                            } at measurement.instant
+                        )
                     }
+                }
 
-                    _broadcastChannel.send(
-                        if (currentValues.filter { it == state }.size >= threshold) {
-                            BinaryState.On
-                        } else {
-                            BinaryState.Off
-                        } at measurement.instant
-                    )
+                //TODO: Consider moving this to reusable function
+                launch(Dispatchers.Daqc) {
+                    changeWatchedInput.isTransceiving.updateBroadcaster.consumeEach { newStatus ->
+                        transceivingStatuses += changeWatchedInput to newStatus
+                        if (_isTransceiving.value && !transceivingStatuses.values.contains(true)) {
+                            _isTransceiving.value = false
+                        } else if (!_isTransceiving.value && transceivingStatuses.values.contains(true)) {
+                            _isTransceiving.value = true
+                        }
+                    }
+                }
+
+                launch(Dispatchers.Default) {
+                    failureBroadcaster.consumeEach {
+                        _failureBroadcastChannel.send(it)
+                    }
                 }
             }
+        }
 
-            launch {
-                failureBroadcaster.consumeEach {
-                    _failureBroadcastChannel.send(it)
-                }
-            }
+        job.invokeOnCompletion {
+            _isTransceiving.value = false
         }
     }
 
     override fun startSampling() = inputs.forEach { it.startSampling() }
 
+    //TODO: We might not want to actually cancel the underlying inputs
     override fun stopTransceiving() = inputs.forEach { it.stopTransceiving() }
+
+
+    fun cancel() {
+        job.cancel()
+    }
 }
 
 fun CoroutineScope.BinaryThresholdSensor(

@@ -17,10 +17,10 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
-import org.tenkiv.kuantify.gate.acquire.input.QuantityInput
-import org.tenkiv.kuantify.hardware.definitions.device.AnalogDaqDevice
-import tec.units.indriya.ComparableQuantity
-import javax.measure.quantity.ElectricPotential
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.hardware.definitions.device.*
+import javax.measure.quantity.*
 
 /**
  * Class defining the basic features of an input which reads analog signals.
@@ -33,7 +33,7 @@ abstract class AnalogInput : QuantityInput<ElectricPotential>, DaqcChannel<Analo
      * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */
-    abstract var buffer: Boolean
+    abstract val buffer: Updatable<Boolean>
 
     /**
      * Denotes the maximum acceptable error for the [AnalogInput].
@@ -41,7 +41,7 @@ abstract class AnalogInput : QuantityInput<ElectricPotential>, DaqcChannel<Analo
      * Implementing backing field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */
-    abstract var maxAcceptableError: ComparableQuantity<ElectricPotential>
+    abstract val maxAcceptableError: UpdatableQuantity<ElectricPotential>
 
     /**
      * Denotes the maximum [ElectricPotential] that the [AnalogInput] can read.
@@ -49,6 +49,6 @@ abstract class AnalogInput : QuantityInput<ElectricPotential>, DaqcChannel<Analo
      * Implementing backing field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */
-    abstract var maxElectricPotential: ComparableQuantity<ElectricPotential>
+    abstract val maxElectricPotential: UpdatableQuantity<ElectricPotential>
 
 }

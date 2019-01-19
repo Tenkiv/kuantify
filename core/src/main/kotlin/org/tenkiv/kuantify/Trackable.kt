@@ -27,6 +27,9 @@ import javax.measure.quantity.*
 import kotlin.coroutines.*
 import kotlin.reflect.*
 
+typealias TrackableQuantity<Q> = Trackable<ComparableQuantity<Q>>
+typealias InitializedTrackableQuantity<Q> = InitializedTrackable<ComparableQuantity<Q>>
+
 /**
  * The base interface which defines objects which have the ability to update their status.
  */
@@ -37,6 +40,10 @@ interface Trackable<out T> : CoroutineScope {
      */
     val updateBroadcaster: ConflatedBroadcastChannel<out T>
 
+}
+
+interface InitializedTrackable<out T> : Trackable<T> {
+    val value: T
 }
 
 /**
@@ -55,19 +62,18 @@ suspend fun <T> Trackable<T>.getValue(): T =
     updateBroadcaster.valueOrNull ?: updateBroadcaster.openSubscription().receive()
 
 interface RatedTrackable<out T> : Trackable<ValueInstant<T>> {
-    val updateRate: ComparableQuantity<Frequency>
+    val updateRate: Trackable<ComparableQuantity<Frequency>>
 }
 
 fun RatedTrackable<*>.runningAverage(avgLength: Duration = 1.minutesSpan): AverageUpdateRateDelegate =
     AverageUpdateRateDelegate(this, avgLength)
 
 class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, private val avgLength: Duration) {
-
-    @Volatile
-    var updateRate = 0.hertz
+    private val updatable: InitializedUpdatable<ComparableQuantity<Frequency>> = input.Updatable(0.hertz)
 
     init {
         input.launch {
+            var updateRate: ComparableQuantity<Frequency>
             val sampleInstants = ArrayList<Instant>()
 
             input.updateBroadcaster.consumeEach {
@@ -76,6 +82,7 @@ class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, p
 
                 val sps = sampleInstants.size / (avgLength.toMillis() * 1_000.0)
                 updateRate = sps.hertz
+                updatable.set(updateRate)
             }
         }
     }
@@ -92,7 +99,8 @@ class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, p
         }
     }
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): ComparableQuantity<Frequency> = updateRate
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): InitializedTrackable<ComparableQuantity<Frequency>> =
+        updatable
 }
 
 private class CombinedTrackable<out T>(scope: CoroutineScope, trackables: Array<out Trackable<T>>) :
@@ -119,5 +127,5 @@ private class CombinedTrackable<out T>(scope: CoroutineScope, trackables: Array<
     fun cancel() = job.cancel()
 }
 
-fun <T> CoroutineScope.CombinedUpdatable(vararg trackables: Trackable<T>): Trackable<T> =
+fun <T> CoroutineScope.CombinedTrackable(vararg trackables: Trackable<T>): Trackable<T> =
     CombinedTrackable(this, trackables)
