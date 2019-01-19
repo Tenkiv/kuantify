@@ -21,6 +21,13 @@ internal object ClientHandler {
         clients[clientId]?.removeSession(session, clients)
     }
 
+    //TODO: Instead of always sending to all clients, register clients with HostDeviceCommunicators
+    suspend fun sendToAll(message: String) {
+        clients.values.forEach {
+            it.sendMessage(message)
+        }
+    }
+
 }
 
 internal class HostedClient(val id: String) {

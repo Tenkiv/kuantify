@@ -303,7 +303,7 @@ private object EmptyBinaryStateRange : ClosedRange<BinaryState> {
 /**
  * The [DaqcValue] representing a value which can be expressed as a [Quantity].
  */
-class DaqcQuantity<Q : Quantity<Q>>(private val wrappedQuantity: ComparableQuantity<Q>) : DaqcValue(),
+class DaqcQuantity<Q : Quantity<Q>>(internal val wrappedQuantity: ComparableQuantity<Q>) : DaqcValue(),
     ComparableQuantity<Q> by wrappedQuantity {
 
     override fun toString() = wrappedQuantity.toString()

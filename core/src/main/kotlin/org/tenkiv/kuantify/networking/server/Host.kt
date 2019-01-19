@@ -9,8 +9,11 @@ import io.ktor.util.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.networking.*
+import org.tenkiv.kuantify.networking.Route
 
 fun Application.kuantifyHost() {
     KuantifyHost().apply { init() }
@@ -61,14 +64,12 @@ private class KuantifyHost {
 
     }
 
+    @Suppress("NAME_SHADOWING")
     private suspend fun receiveMessage(clientId: String, message: String) {
+        val (route, message) = JSON.parse(NetworkMessage.serializer(), message)
         when {
-
+            route.first() == Route.DEVICE -> HostedDeviceManager.receiveMessage(route.drop(1), message)
         }
-    }
-
-    companion object {
-        const val DEVICE_CMD = "/device"
     }
 
 }
