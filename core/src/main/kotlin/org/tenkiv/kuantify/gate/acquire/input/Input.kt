@@ -36,7 +36,7 @@ interface Input<out T : DaqcValue> : IOStrand<T>, RatedTrackable<T> {
     /**
      * Exception is sent over this channel when something prevents the input from being received.
      */
-    val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
 
     /**
      * Activates the input alerting it to begin collecting and sending data.

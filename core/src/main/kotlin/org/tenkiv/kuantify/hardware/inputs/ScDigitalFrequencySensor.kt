@@ -43,7 +43,7 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
         get() = _broadcastChannel
 
     private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    final override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    final override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
 
     override val isTransceiving get() = digitalInput.isTransceivingFrequency

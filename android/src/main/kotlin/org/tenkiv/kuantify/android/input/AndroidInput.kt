@@ -51,7 +51,7 @@ abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val 
         get() = _broadcastChannel
 
     private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
 
     private val _accuracyBroadcastChannel = ConflatedBroadcastChannel<AndroidSensorAccuracy>()

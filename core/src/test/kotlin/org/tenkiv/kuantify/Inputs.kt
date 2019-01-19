@@ -25,7 +25,7 @@ import tec.units.indriya.*
 import javax.measure.quantity.*
 
 class EmptyAnalogInput : AnalogInput() {
-    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
     override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
@@ -62,7 +62,7 @@ class EmptyDigitalInput : DigitalInput() {
         throw Exception("Empty Test Class Exception")
     }
 
-    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
 
     override val transitionFrequencyIsSimulated: Boolean

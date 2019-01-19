@@ -37,7 +37,7 @@ class DigitalGibberingSensor : Input<BinaryState> {
     override val coroutineContext: CoroutineContext = Job()
     override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
-    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
     override val updateBroadcaster = ConflatedBroadcastChannel<BinaryStateMeasurement>()
     override val isTransceiving: Boolean = false
@@ -85,7 +85,7 @@ class DigitalInputGibberingSensor : DigitalInput() {
         get() = throw Exception("Empty Test Class Exception")
     override val hardwareNumber: Int
         get() = throw Exception("Empty Test Class Exception")
-    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
 
     val random = Random()
@@ -116,7 +116,7 @@ class DigitalInputGibberingSensor : DigitalInput() {
 class AnalogGibberingSensor : Input<DaqcQuantity<ElectricPotential>> {
     override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
-    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
     override val updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
     override val coroutineContext: CoroutineContext = Job()
@@ -162,7 +162,7 @@ class AnalogInputGibberingSensor : AnalogInput() {
         get() = throw Exception("Empty Test Class Exception")
     override val hardwareNumber: Int
         get() = throw Exception("Empty Test Class Exception")
-    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
     override val updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
 

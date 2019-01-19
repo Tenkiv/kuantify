@@ -32,7 +32,7 @@ import kotlin.coroutines.*
 class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
     override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
-    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
     override val isTransceiving: Boolean = false
     override val updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DaqcQuantity<ElectricPotential>>>()
@@ -76,7 +76,7 @@ class PredictableAnalogSensor : Input<DaqcQuantity<ElectricPotential>> {
 class PredictableDigitalSensor : Input<BinaryState> {
     override val updateRate: ComparableQuantity<Frequency>
         get() = throw Exception("Empty Test Class Exception")
-    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = throw Exception("Empty Test Class Exception")
     override val updateBroadcaster: ConflatedBroadcastChannel<ValueInstant<BinaryState>> = ConflatedBroadcastChannel()
     override val isTransceiving: Boolean = true

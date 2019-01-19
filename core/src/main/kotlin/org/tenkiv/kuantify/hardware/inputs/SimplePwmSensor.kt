@@ -40,7 +40,7 @@ class SimplePwmSensor internal constructor(val digitalInput: DigitalInput) :
 
     override val updateBroadcaster get() = digitalInput.pwmBroadcastChannel
 
-    override val failureBroadcastChannel get() = digitalInput.failureBroadcastChannel
+    override val failureBroadcaster get() = digitalInput.failureBroadcaster
 
     override val isTransceiving get() = digitalInput.isTransceivingPwm
 

@@ -56,7 +56,7 @@ class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
         get() = _broadcastChannel
 
     private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
 
     override val updateRate by runningAverage()
@@ -78,7 +78,7 @@ class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
             }
 
             launch {
-                failureBroadcastChannel.consumeEach {
+                failureBroadcaster.consumeEach {
                     _failureBroadcastChannel.send(it)
                 }
             }
@@ -128,7 +128,7 @@ class BinaryThresholdSensor internal constructor(
         get() = _broadcastChannel
 
     private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    override val failureBroadcastChannel: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _failureBroadcastChannel
 
     override val updateRate by runningAverage()
@@ -154,7 +154,7 @@ class BinaryThresholdSensor internal constructor(
             }
 
             launch {
-                failureBroadcastChannel.consumeEach {
+                failureBroadcaster.consumeEach {
                     _failureBroadcastChannel.send(it)
                 }
             }
