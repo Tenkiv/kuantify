@@ -53,7 +53,7 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(
 
     init {
         launch {
-            digitalInput.pwmBroadcastChannel.consumeEach { measurement ->
+            digitalInput.pwmBroadcaster.consumeEach { measurement ->
                 val convertedInput = convertInput(measurement.value)
 
                 when (convertedInput) {

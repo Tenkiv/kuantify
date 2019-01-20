@@ -17,13 +17,11 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
-import org.tenkiv.kuantify.gate.control.output.QuantityOutput
-import org.tenkiv.kuantify.hardware.definitions.device.AnalogOutputDevice
-import javax.measure.quantity.ElectricPotential
+import org.tenkiv.kuantify.gate.control.output.*
+import org.tenkiv.kuantify.hardware.definitions.device.*
+import javax.measure.quantity.*
 
 /**
  * Class defining the basic features of an output which sends analog signals.
  */
-abstract class AnalogOutput : QuantityOutput<ElectricPotential>, DaqcChannel<AnalogOutputDevice> {
-
-}
+abstract class AnalogOutput : QuantityOutput<ElectricPotential>, DaqcChannel<AnalogOutputDevice>

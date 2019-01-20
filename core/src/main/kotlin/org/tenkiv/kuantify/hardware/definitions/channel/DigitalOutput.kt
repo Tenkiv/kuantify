@@ -17,35 +17,25 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
-import org.tenkiv.kuantify.gate.control.output.SettingResult
-import org.tenkiv.kuantify.hardware.definitions.device.DigitalDaqDevice
-import org.tenkiv.kuantify.hardware.outputs.SimpleBinaryStateController
-import org.tenkiv.kuantify.hardware.outputs.SimpleFrequencyController
-import org.tenkiv.kuantify.hardware.outputs.SimplePwmController
-import javax.measure.quantity.Dimensionless
-import javax.measure.quantity.Frequency
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.control.output.*
+import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.hardware.outputs.*
+import javax.measure.quantity.*
 
 /**
  * Class defining the basic features of an output which sends binary signals.
  */
-abstract class DigitalOutput : DigitalChannel<DigitalDaqDevice>(), BinaryStateOutput {
+@Suppress("LeakingThis")
+abstract class DigitalOutput : DigitalChannel<DigitalDaqDevice>() {
 
-    override val isTransceiving get() = super.isTransceiving
+    private val thisAsBinaryStateController = SimpleBinaryStateController(this)
 
-    private val thisAsBinaryStateController by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        SimpleBinaryStateController(this)
-    }
+    private val thisAsPwmController = SimplePwmController(this)
 
-    private val thisAsPwmController by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        SimplePwmController(this)
-    }
+    private val thisAsFrequencyController = SimpleFrequencyController(this)
 
-    private val thisAsFrequencyController by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        SimpleFrequencyController(this)
-    }
+    abstract fun setOutput(state: BinaryState)
 
     /**
      * Activates this [DigitalOutput] for pulse width modulation.

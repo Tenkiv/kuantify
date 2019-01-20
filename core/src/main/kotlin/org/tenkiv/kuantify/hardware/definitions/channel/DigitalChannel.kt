@@ -17,74 +17,18 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import javax.measure.quantity.*
 
 /**
  * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
  */
-abstract class DigitalChannel<D : Device> : Trackable<BinaryStateMeasurement>, DaqcChannel<D> {
-
-    /**
-     * Gets if the channel has been activated for any state
-     */
-    open val isTransceiving get() = isTransceivingBinaryState || isTransceivingPwm || isTransceivingFrequency
-
-    /**
-     * Gets if the channel is active for binary state.
-     *
-     * Implementing backing  field must be atomic or otherwise provide safety for
-     * reads from multiple threads.
-     */
-    abstract val isTransceivingBinaryState: Boolean
-
-    /**
-     * Gets if the channel is active for pulse width modulation.
-     *
-     * Implementing backing  field must be atomic or otherwise provide safety for
-     * reads from multiple threads.
-     */
-    abstract val isTransceivingPwm: Boolean
-
-    /**
-     * Gets if the channel is active for state transitions.
-     *
-     * Implementing backing  field must be atomic or otherwise provide safety for
-     * reads from multiple threads.
-     */
-    abstract val isTransceivingFrequency: Boolean
-
-    protected val _binaryStateBroadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
-
-    final override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
-        get() = _binaryStateBroadcastChannel
-
-    protected val _pwmBroadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Dimensionless>>()
-
-    /**
-     * [ConflatedBroadcastChannel] for receiving pulse width modulation data.
-     */
-    val pwmBroadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Dimensionless>>
-        get() = _pwmBroadcastChannel
-
-    protected val _transitionFrequencyBroadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Frequency>>()
-
-    /**
-     * [ConflatedBroadcastChannel] for receiving transition frequency data.
-     */
-    val transitionFrequencyBroadcastChannel: ConflatedBroadcastChannel<out QuantityMeasurement<Frequency>>
-        get() = _transitionFrequencyBroadcastChannel
-
-    private val _unifiedBroadcastChannel = ConflatedBroadcastChannel<Measurement>()
-
-    /**
-     * [ConflatedBroadcastChannel] for receiving all data sent by this channel.
-     */
-    val unifiedBroadcastChannel: ConflatedBroadcastChannel<out Measurement>
-        get() = _unifiedBroadcastChannel
+abstract class DigitalChannel<D : DigitalDaqDevice> : DaqcGate<DigitalChannelValue>, DaqcChannel<D> {
 
     /**
      * Gets if the pulse width modulation state for this channel is simulated using software.
@@ -96,21 +40,74 @@ abstract class DigitalChannel<D : Device> : Trackable<BinaryStateMeasurement>, D
      */
     abstract val transitionFrequencyIsSimulated: Boolean
 
-    init {
-        launch {
-            updateBroadcaster.consumeEach {
-                _unifiedBroadcastChannel.send(it)
-            }
-        }
-        launch {
-            pwmBroadcastChannel.consumeEach {
-                _unifiedBroadcastChannel.send(it)
-            }
-        }
-        launch {
-            transitionFrequencyBroadcastChannel.consumeEach {
-                _unifiedBroadcastChannel.send(it)
-            }
-        }
+    /**
+     * Gets if the channel is active for binary state.
+     *
+     * Implementing backing  field must be atomic or otherwise provide safety for
+     * reads from multiple threads.
+     */
+    abstract val isTransceivingBinaryState: InitializedTrackable<Boolean>
+
+    /**
+     * Gets if the channel is active for pulse width modulation.
+     *
+     * Implementing backing  field must be atomic or otherwise provide safety for
+     * reads from multiple threads.
+     */
+    abstract val isTransceivingPwm: InitializedTrackable<Boolean>
+
+    /**
+     * Gets if the channel is active for state transitions.
+     *
+     * Implementing backing  field must be atomic or otherwise provide safety for
+     * reads from multiple threads.
+     */
+    abstract val isTransceivingFrequency: InitializedTrackable<Boolean>
+
+    protected val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalChannelValue>>()
+    final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalChannelValue>>
+        get() = _updateBroadcaster
+
+    protected val _binaryStateBroadcaster = ConflatedBroadcastChannel<BinaryStateMeasurement>()
+    val binaryStateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+        get() = _binaryStateBroadcaster
+
+    protected val _pwmBroadcaster = ConflatedBroadcastChannel<QuantityMeasurement<Dimensionless>>()
+    /**
+     * [ConflatedBroadcastChannel] for receiving pulse width modulation data.
+     */
+    val pwmBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Dimensionless>>
+        get() = _pwmBroadcaster
+
+    protected val _transitionFrequencyBroadcaster = ConflatedBroadcastChannel<QuantityMeasurement<Frequency>>()
+    /**
+     * [ConflatedBroadcastChannel] for receiving transition frequency data.
+     */
+    val transitionFrequencyBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Frequency>>
+        get() = _transitionFrequencyBroadcaster
+}
+
+sealed class DigitalChannelValue : DaqcData {
+
+    override val size: Int
+        get() = 1
+
+    data class BinaryState(val state: org.tenkiv.kuantify.data.BinaryState) : DigitalChannelValue() {
+
+        override fun toDaqcValueList(): List<DaqcValue> = listOf(state)
+
     }
+
+    data class Frequency(val frequency: DaqcQuantity<javax.measure.quantity.Frequency>) : DigitalChannelValue() {
+
+        override fun toDaqcValueList(): List<DaqcValue> = listOf(frequency)
+
+    }
+
+    data class Percentage(val percent: DaqcQuantity<Dimensionless>) : DigitalChannelValue() {
+
+        override fun toDaqcValueList(): List<DaqcValue> = listOf(percent)
+
+    }
+
 }

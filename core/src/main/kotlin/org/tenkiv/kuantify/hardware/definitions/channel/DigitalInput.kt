@@ -17,32 +17,23 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.gate.acquire.input.BinaryStateInput
-import org.tenkiv.kuantify.hardware.definitions.device.DigitalDaqDevice
-import org.tenkiv.kuantify.hardware.inputs.SimpleBinaryStateSensor
-import org.tenkiv.kuantify.hardware.inputs.SimpleDigitalFrequencySensor
-import org.tenkiv.kuantify.hardware.inputs.SimplePwmSensor
-import javax.measure.quantity.Frequency
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.hardware.inputs.*
+import javax.measure.quantity.*
 
 /**
  * Class defining the basic features of an input which reads binary signals.
  */
-abstract class DigitalInput : DigitalChannel<DigitalDaqDevice>(), BinaryStateInput {
+@Suppress("LeakingThis")
+abstract class DigitalInput : DigitalChannel<DigitalDaqDevice>() {
 
-    override val isTransceiving get() = super.isTransceiving
+    private val thisAsBinaryStateSensor = SimpleBinaryStateSensor(this)
 
-    private val thisAsBinaryStateSensor by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        SimpleBinaryStateSensor(this)
-    }
+    private val thisAsTransitionFrequencyInput = SimpleDigitalFrequencySensor(this)
 
-    private val thisAsTransitionFrequencyInput by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        SimpleDigitalFrequencySensor(this)
-    }
+    private val thisAsPwmInput = SimplePwmSensor(this)
 
-    private val thisAsPwmInput by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        SimplePwmSensor(this)
-    }
 
     /**
      * Activates this channel to gather data for transition frequency averaged over a certain period of time.
@@ -61,7 +52,7 @@ abstract class DigitalInput : DigitalChannel<DigitalDaqDevice>(), BinaryStateInp
     /**
      * Activates the channel to receive data about the current state of the [DigitalInput]
      */
-    open fun startSamplingCurrentState() = startSampling()
+    abstract fun startSamplingCurrentState()
 
     /**
      * Creates a [SimpleBinaryStateSensor] with the input being this channel.

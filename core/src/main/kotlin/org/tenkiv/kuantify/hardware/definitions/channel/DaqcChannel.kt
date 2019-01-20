@@ -17,9 +17,11 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
-import kotlinx.coroutines.CoroutineScope
-import org.tenkiv.kuantify.hardware.definitions.device.Device
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.*
+import org.tenkiv.kuantify.hardware.definitions.device.*
+import kotlin.coroutines.*
+import org.tenkiv.kuantify.data.BinaryState as DaqcValueBinaryState
+import javax.measure.quantity.Frequency as FrequencyDimension
 
 /**
  * Defines the basic features of a channel owned by a [Device].

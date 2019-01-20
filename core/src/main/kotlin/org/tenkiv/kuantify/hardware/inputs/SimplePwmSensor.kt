@@ -38,7 +38,7 @@ class SimplePwmSensor internal constructor(val digitalInput: DigitalInput) :
     @Volatile
     var avgFrequency: DaqcQuantity<Frequency> = 1.hertz.toDaqc()
 
-    override val updateBroadcaster get() = digitalInput.pwmBroadcastChannel
+    override val updateBroadcaster get() = digitalInput.pwmBroadcaster
 
     override val failureBroadcaster get() = digitalInput.failureBroadcaster
 

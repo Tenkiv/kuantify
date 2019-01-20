@@ -95,9 +95,9 @@ class DigitalInputGibberingSensor : DigitalInput() {
     init {
         timer.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
-                _binaryStateBroadcastChannel.offer(BinaryState.On.at(Instant.now()))
-                _transitionFrequencyBroadcastChannel.offer(DaqcQuantity.of(10.hertz).at(Instant.now()))
-                _pwmBroadcastChannel.offer(DaqcQuantity.of(10.percent).at(Instant.now()))
+                _binaryStateBroadcaster.offer(BinaryState.On.at(Instant.now()))
+                _transitionFrequencyBroadcaster.offer(DaqcQuantity.of(10.hertz).at(Instant.now()))
+                _pwmBroadcaster.offer(DaqcQuantity.of(10.percent).at(Instant.now()))
             }
         }, 100, 100)
     }

@@ -38,7 +38,7 @@ class SimpleDigitalFrequencySensor internal constructor(val digitalInput: Digita
     @Volatile
     var avgFrequency: DaqcQuantity<Frequency> = 1.hertz.toDaqc()
 
-    override val updateBroadcaster get() = digitalInput.transitionFrequencyBroadcastChannel
+    override val updateBroadcaster get() = digitalInput.transitionFrequencyBroadcaster
 
     override val failureBroadcaster get() = digitalInput.failureBroadcaster
 

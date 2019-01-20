@@ -25,7 +25,7 @@ import org.tenkiv.kuantify.gate.*
  */
 interface Device : CoroutineScope {
 
-    val ioStrandMap: Map<String, IOStrand<*>>
+    val daqcGateMap: Map<String, DaqcGate<*>>
 
     val uid: String
 

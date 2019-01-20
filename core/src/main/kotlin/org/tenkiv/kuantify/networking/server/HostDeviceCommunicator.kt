@@ -40,7 +40,7 @@ open class HostDeviceCommunicator(
 
     init {
         launch {
-            device.ioStrandMap.forEach { id, strand ->
+            device.daqcGateMap.forEach { id, strand ->
                 launch {
                     strand.updateBroadcaster.consumeEach {
                         when (val value = it.value) {
@@ -83,7 +83,7 @@ open class HostDeviceCommunicator(
     private fun receiveBufferMsg(strandId: String, message: String) {
         val buffer: Boolean = JSON.parse(BooleanSerializer, message)
 
-        (device.ioStrandMap[strandId] as AnalogInput)
+        (device.daqcGateMap[strandId] as AnalogInput)
     }
 
     private fun receiveMaxErrorMsg(strandId: String, message: String) {

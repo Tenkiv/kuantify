@@ -52,7 +52,7 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
 
     init {
         launch {
-            digitalInput.transitionFrequencyBroadcastChannel.consumeEach { measurement ->
+            digitalInput.transitionFrequencyBroadcaster.consumeEach { measurement ->
                 val convertedInput = convertInput(measurement.value)
 
                 when (convertedInput) {
