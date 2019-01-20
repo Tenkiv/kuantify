@@ -1,12 +1,9 @@
 package org.tenkiv.kuantify.android
 
-import android.hardware.Sensor
-import android.hardware.SensorManager
-import org.tenkiv.kuantify.android.input.AndroidSensor
-import org.tenkiv.kuantify.android.lib.beatsPerMinute
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.data.toDaqc
+import android.hardware.*
+import org.tenkiv.kuantify.android.input.*
+import org.tenkiv.kuantify.android.lib.*
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.physikal.core.*
 import javax.measure.quantity.*
 
@@ -91,7 +88,7 @@ class AndroidStationarySensor(device: LocalAndroidDevice, sensor: Sensor) :
 
     override val type: Int = Sensor.TYPE_STATIONARY_DETECT
 
-    override fun convertData(data: FloatArray): BinaryState = BinaryState.On
+    override fun convertData(data: FloatArray): BinaryState = BinaryState.High
 }
 
 /**
@@ -105,7 +102,7 @@ class AndroidMotionSensor(device: LocalAndroidDevice, sensor: Sensor) :
 
     override val type: Int = Sensor.TYPE_MOTION_DETECT
 
-    override fun convertData(data: FloatArray): BinaryState = BinaryState.On
+    override fun convertData(data: FloatArray): BinaryState = BinaryState.High
 }
 
 /**
@@ -133,5 +130,5 @@ class AndroidOnBodySensor(device: LocalAndroidDevice, sensor: Sensor) :
 
     override val type: Int = Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT
 
-    override fun convertData(data: FloatArray): BinaryState = if (data[0] == 1.0f) BinaryState.On else BinaryState.Off
+    override fun convertData(data: FloatArray): BinaryState = if (data[0] == 1.0f) BinaryState.High else BinaryState.Low
 }

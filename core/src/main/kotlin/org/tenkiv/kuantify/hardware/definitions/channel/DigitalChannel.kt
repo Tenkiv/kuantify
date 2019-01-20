@@ -41,6 +41,13 @@ abstract class DigitalChannel<D : DigitalDaqDevice> : DaqcGate<DigitalChannelVal
     abstract val transitionFrequencyIsSimulated: Boolean
 
     /**
+     * The frequency with which pwm and transition frequency input and output will be averaged.
+     * e.g. you want an output to be [BinaryState.High] 60% of the time. This will set if it's high 60% of the time
+     * after 2 seconds, 1 second, 0.5 seconds, etc.
+     */
+    val avgFrequency: UpdatableQuantity<Frequency> = Updatable()
+
+    /**
      * Gets if the channel is active for binary state.
      *
      * Implementing backing  field must be atomic or otherwise provide safety for
@@ -85,6 +92,11 @@ abstract class DigitalChannel<D : DigitalDaqDevice> : DaqcGate<DigitalChannelVal
      */
     val transitionFrequencyBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Frequency>>
         get() = _transitionFrequencyBroadcaster
+
+    protected val _failureBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
+    val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        get() = _failureBroadcaster
+
 }
 
 sealed class DigitalChannelValue : DaqcData {

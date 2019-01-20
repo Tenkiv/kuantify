@@ -32,7 +32,7 @@ open class HostDeviceCommunicator(
     private val ioStrandRoute = run {
         val list = ArrayList<String>()
         list += deviceRoute
-        list += Route.IO_STRAND
+        list += Route.DAQC_GATE
         list
     }
 
@@ -58,7 +58,7 @@ open class HostDeviceCommunicator(
     //TODO: Throw specific exceptions for errors in message reception
     internal fun receiveMessage(route: List<String>, message: String) {
         when {
-            route.first() == Route.IO_STRAND -> receiveIOStrandMsg(route.drop(1), message)
+            route.first() == Route.DAQC_GATE -> receiveIOStrandMsg(route.drop(1), message)
         }
     }
 

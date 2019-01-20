@@ -101,7 +101,7 @@ class LearningController<T> internal constructor(
         outputs.forEach {
             when (it) {
                 is RangedQuantityOutput<*> -> it.setOutputToPercentMaximum(50.percent)
-                is BinaryStateOutput -> it.setOutput(BinaryState.Off)
+                is BinaryStateOutput -> it.setOutput(BinaryState.Low)
             }
         }
 

@@ -121,12 +121,12 @@ fun <Q : Quantity<Q>> CoroutineScope.AverageQuantitySensor(vararg inputs: Quanti
  *
  * @param inputs The [BinaryInput]s for which samples are to be drawn.
  * @param threshold The minimum number of [BinaryInput]s which need to be in the desired state.
- * @param state The state for which the [BinaryInput]s should be checked. Default is [BinaryState.On].
+ * @param state The state for which the [BinaryInput]s should be checked. Default is [BinaryState.High].
  */
 class BinaryThresholdSensor internal constructor(
     scope: CoroutineScope,
     threshold: Int,
-    state: BinaryState = BinaryState.On,
+    state: BinaryState = BinaryState.High,
     private vararg val inputs: BinaryStateInput
 ) : BinaryStateInput {
 
@@ -167,9 +167,9 @@ class BinaryThresholdSensor internal constructor(
 
                         _broadcastChannel.send(
                             if (currentValues.filter { it == state }.size >= threshold) {
-                                BinaryState.On
+                                BinaryState.High
                             } else {
-                                BinaryState.Off
+                                BinaryState.Low
                             } at measurement.instant
                         )
                     }
@@ -213,6 +213,6 @@ class BinaryThresholdSensor internal constructor(
 
 fun CoroutineScope.BinaryThresholdSensor(
     threshold: Int,
-    state: BinaryState = BinaryState.On,
+    state: BinaryState = BinaryState.High,
     vararg inputs: BinaryStateInput
 ): BinaryThresholdSensor = BinaryThresholdSensor(this, threshold, state, *inputs)

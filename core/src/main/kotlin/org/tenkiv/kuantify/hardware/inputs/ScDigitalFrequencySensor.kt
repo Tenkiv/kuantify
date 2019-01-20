@@ -25,7 +25,6 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.definitions.channel.*
-import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
 import javax.measure.*
 import javax.measure.quantity.*
@@ -50,6 +49,8 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
 
     override val updateRate get() = digitalInput.updateRate
 
+    val avgFrequency: UpdatableQuantity<Frequency> get() = digitalInput.avgFrequency
+
     init {
         launch {
             digitalInput.transitionFrequencyBroadcaster.consumeEach { measurement ->
@@ -63,10 +64,7 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
         }
     }
 
-    @Volatile
-    var averageTransitionFrequency: DaqcQuantity<Frequency> = 2.hertz.toDaqc()
-
-    override fun startSampling() = digitalInput.startSamplingTransitionFrequency(averageTransitionFrequency)
+    override fun startSampling() = digitalInput.startSamplingTransitionFrequency()
 
     override fun stopTransceiving() = digitalInput.stopTransceiving()
 

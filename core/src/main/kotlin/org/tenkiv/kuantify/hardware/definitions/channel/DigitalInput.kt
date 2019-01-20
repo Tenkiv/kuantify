@@ -17,52 +17,51 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.hardware.inputs.*
+import tec.units.indriya.*
 import javax.measure.quantity.*
 
 /**
  * Class defining the basic features of an input which reads binary signals.
  */
 @Suppress("LeakingThis")
-abstract class DigitalInput : DigitalChannel<DigitalDaqDevice>() {
+abstract class DigitalInput : DigitalChannel<DigitalDaqDevice>(), RatedTrackable<DigitalChannelValue> {
 
     private val thisAsBinaryStateSensor = SimpleBinaryStateSensor(this)
 
     private val thisAsTransitionFrequencyInput = SimpleDigitalFrequencySensor(this)
 
-    private val thisAsPwmInput = SimplePwmSensor(this)
-
+    private val thisAsPwmSensor = SimplePwmSensor(this)
 
     /**
      * Activates this channel to gather data for transition frequency averaged over a certain period of time.
      *
      * @param avgFrequency The period of time to average the transition frequency.
      */
-    abstract fun startSamplingTransitionFrequency(avgFrequency: DaqcQuantity<Frequency>)
+    abstract fun startSamplingTransitionFrequency()
 
     /**
      * Activates this channel to gather data for PWM averaged over a certain period of time.
      *
      * @param avgFrequency The period of time to average the PWM frequency.
      */
-    abstract fun startSamplingPwm(avgFrequency: DaqcQuantity<Frequency>)
+    abstract fun startSamplingPwm()
 
     /**
      * Activates the channel to receive data about the current state of the [DigitalInput]
      */
-    abstract fun startSamplingCurrentState()
+    abstract fun startSamplingBinaryState()
 
     /**
      * Creates a [SimpleBinaryStateSensor] with the input being this channel.
      *
-     * @param inverted If the channel has inverted values, ie Off == [BinaryState.On]. Default is false.
+     * @param inverted If the channel has inverted values, ie Low == [BinaryState.High]. Default is false.
      * @return A [SimpleBinaryStateSensor] with the input as this channel.
      */
-    fun asBinaryStateSensor(inverted: Boolean = false) = thisAsBinaryStateSensor.apply {
-        this.inverted = inverted
-    }
+    fun asBinaryStateSensor() = thisAsBinaryStateSensor
 
     /**
      * Creates a [SimpleDigitalFrequencySensor] with the input being this channel.
@@ -70,8 +69,9 @@ abstract class DigitalInput : DigitalChannel<DigitalDaqDevice>() {
      * @param avgFrequency The average period of time over which to average.
      * @return A [SimpleDigitalFrequencySensor] with the input as this channel.
      */
-    fun asTransitionFrequencySensor(avgFrequency: DaqcQuantity<Frequency>) = thisAsTransitionFrequencyInput.apply {
-        this.avgFrequency = avgFrequency
+    fun asTransitionFrequencySensor(avgFrequency: ComparableQuantity<Frequency>): SimpleDigitalFrequencySensor {
+        this.avgFrequency.set(avgFrequency)
+        return thisAsTransitionFrequencyInput
     }
 
     /**
@@ -80,7 +80,8 @@ abstract class DigitalInput : DigitalChannel<DigitalDaqDevice>() {
      * @param avgFrequency The average period of time over which to average.
      * @return A [SimplePwmSensor] with the input as this channel.
      */
-    fun asPwmSensor(avgFrequency: DaqcQuantity<Frequency>) = thisAsPwmInput.apply {
-        this.avgFrequency = avgFrequency
+    fun asPwmSensor(avgFrequency: ComparableQuantity<Frequency>): SimplePwmSensor {
+        this.avgFrequency.set(avgFrequency)
+        return thisAsPwmSensor
     }
 }

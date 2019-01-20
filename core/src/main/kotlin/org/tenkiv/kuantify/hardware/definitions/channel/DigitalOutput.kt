@@ -17,10 +17,12 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.hardware.outputs.*
+import tec.units.indriya.*
 import javax.measure.quantity.*
 
 /**
@@ -35,7 +37,7 @@ abstract class DigitalOutput : DigitalChannel<DigitalDaqDevice>() {
 
     private val thisAsFrequencyController = SimpleFrequencyController(this)
 
-    abstract fun setOutput(state: BinaryState)
+    abstract fun setOutput(state: BinaryState): SettingResult
 
     /**
      * Activates this [DigitalOutput] for pulse width modulation.
@@ -52,30 +54,34 @@ abstract class DigitalOutput : DigitalChannel<DigitalDaqDevice>() {
     abstract fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>, panicOnFailure: Boolean): SettingResult
 
     override fun stopTransceiving() {
-        setOutput(BinaryState.Off)
+        setOutput(BinaryState.Low)
     }
 
     /**
      * Ease of use function to create a [SimpleBinaryStateController] from this [DigitalOutput].
      *
-     * @param inverted Denotes if [BinaryState.ON] is Off as well as the inverse. By default false.
+     * @param inverted Denotes if [BinaryState.ON] is Low as well as the inverse. By default false.
      * @return A [SimpleBinaryStateController] with this [DigitalOutput] as the controlled output.
      */
-    fun asBinaryStateController(inverted: Boolean = false) = thisAsBinaryStateController.apply {
-        this.inverted = inverted
-    }
+    fun asBinaryStateController() = thisAsBinaryStateController
 
     /**
      * Ease of use function to create a [SimplePwmController] from this [DigitalOutput].
      *
      * @return A [SimplePwmController] with this [DigitalOutput] as the controlled output.
      */
-    fun asPwmController() = thisAsPwmController
+    fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): SimplePwmController {
+        this.avgFrequency.set(avgFrequency)
+        return thisAsPwmController
+    }
 
     /**
      * Ease of use function to create a [SimpleFrequencyController] from this [DigitalOutput].
      *
      * @return A [SimpleFrequencyController] with this [DigitalOutput] as the controlled output.
      */
-    fun asFrequencyController() = thisAsFrequencyController
+    fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): SimpleFrequencyController {
+        this.avgFrequency.set(avgFrequency)
+        return thisAsFrequencyController
+    }
 }

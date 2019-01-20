@@ -37,9 +37,10 @@ abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput
     override val isTransceiving get() = digitalOutput.isTransceivingPwm
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-
     final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
+
+    val avgFrequency: UpdatableQuantity<Frequency> get() = digitalOutput.avgFrequency
 
     override fun setOutput(setting: DaqcQuantity<Q>, panicOnFailure: Boolean): SettingResult {
         val result = digitalOutput.pulseWidthModulate(convertOutput(setting), panicOnFailure)

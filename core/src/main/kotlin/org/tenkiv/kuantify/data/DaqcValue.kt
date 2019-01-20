@@ -111,7 +111,7 @@ sealed class DaqcValue : DaqcData {
 sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
     /**
-     * Returns the binary value as a [Boolean]. This will return true for [On] and false for [Off]
+     * Returns the binary value as a [Boolean]. This will return true for [High] and false for [Low]
      *
      * @return The binary value as a [Boolean]
      */
@@ -166,22 +166,22 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
      */
     operator fun rangeTo(other: BinaryState): ClosedRange<BinaryState> =
         when (this) {
-            Off -> FullBinaryStateRange
-            On -> EmptyBinaryStateRange
+            Low -> FullBinaryStateRange
+            High -> EmptyBinaryStateRange
         }
 
     /**
      * The [BinaryState] representing the activated value or the 1 state.
      */
-    object On : BinaryState() {
+    object High : BinaryState() {
 
         const val SHORT_REPRESENTATION: Short = 1
         const val BYTE_REPRESENTATION: Byte = 1
 
         override fun compareTo(other: BinaryState) =
             when (other) {
-                is On -> 0
-                is Off -> 1
+                is High -> 0
+                is Low -> 1
             }
 
         override fun toBoolean(): Boolean = true
@@ -198,21 +198,21 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
         override fun toDouble() = 1.0
 
-        override fun toString() = "BinaryState.ON"
+        override fun toString() = "BinaryState.HIGH"
     }
 
     /**
      * The [BinaryState] representing the deactivated value or the 0 state.
      */
-    object Off : BinaryState() {
+    object Low : BinaryState() {
 
         const val SHORT_REPRESENTATION: Short = 0
         const val BYTE_REPRESENTATION: Byte = 0
 
         override fun compareTo(other: BinaryState) =
             when (other) {
-                is On -> -1
-                is Off -> 0
+                is High -> -1
+                is Low -> 0
             }
 
         override fun toBoolean(): Boolean = false
@@ -229,7 +229,7 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
         override fun toDouble() = 0.0
 
-        override fun toString() = "BinaryState.OFF"
+        override fun toString() = "BinaryState.LOW"
 
     }
 
@@ -251,19 +251,19 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
          * @throws [DataFormatException] if the [String] is malformed or not a 1 or 0.
          */
         fun fromString(input: String): BinaryState {
-            if (input == On.toString()) {
-                return On
+            if (input == High.toString()) {
+                return High
             }
-            if (input == Off.toString()) {
-                return Off
+            if (input == Low.toString()) {
+                return Low
             }
             throw DataFormatException("Data with BinaryState not found")
         }
 
         override fun deserialize(input: Decoder): BinaryState {
             return when (input.decodeByte()) {
-                On.BYTE_REPRESENTATION -> On
-                Off.BYTE_REPRESENTATION -> Off
+                High.BYTE_REPRESENTATION -> High
+                Low.BYTE_REPRESENTATION -> Low
                 else -> throw SerializationException("Data with BinaryState not found")
             }
         }
@@ -280,8 +280,8 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
  * The [ClosedRange] of all [BinaryState]s.
  */
 private object FullBinaryStateRange : ClosedRange<BinaryState> {
-    override val endInclusive get() = BinaryState.On
-    override val start get() = BinaryState.Off
+    override val endInclusive get() = BinaryState.High
+    override val start get() = BinaryState.Low
 
     override fun contains(value: BinaryState) = true
 
@@ -292,8 +292,8 @@ private object FullBinaryStateRange : ClosedRange<BinaryState> {
  * An empty [ClosedRange] containing no [BinaryState]s.
  */
 private object EmptyBinaryStateRange : ClosedRange<BinaryState> {
-    override val endInclusive get() = BinaryState.Off
-    override val start get() = BinaryState.On
+    override val endInclusive get() = BinaryState.Low
+    override val start get() = BinaryState.High
 
     override fun contains(value: BinaryState) = false
 

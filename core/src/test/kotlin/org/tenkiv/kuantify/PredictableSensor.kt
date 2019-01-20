@@ -88,16 +88,17 @@ class PredictableDigitalSensor : Input<BinaryState> {
     var iteration = 0
 
     var sendingOrder = arrayListOf(
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.On,
-            BinaryState.Off,
-            BinaryState.Off)
+        BinaryState.High,
+        BinaryState.High,
+        BinaryState.High,
+        BinaryState.High,
+        BinaryState.High,
+        BinaryState.High,
+        BinaryState.High,
+        BinaryState.High,
+        BinaryState.Low,
+        BinaryState.Low
+    )
 
     init {
         val timer = Timer(false)

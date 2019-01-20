@@ -3,7 +3,7 @@ package org.tenkiv.kuantify.networking
 object Route {
     const val DEVICE = "device"
 
-    const val IO_STRAND = "io_strand"
+    const val DAQC_GATE = "gaqc_gate"
     const val BUFFER = "buffer"
     const val MAX_ACCEPTABLE_ERROR = "max_acceptable_error"
     const val MAX_ELECTRIC_POTENTIAL = "max_electric_potential"

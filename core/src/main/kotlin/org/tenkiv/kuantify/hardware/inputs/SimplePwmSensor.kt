@@ -18,10 +18,8 @@
 package org.tenkiv.kuantify.hardware.inputs
 
 import kotlinx.coroutines.*
-import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.definitions.channel.*
-import org.tenkiv.physikal.core.*
 import javax.measure.quantity.*
 
 /**
@@ -32,21 +30,16 @@ import javax.measure.quantity.*
 class SimplePwmSensor internal constructor(val digitalInput: DigitalInput) :
     QuantityInput<Dimensionless>, CoroutineScope by digitalInput {
 
-    /**
-     * The [Frequency] over which to average the samples.
-     */
-    @Volatile
-    var avgFrequency: DaqcQuantity<Frequency> = 1.hertz.toDaqc()
-
     override val updateBroadcaster get() = digitalInput.pwmBroadcaster
 
     override val failureBroadcaster get() = digitalInput.failureBroadcaster
 
     override val isTransceiving get() = digitalInput.isTransceivingPwm
 
-    override fun startSampling() = digitalInput.startSamplingPwm(avgFrequency)
+    override val updateRate get() = digitalInput.updateRate
+
+    override fun startSampling() = digitalInput.startSamplingPwm()
 
     override fun stopTransceiving() = digitalInput.stopTransceiving()
 
-    override val updateRate get() = digitalInput.updateRate
 }

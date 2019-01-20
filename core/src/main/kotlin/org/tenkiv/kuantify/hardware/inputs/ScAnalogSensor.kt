@@ -55,8 +55,8 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
     override val updateRate get() = analogInput.updateRate
 
     init {
-        analogInput.maxElectricPotential = maximumEp
-        analogInput.maxAcceptableError = acceptableError
+        analogInput.maxElectricPotential.set(maximumEp)
+        analogInput.maxAcceptableError.set(acceptableError)
 
         launch {
             analogInput.updateBroadcaster.consumeEach { measurement ->

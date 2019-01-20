@@ -41,6 +41,8 @@ abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: 
     final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
+    val avgFrequency: UpdatableQuantity<Frequency> get() = digitalOutput.avgFrequency
+
     override fun setOutput(setting: DaqcQuantity<Q>, panicOnFailure: Boolean): SettingResult {
         val result = digitalOutput.sustainTransitionFrequency(convertOutput(setting), panicOnFailure)
 

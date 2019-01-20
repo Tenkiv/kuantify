@@ -42,9 +42,9 @@ class BinaryStateOutputActionHandler(private val output: BinaryStateOutput) : Ou
         }
     }
 
-    private fun setOn() = output.setOutput(BinaryState.On)
+    private fun setOn() = output.setOutput(BinaryState.High)
 
-    private fun setOff() = output.setOutput(BinaryState.Off)
+    private fun setOff() = output.setOutput(BinaryState.Low)
 
 }
 

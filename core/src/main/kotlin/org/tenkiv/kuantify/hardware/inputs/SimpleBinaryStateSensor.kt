@@ -19,9 +19,7 @@ package org.tenkiv.kuantify.hardware.inputs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.definitions.channel.*
 
@@ -33,16 +31,8 @@ import org.tenkiv.kuantify.hardware.definitions.channel.*
 class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInput) :
     BinaryStateInput, CoroutineScope by digitalInput {
 
-    /**
-     * Denotes if the [DigitalInput] is inverted; ie Off = [BinaryState.On]
-     */
-    @Volatile
-    var inverted: Boolean = false
-
-    private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
-
     override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
-        get() = _broadcastChannel
+        get() = digitalInput.binaryStateBroadcaster
 
     override val failureBroadcaster get() = digitalInput.failureBroadcaster
 
@@ -50,18 +40,7 @@ class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInpu
 
     override val updateRate get() = digitalInput.updateRate
 
-    init {
-        launch {
-            digitalInput.updateBroadcaster.consumeEach { measurement ->
-                if (!inverted) _broadcastChannel.send(measurement) else when (measurement.value) {
-                    BinaryState.On -> _broadcastChannel.send(BinaryState.Off at measurement.instant)
-                    BinaryState.Off -> _broadcastChannel.send(BinaryState.On at measurement.instant)
-                }
-            }
-        }
-    }
-
-    override fun startSampling() = digitalInput.startSamplingCurrentState()
+    override fun startSampling() = digitalInput.startSamplingBinaryState()
 
     override fun stopTransceiving() = digitalInput.stopTransceiving()
 }
