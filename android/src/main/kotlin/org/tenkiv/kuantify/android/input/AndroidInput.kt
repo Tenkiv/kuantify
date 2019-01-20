@@ -25,7 +25,6 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.android.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
-import tec.units.indriya.*
 import java.time.*
 import javax.measure.quantity.*
 import kotlin.coroutines.*
@@ -44,7 +43,7 @@ abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val 
 
     override val coroutineContext: CoroutineContext get() = device.coroutineContext
 
-    override val updateRate: ComparableQuantity<Frequency> by runningAverage()
+    override val updateRate: TrackableQuantity<Frequency> by runningAverage()
 
     private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<Q>>()
     final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Q>>
@@ -62,9 +61,6 @@ abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val 
     val accuracyBroadcastChannel: ConflatedBroadcastChannel<out AndroidSensorAccuracy>
         get() = _accuracyBroadcastChannel
 
-    @Volatile
-    private var _isActive = false
-
     /**
      * The minimum acceptable accuracy for samples from the sensor. Samples which fall below it will be discarded.
      */
@@ -72,8 +68,9 @@ abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val 
     var minimumAccuracy: AndroidSensorAccuracy =
         AndroidSensorAccuracy.LOW_ACCURACY
 
-    override val isTransceiving: Boolean
-        get() = _isActive
+    protected val _isTransceiving = Updatable(false)
+    override val isTransceiving: InitializedTrackable<Boolean>
+        get() = _isTransceiving
 
     private val sensorListener = object : SensorEventListener {
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
@@ -93,12 +90,12 @@ abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val 
     }
 
     override fun startSampling() {
-        _isActive = true
+        _isTransceiving.value = true
         manager.registerListener(sensorListener, sensor, 100, 200)
     }
 
     override fun stopTransceiving() {
-        _isActive = false
+        _isTransceiving.value = false
         manager.unregisterListener(sensorListener)
     }
 
