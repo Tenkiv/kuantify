@@ -19,7 +19,7 @@ internal object HostedDeviceManager {
     }
 
     @Suppress("NAME_SHADOWING")
-    fun receiveMessage(route: List<String>, message: String) {
+    suspend fun receiveMessage(route: List<String>, message: String) {
         val deviceId = route.first()
         val route = route.drop(1)
 

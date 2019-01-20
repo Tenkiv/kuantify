@@ -4,7 +4,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.definitions.channel.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.lib.*
@@ -55,75 +58,114 @@ open class HostDeviceCommunicator(
 
     }
 
+    //TODO: Check additional data channels if cast fails
     //TODO: Throw specific exceptions for errors in message reception
-    internal fun receiveMessage(route: List<String>, message: String) {
+    internal suspend fun receiveMessage(route: List<String>, message: String) {
         when {
-            route.first() == Route.DAQC_GATE -> receiveIOStrandMsg(route.drop(1), message)
+            route.first() == Route.DAQC_GATE -> receiveDaqcGateMsg(route.drop(1), message)
+            else -> receiveOtherMessage(route, message)
+        }
+    }
+
+    private suspend fun receiveDaqcGateMsg(route: List<String>, message: String) {
+        val gateId = route.first()
+        val command = route.drop(1).first()
+
+        when (command) {
+            Route.BUFFER -> receiveBufferMsg(gateId, message)
+            Route.MAX_ACCEPTABLE_ERROR -> receiveMaxErrorMsg(gateId, message)
+            Route.MAX_ELECTRIC_POTENTIAL -> receiveMaxElectricPotential(gateId, message)
+            Route.START_SAMPLING -> receiveStartSampling(gateId)
+            Route.START_SAMPLING_BINARY_STATE -> receiveStartSamplingBinaryState(gateId)
+            Route.START_SAMPLING_PWM -> receiveStartSamplingPwm(gateId)
+            Route.START_SAMPLING_TRANSITION_FREQUENCY -> receiveStartSamplingTransitionFrequency(gateId)
+            Route.STOP_TRANSCEIVING -> receiveStopTransceiving(gateId)
+            Route.PULSE_WIDTH_MODULATE -> receivePulseWidthModulate(gateId, message)
+            Route.SUSTAIN_TRANSITION_FREQUENCY -> receiveSustainTransitionFrequency(gateId, message)
+            Route.AVG_FREQUENCY -> receiveAvgFrequency(gateId, message)
+            else -> receiveOtherDaqcGateMessage(route, message)
+        }
+    }
+
+    private fun receiveBufferMsg(gateId: String, message: String) {
+        val buffer: Boolean = JSON.parse(BooleanSerializer, message)
+
+        (device.daqcGateMap[gateId] as AnalogInput).buffer.set(buffer)
+    }
+
+    private fun receiveMaxErrorMsg(gateId: String, message: String) {
+        val maxAcceptableError: ComparableQuantity<ElectricPotential> =
+            JSON.parse(ComparableQuantitySerializer, message).asType()
+
+        (device.daqcGateMap[gateId] as AnalogInput).maxAcceptableError.set(maxAcceptableError)
+    }
+
+    private fun receiveMaxElectricPotential(gateId: String, message: String) {
+        val maxElectricPotential: ComparableQuantity<ElectricPotential> =
+            JSON.parse(ComparableQuantitySerializer, message).asType()
+
+        (device.daqcGateMap[gateId] as AnalogInput).maxElectricPotential.set(maxElectricPotential)
+    }
+
+    private fun receiveStartSampling(gateId: String) {
+        (device.daqcGateMap[gateId] as Input<*>).startSampling()
+    }
+
+    private fun receiveStartSamplingBinaryState(gateId: String) {
+        (device.daqcGateMap[gateId] as DigitalInput).startSamplingBinaryState()
+    }
+
+    private fun receiveStartSamplingPwm(gateId: String) {
+        (device.daqcGateMap[gateId] as DigitalInput).startSamplingPwm()
+    }
+
+    private fun receiveStartSamplingTransitionFrequency(gateId: String) {
+        (device.daqcGateMap[gateId] as DigitalInput).startSamplingTransitionFrequency()
+    }
+
+    private fun receiveStopTransceiving(gateId: String) {
+        device.daqcGateMap[gateId]?.stopTransceiving()
+    }
+
+    private fun receivePulseWidthModulate(gateId: String, message: String) {
+        val percent: ComparableQuantity<Dimensionless> = JSON.parse(ComparableQuantitySerializer, message).asType()
+
+        (device.daqcGateMap[gateId] as DigitalOutput).pulseWidthModulate(percent, Output.DEFAULT_PANIC_ON_FAILURE)
+    }
+
+    private fun receiveSustainTransitionFrequency(gateId: String, message: String) {
+        val transitionFrequency: ComparableQuantity<Frequency> =
+            JSON.parse(ComparableQuantitySerializer, message).asType()
+
+        (device.daqcGateMap[gateId] as DigitalOutput).sustainTransitionFrequency(
+            transitionFrequency,
+            Output.DEFAULT_PANIC_ON_FAILURE
+        )
+    }
+
+    private fun receiveAvgFrequency(gateId: String, message: String) {
+        val avgFrequency: ComparableQuantity<Frequency> =
+            JSON.parse(ComparableQuantitySerializer, message).asType()
+
+        (device.daqcGateMap[gateId] as DigitalChannel<*>).avgFrequency.set(avgFrequency)
+    }
+
+    private suspend fun receiveOtherMessage(route: List<String>, message: String) {
+        if (additionalDataChannels == null) {
+            //TODO: Handle invalid message
+        } else {
+            additionalDataChannels[route]?.send(message) ?: TODO("Handle invalid message")
         }
     }
 
     @Suppress("NAME_SHADOWING")
-    private fun receiveIOStrandMsg(route: List<String>, message: String) {
-        val strandId = route.first()
-        val route = route.drop(1).first()
-
-        when (route) {
-            Route.BUFFER -> receiveBufferMsg(strandId, message)
-            Route.MAX_ACCEPTABLE_ERROR -> receiveMaxErrorMsg(strandId, message)
-            Route.MAX_ELECTRIC_POTENTIAL -> receiveMaxElectricPotential(strandId, message)
-            Route.START_SAMPLING -> receiveStartSampling(strandId)
-            Route.START_SAMPLING_PWM -> receiveStartSamplingPwm(strandId)
-            Route.START_SAMPLING_TRANSITION_FREQUENCY -> receiveStartSamplingTransitionFrequency(strandId)
-            Route.STOP_TRANSCEIVING -> receiveStopTransceiving(strandId)
-            Route.PULSE_WIDTH_MODULATE -> receivePulseWidthModulate(strandId, message)
-            Route.SUSTAIN_TRANSITION_FREQUENCY -> receiveSustainTransitionFrequency(strandId, message)
+    private suspend fun receiveOtherDaqcGateMessage(route: List<String>, message: String) {
+        if (additionalDataChannels == null) {
+            //TODO: Handle invalid message
+        } else {
+            val route = mutableListOf(Route.DAQC_GATE).apply { addAll(route) }
+            additionalDataChannels[route]?.send(message) ?: TODO("Handle invalid message")
         }
-    }
-
-    private fun receiveBufferMsg(strandId: String, message: String) {
-        val buffer: Boolean = JSON.parse(BooleanSerializer, message)
-
-        (device.daqcGateMap[strandId] as AnalogInput)
-    }
-
-    private fun receiveMaxErrorMsg(strandId: String, message: String) {
-        val maxAcceptableError: ComparableQuantity<ElectricPotential> =
-            JSON.parse(ComparableQuantitySerializer, message).asType()
-
-    }
-
-    private fun receiveMaxElectricPotential(strandId: String, message: String) {
-        val maxElectricPotential: ComparableQuantity<ElectricPotential> =
-            JSON.parse(ComparableQuantitySerializer, message).asType()
-
-    }
-
-    private fun receiveStartSampling(strandId: String) {
-
-
-    }
-
-    private fun receiveStartSamplingPwm(strandId: String) {
-
-    }
-
-    private fun receiveStartSamplingTransitionFrequency(strandId: String) {
-
-    }
-
-    private fun receiveStopTransceiving(strandId: String) {
-
-    }
-
-    private fun receivePulseWidthModulate(strandId: String, message: String) {
-        val percent: ComparableQuantity<Dimensionless> = JSON.parse(ComparableQuantitySerializer, message).asType()
-
-    }
-
-    private fun receiveSustainTransitionFrequency(strandId: String, message: String) {
-        val transitionFrequency: ComparableQuantity<Frequency> =
-            JSON.parse(ComparableQuantitySerializer, message).asType()
-
     }
 
     fun cancel() {

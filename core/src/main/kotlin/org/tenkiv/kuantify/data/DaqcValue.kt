@@ -32,6 +32,7 @@ import org.tenkiv.physikal.core.toIntInSystemUnit as physikalToIntInSystemUnit
 import org.tenkiv.physikal.core.toLongInSystemUnit as physikalToLongInSystemUnit
 import org.tenkiv.physikal.core.toShortInSystemUnit as physikalToShortInSystemUnit
 
+//TODO: Make serializable
 /**
  * The wrapper class representing the different types of data which can be returned from a basic [Updatable].
  * Either a [BinaryState] or a [DaqcQuantity].

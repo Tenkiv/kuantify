@@ -44,14 +44,14 @@ abstract class DigitalOutput : DigitalChannel<DigitalDaqDevice>() {
      *
      * @param percent The percentage of the time the output is supposed to be active.
      */
-    abstract fun pulseWidthModulate(percent: DaqcQuantity<Dimensionless>, panicOnFailure: Boolean): SettingResult
+    abstract fun pulseWidthModulate(percent: ComparableQuantity<Dimensionless>, panicOnFailure: Boolean): SettingResult
 
     /**
      * Activates this [DigitalInput] for transitioning states at [freq]
      *
      * @param freq The frequency of state change.
      */
-    abstract fun sustainTransitionFrequency(freq: DaqcQuantity<Frequency>, panicOnFailure: Boolean): SettingResult
+    abstract fun sustainTransitionFrequency(freq: ComparableQuantity<Frequency>, panicOnFailure: Boolean): SettingResult
 
     override fun stopTransceiving() {
         setOutput(BinaryState.Low)

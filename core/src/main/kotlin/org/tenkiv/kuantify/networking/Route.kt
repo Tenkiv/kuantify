@@ -12,12 +12,14 @@ object Route {
     const val IS_TRANSCEIVING_FREQUENCY = "is_transceiving_frequency"
     const val VALUE = "value"
     const val START_SAMPLING = "start_sampling"
+    const val START_SAMPLING_BINARY_STATE = "start_sampling_binary_state"
     const val START_SAMPLING_PWM = "start_sampling_pwm"
     const val START_SAMPLING_TRANSITION_FREQUENCY = "start_sampling_transition_frequency"
     const val STOP_TRANSCEIVING = "stop_transceiving"
     const val UPDATE_RATE = "update_rate"
     const val PULSE_WIDTH_MODULATE = "pulse_width_modulate"
     const val SUSTAIN_TRANSITION_FREQUENCY = "sustain_transition_frequency"
+    const val AVG_FREQUENCY = "avg_frequency"
 
     const val CRITICAL_ERROR = "critical_error"
 
