@@ -85,8 +85,13 @@ class LearningController<T> internal constructor(
 
     @Volatile
     private var agentRunner: Job? = null
+        set(value) {
+            field = value
+            _isTransceiving.value = value != null
+        }
 
-    override val isTransceiving get() = agentRunner != null
+    private val _isTransceiving = Updatable(false)
+    override val isTransceiving get() = _isTransceiving
 
     private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<T>>()
 
