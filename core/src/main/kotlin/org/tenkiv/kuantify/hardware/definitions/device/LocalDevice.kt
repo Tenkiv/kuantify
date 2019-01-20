@@ -15,7 +15,7 @@ interface LocalDevice : Device {
 }
 
 suspend fun LocalDevice.isHosting(): Boolean = withContext(Dispatchers.Daqc) {
-    HostedDeviceManager.hostedDevices.containsKey(this)
+    HostedDeviceManager.hostedDevices.containsKey(this@isHosting.uid)
 }
 
 suspend fun LocalDevice.startHosting() {
