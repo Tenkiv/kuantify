@@ -54,43 +54,42 @@ interface Output<T : DaqcValue> : IOStrand<T> {
  *
  * @param Q The type of signal sent by this Output.
  */
-interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
-    //TODO: Maybe we can move all these functions to being extension functions.
+interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>>
 
-    /**
-     * Sets the signal of this output to the correct value as a [DaqcQuantity].
-     *
-     * @param setting The signal to set as the output.
-     */
-    fun setOutput(setting: ComparableQuantity<Q>, panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE) =
-        setOutput(setting.toDaqc(), panicOnFailure)
+/**
+ * Sets the signal of this output to the correct value as a [DaqcQuantity].
+ *
+ * @param setting The signal to set as the output.
+ */
+fun <Q : Quantity<Q>> QuantityOutput<Q>.setOutput(
+    setting: ComparableQuantity<Q>,
+    panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+) = setOutput(setting.toDaqc(), panicOnFailure)
 
-    /**
-     * Adjust the output by applying a function to the current setting. For example double it or square it.
-     * This will fail with a return [AdjustmentAttempt.UninitialisedSetting] if there hasn't yet been a setting provided
-     * for this [Output]
-     */
-    fun adjustOutputOrFail(
-        adjustment: (Double) -> Double,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult {
-        val setting = valueOrNull
-        return if (setting != null) {
-            setOutput(adjustment(setting.value.valueToDouble())(setting.value.unit), panicOnFailure)
-        } else {
-            SettingResult.Failure(UninitialisedSettingException(this), panicOnFailure)
-        }
+/**
+ * Adjust the output by applying a function to the current setting. For example double it or square it.
+ * If there hasn't yet been a setting provided for this output, this function will suspend until there is one.
+ */
+suspend fun <Q : Quantity<Q>> QuantityOutput<Q>.adjustOutput(
+    adjustment: (Double) -> Double,
+    panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+): SettingResult = setOutput(adjustment(getValue().value.valueToDouble())(getValue().value.unit), panicOnFailure)
+
+/**
+ * Adjust the output by applying a function to the current setting. For example double it or square it.
+ * This will fail with a return [AdjustmentAttempt.UninitialisedSetting] if there hasn't yet been a setting provided
+ * for this [Output]
+ */
+fun <Q : Quantity<Q>> QuantityOutput<Q>.adjustOutputOrFail(
+    adjustment: (Double) -> Double,
+    panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+): SettingResult {
+    val setting = valueOrNull
+    return if (setting != null) {
+        setOutput(adjustment(setting.value.valueToDouble())(setting.value.unit), panicOnFailure)
+    } else {
+        SettingResult.Failure(UninitialisedSettingException(this), panicOnFailure)
     }
-
-    /**
-     * Adjust the output by applying a function to the current setting. For example double it or square it.
-     * If there hasn't yet been a setting provided for this output, this function will suspend until there is one.
-     */
-    suspend fun adjustOutput(
-        adjustment: (Double) -> Double,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult = setOutput(adjustment(getValue().value.valueToDouble())(getValue().value.unit), panicOnFailure)
-
 }
 
 /**
@@ -109,76 +108,75 @@ interface BinaryStateOutput : RangedOutput<BinaryState> {
 
 }
 
-interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>, QuantityOutput<Q> {
+interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>, QuantityOutput<Q>
 
-    fun increaseByRatioOfRange(
-        ratioIncrease: Double,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult {
-        val setting = valueOrNull
+fun <Q : Quantity<Q>> RangedQuantityOutput<Q>.increaseByRatioOfRange(
+    ratioIncrease: Double,
+    panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+): SettingResult {
+    val setting = valueOrNull
 
-        return if (setting != null) {
-            val newSetting = setting.value * ratioIncrease
-            if (newSetting.toDaqc() in valueRange) {
-                setOutput(setting.value * ratioIncrease, panicOnFailure)
-            } else {
-                SettingResult.Failure(SettingOutOfRangeException(this), panicOnFailure)
-            }
+    return if (setting != null) {
+        val newSetting = setting.value * ratioIncrease
+        if (newSetting.toDaqc() in valueRange) {
+            setOutput(setting.value * ratioIncrease, panicOnFailure)
         } else {
-            SettingResult.Failure(UninitialisedSettingException(this), panicOnFailure)
+            SettingResult.Failure(SettingOutOfRangeException(this), panicOnFailure)
         }
+    } else {
+        SettingResult.Failure(UninitialisedSettingException(this), panicOnFailure)
     }
+}
 
-    fun decreaseByRatioOfRange(
-        ratioDecrease: Double,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult = increaseByRatioOfRange(-ratioDecrease, panicOnFailure)
+fun <Q : Quantity<Q>> RangedQuantityOutput<Q>.decreaseByRatioOfRange(
+    ratioDecrease: Double,
+    panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+): SettingResult = increaseByRatioOfRange(-ratioDecrease, panicOnFailure)
 
-    /**
-     * Increase the setting by a percentage of the allowable range for this output.
-     */
-    fun increaseByPercentOfRange(
-        percentIncrease: ComparableQuantity<Dimensionless>,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult = increaseByRatioOfRange(percentIncrease.toDoubleIn(PERCENT) / 100, panicOnFailure)
+/**
+ * Increase the setting by a percentage of the allowable range for this output.
+ */
+fun <Q : Quantity<Q>> RangedQuantityOutput<Q>.increaseByPercentOfRange(
+    percentIncrease: ComparableQuantity<Dimensionless>,
+    panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+): SettingResult = increaseByRatioOfRange(percentIncrease.toDoubleIn(PERCENT) / 100, panicOnFailure)
 
-    /**
-     * Decrease the setting by a percentage of the allowable range for this output.
-     */
-    fun decreaseByPercentOfRange(
-        percentDecrease: ComparableQuantity<Dimensionless>,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
-    ) = decreaseByRatioOfRange(percentDecrease.toDoubleIn(PERCENT) / 100, panicOnFailure)
+/**
+ * Decrease the setting by a percentage of the allowable range for this output.
+ */
+fun <Q : Quantity<Q>> RangedQuantityOutput<Q>.decreaseByPercentOfRange(
+    percentDecrease: ComparableQuantity<Dimensionless>,
+    panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+) = decreaseByRatioOfRange(percentDecrease.toDoubleIn(PERCENT) / 100, panicOnFailure)
 
-    fun setOutputToPercentMaximum(
-        percent: ComparableQuantity<Dimensionless>,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult =
-        setOutputToRatioMaximum(percent.toDoubleIn(PERCENT) / 100, panicOnFailure)
+fun <Q : Quantity<Q>> RangedQuantityOutput<Q>.setOutputToPercentMaximum(
+    percent: ComparableQuantity<Dimensionless>,
+    panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+): SettingResult =
+    setOutputToRatioMaximum(percent.toDoubleIn(PERCENT) / 100, panicOnFailure)
 
-    fun setOutputToRatioMaximum(
-        ratio: Double,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult =
-        setOutput(ratioOfRange(ratio), panicOnFailure)
+fun <Q : Quantity<Q>> RangedQuantityOutput<Q>.setOutputToRatioMaximum(
+    ratio: Double,
+    panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+): SettingResult =
+    setOutput(ratioOfRange(ratio), panicOnFailure)
 
-    /**
-     * Sets this output to random setting within the allowable range.
-     */
-    fun setOutputToRandom(panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE): SettingResult {
-        val random = Math.random()
+/**
+ * Sets this output to random setting within the allowable range.
+ */
+fun <Q : Quantity<Q>> RangedQuantityOutput<Q>.setOutputToRandom(panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE): SettingResult {
+    val random = Math.random()
 
-        val setting = ratioOfRange(random)
+    val setting = ratioOfRange(random)
 
-        return setOutput(setting, panicOnFailure)
-    }
+    return setOutput(setting, panicOnFailure)
+}
 
-    private fun ratioOfRange(ratio: Double): ComparableQuantity<Q> {
-        val min = valueRange.start.toDoubleInSystemUnit()
-        val max = valueRange.endInclusive.toDoubleInSystemUnit()
+private fun <Q : Quantity<Q>> RangedQuantityOutput<Q>.ratioOfRange(ratio: Double): ComparableQuantity<Q> {
+    val min = valueRange.start.toDoubleInSystemUnit()
+    val max = valueRange.endInclusive.toDoubleInSystemUnit()
 
-        return (ratio * (max - min) + min)(valueRange.start.unit.systemUnit)
-    }
+    return (ratio * (max - min) + min)(valueRange.start.unit.systemUnit)
 }
 
 class RqoAdapter<Q : Quantity<Q>> internal constructor(
