@@ -1,7 +1,6 @@
 package org.tenkiv.kuantify.hardware.definitions.device
 
 import kotlinx.coroutines.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.networking.server.*
 import kotlin.coroutines.*
 
@@ -14,18 +13,12 @@ interface LocalDevice : Device {
 
 }
 
-suspend fun LocalDevice.isHosting(): Boolean = withContext(Dispatchers.Daqc) {
-    HostedDeviceManager.hostedDevices.containsKey(this@isHosting.uid)
-}
+suspend fun LocalDevice.isHosting(): Boolean = HostedDeviceManager.isDeviceHosted(this)
 
 suspend fun LocalDevice.startHosting() {
-    withContext(Dispatchers.Daqc) {
-        HostedDeviceManager.registerDevice(this@startHosting, getNewCommunicator())
-    }
+    HostedDeviceManager.registerDevice(this, getNewCommunicator())
 }
 
 suspend fun LocalDevice.stopHosting() {
-    withContext(Dispatchers.Daqc) {
-        HostedDeviceManager.unregisterDevice(this@stopHosting)
-    }
+    HostedDeviceManager.unregisterDevice(this)
 }

@@ -5,7 +5,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.definitions.channel.*
@@ -25,14 +25,14 @@ open class HostDeviceCommunicator(
      * Map of path from this communicators device to a [Channel] to transmit additional data not built in to Kuantify.
      * Serialization needs to be handled separately, data sent on this channel must already be serialized.
      */
-    private val additionalDataChannels: Map<List<String>, Channel<String>>? = null
+    private val additionalDataChannels: Map<List<String>, Channel<String?>>? = null
 ) : CoroutineScope {
 
     private val job = Job(scope.coroutineContext[Job])
 
     private val deviceId get() = device.uid
     private val deviceRoute = listOf(Route.DEVICE, deviceId)
-    private val ioStrandRoute = run {
+    private val daqcGateRoute = run {
         val list = ArrayList<String>()
         list += deviceRoute
         list += Route.DAQC_GATE
@@ -42,32 +42,42 @@ open class HostDeviceCommunicator(
     override val coroutineContext: CoroutineContext = scope.coroutineContext + job
 
     init {
-        launch {
-            device.daqcGateMap.forEach { id, strand ->
-                launch {
-                    strand.updateBroadcaster.consumeEach {
-                        when (val value = it.value) {
-                            is DaqcQuantity<*> -> value // send as ComparableQuantity
-                            is BinaryState -> value
-                        }
 
-                    }
-                }
-            }
-        }
 
     }
 
     //TODO: Check additional data channels if cast fails
-    //TODO: Throw specific exceptions for errors in message reception
-    internal suspend fun receiveMessage(route: List<String>, message: String) {
+    //TODO: Throw specific exceptions for errors in message reception, no !!
+    internal suspend fun receiveMessage(route: List<String>, message: String?) {
         when {
             route.first() == Route.DAQC_GATE -> receiveDaqcGateMsg(route.drop(1), message)
             else -> receiveOtherMessage(route, message)
         }
     }
 
-    private suspend fun receiveDaqcGateMsg(route: List<String>, message: String) {
+    private fun initDaqcGateSending() {
+        device.daqcGateMap.forEach { gateId, gate ->
+            launch {
+                when (gate) {
+                    is Input<*>
+                    is Output<*>
+                    is DigitalChannel<*>
+                }
+            }
+        }
+    }
+
+    private fun initIsTransceivingSending(gateId: String, gate: DaqcGate<*>) {
+        val route = daqcGateRoute + listOf(gateId, Route.IS_TRANSCEIVING)
+        launch {
+            gate.isTransceiving.updateBroadcaster.consumeEach {
+                val serializedValue = JSON.stringify(BooleanSerializer, it)
+                ClientHandler.sendToAll(route, serializedValue)
+            }
+        }
+    }
+
+    private suspend fun receiveDaqcGateMsg(route: List<String>, message: String?) {
         val gateId = route.first()
         val command = route.drop(1).first()
 
@@ -87,22 +97,22 @@ open class HostDeviceCommunicator(
         }
     }
 
-    private fun receiveBufferMsg(gateId: String, message: String) {
-        val buffer: Boolean = JSON.parse(BooleanSerializer, message)
+    private fun receiveBufferMsg(gateId: String, message: String?) {
+        val buffer: Boolean = JSON.parse(BooleanSerializer, message!!)
 
         (device.daqcGateMap[gateId] as AnalogInput).buffer.set(buffer)
     }
 
-    private fun receiveMaxErrorMsg(gateId: String, message: String) {
+    private fun receiveMaxErrorMsg(gateId: String, message: String?) {
         val maxAcceptableError: ComparableQuantity<ElectricPotential> =
-            JSON.parse(ComparableQuantitySerializer, message).asType()
+            JSON.parse(ComparableQuantitySerializer, message!!).asType()
 
         (device.daqcGateMap[gateId] as AnalogInput).maxAcceptableError.set(maxAcceptableError)
     }
 
-    private fun receiveMaxElectricPotential(gateId: String, message: String) {
+    private fun receiveMaxElectricPotential(gateId: String, message: String?) {
         val maxElectricPotential: ComparableQuantity<ElectricPotential> =
-            JSON.parse(ComparableQuantitySerializer, message).asType()
+            JSON.parse(ComparableQuantitySerializer, message!!).asType()
 
         (device.daqcGateMap[gateId] as AnalogInput).maxElectricPotential.set(maxElectricPotential)
     }
@@ -127,15 +137,15 @@ open class HostDeviceCommunicator(
         device.daqcGateMap[gateId]?.stopTransceiving()
     }
 
-    private fun receivePulseWidthModulate(gateId: String, message: String) {
-        val percent: ComparableQuantity<Dimensionless> = JSON.parse(ComparableQuantitySerializer, message).asType()
+    private fun receivePulseWidthModulate(gateId: String, message: String?) {
+        val percent: ComparableQuantity<Dimensionless> = JSON.parse(ComparableQuantitySerializer, message!!).asType()
 
         (device.daqcGateMap[gateId] as DigitalOutput).pulseWidthModulate(percent, Output.DEFAULT_PANIC_ON_FAILURE)
     }
 
-    private fun receiveSustainTransitionFrequency(gateId: String, message: String) {
+    private fun receiveSustainTransitionFrequency(gateId: String, message: String?) {
         val transitionFrequency: ComparableQuantity<Frequency> =
-            JSON.parse(ComparableQuantitySerializer, message).asType()
+            JSON.parse(ComparableQuantitySerializer, message!!).asType()
 
         (device.daqcGateMap[gateId] as DigitalOutput).sustainTransitionFrequency(
             transitionFrequency,
@@ -143,14 +153,14 @@ open class HostDeviceCommunicator(
         )
     }
 
-    private fun receiveAvgFrequency(gateId: String, message: String) {
+    private fun receiveAvgFrequency(gateId: String, message: String?) {
         val avgFrequency: ComparableQuantity<Frequency> =
-            JSON.parse(ComparableQuantitySerializer, message).asType()
+            JSON.parse(ComparableQuantitySerializer, message!!).asType()
 
         (device.daqcGateMap[gateId] as DigitalChannel<*>).avgFrequency.set(avgFrequency)
     }
 
-    private suspend fun receiveOtherMessage(route: List<String>, message: String) {
+    private suspend fun receiveOtherMessage(route: List<String>, message: String?) {
         if (additionalDataChannels == null) {
             //TODO: Handle invalid message
         } else {
@@ -159,7 +169,7 @@ open class HostDeviceCommunicator(
     }
 
     @Suppress("NAME_SHADOWING")
-    private suspend fun receiveOtherDaqcGateMessage(route: List<String>, message: String) {
+    private suspend fun receiveOtherDaqcGateMessage(route: List<String>, message: String?) {
         if (additionalDataChannels == null) {
             //TODO: Handle invalid message
         } else {

@@ -7,11 +7,9 @@ import io.ktor.routing.*
 import io.ktor.sessions.*
 import io.ktor.util.*
 import io.ktor.websocket.*
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.Route
 
@@ -41,24 +39,24 @@ private class KuantifyHost {
 
         routing {
             webSocket("/") {
-                withContext(Dispatchers.Daqc) {
-                    val clientID = call.sessions.get<ClientId>()
 
-                    if (clientID == null) {
-                        close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "No session"))
-                        return@withContext
-                    }
+                val clientID = call.sessions.get<ClientId>()
 
-                    ClientHandler.connectionOpened(clientID.id, this@webSocket)
-
-                    try {
-                        incoming.consumeEach { frame ->
-                            if (frame is Frame.Text) receiveMessage(clientID.id, frame.readText())
-                        }
-                    } finally {
-                        ClientHandler.connectionClosed(clientID.id, this@webSocket)
-                    }
+                if (clientID == null) {
+                    close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "No session"))
+                    return@webSocket
                 }
+
+                ClientHandler.connectionOpened(clientID.id, this@webSocket)
+
+                try {
+                    incoming.consumeEach { frame ->
+                        if (frame is Frame.Text) receiveMessage(clientID.id, frame.readText())
+                    }
+                } finally {
+                    ClientHandler.connectionClosed(clientID.id, this@webSocket)
+                }
+
             }
         }
 

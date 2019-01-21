@@ -1,30 +1,44 @@
 package org.tenkiv.kuantify.networking.server
 
+import kotlinx.coroutines.sync.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.lib.*
 
-// Must only be accessed from daqc dispatcher
 internal object HostedDeviceManager {
 
-    val hostedDevices: MutableMap<String, HostDeviceCommunicator> = HashMap()
+    private val mutexHostedDevices: MutexValue<MutableMap<String, HostDeviceCommunicator>> =
+        MutexValue(HashMap(), Mutex())
 
-    fun registerDevice(device: LocalDevice, communicator: HostDeviceCommunicator) {
-        if (hostedDevices[device.uid] == null) {
-            hostedDevices += device.uid to communicator
+    suspend fun registerDevice(device: LocalDevice, communicator: HostDeviceCommunicator) {
+        mutexHostedDevices.withLock { hostedDevices ->
+            if (hostedDevices[device.uid] == null) {
+                hostedDevices += device.uid to communicator
+            }
         }
     }
 
-    fun unregisterDevice(device: LocalDevice) {
-        hostedDevices[device.uid]?.cancel()
-        hostedDevices -= device.uid
+    suspend fun unregisterDevice(device: LocalDevice) {
+        mutexHostedDevices.withLock { hostedDevices ->
+            hostedDevices[device.uid]?.cancel()
+            hostedDevices -= device.uid
+        }
     }
 
     @Suppress("NAME_SHADOWING")
-    suspend fun receiveMessage(route: List<String>, message: String) {
+    suspend fun receiveMessage(route: List<String>, message: String?) {
         val deviceId = route.first()
         val route = route.drop(1)
 
-        //TODO: Handle message being sent to invalid device.
-        hostedDevices[deviceId]?.receiveMessage(route, message)
+        mutexHostedDevices.withLock { hostedDevices ->
+            //TODO: Handle message being sent to invalid device.
+            hostedDevices[deviceId]?.receiveMessage(route, message)
+        }
     }
+
+    suspend fun isDeviceHosted(device: Device): Boolean =
+        mutexHostedDevices.withLock { hostedDevices ->
+            hostedDevices.containsKey(device.uid)
+        }
+
 
 }

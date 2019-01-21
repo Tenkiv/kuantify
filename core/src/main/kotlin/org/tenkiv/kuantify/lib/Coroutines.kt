@@ -17,11 +17,9 @@
 
 package org.tenkiv.kuantify.lib
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.consume
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.sync.*
 
 //TODO: I think this function should be removed. It is only used in trigger and I think there is a more idiomatic way.
 /**
@@ -40,4 +38,12 @@ fun <T> BroadcastChannel<T>.consumeAndReturn(
         subChannel.consume { for (x in this) onReceive(x) }
     }
     return subChannel
+}
+
+class MutexValue<V : Any>(@PublishedApi internal val value: V, @PublishedApi internal val mutex: Mutex) {
+
+    suspend inline fun <R> withLock(block: (value: V) -> R): R = mutex.withLock {
+        block(value)
+    }
+
 }
