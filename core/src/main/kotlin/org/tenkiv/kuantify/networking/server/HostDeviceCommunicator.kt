@@ -5,7 +5,6 @@ import kotlinx.coroutines.channels.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.gate.control.output.*
@@ -18,6 +17,7 @@ import tec.units.indriya.*
 import javax.measure.quantity.*
 import kotlin.coroutines.*
 
+// Constructor must only be called from Daqc dispatcher.
 open class HostDeviceCommunicator(
     scope: CoroutineScope,
     val device: LocalDevice,
@@ -42,19 +42,28 @@ open class HostDeviceCommunicator(
     override val coroutineContext: CoroutineContext = scope.coroutineContext + job
 
     init {
-        initDaqcGateSending()
+
+
+    }
+
+    //TODO: Check additional data channels if cast fails
+    //TODO: Throw specific exceptions for errors in message reception, no !!
+    internal suspend fun receiveMessage(route: List<String>, message: String?) {
+        when {
+            route.first() == Route.DAQC_GATE -> receiveDaqcGateMsg(route.drop(1), message)
+            else -> receiveOtherMessage(route, message)
+        }
     }
 
     private fun initDaqcGateSending() {
         device.daqcGateMap.forEach { gateId, gate ->
-
-            initIsTransceivingSending(gateId, gate)
-
-            when (gate) {
-                is IOStrand<*> -> initIOStrandSending(gateId, gate)
-                is DigitalChannel<*> -> initDigitalChannelSending(gateId, gate)
+            launch {
+                when (gate) {
+                    is Input<*>
+                    is Output<*>
+                    is DigitalChannel<*>
+                }
             }
-
         }
     }
 
@@ -65,57 +74,6 @@ open class HostDeviceCommunicator(
                 val serializedValue = JSON.stringify(BooleanSerializer, it)
                 ClientHandler.sendToAll(route, serializedValue)
             }
-        }
-    }
-
-    private fun initIOStrandSending(gateId: String, strand: IOStrand<*>) {
-        initValueSending(gateId, strand)
-
-        when (strand) {
-            is Input<*> -> initInputSending(gateId, strand)
-        }
-    }
-
-    private fun initValueSending(gateId: String, strand: IOStrand<*>) {
-        val route = daqcGateRoute + listOf(gateId, Route.VALUE)
-
-        launch {
-            strand.updateBroadcaster.consumeEach {
-                val value = when (val measurementValue = it.value) {
-                    is BinaryState -> JSON.stringify(BinaryState.serializer(), measurementValue)
-                    is DaqcQuantity<*> -> JSON.stringify(ComparableQuantitySerializer, measurementValue)
-                }
-
-                ClientHandler.sendToAll(route, value)
-            }
-        }
-    }
-
-    private fun initInputSending(gateId: String, input: Input<*>) {
-        initUpdateRateSending(gateId, input.updateRate)
-    }
-
-    private fun initUpdateRateSending(gateId: String, updateRate: TrackableQuantity<Frequency>) {
-        val route = daqcGateRoute + listOf(gateId, Route.UPDATE_RATE)
-
-        launch {
-            updateRate.updateBroadcaster.consumeEach {
-                val value = JSON.stringify(ComparableQuantitySerializer, it)
-                ClientHandler.sendToAll(route, value)
-            }
-        }
-    }
-
-    private fun initDigitalChannelSending(gateId: String, channel: DigitalChannel<*>) {
-
-    }
-
-    //TODO: Check additional data channels if cast fails
-    //TODO: Throw specific exceptions for errors in message reception, no !!
-    internal suspend fun receiveMessage(route: List<String>, message: String?) {
-        when {
-            route.first() == Route.DAQC_GATE -> receiveDaqcGateMsg(route.drop(1), message)
-            else -> receiveOtherMessage(route, message)
         }
     }
 
@@ -137,14 +95,6 @@ open class HostDeviceCommunicator(
             Route.AVG_FREQUENCY -> receiveAvgFrequency(gateId, message)
             else -> receiveOtherDaqcGateMessage(route, message)
         }
-    }
-
-    private fun receiveValueMsg(gateId: String, message: String?) {
-
-    }
-
-    private fun receiveOutputValueMsg(gateId: String, message: String?) {
-
     }
 
     private fun receiveBufferMsg(gateId: String, message: String?) {

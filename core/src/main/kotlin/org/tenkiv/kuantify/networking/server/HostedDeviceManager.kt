@@ -40,4 +40,5 @@ internal object HostedDeviceManager {
             hostedDevices.containsKey(device.uid)
         }
 
+
 }

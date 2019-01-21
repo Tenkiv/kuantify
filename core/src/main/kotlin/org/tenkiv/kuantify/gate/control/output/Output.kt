@@ -34,15 +34,10 @@ import javax.measure.quantity.*
 interface Output<T : DaqcValue> : IOStrand<T> {
 
     /**
-     * Value given in the type of this [Output] that corresponds to floating point 0.0
-     * This is used by kuantify as an example value for this [Output] for runtime type analysis.
-     */
-    val zero: T
-
-    /**
      * @param panicOnFailure If true invoking setOutput will throw an exception instead of returning a [SettingResult].
      */
     fun setOutput(setting: T, panicOnFailure: Boolean = DEFAULT_PANIC_ON_FAILURE): SettingResult
+
 
     companion object {
         internal const val DEFAULT_PANIC_ON_FAILURE = false
@@ -101,8 +96,6 @@ interface RangedOutput<T> : Output<T>, RangedIOStrand<T> where T : DaqcValue, T 
  * A [RangedOutput] which uses the [BinaryState] type.
  */
 interface BinaryStateOutput : RangedOutput<BinaryState> {
-
-    override val zero: BinaryState get() = BinaryState.Low
 
     override val valueRange get() = BinaryState.range
 
