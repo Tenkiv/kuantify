@@ -17,19 +17,14 @@
 
 package org.tenkiv.kuantify.gate.control.output
 
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.data.DaqcValue
-import org.tenkiv.kuantify.data.toDaqc
-import org.tenkiv.kuantify.gate.IOStrand
-import org.tenkiv.kuantify.gate.RangedIOStrand
-import org.tenkiv.kuantify.getValue
-import org.tenkiv.kuantify.valueOrNull
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.*
 import org.tenkiv.physikal.core.*
-import tec.units.indriya.ComparableQuantity
+import tec.units.indriya.*
 import tec.units.indriya.unit.Units.*
-import javax.measure.Quantity
-import javax.measure.quantity.Dimensionless
+import javax.measure.*
+import javax.measure.quantity.*
 
 /**
  * Interface defining classes which act as outputs and send controls or signals to devices.
@@ -39,10 +34,15 @@ import javax.measure.quantity.Dimensionless
 interface Output<T : DaqcValue> : IOStrand<T> {
 
     /**
+     * Value given in the type of this [Output] that corresponds to floating point 0.0
+     * This is used by kuantify as an example value for this [Output] for runtime type analysis.
+     */
+    val zero: T
+
+    /**
      * @param panicOnFailure If true invoking setOutput will throw an exception instead of returning a [SettingResult].
      */
     fun setOutput(setting: T, panicOnFailure: Boolean = DEFAULT_PANIC_ON_FAILURE): SettingResult
-
 
     companion object {
         internal const val DEFAULT_PANIC_ON_FAILURE = false
@@ -102,6 +102,8 @@ interface RangedOutput<T> : Output<T>, RangedIOStrand<T> where T : DaqcValue, T 
  * A [RangedOutput] which uses the [BinaryState] type.
  */
 interface BinaryStateOutput : RangedOutput<BinaryState> {
+
+    override val zero: BinaryState get() = BinaryState.Low
 
     override val valueRange get() = BinaryState.range
 
