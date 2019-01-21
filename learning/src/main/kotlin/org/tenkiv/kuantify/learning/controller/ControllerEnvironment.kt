@@ -17,26 +17,18 @@
 
 package org.tenkiv.kuantify.learning.controller
 
-import com.google.common.collect.ImmutableList
-import com.google.common.collect.Sets
-import org.apache.commons.math3.distribution.NormalDistribution
-import org.deeplearning4j.gym.StepReply
-import org.deeplearning4j.rl4j.mdp.MDP
-import org.deeplearning4j.rl4j.space.ArrayObservationSpace
-import org.deeplearning4j.rl4j.space.DiscreteSpace
-import org.deeplearning4j.rl4j.space.Encodable
-import org.deeplearning4j.rl4j.space.ObservationSpace
-import org.tenkiv.coral.normalTo
-import org.tenkiv.kuantify.data.BinaryState
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.data.DaqcValue
-import org.tenkiv.kuantify.gate.acquire.input.RangedInput
-import org.tenkiv.kuantify.gate.control.output.BinaryStateOutput
-import org.tenkiv.kuantify.gate.control.output.RangedOutput
-import org.tenkiv.kuantify.gate.control.output.RangedQuantityOutput
-import org.tenkiv.kuantify.gate.getNormalisedDoubleOrNull
-import org.tenkiv.kuantify.recording.Recorder
-import org.tenkiv.kuantify.valueOrNull
+import com.google.common.collect.*
+import org.apache.commons.math3.distribution.*
+import org.deeplearning4j.gym.*
+import org.deeplearning4j.rl4j.mdp.*
+import org.deeplearning4j.rl4j.space.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.gate.control.output.*
+import org.tenkiv.kuantify.recording.*
 
 internal class ControllerEnvironment<T>(private val controller: LearningController<T>) :
     MDP<Encodable, Int, DiscreteSpace> where T : DaqcValue, T : Comparable<T> {
@@ -81,7 +73,7 @@ internal class ControllerEnvironment<T>(private val controller: LearningControll
     }
 
     override fun isDone(): Boolean {
-        return !controller.isTransceiving
+        return !controller.isTransceiving.value
     }
 
     override fun newInstance(): MDP<Encodable, Int, DiscreteSpace> = ControllerEnvironment(controller)

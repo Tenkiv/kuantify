@@ -18,6 +18,8 @@
 package org.tenkiv.kuantify.hardware.definitions.channel
 
 import kotlinx.coroutines.channels.*
+import kotlinx.serialization.*
+import kotlinx.serialization.internal.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
@@ -99,6 +101,7 @@ abstract class DigitalChannel<D : DigitalDaqDevice> : DaqcGate<DigitalChannelVal
 
 }
 
+@Serializable
 sealed class DigitalChannelValue : DaqcData {
 
     override val size: Int
@@ -108,18 +111,78 @@ sealed class DigitalChannelValue : DaqcData {
 
         override fun toDaqcValueList(): List<DaqcValue> = listOf(state)
 
+        companion object {
+            internal const val TYPE_BYTE: Byte = 0
+        }
     }
 
     data class Frequency(val frequency: DaqcQuantity<javax.measure.quantity.Frequency>) : DigitalChannelValue() {
 
         override fun toDaqcValueList(): List<DaqcValue> = listOf(frequency)
 
+        companion object {
+            internal const val TYPE_BYTE: Byte = 1
+        }
     }
 
     data class Percentage(val percent: DaqcQuantity<Dimensionless>) : DigitalChannelValue() {
 
         override fun toDaqcValueList(): List<DaqcValue> = listOf(percent)
 
+        companion object {
+            internal const val TYPE_BYTE: Byte = 2
+        }
     }
 
+    //TODO: Redo this horrific abomination of a serialization hack
+    @Serializer(forClass = DigitalChannelValue::class)
+    companion object {
+        override val descriptor: SerialDescriptor = object : SerialClassDescImpl("DigitalChannelValue") {
+            init {
+                addElement("type")
+                addElement("value")
+            }
+        }
+
+        override fun deserialize(input: Decoder): DigitalChannelValue {
+            val inp: CompositeDecoder = input.beginStructure(descriptor)
+            var type: Byte = -1
+            lateinit var value: String
+            loop@ while (true) {
+                when (val i = inp.decodeElementIndex(descriptor)) {
+                    CompositeDecoder.READ_DONE -> break@loop
+                    0 -> type = inp.decodeByteElement(descriptor, i)
+                    1 -> value = inp.decodeStringElement(descriptor, i)
+                    else -> throw SerializationException("Unknown index $i")
+                }
+            }
+            inp.endStructure(descriptor)
+            return when (type) {
+                BinaryState.TYPE_BYTE -> BinaryState(org.tenkiv.kuantify.data.BinaryState.fromString(value))
+                Frequency.TYPE_BYTE -> Frequency(DaqcQuantity.fromString(value))
+                Percentage.TYPE_BYTE -> Percentage(DaqcQuantity.fromString(value))
+                else -> throw SerializationException("Invalid type representation")
+            }
+        }
+
+        override fun serialize(output: Encoder, obj: DigitalChannelValue) {
+            val compositeOutput: CompositeEncoder = output.beginStructure(descriptor)
+
+            val type = when (obj) {
+                is BinaryState -> BinaryState.TYPE_BYTE
+                is Frequency -> Frequency.TYPE_BYTE
+                is Percentage -> Percentage.TYPE_BYTE
+            }
+
+            val value = when (obj) {
+                is BinaryState -> obj.state.toString()
+                is Frequency -> obj.frequency.toString()
+                is Percentage -> obj.percent.toString()
+            }
+
+            compositeOutput.encodeByteElement(descriptor, 0, type)
+            compositeOutput.encodeStringElement(descriptor, 1, value)
+            compositeOutput.endStructure(descriptor)
+        }
+    }
 }

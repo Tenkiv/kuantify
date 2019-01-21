@@ -17,10 +17,11 @@
 
 package org.tenkiv.kuantify.hardware.outputs
 
-import kotlinx.coroutines.CoroutineScope
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.hardware.definitions.channel.DigitalOutput
-import javax.measure.quantity.Frequency
+import kotlinx.coroutines.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.hardware.definitions.channel.*
+import javax.measure.quantity.*
+import kotlin.reflect.*
 
 /**
  * A simple implementation of a binary transition frequency controller.
@@ -29,6 +30,9 @@ import javax.measure.quantity.Frequency
  */
 class SimpleFrequencyController internal constructor(digitalOutput: DigitalOutput) :
     ScDigitalFrequencyController<Frequency>(digitalOutput), CoroutineScope by digitalOutput {
+
+    override val quantityType: KClass<Frequency>
+        get() = Frequency::class
 
     override fun convertOutput(setting: DaqcQuantity<Frequency>) = setting
 

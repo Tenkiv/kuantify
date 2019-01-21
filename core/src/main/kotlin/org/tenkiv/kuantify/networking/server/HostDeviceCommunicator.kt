@@ -127,6 +127,7 @@ open class HostDeviceCommunicator(
             Route.BUFFER -> receiveBufferMsg(gateId, message)
             Route.MAX_ACCEPTABLE_ERROR -> receiveMaxErrorMsg(gateId, message)
             Route.MAX_ELECTRIC_POTENTIAL -> receiveMaxElectricPotential(gateId, message)
+            Route.VALUE -> receiveValueMsg(gateId, message)
             Route.START_SAMPLING -> receiveStartSampling(gateId)
             Route.START_SAMPLING_BINARY_STATE -> receiveStartSamplingBinaryState(gateId)
             Route.START_SAMPLING_PWM -> receiveStartSamplingPwm(gateId)
@@ -140,10 +141,24 @@ open class HostDeviceCommunicator(
     }
 
     private fun receiveValueMsg(gateId: String, message: String?) {
-
+        when (val output = device.daqcGateMap[gateId]) {
+            is QuantityOutput<*> -> receiveQuantityOutputValueMsg(output, message)
+            is BinaryStateOutput -> receiveBinaryStateOutputValueMsg(output, message)
+            is DigitalOutput -> receiveDigitalOutputValueMsg(output, message)
+        }
     }
 
-    private fun receiveOutputValueMsg(gateId: String, message: String?) {
+    private fun receiveQuantityOutputValueMsg(output: QuantityOutput<*>, message: String?) {
+        val setting = JSON.parse(ComparableQuantitySerializer, message!!)
+        output.unsafeSetOutput(setting)
+    }
+
+    private fun receiveBinaryStateOutputValueMsg(output: BinaryStateOutput, message: String?) {
+        val setting = JSON.parse(BinaryState.serializer(), message!!)
+        output.setOutput(setting)
+    }
+
+    private fun receiveDigitalOutputValueMsg(output: DigitalOutput, message: String?) {
 
     }
 
