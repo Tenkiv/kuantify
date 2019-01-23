@@ -17,17 +17,13 @@
 
 package org.tenkiv.kuantify.data.vector
 
-import org.tenkiv.kuantify.data.DaqcData
-import org.tenkiv.kuantify.data.toDaqc
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.physikal.core.*
-import tec.units.indriya.ComparableQuantity
+import tec.units.indriya.*
 import tec.units.indriya.unit.Units.*
-import javax.measure.Quantity
-import javax.measure.quantity.Angle
-import kotlin.math.acos
-import kotlin.math.atan
-import kotlin.math.cos
-import kotlin.math.sin
+import javax.measure.*
+import javax.measure.quantity.*
+import kotlin.math.*
 
 /**
  * A [PolarVector3D] is a vector described in terms of two perpendicular polar planes with the same center point.
@@ -48,7 +44,7 @@ class PolarVector3D<Q : Quantity<Q>>(
 
     override val size get() = 3
 
-    override fun toDaqcValueList() = listOf(magnitude, incline, azimuth)
+    override fun toDaqcValues() = listOf(magnitude, incline, azimuth)
 
     private fun toComponentDoubles(): Triple<Double, Double, Double> {
         val magnitude = magnitude.valueToDouble()

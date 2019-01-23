@@ -17,15 +17,13 @@
 
 package org.tenkiv.kuantify.data.vector
 
-import org.tenkiv.kuantify.data.DaqcData
-import org.tenkiv.kuantify.data.DaqcQuantity
-import org.tenkiv.kuantify.data.toDaqc
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.physikal.core.*
-import org.tenkiv.physikal.si.degreeAngle
-import tec.units.indriya.ComparableQuantity
+import org.tenkiv.physikal.si.*
+import tec.units.indriya.*
 import tec.units.indriya.unit.Units.*
-import javax.measure.Quantity
-import javax.measure.quantity.Angle
+import javax.measure.*
+import javax.measure.quantity.*
 import kotlin.math.*
 
 private fun ComparableQuantity<Angle>.compassInvert(): DaqcQuantity<Angle> {
@@ -50,7 +48,7 @@ class PolarVector2D<Q : Quantity<Q>>(
 
     override val size get() = 2
 
-    override fun toDaqcValueList() = listOf(magnitude, angle)
+    override fun toDaqcValues() = listOf(magnitude, angle)
 
     /**
      * Converts this [PolarVector2D] to a [Pair] of [Double]s representing the equivalent components of a Euclidean vector in

@@ -37,24 +37,33 @@ abstract class DigitalOutput : DigitalChannel<DigitalDaqDevice>() {
 
     private val thisAsFrequencyController = SimpleFrequencyController(this)
 
-    abstract fun setOutput(state: BinaryState): SettingResult
+    abstract fun setOutputState(
+        state: BinaryState,
+        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+    ): SettingResult
 
     /**
      * Activates this [DigitalOutput] for pulse width modulation.
      *
      * @param percent The percentage of the time the output is supposed to be active.
      */
-    abstract fun pulseWidthModulate(percent: ComparableQuantity<Dimensionless>, panicOnFailure: Boolean): SettingResult
+    abstract fun pulseWidthModulate(
+        percent: ComparableQuantity<Dimensionless>,
+        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+    ): SettingResult
 
     /**
      * Activates this [DigitalInput] for transitioning states at [freq]
      *
      * @param freq The frequency of state change.
      */
-    abstract fun sustainTransitionFrequency(freq: ComparableQuantity<Frequency>, panicOnFailure: Boolean): SettingResult
+    abstract fun sustainTransitionFrequency(
+        freq: ComparableQuantity<Frequency>,
+        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+    ): SettingResult
 
     override fun stopTransceiving() {
-        setOutput(BinaryState.Low)
+        setOutputState(BinaryState.Low)
     }
 
     /**

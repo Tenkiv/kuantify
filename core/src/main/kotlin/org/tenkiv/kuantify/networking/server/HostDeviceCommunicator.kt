@@ -53,6 +53,7 @@ open class HostDeviceCommunicator(
             when (gate) {
                 is IOStrand<*> -> initIOStrandSending(gateId, gate)
                 is DigitalChannel<*> -> initDigitalChannelSending(gateId, gate)
+                is AnalogInput -> initAnalogInputSending(gateId, gate)
             }
 
         }
@@ -69,14 +70,14 @@ open class HostDeviceCommunicator(
     }
 
     private fun initIOStrandSending(gateId: String, strand: IOStrand<*>) {
-        initValueSending(gateId, strand)
+        initStrandValueSending(gateId, strand)
 
         when (strand) {
             is Input<*> -> initInputSending(gateId, strand)
         }
     }
 
-    private fun initValueSending(gateId: String, strand: IOStrand<*>) {
+    private fun initStrandValueSending(gateId: String, strand: IOStrand<*>) {
         val route = daqcGateRoute + listOf(gateId, Route.VALUE)
 
         launch {
@@ -107,7 +108,97 @@ open class HostDeviceCommunicator(
     }
 
     private fun initDigitalChannelSending(gateId: String, channel: DigitalChannel<*>) {
+        initDigitalChannelValueSending(gateId, channel)
+        initAvgFrequencySending(gateId, channel)
+        initIsTransceivingBinStateSending(gateId, channel)
+        initIsTransceivingPwmSending(gateId, channel)
+        initIsTransceivingFrequencySending(gateId, channel)
 
+        when (channel) {
+            is DigitalInput -> initUpdateRateSending(gateId, channel.updateRate)
+        }
+    }
+
+    private fun initDigitalChannelValueSending(gateId: String, channel: DigitalChannel<*>) {
+        val route = daqcGateRoute + listOf(gateId, Route.VALUE)
+
+        launch {
+            channel.updateBroadcaster.consumeEach {
+                val value = JSON.stringify(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
+                ClientHandler.sendToAll(route, value)
+            }
+        }
+    }
+
+    private fun initAvgFrequencySending(gateId: String, channel: DigitalChannel<*>) {
+        val route = daqcGateRoute + listOf(gateId, Route.AVG_FREQUENCY)
+
+        launch {
+            channel.avgFrequency.updateBroadcaster.consumeEach {
+                val value = JSON.stringify(ComparableQuantitySerializer, it)
+                ClientHandler.sendToAll(route, value)
+            }
+        }
+    }
+
+    private fun initIsTransceivingBinStateSending(gateId: String, channel: DigitalChannel<*>) {
+        val route = daqcGateRoute + listOf(gateId, Route.IS_TRANSCEIVING_BIN_STATE)
+
+        launch {
+            channel.isTransceivingBinaryState.updateBroadcaster.consumeEach {
+                val value = JSON.stringify(BooleanSerializer, it)
+                ClientHandler.sendToAll(route, value)
+            }
+        }
+    }
+
+    private fun initIsTransceivingPwmSending(gateId: String, channel: DigitalChannel<*>) {
+        val route = daqcGateRoute + listOf(gateId, Route.IS_TRANSCEIVING_PWM)
+
+        launch {
+            channel.isTransceivingPwm.updateBroadcaster.consumeEach {
+                val value = JSON.stringify(BooleanSerializer, it)
+                ClientHandler.sendToAll(route, value)
+            }
+        }
+    }
+
+    private fun initIsTransceivingFrequencySending(gateId: String, channel: DigitalChannel<*>) {
+        val route = daqcGateRoute + listOf(gateId, Route.IS_TRANSCEIVING_FREQUENCY)
+
+        launch {
+            channel.isTransceivingFrequency.updateBroadcaster.consumeEach {
+                val value = JSON.stringify(BooleanSerializer, it)
+                ClientHandler.sendToAll(route, value)
+            }
+        }
+    }
+
+    private fun initAnalogInputSending(gateId: String, channel: AnalogInput) {
+        initMaxAcceptableErrorSending(gateId, channel)
+        initMaxElectricPotentialSending(gateId, channel)
+    }
+
+    private fun initMaxAcceptableErrorSending(gateId: String, channel: AnalogInput) {
+        val route = daqcGateRoute + listOf(gateId, Route.MAX_ACCEPTABLE_ERROR)
+
+        launch {
+            channel.maxAcceptableError.updateBroadcaster.consumeEach {
+                val value = JSON.stringify(ComparableQuantitySerializer, it)
+                ClientHandler.sendToAll(route, value)
+            }
+        }
+    }
+
+    private fun initMaxElectricPotentialSending(gateId: String, channel: AnalogInput) {
+        val route = daqcGateRoute + listOf(gateId, Route.MAX_ELECTRIC_POTENTIAL)
+
+        launch {
+            channel.maxElectricPotential.updateBroadcaster.consumeEach {
+                val value = JSON.stringify(ComparableQuantitySerializer, it)
+                ClientHandler.sendToAll(route, value)
+            }
+        }
     }
 
     //TODO: Check additional data channels if cast fails
@@ -159,7 +250,12 @@ open class HostDeviceCommunicator(
     }
 
     private fun receiveDigitalOutputValueMsg(output: DigitalOutput, message: String?) {
-
+        val setting = JSON.parse(DigitalChannelValue.serializer(), message!!)
+        when (setting) {
+            is DigitalChannelValue.BinaryState -> output.setOutputState(setting.state)
+            is DigitalChannelValue.Percentage -> output.pulseWidthModulate(setting.percent)
+            is DigitalChannelValue.Frequency -> output.sustainTransitionFrequency(setting.frequency)
+        }
     }
 
     private fun receiveBufferMsg(gateId: String, message: String?) {

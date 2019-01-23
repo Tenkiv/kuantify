@@ -101,7 +101,7 @@ sealed class DaqcValue : DaqcData {
         is DaqcQuantity<*> -> this.physikalToDoubleInSystemUnit()
     }
 
-    override fun toDaqcValueList() = listOf(this)
+    override fun toDaqcValues() = listOf(this)
 
 }
 

@@ -42,6 +42,6 @@ class SimpleBinaryStateController internal constructor(val digitalOutput: Digita
     override fun stopTransceiving() = digitalOutput.stopTransceiving()
 
     override fun setOutput(setting: BinaryState, panicOnFailure: Boolean): SettingResult =
-        digitalOutput.setOutput(setting)
+        digitalOutput.setOutputState(setting)
 
 }

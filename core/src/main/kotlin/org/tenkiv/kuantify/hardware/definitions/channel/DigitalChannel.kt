@@ -109,7 +109,7 @@ sealed class DigitalChannelValue : DaqcData {
 
     data class BinaryState(val state: org.tenkiv.kuantify.data.BinaryState) : DigitalChannelValue() {
 
-        override fun toDaqcValueList(): List<DaqcValue> = listOf(state)
+        override fun toDaqcValues(): List<DaqcValue> = listOf(state)
 
         companion object {
             internal const val TYPE_BYTE: Byte = 0
@@ -118,7 +118,7 @@ sealed class DigitalChannelValue : DaqcData {
 
     data class Frequency(val frequency: DaqcQuantity<javax.measure.quantity.Frequency>) : DigitalChannelValue() {
 
-        override fun toDaqcValueList(): List<DaqcValue> = listOf(frequency)
+        override fun toDaqcValues(): List<DaqcValue> = listOf(frequency)
 
         companion object {
             internal const val TYPE_BYTE: Byte = 1
@@ -127,7 +127,7 @@ sealed class DigitalChannelValue : DaqcData {
 
     data class Percentage(val percent: DaqcQuantity<Dimensionless>) : DigitalChannelValue() {
 
-        override fun toDaqcValueList(): List<DaqcValue> = listOf(percent)
+        override fun toDaqcValues(): List<DaqcValue> = listOf(percent)
 
         companion object {
             internal const val TYPE_BYTE: Byte = 2

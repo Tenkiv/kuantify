@@ -8,6 +8,7 @@ object Route {
     const val MAX_ACCEPTABLE_ERROR = "max_acceptable_error"
     const val MAX_ELECTRIC_POTENTIAL = "max_electric_potential"
     const val IS_TRANSCEIVING = "is_transceiving"
+    const val IS_TRANSCEIVING_BIN_STATE = "is_transceiving_binary_state"
     const val IS_TRANSCEIVING_PWM = "is_transceiving_pwm"
     const val IS_TRANSCEIVING_FREQUENCY = "is_transceiving_frequency"
     const val VALUE = "value"

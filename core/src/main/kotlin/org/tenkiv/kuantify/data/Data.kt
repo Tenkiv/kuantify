@@ -29,5 +29,5 @@ interface DaqcData {
     val size: Int
 
     // TODO: Keep looking / waiting for similar data structure that forces immutability
-    fun toDaqcValueList(): List<DaqcValue>
+    fun toDaqcValues(): List<DaqcValue>
 }
