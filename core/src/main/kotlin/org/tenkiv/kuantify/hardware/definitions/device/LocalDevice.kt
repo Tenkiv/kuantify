@@ -9,17 +9,18 @@ interface LocalDevice : Device {
     override val coroutineContext: CoroutineContext
         get() = GlobalScope.coroutineContext
 
-    //TODO: Needs to cancel old one or be fixed some other way.
-    fun getNewCommunicator(): HostDeviceCommunicator = HostDeviceCommunicator(this, this)
+    val networkCommunicator: HostDeviceCommunicator
 
 }
 
 suspend fun LocalDevice.isHosting(): Boolean = HostedDeviceManager.isDeviceHosted(this)
 
 suspend fun LocalDevice.startHosting() {
-    HostedDeviceManager.registerDevice(this, getNewCommunicator())
+    networkCommunicator.start()
+    HostedDeviceManager.registerDevice(this)
 }
 
 suspend fun LocalDevice.stopHosting() {
     HostedDeviceManager.unregisterDevice(this)
+    networkCommunicator.stop()
 }

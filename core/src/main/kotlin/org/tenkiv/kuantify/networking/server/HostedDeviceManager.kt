@@ -9,17 +9,17 @@ internal object HostedDeviceManager {
     private val mutexHostedDevices: MutexValue<MutableMap<String, HostDeviceCommunicator>> =
         MutexValue(HashMap(), Mutex())
 
-    suspend fun registerDevice(device: LocalDevice, communicator: HostDeviceCommunicator) {
+    suspend fun registerDevice(device: LocalDevice) {
         mutexHostedDevices.withLock { hostedDevices ->
             if (hostedDevices[device.uid] == null) {
-                hostedDevices += device.uid to communicator
+                hostedDevices += device.uid to device.networkCommunicator
             }
         }
     }
 
     suspend fun unregisterDevice(device: LocalDevice) {
         mutexHostedDevices.withLock { hostedDevices ->
-            hostedDevices[device.uid]?.cancel()
+            hostedDevices[device.uid]?.stop()
             hostedDevices -= device.uid
         }
     }

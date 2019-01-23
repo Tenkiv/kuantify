@@ -19,7 +19,7 @@ import javax.measure.quantity.*
 import kotlin.coroutines.*
 
 open class HostDeviceCommunicator(
-    scope: CoroutineScope,
+    private val scope: CoroutineScope,
     val device: LocalDevice,
     /**
      * Map of path from this communicators device to a [Channel] to transmit additional data not built in to Kuantify.
@@ -28,7 +28,8 @@ open class HostDeviceCommunicator(
     private val additionalDataChannels: Map<List<String>, Channel<String?>>? = null
 ) : CoroutineScope {
 
-    private val job = Job(scope.coroutineContext[Job])
+    @Volatile
+    private var job = Job(scope.coroutineContext[Job])
 
     private val deviceId get() = device.uid
     private val deviceRoute = listOf(Route.DEVICE, deviceId)
@@ -39,11 +40,7 @@ open class HostDeviceCommunicator(
         list
     }
 
-    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
-
-    init {
-        initDaqcGateSending()
-    }
+    override val coroutineContext: CoroutineContext get() = scope.coroutineContext + job
 
     private fun initDaqcGateSending() {
         device.daqcGateMap.forEach { gateId, gate ->
@@ -339,9 +336,13 @@ open class HostDeviceCommunicator(
         }
     }
 
-    fun cancel() {
-
+    fun stop() {
         job.cancel()
+        job = Job()
+    }
+
+    fun start() {
+        initDaqcGateSending()
     }
 
 }
