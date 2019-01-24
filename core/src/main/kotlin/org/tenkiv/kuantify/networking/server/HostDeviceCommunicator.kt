@@ -60,7 +60,7 @@ open class HostDeviceCommunicator(
         val route = daqcGateRoute + listOf(gateId, Route.IS_TRANSCEIVING)
         launch {
             gate.isTransceiving.updateBroadcaster.consumeEach {
-                val serializedValue = JSON.stringify(BooleanSerializer, it)
+                val serializedValue = Json.stringify(BooleanSerializer, it)
                 ClientHandler.sendToAll(route, serializedValue)
             }
         }
@@ -80,8 +80,8 @@ open class HostDeviceCommunicator(
         launch {
             strand.updateBroadcaster.consumeEach {
                 val value = when (val measurementValue = it.value) {
-                    is BinaryState -> JSON.stringify(BinaryState.serializer(), measurementValue)
-                    is DaqcQuantity<*> -> JSON.stringify(ComparableQuantitySerializer, measurementValue)
+                    is BinaryState -> Json.stringify(BinaryState.serializer(), measurementValue)
+                    is DaqcQuantity<*> -> Json.stringify(ComparableQuantitySerializer, measurementValue)
                 }
 
                 ClientHandler.sendToAll(route, value)
@@ -98,7 +98,7 @@ open class HostDeviceCommunicator(
 
         launch {
             updateRate.updateBroadcaster.consumeEach {
-                val value = JSON.stringify(ComparableQuantitySerializer, it)
+                val value = Json.stringify(ComparableQuantitySerializer, it)
                 ClientHandler.sendToAll(route, value)
             }
         }
@@ -121,7 +121,7 @@ open class HostDeviceCommunicator(
 
         launch {
             channel.updateBroadcaster.consumeEach {
-                val value = JSON.stringify(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
+                val value = Json.stringify(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
                 ClientHandler.sendToAll(route, value)
             }
         }
@@ -132,7 +132,7 @@ open class HostDeviceCommunicator(
 
         launch {
             channel.avgFrequency.updateBroadcaster.consumeEach {
-                val value = JSON.stringify(ComparableQuantitySerializer, it)
+                val value = Json.stringify(ComparableQuantitySerializer, it)
                 ClientHandler.sendToAll(route, value)
             }
         }
@@ -143,7 +143,7 @@ open class HostDeviceCommunicator(
 
         launch {
             channel.isTransceivingBinaryState.updateBroadcaster.consumeEach {
-                val value = JSON.stringify(BooleanSerializer, it)
+                val value = Json.stringify(BooleanSerializer, it)
                 ClientHandler.sendToAll(route, value)
             }
         }
@@ -154,7 +154,7 @@ open class HostDeviceCommunicator(
 
         launch {
             channel.isTransceivingPwm.updateBroadcaster.consumeEach {
-                val value = JSON.stringify(BooleanSerializer, it)
+                val value = Json.stringify(BooleanSerializer, it)
                 ClientHandler.sendToAll(route, value)
             }
         }
@@ -165,7 +165,7 @@ open class HostDeviceCommunicator(
 
         launch {
             channel.isTransceivingFrequency.updateBroadcaster.consumeEach {
-                val value = JSON.stringify(BooleanSerializer, it)
+                val value = Json.stringify(BooleanSerializer, it)
                 ClientHandler.sendToAll(route, value)
             }
         }
@@ -181,7 +181,7 @@ open class HostDeviceCommunicator(
 
         launch {
             channel.maxAcceptableError.updateBroadcaster.consumeEach {
-                val value = JSON.stringify(ComparableQuantitySerializer, it)
+                val value = Json.stringify(ComparableQuantitySerializer, it)
                 ClientHandler.sendToAll(route, value)
             }
         }
@@ -192,7 +192,7 @@ open class HostDeviceCommunicator(
 
         launch {
             channel.maxElectricPotential.updateBroadcaster.consumeEach {
-                val value = JSON.stringify(ComparableQuantitySerializer, it)
+                val value = Json.stringify(ComparableQuantitySerializer, it)
                 ClientHandler.sendToAll(route, value)
             }
         }
@@ -237,17 +237,17 @@ open class HostDeviceCommunicator(
     }
 
     private fun receiveQuantityOutputValueMsg(output: QuantityOutput<*>, message: String?) {
-        val setting = JSON.parse(ComparableQuantitySerializer, message!!)
+        val setting = Json.parse(ComparableQuantitySerializer, message!!)
         output.unsafeSetOutput(setting)
     }
 
     private fun receiveBinaryStateOutputValueMsg(output: BinaryStateOutput, message: String?) {
-        val setting = JSON.parse(BinaryState.serializer(), message!!)
+        val setting = Json.parse(BinaryState.serializer(), message!!)
         output.setOutput(setting)
     }
 
     private fun receiveDigitalOutputValueMsg(output: DigitalOutput, message: String?) {
-        val setting = JSON.parse(DigitalChannelValue.serializer(), message!!)
+        val setting = Json.parse(DigitalChannelValue.serializer(), message!!)
         when (setting) {
             is DigitalChannelValue.BinaryState -> output.setOutputState(setting.state)
             is DigitalChannelValue.Percentage -> output.pulseWidthModulate(setting.percent)
@@ -256,21 +256,21 @@ open class HostDeviceCommunicator(
     }
 
     private fun receiveBufferMsg(gateId: String, message: String?) {
-        val buffer: Boolean = JSON.parse(BooleanSerializer, message!!)
+        val buffer: Boolean = Json.parse(BooleanSerializer, message!!)
 
         (device.daqcGateMap[gateId] as AnalogInput).buffer.set(buffer)
     }
 
     private fun receiveMaxErrorMsg(gateId: String, message: String?) {
         val maxAcceptableError: ComparableQuantity<ElectricPotential> =
-            JSON.parse(ComparableQuantitySerializer, message!!).asType()
+            Json.parse(ComparableQuantitySerializer, message!!).asType()
 
         (device.daqcGateMap[gateId] as AnalogInput).maxAcceptableError.set(maxAcceptableError)
     }
 
     private fun receiveMaxElectricPotential(gateId: String, message: String?) {
         val maxElectricPotential: ComparableQuantity<ElectricPotential> =
-            JSON.parse(ComparableQuantitySerializer, message!!).asType()
+            Json.parse(ComparableQuantitySerializer, message!!).asType()
 
         (device.daqcGateMap[gateId] as AnalogInput).maxElectricPotential.set(maxElectricPotential)
     }
@@ -296,14 +296,14 @@ open class HostDeviceCommunicator(
     }
 
     private fun receivePulseWidthModulate(gateId: String, message: String?) {
-        val percent: ComparableQuantity<Dimensionless> = JSON.parse(ComparableQuantitySerializer, message!!).asType()
+        val percent: ComparableQuantity<Dimensionless> = Json.parse(ComparableQuantitySerializer, message!!).asType()
 
         (device.daqcGateMap[gateId] as DigitalOutput).pulseWidthModulate(percent, Output.DEFAULT_PANIC_ON_FAILURE)
     }
 
     private fun receiveSustainTransitionFrequency(gateId: String, message: String?) {
         val transitionFrequency: ComparableQuantity<Frequency> =
-            JSON.parse(ComparableQuantitySerializer, message!!).asType()
+            Json.parse(ComparableQuantitySerializer, message!!).asType()
 
         (device.daqcGateMap[gateId] as DigitalOutput).sustainTransitionFrequency(
             transitionFrequency,
@@ -313,7 +313,7 @@ open class HostDeviceCommunicator(
 
     private fun receiveAvgFrequency(gateId: String, message: String?) {
         val avgFrequency: ComparableQuantity<Frequency> =
-            JSON.parse(ComparableQuantitySerializer, message!!).asType()
+            Json.parse(ComparableQuantitySerializer, message!!).asType()
 
         (device.daqcGateMap[gateId] as DigitalChannel<*>).avgFrequency.set(avgFrequency)
     }

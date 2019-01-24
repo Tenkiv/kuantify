@@ -19,8 +19,8 @@ object Vof {
     const val kotlin = "1.3.20"
 
     // Kotlin extensions
-    const val coroutinesX = "1.1.0"
-    const val serializationX = "0.9.1"
+    const val coroutinesX = "1.1.1"
+    const val serializationX = "0.10.0"
 
     // Jetbrains
     const val ktor = "1.1.1"

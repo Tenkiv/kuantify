@@ -144,8 +144,8 @@ sealed class DigitalChannelValue : DaqcData {
             }
         }
 
-        override fun deserialize(input: Decoder): DigitalChannelValue {
-            val inp: CompositeDecoder = input.beginStructure(descriptor)
+        override fun deserialize(decoder: Decoder): DigitalChannelValue {
+            val inp: CompositeDecoder = decoder.beginStructure(descriptor)
             var type: Byte = -1
             lateinit var value: String
             loop@ while (true) {
@@ -165,8 +165,8 @@ sealed class DigitalChannelValue : DaqcData {
             }
         }
 
-        override fun serialize(output: Encoder, obj: DigitalChannelValue) {
-            val compositeOutput: CompositeEncoder = output.beginStructure(descriptor)
+        override fun serialize(encoder: Encoder, obj: DigitalChannelValue) {
+            val compositeOutput: CompositeEncoder = encoder.beginStructure(descriptor)
 
             val type = when (obj) {
                 is BinaryState -> BinaryState.TYPE_BYTE

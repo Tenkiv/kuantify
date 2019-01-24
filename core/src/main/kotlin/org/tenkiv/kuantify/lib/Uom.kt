@@ -34,8 +34,8 @@ object ComparableQuantitySerializer : KSerializer<ComparableQuantity<*>> {
         }
     }
 
-    override fun deserialize(input: Decoder): ComparableQuantity<*> {
-        val inp: CompositeDecoder = input.beginStructure(descriptor)
+    override fun deserialize(decoder: Decoder): ComparableQuantity<*> {
+        val inp: CompositeDecoder = decoder.beginStructure(descriptor)
         var value = 0.0
         lateinit var unit: String
         loop@ while (true) {
@@ -50,8 +50,8 @@ object ComparableQuantitySerializer : KSerializer<ComparableQuantity<*>> {
         return value withSymbol unit
     }
 
-    override fun serialize(output: Encoder, obj: ComparableQuantity<*>) {
-        val compositeOutput: CompositeEncoder = output.beginStructure(descriptor)
+    override fun serialize(encoder: Encoder, obj: ComparableQuantity<*>) {
+        val compositeOutput: CompositeEncoder = encoder.beginStructure(descriptor)
         //TODO: Probably change this to encodeSerializableElement so we can accommodate for numbers other than Double
         compositeOutput.encodeDoubleElement(descriptor, 0, obj.getValue().toDouble())
         compositeOutput.encodeStringElement(descriptor, 1, obj.getUnit().toString())

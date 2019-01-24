@@ -261,16 +261,16 @@ sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
             throw DataFormatException("Data with BinaryState not found")
         }
 
-        override fun deserialize(input: Decoder): BinaryState {
-            return when (input.decodeByte()) {
+        override fun deserialize(decoder: Decoder): BinaryState {
+            return when (decoder.decodeByte()) {
                 High.BYTE_REPRESENTATION -> High
                 Low.BYTE_REPRESENTATION -> Low
                 else -> throw SerializationException("Data with BinaryState not found")
             }
         }
 
-        override fun serialize(output: Encoder, obj: BinaryState) {
-            output.encodeByte(obj.toByte())
+        override fun serialize(encoder: Encoder, obj: BinaryState) {
+            encoder.encodeByte(obj.toByte())
         }
 
     }

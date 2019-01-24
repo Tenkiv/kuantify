@@ -15,15 +15,15 @@ class ValueInstantSerializer<T : Any>(val valueSerializer: KSerializer<T>) : KSe
         }
     }
 
-    override fun serialize(output: Encoder, obj: ValueInstant<T>) {
-        val out = output.beginStructure(descriptor)
+    override fun serialize(encoder: Encoder, obj: ValueInstant<T>) {
+        val out = encoder.beginStructure(descriptor)
         out.encodeSerializableElement(descriptor, 0, valueSerializer, obj.value)
         out.encodeSerializableElement(descriptor, 1, InstantSerializer, obj.instant)
         out.endStructure(descriptor)
     }
 
-    override fun deserialize(input: Decoder): ValueInstant<T> {
-        val inp = input.beginStructure(descriptor)
+    override fun deserialize(decoder: Decoder): ValueInstant<T> {
+        val inp = decoder.beginStructure(descriptor)
         lateinit var value: T
         lateinit var instant: Instant
         loop@ while (true) {
@@ -45,12 +45,12 @@ object InstantSerializer : KSerializer<Instant> {
 
     override val descriptor: SerialDescriptor = LongDescriptor.withName("Instant")
 
-    override fun deserialize(input: Decoder): Instant {
-        return Instant.ofEpochMilli(input.decodeLong())
+    override fun deserialize(decoder: Decoder): Instant {
+        return Instant.ofEpochMilli(decoder.decodeLong())
     }
 
-    override fun serialize(output: Encoder, obj: Instant) {
-        output.encodeLong(obj.toEpochMilli())
+    override fun serialize(encoder: Encoder, obj: Instant) {
+        encoder.encodeLong(obj.toEpochMilli())
     }
 
 }

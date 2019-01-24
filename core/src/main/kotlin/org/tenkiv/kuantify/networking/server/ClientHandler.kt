@@ -31,7 +31,7 @@ internal object ClientHandler {
     //TODO: Instead of always sending to all clients, register clients with HostDeviceCommunicators
     suspend fun sendToAll(route: List<String>, value: String?) {
         val message = NetworkMessage(route, value)
-        val serializedMsg = JSON.stringify(NetworkMessage.serializer(), message)
+        val serializedMsg = Json.stringify(NetworkMessage.serializer(), message)
 
         mutexClients.withLock { clients ->
             clients.values.forEach {

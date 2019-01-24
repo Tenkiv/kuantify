@@ -64,7 +64,7 @@ private class KuantifyHost {
 
     @Suppress("NAME_SHADOWING")
     private suspend fun receiveMessage(clientId: String, message: String) {
-        val (route, message) = JSON.parse(NetworkMessage.serializer(), message)
+        val (route, message) = Json.parse(NetworkMessage.serializer(), message)
         when {
             route.first() == Route.DEVICE -> HostedDeviceManager.receiveMessage(route.drop(1), message)
         }
