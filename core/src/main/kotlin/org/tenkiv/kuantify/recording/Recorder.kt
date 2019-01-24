@@ -17,12 +17,11 @@
 
 package org.tenkiv.kuantify.recording
 
-import com.fasterxml.jackson.databind.*
-import com.fasterxml.jackson.module.kotlin.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.sync.*
 import kotlinx.coroutines.time.*
+import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.lib.*
@@ -677,18 +676,12 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
                             if (numUnclosedBraces == 0) return@readFromDisk complyingObjects
 
                             if (numUnclosedBraces == 1) {
-                                val jsonTree = jacksonMapper.readTree(currentObject.toByteArray())
-                                val epochMilli = jsonTree[INSTANT_KEY].asLong()
-                                val valueTree = jsonTree[VALUE_KEY]
-                                val valueString = if (valueTree.isTextual) valueTree.asText() else valueTree.toString()
-                                val valueInstant =
-                                    PrimitiveValueInstant(epochMilli, valueString).toValueInstant(valueDeserializer)
+                                val valueInstant = deserializeValueInstant(currentObject, valueDeserializer)
 
                                 if (filter(valueInstant)) {
                                     complyingObjects += valueInstant
                                 }
                                 currentObject.clear()
-
                             }
                         }
 
@@ -702,6 +695,18 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
             } else {
                 throw IllegalStateException("valueDeserializer cannot be null if recorder is using disk for storage.")
             }
+        }
+
+        private fun deserializeValueInstant(
+            jsonObject: List<Byte>,
+            valueDeserializer: ValueDeserializer<T>
+        ): ValueInstant<T> {
+            val jsonTree = Json.plain.parseJson(jsonObject.toString()).jsonObject
+            val epochMilli = jsonTree[INSTANT_KEY].long
+            val valueTree = jsonTree[VALUE_KEY]
+            val valueString = valueTree.contentOrNull ?: valueTree.toString()
+
+            return PrimitiveValueInstant(epochMilli, valueString).toValueInstant(valueDeserializer)
         }
 
     }
@@ -723,8 +728,6 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
         private const val ARRAY_CLOSE = "]}"
 
         private const val RECORDERS_PATH = "recorders"
-
-        private val jacksonMapper: ObjectMapper = jacksonObjectMapper()
 
         private val recordersDirectory = File(RECORDERS_PATH).apply { mkdir() }
 

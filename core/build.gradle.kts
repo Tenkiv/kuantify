@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.*
 
 /*
  * Copyright 2018 Tenkiv, Inc.
@@ -46,8 +46,6 @@ dependencies {
         name = "kotlinx-serialization-runtime",
         version = Vof.serializationX
     )
-    implementation(group = "com.fasterxml.jackson.core", name = "jackson-databind", version = Vof.jackson)
-    implementation(group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version = Vof.jackson)
 
     //Units of measurement
     compile(group = "org.tenkiv.physikal", name = "complete-units", version = Vof.physikal)
