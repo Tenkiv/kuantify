@@ -93,13 +93,15 @@ open class HostDeviceCommunicator(
         initUpdateRateSending(gateId, input.updateRate)
     }
 
-    private fun initUpdateRateSending(gateId: String, updateRate: TrackableQuantity<Frequency>) {
-        val route = daqcGateRoute + listOf(gateId, Route.UPDATE_RATE)
+    private fun initUpdateRateSending(gateId: String, updateRate: UpdateRate) {
+        if (updateRate is UpdateRate.Configured) {
+            val route = daqcGateRoute + listOf(gateId, Route.UPDATE_RATE)
 
-        launch {
-            updateRate.updateBroadcaster.consumeEach {
-                val value = Json.stringify(ComparableQuantitySerializer, it)
-                ClientHandler.sendToAll(route, value)
+            launch {
+                updateRate.updateBroadcaster.consumeEach {
+                    val value = Json.stringify(ComparableQuantitySerializer, it)
+                    ClientHandler.sendToAll(route, value)
+                }
             }
         }
     }

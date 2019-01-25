@@ -23,7 +23,7 @@ object Vof {
     const val serializationX = "0.10.0"
 
     // Jetbrains
-    const val ktor = "1.1.1"
+    const val ktor = "1.1.2"
 
     // Tenkiv
     const val coral = "2.1.2.3-SNAPSHOT"

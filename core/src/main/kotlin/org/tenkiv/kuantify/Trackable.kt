@@ -62,13 +62,25 @@ suspend fun <T> Trackable<T>.getValue(): T =
     updateBroadcaster.valueOrNull ?: updateBroadcaster.openSubscription().receive()
 
 interface RatedTrackable<out T> : Trackable<ValueInstant<T>> {
-    val updateRate: Trackable<ComparableQuantity<Frequency>>
+    val updateRate: UpdateRate
 }
 
-fun RatedTrackable<*>.runningAverage(avgLength: Duration = 1.minutesSpan): AverageUpdateRateDelegate =
-    AverageUpdateRateDelegate(this, avgLength)
+sealed class UpdateRate(rate: TrackableQuantity<Frequency>) : TrackableQuantity<Frequency> by rate {
 
-class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, private val avgLength: Duration) {
+    class RunningAverage internal constructor(rate: TrackableQuantity<Frequency>) : UpdateRate(rate)
+
+    /**
+     * Means the update rate is a result of some set configuration and will only change when that configuration is
+     * changed.
+     */
+    class Configured(rate: TrackableQuantity<Frequency>) : UpdateRate(rate)
+
+}
+
+fun RatedTrackable<*>.runningAverage(avgPeriod: Duration = 1.minutesSpan): AverageUpdateRateDelegate =
+    AverageUpdateRateDelegate(this, avgPeriod)
+
+class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, private val avgPeriod: Duration) {
     private val updatable: InitializedUpdatable<ComparableQuantity<Frequency>> = input.Updatable(0.hertz)
 
     init {
@@ -80,7 +92,7 @@ class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, p
                 sampleInstants += it.instant
                 clean(sampleInstants)
 
-                val sps = sampleInstants.size / (avgLength.toMillis() * 1_000.0)
+                val sps = sampleInstants.size / (avgPeriod.toMillis() * 1_000.0)
                 updateRate = sps.hertz
                 updatable.set(updateRate)
             }
@@ -91,7 +103,7 @@ class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, p
         val iterator = sampleInstants.listIterator()
         while (iterator.hasNext()) {
             val instant = iterator.next()
-            if (instant.isOlderThan(avgLength)) {
+            if (instant.isOlderThan(avgPeriod)) {
                 iterator.remove()
             } else {
                 break
@@ -99,8 +111,8 @@ class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, p
         }
     }
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): InitializedTrackable<ComparableQuantity<Frequency>> =
-        updatable
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): UpdateRate.RunningAverage =
+        UpdateRate.RunningAverage(updatable)
 }
 
 private class CombinedTrackable<out T>(scope: CoroutineScope, trackables: Array<out Trackable<T>>) :
