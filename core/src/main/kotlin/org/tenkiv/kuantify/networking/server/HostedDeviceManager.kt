@@ -6,20 +6,19 @@ import org.tenkiv.kuantify.lib.*
 
 internal object HostedDeviceManager {
 
-    private val mutexHostedDevices: MutexValue<MutableMap<String, HostDeviceCommunicator>> =
+    private val mutexHostedDevices: MutexValue<MutableMap<String, LocalDevice>> =
         MutexValue(HashMap(), Mutex())
 
     suspend fun registerDevice(device: LocalDevice) {
         mutexHostedDevices.withLock { hostedDevices ->
             if (hostedDevices[device.uid] == null) {
-                hostedDevices += device.uid to device.networkCommunicator
+                hostedDevices += device.uid to device
             }
         }
     }
 
     suspend fun unregisterDevice(device: LocalDevice) {
         mutexHostedDevices.withLock { hostedDevices ->
-            hostedDevices[device.uid]?.stop()
             hostedDevices -= device.uid
         }
     }
