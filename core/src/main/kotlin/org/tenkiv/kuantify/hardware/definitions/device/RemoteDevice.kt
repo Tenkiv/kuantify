@@ -6,6 +6,8 @@ package org.tenkiv.kuantify.hardware.definitions.device
  */
 interface RemoteDevice : Device {
 
+    val hostIp: String
+
     /**
      * Value representing if the Device is connected.
      *
