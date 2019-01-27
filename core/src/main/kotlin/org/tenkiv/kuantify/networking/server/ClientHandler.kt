@@ -28,7 +28,6 @@ internal object ClientHandler {
         }
     }
 
-    //TODO: Instead of always sending to all clients, register clients with HostDeviceCommunicators
     suspend fun sendToAll(route: List<String>, value: String?) {
         val message = NetworkMessage(route, value)
         val serializedMsg = Json.stringify(NetworkMessage.serializer(), message)
@@ -40,29 +39,33 @@ internal object ClientHandler {
         }
     }
 
-}
-
-internal class HostedClient(val id: String) {
-
-    private val mutexWebsocketSessions: MutexValue<MutableList<WebSocketSession>> = MutexValue(ArrayList(), Mutex())
-
-    suspend fun addSession(session: WebSocketSession) {
-        mutexWebsocketSessions.withLock { websocketSessions ->
-            websocketSessions += session
+    suspend fun closeAllSessions() {
+        mutexClients.withLock { clients ->
+            clients.values.forEach { it.closeAllSessions() }
         }
     }
 
-    suspend fun removeSession(session: WebSocketSession, clients: MutableMap<String, HostedClient>) {
-        mutexWebsocketSessions.withLock { websocketSessions ->
+    private class HostedClient(val id: String) {
+
+        private val websocketSessions: MutableList<WebSocketSession> = ArrayList()
+
+        fun addSession(session: WebSocketSession) {
+            websocketSessions += session
+        }
+
+        fun removeSession(session: WebSocketSession, clients: MutableMap<String, HostedClient>) {
             websocketSessions -= session
             if (websocketSessions.isEmpty()) clients -= id
         }
-    }
 
-    suspend fun sendMessage(serializedMsg: String) {
-        mutexWebsocketSessions.withLock { websocketSessions ->
+        suspend fun sendMessage(serializedMsg: String) {
             websocketSessions.forEach { it.send(Frame.Text(serializedMsg)) }
         }
+
+        suspend fun closeAllSessions() {
+            websocketSessions.forEach { it.close() }
+        }
+
     }
 
 }

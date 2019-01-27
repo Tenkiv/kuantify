@@ -26,26 +26,18 @@ abstract class LocalDevice : Device {
     override val coroutineContext: CoroutineContext
         get() = GlobalScope.coroutineContext + job
 
-    protected val deviceRoute get() = listOf(Route.DEVICE, uid)
-    protected val daqcGateRoute
-        get() = run {
-            val list = ArrayList<String>()
-            list += deviceRoute
-            list += Route.DAQC_GATE
-            list
-        }
-
     protected open val additionalDataChannels: Map<List<String>, Channel<String?>>? = null
 
-    suspend fun isHosting(): Boolean = HostedDeviceManager.isDeviceHosted(this)
+    val isHosting: Boolean
+        get() = KuantifyHost.isHosting
 
-    suspend fun startHosting() {
+    fun startHosting() {
         initDaqcGateSending()
-        HostedDeviceManager.registerDevice(this)
+        KuantifyHost.startHosting(this)
     }
 
     suspend fun stopHosting() {
-        HostedDeviceManager.unregisterDevice(this)
+        KuantifyHost.stopHosting()
         job.cancel()
         job = Job()
     }
@@ -65,7 +57,7 @@ abstract class LocalDevice : Device {
     }
 
     private fun initIsTransceivingSending(gateId: String, gate: DaqcGate<*>) {
-        val route = daqcGateRoute + listOf(gateId, Route.IS_TRANSCEIVING)
+        val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING)
         launch {
             gate.isTransceiving.updateBroadcaster.consumeEach {
                 val serializedValue = Json.stringify(BooleanSerializer, it)
@@ -83,7 +75,7 @@ abstract class LocalDevice : Device {
     }
 
     private fun initStrandValueSending(gateId: String, strand: IOStrand<*>) {
-        val route = daqcGateRoute + listOf(gateId, Route.VALUE)
+        val route = listOf(Route.DAQC_GATE, gateId, Route.VALUE)
 
         launch {
             strand.updateBroadcaster.consumeEach {
@@ -103,7 +95,7 @@ abstract class LocalDevice : Device {
 
     private fun initUpdateRateSending(gateId: String, updateRate: UpdateRate) {
         if (updateRate is UpdateRate.Configured) {
-            val route = daqcGateRoute + listOf(gateId, Route.UPDATE_RATE)
+            val route = listOf(Route.DAQC_GATE, gateId, Route.UPDATE_RATE)
 
             launch {
                 updateRate.updateBroadcaster.consumeEach {
@@ -127,7 +119,7 @@ abstract class LocalDevice : Device {
     }
 
     private fun initDigitalChannelValueSending(gateId: String, channel: DigitalChannel<*>) {
-        val route = daqcGateRoute + listOf(gateId, Route.VALUE)
+        val route = listOf(Route.DAQC_GATE, gateId, Route.VALUE)
 
         launch {
             channel.updateBroadcaster.consumeEach {
@@ -138,7 +130,7 @@ abstract class LocalDevice : Device {
     }
 
     private fun initAvgFrequencySending(gateId: String, channel: DigitalChannel<*>) {
-        val route = daqcGateRoute + listOf(gateId, Route.AVG_FREQUENCY)
+        val route = listOf(Route.DAQC_GATE, gateId, Route.AVG_FREQUENCY)
 
         launch {
             channel.avgFrequency.updateBroadcaster.consumeEach {
@@ -149,7 +141,7 @@ abstract class LocalDevice : Device {
     }
 
     private fun initIsTransceivingBinStateSending(gateId: String, channel: DigitalChannel<*>) {
-        val route = daqcGateRoute + listOf(gateId, Route.IS_TRANSCEIVING_BIN_STATE)
+        val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING_BIN_STATE)
 
         launch {
             channel.isTransceivingBinaryState.updateBroadcaster.consumeEach {
@@ -160,7 +152,7 @@ abstract class LocalDevice : Device {
     }
 
     private fun initIsTransceivingPwmSending(gateId: String, channel: DigitalChannel<*>) {
-        val route = daqcGateRoute + listOf(gateId, Route.IS_TRANSCEIVING_PWM)
+        val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING_PWM)
 
         launch {
             channel.isTransceivingPwm.updateBroadcaster.consumeEach {
@@ -171,7 +163,7 @@ abstract class LocalDevice : Device {
     }
 
     private fun initIsTransceivingFrequencySending(gateId: String, channel: DigitalChannel<*>) {
-        val route = daqcGateRoute + listOf(gateId, Route.IS_TRANSCEIVING_FREQUENCY)
+        val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING_FREQUENCY)
 
         launch {
             channel.isTransceivingFrequency.updateBroadcaster.consumeEach {
@@ -187,7 +179,7 @@ abstract class LocalDevice : Device {
     }
 
     private fun initMaxAcceptableErrorSending(gateId: String, channel: AnalogInput) {
-        val route = daqcGateRoute + listOf(gateId, Route.MAX_ACCEPTABLE_ERROR)
+        val route = listOf(Route.DAQC_GATE, gateId, Route.MAX_ACCEPTABLE_ERROR)
 
         launch {
             channel.maxAcceptableError.updateBroadcaster.consumeEach {
@@ -198,7 +190,7 @@ abstract class LocalDevice : Device {
     }
 
     private fun initMaxElectricPotentialSending(gateId: String, channel: AnalogInput) {
-        val route = daqcGateRoute + listOf(gateId, Route.MAX_ELECTRIC_POTENTIAL)
+        val route = listOf(Route.DAQC_GATE, gateId, Route.MAX_ELECTRIC_POTENTIAL)
 
         launch {
             channel.maxElectricPotential.updateBroadcaster.consumeEach {
