@@ -2,9 +2,7 @@ package org.tenkiv.kuantify.networking.server
 
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.sync.*
-import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.lib.*
-import org.tenkiv.kuantify.networking.*
 
 internal object ClientHandler {
 
@@ -28,13 +26,10 @@ internal object ClientHandler {
         }
     }
 
-    suspend fun sendToAll(route: List<String>, value: String?) {
-        val message = NetworkMessage(route, value)
-        val serializedMsg = Json.stringify(NetworkMessage.serializer(), message)
-
+    suspend fun sendToAll(message: String) {
         mutexClients.withLock { clients ->
             clients.values.forEach {
-                it.sendMessage(serializedMsg)
+                it.sendMessage(message)
             }
         }
     }

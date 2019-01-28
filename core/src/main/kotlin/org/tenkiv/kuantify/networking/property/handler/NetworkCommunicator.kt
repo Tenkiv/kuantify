@@ -1,4 +1,4 @@
-package org.tenkiv.kuantify.hardware.definitions.device
+package org.tenkiv.kuantify.networking.property.handler
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -10,36 +10,49 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.definitions.channel.*
+import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.server.*
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
+import java.util.*
 import javax.measure.quantity.*
 import kotlin.coroutines.*
 
-abstract class LocalDevice : Device {
+open class NetworkCommunicator(
+    private val device: KuantifyDevice
+) : CoroutineScope {
+
+    private val parentJob: Job? = device.coroutineContext[Job]
 
     @Volatile
-    private var job = Job()
+    private var job: Job = Job(parentJob)
 
-    override val coroutineContext: CoroutineContext
-        get() = GlobalScope.coroutineContext + job
+    override val coroutineContext: CoroutineContext get() = device.coroutineContext + Dispatchers.Daqc + job
+
+    protected val daqcGateMap get() = device.daqcGateMap
 
     protected open val additionalDataChannels: Map<List<String>, Channel<String?>>? = null
 
-    val isHosting: Boolean
-        get() = KuantifyHost.isHosting
+    private val updateIgnoreMap: IdentityHashMap<Trackable<*>, Boolean> = IdentityHashMap()
 
-    fun startHosting() {
+    open fun start() {
         initDaqcGateSending()
-        KuantifyHost.startHosting(this)
     }
 
-    suspend fun stopHosting() {
-        KuantifyHost.stopHosting()
+    fun stop() {
         job.cancel()
-        job = Job()
+        job = Job(parentJob)
+    }
+
+    protected suspend fun send(route: List<String>, serializedValue: String?) {
+        val message = Json.stringify(NetworkMessage.serializer(), NetworkMessage(route, serializedValue))
+
+        when (device) {
+            is LocalDevice -> ClientHandler.sendToAll(message)
+            is RemoteKuantifyDevice -> device.sendChannel.send(message)
+        }
     }
 
     private fun initDaqcGateSending() {
@@ -57,50 +70,65 @@ abstract class LocalDevice : Device {
     }
 
     private fun initIsTransceivingSending(gateId: String, gate: DaqcGate<*>) {
-        val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING)
-        launch {
+        if (device is LocalDevice) launch(Dispatchers.Default) {
+            val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING)
             gate.isTransceiving.updateBroadcaster.consumeEach {
                 val serializedValue = Json.stringify(BooleanSerializer, it)
-                ClientHandler.sendToAll(route, serializedValue)
+                send(route, serializedValue)
             }
         }
     }
 
     private fun initIOStrandSending(gateId: String, strand: IOStrand<*>) {
-        initStrandValueSending(gateId, strand)
-
         when (strand) {
             is Input<*> -> initInputSending(gateId, strand)
+            is Output<*> -> initOutputValueSending(gateId, strand)
         }
     }
 
-    private fun initStrandValueSending(gateId: String, strand: IOStrand<*>) {
-        val route = listOf(Route.DAQC_GATE, gateId, Route.VALUE)
+    private fun initInputSending(gateId: String, input: Input<*>) {
+        initInputValueSending(gateId, input)
+        initUpdateRateSending(gateId, input.updateRate)
+    }
 
-        launch {
-            strand.updateBroadcaster.consumeEach {
+    private fun initInputValueSending(gateId: String, input: Input<*>) {
+        if (device is LocalDevice) launch(Dispatchers.Default) {
+            val route = listOf(Route.DAQC_GATE, gateId, Route.VALUE)
+            input.updateBroadcaster.consumeEach {
                 val value = when (val measurementValue = it.value) {
                     is BinaryState -> Json.stringify(BinaryState.serializer(), measurementValue)
                     is DaqcQuantity<*> -> Json.stringify(ComparableQuantitySerializer, measurementValue)
                 }
 
-                ClientHandler.sendToAll(route, value)
+                send(route, value)
             }
         }
     }
 
-    private fun initInputSending(gateId: String, input: Input<*>) {
-        initUpdateRateSending(gateId, input.updateRate)
+    private fun initUpdateRateSending(gateId: String, updateRate: UpdateRate) {
+        if (updateRate is UpdateRate.Configured && device is LocalDevice) launch(Dispatchers.Default) {
+            val route = listOf(Route.DAQC_GATE, gateId, Route.UPDATE_RATE)
+            updateRate.updateBroadcaster.consumeEach {
+                val value = Json.stringify(ComparableQuantitySerializer, it)
+                send(route, value)
+            }
+        }
     }
 
-    private fun initUpdateRateSending(gateId: String, updateRate: UpdateRate) {
-        if (updateRate is UpdateRate.Configured) {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.UPDATE_RATE)
+    private fun initOutputValueSending(gateId: String, output: Output<*>) {
+        launch(Dispatchers.Daqc) {
+            val route = listOf(Route.DAQC_GATE, gateId, Route.VALUE)
 
-            launch {
-                updateRate.updateBroadcaster.consumeEach {
-                    val value = Json.stringify(ComparableQuantitySerializer, it)
-                    ClientHandler.sendToAll(route, value)
+            output.updateBroadcaster.consumeEach {
+                if (!output.ignoreNextUpdate) {
+                    val value = when (val measurementValue = it.value) {
+                        is BinaryState -> Json.stringify(BinaryState.serializer(), measurementValue)
+                        is DaqcQuantity<*> -> Json.stringify(ComparableQuantitySerializer, measurementValue)
+                    }
+
+                    send(route, value)
+                } else {
+                    output.ignoreNextUpdate = false
                 }
             }
         }
@@ -124,7 +152,7 @@ abstract class LocalDevice : Device {
         launch {
             channel.updateBroadcaster.consumeEach {
                 val value = Json.stringify(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
-                ClientHandler.sendToAll(route, value)
+                send(route, value)
             }
         }
     }
@@ -135,7 +163,7 @@ abstract class LocalDevice : Device {
         launch {
             channel.avgFrequency.updateBroadcaster.consumeEach {
                 val value = Json.stringify(ComparableQuantitySerializer, it)
-                ClientHandler.sendToAll(route, value)
+                send(route, value)
             }
         }
     }
@@ -146,7 +174,7 @@ abstract class LocalDevice : Device {
         launch {
             channel.isTransceivingBinaryState.updateBroadcaster.consumeEach {
                 val value = Json.stringify(BooleanSerializer, it)
-                ClientHandler.sendToAll(route, value)
+                send(route, value)
             }
         }
     }
@@ -157,7 +185,7 @@ abstract class LocalDevice : Device {
         launch {
             channel.isTransceivingPwm.updateBroadcaster.consumeEach {
                 val value = Json.stringify(BooleanSerializer, it)
-                ClientHandler.sendToAll(route, value)
+                send(route, value)
             }
         }
     }
@@ -168,7 +196,7 @@ abstract class LocalDevice : Device {
         launch {
             channel.isTransceivingFrequency.updateBroadcaster.consumeEach {
                 val value = Json.stringify(BooleanSerializer, it)
-                ClientHandler.sendToAll(route, value)
+                send(route, value)
             }
         }
     }
@@ -184,7 +212,7 @@ abstract class LocalDevice : Device {
         launch {
             channel.maxAcceptableError.updateBroadcaster.consumeEach {
                 val value = Json.stringify(ComparableQuantitySerializer, it)
-                ClientHandler.sendToAll(route, value)
+                send(route, value)
             }
         }
     }
@@ -195,7 +223,7 @@ abstract class LocalDevice : Device {
         launch {
             channel.maxElectricPotential.updateBroadcaster.consumeEach {
                 val value = Json.stringify(ComparableQuantitySerializer, it)
-                ClientHandler.sendToAll(route, value)
+                send(route, value)
             }
         }
     }
@@ -203,8 +231,8 @@ abstract class LocalDevice : Device {
     //TODO: Check additional data channels if cast fails
     //TODO: Throw specific exceptions for errors in message reception, no !!
     internal suspend fun receiveMessage(route: List<String>, message: String?) {
-        when {
-            route.first() == Route.DAQC_GATE -> receiveDaqcGateMsg(route.drop(1), message)
+        when (route.first()) {
+            Route.DAQC_GATE -> receiveDaqcGateMsg(route.drop(1), message)
             else -> receiveOtherMessage(route, message)
         }
     }
@@ -337,5 +365,17 @@ abstract class LocalDevice : Device {
             additionalDataChannels?.get(route)?.send(message) ?: TODO("Handle invalid message")
         }
     }
+
+    /**
+     * Can be used to avoid ping ponging updates back and forth for properties that are sent and received by both
+     * the local and remote device. This property is not thread safe and should only be accessed from
+     * [Dispatchers.Daqc] (if you don't manually set dispatchers in your [NetworkCommunicator] you have nothing to
+     * worry about).
+     */
+    protected var Trackable<*>.ignoreNextUpdate: Boolean
+        get() = updateIgnoreMap[this] ?: false
+        set(value) {
+            updateIgnoreMap[this] = value
+        }
 
 }
