@@ -29,7 +29,7 @@ open class NetworkCommunicator(
     @Volatile
     private var job: Job = Job(parentJob)
 
-    override val coroutineContext: CoroutineContext get() = device.coroutineContext + Dispatchers.Daqc + job
+    final override val coroutineContext: CoroutineContext get() = device.coroutineContext + Dispatchers.Daqc + job
 
     protected val daqcGateMap get() = device.daqcGateMap
 
@@ -135,43 +135,71 @@ open class NetworkCommunicator(
     }
 
     private fun initDigitalChannelSending(gateId: String, channel: DigitalChannel<*>) {
-        initDigitalChannelValueSending(gateId, channel)
         initAvgFrequencySending(gateId, channel)
         initIsTransceivingBinStateSending(gateId, channel)
         initIsTransceivingPwmSending(gateId, channel)
         initIsTransceivingFrequencySending(gateId, channel)
 
         when (channel) {
-            is DigitalInput -> initUpdateRateSending(gateId, channel.updateRate)
+            is DigitalInput -> initDigitalInputSending(gateId, channel)
+            is DigitalOutput -> initDigitalOutputSending(gateId, channel)
         }
     }
 
-    private fun initDigitalChannelValueSending(gateId: String, channel: DigitalChannel<*>) {
-        val route = listOf(Route.DAQC_GATE, gateId, Route.VALUE)
+    private fun initDigitalInputSending(gateId: String, input: DigitalInput) {
+        initUpdateRateSending(gateId, input.updateRate)
+        initDigitalInputValueSending(gateId, input)
+    }
 
-        launch {
-            channel.updateBroadcaster.consumeEach {
+    private fun initDigitalOutputSending(gateId: String, output: DigitalOutput) {
+        initDigitalOutputValueSending(gateId, output)
+    }
+
+    private fun initDigitalInputValueSending(gateId: String, input: DigitalInput) {
+        if (device is LocalDevice) launch(Dispatchers.Default) {
+            val route = listOf(Route.DAQC_GATE, gateId, Route.VALUE)
+
+            input.updateBroadcaster.consumeEach {
                 val value = Json.stringify(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
                 send(route, value)
             }
         }
     }
 
-    private fun initAvgFrequencySending(gateId: String, channel: DigitalChannel<*>) {
-        val route = listOf(Route.DAQC_GATE, gateId, Route.AVG_FREQUENCY)
+    private fun initDigitalOutputValueSending(gateId: String, output: DigitalOutput) {
+        launch(Dispatchers.Daqc) {
+            val route = listOf(Route.DAQC_GATE, gateId, Route.VALUE)
 
+            output.updateBroadcaster.consumeEach {
+                if (!output.ignoreNextUpdate) {
+                    val value = Json.stringify(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
+                    send(route, value)
+                } else {
+                    output.ignoreNextUpdate = false
+                }
+            }
+        }
+    }
+
+    private fun initAvgFrequencySending(gateId: String, channel: DigitalChannel<*>) {
         launch {
+            val route = listOf(Route.DAQC_GATE, gateId, Route.AVG_FREQUENCY)
+
             channel.avgFrequency.updateBroadcaster.consumeEach {
-                val value = Json.stringify(ComparableQuantitySerializer, it)
-                send(route, value)
+                if (!channel.avgFrequency.ignoreNextUpdate) {
+                    val value = Json.stringify(ComparableQuantitySerializer, it)
+                    send(route, value)
+                } else {
+                    channel.avgFrequency.ignoreNextUpdate = false
+                }
             }
         }
     }
 
     private fun initIsTransceivingBinStateSending(gateId: String, channel: DigitalChannel<*>) {
-        val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING_BIN_STATE)
+        if (device is LocalDevice) launch {
+            val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING_BIN_STATE)
 
-        launch {
             channel.isTransceivingBinaryState.updateBroadcaster.consumeEach {
                 val value = Json.stringify(BooleanSerializer, it)
                 send(route, value)
@@ -180,9 +208,9 @@ open class NetworkCommunicator(
     }
 
     private fun initIsTransceivingPwmSending(gateId: String, channel: DigitalChannel<*>) {
-        val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING_PWM)
+        if (device is LocalDevice) launch {
+            val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING_PWM)
 
-        launch {
             channel.isTransceivingPwm.updateBroadcaster.consumeEach {
                 val value = Json.stringify(BooleanSerializer, it)
                 send(route, value)
@@ -191,9 +219,9 @@ open class NetworkCommunicator(
     }
 
     private fun initIsTransceivingFrequencySending(gateId: String, channel: DigitalChannel<*>) {
-        val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING_FREQUENCY)
+        if (device is LocalDevice) launch {
+            val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING_FREQUENCY)
 
-        launch {
             channel.isTransceivingFrequency.updateBroadcaster.consumeEach {
                 val value = Json.stringify(BooleanSerializer, it)
                 send(route, value)
@@ -207,23 +235,31 @@ open class NetworkCommunicator(
     }
 
     private fun initMaxAcceptableErrorSending(gateId: String, channel: AnalogInput) {
-        val route = listOf(Route.DAQC_GATE, gateId, Route.MAX_ACCEPTABLE_ERROR)
-
         launch {
+            val route = listOf(Route.DAQC_GATE, gateId, Route.MAX_ACCEPTABLE_ERROR)
+
             channel.maxAcceptableError.updateBroadcaster.consumeEach {
-                val value = Json.stringify(ComparableQuantitySerializer, it)
-                send(route, value)
+                if (!channel.maxAcceptableError.ignoreNextUpdate) {
+                    val value = Json.stringify(ComparableQuantitySerializer, it)
+                    send(route, value)
+                } else {
+                    channel.maxAcceptableError.ignoreNextUpdate = false
+                }
             }
         }
     }
 
     private fun initMaxElectricPotentialSending(gateId: String, channel: AnalogInput) {
-        val route = listOf(Route.DAQC_GATE, gateId, Route.MAX_ELECTRIC_POTENTIAL)
-
         launch {
+            val route = listOf(Route.DAQC_GATE, gateId, Route.MAX_ELECTRIC_POTENTIAL)
+
             channel.maxElectricPotential.updateBroadcaster.consumeEach {
-                val value = Json.stringify(ComparableQuantitySerializer, it)
-                send(route, value)
+                if (!channel.maxElectricPotential.ignoreNextUpdate) {
+                    val value = Json.stringify(ComparableQuantitySerializer, it)
+                    send(route, value)
+                } else {
+                    channel.maxElectricPotential.ignoreNextUpdate = false
+                }
             }
         }
     }
