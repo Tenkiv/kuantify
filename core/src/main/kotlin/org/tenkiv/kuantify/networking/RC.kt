@@ -1,6 +1,6 @@
 package org.tenkiv.kuantify.networking
 
-object Route {
+object RC {
 
     const val DAQC_GATE = "gaqc_gate"
     const val BUFFER = "buffer"

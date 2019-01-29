@@ -12,7 +12,6 @@ import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.networking.*
-import org.tenkiv.kuantify.networking.Route
 
 fun Application.kuantifyHost() {
     KuantifyHost.apply { init() }
@@ -81,7 +80,7 @@ internal object KuantifyHost {
     private suspend fun receiveMessage(clientId: String, message: String) {
         val (route, message) = Json.parse(NetworkMessage.serializer(), message)
         when (route.first()) {
-            Route.MESSAGE_ERROR -> clientReportedError()
+            RC.MESSAGE_ERROR -> clientReportedError()
             else -> hostedDevice?.receiveMessage(route, message) ?: deviceNotHosted()
         }
     }

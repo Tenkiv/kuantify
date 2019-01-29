@@ -49,8 +49,8 @@ abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : Kuantif
         val (route, message) = Json.parse(NetworkMessage.serializer(), message)
 
         when (route.first()) {
-            Route.DAQC_GATE -> receiveDaqcGateMsg(route, message)
-            Route.MESSAGE_ERROR -> hostReportedError()
+            RC.DAQC_GATE -> receiveDaqcGateMsg(route, message)
+            RC.MESSAGE_ERROR -> hostReportedError()
         }
     }
 

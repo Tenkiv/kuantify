@@ -13,9 +13,11 @@ sealed class KuantifyDevice : Device {
 
     protected abstract val networkCommunicator: NetworkCommunicator
 
-    internal suspend fun receiveMessage(route: List<String>, message: String?) {
+    internal suspend fun receiveMessage(route: Route, message: String?) {
         networkCommunicator.receiveMessage(route, message)
     }
+
+    internal abstract suspend fun sendMessage(route: Route, serializedValue: String?)
 
 }
 

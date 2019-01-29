@@ -21,7 +21,7 @@ import javax.measure.quantity.*
 import kotlin.coroutines.*
 
 open class NetworkCommunicator(
-    private val device: KuantifyDevice
+    val device: KuantifyDevice
 ) : CoroutineScope {
 
     private val parentJob: Job? = device.coroutineContext[Job]
@@ -46,7 +46,7 @@ open class NetworkCommunicator(
         job = Job(parentJob)
     }
 
-    protected suspend fun send(route: List<String>, serializedValue: String?) {
+    internal suspend fun send(route: List<String>, serializedValue: String?) {
         val message = Json.stringify(NetworkMessage.serializer(), NetworkMessage(route, serializedValue))
 
         when (device) {
@@ -71,7 +71,7 @@ open class NetworkCommunicator(
 
     private fun initIsTransceivingSending(gateId: String, gate: DaqcGate<*>) {
         if (device is LocalDevice) launch(Dispatchers.Default) {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING)
+            val route = listOf(RC.DAQC_GATE, gateId, RC.IS_TRANSCEIVING)
             gate.isTransceiving.updateBroadcaster.consumeEach {
                 val serializedValue = Json.stringify(BooleanSerializer, it)
                 send(route, serializedValue)
@@ -93,7 +93,7 @@ open class NetworkCommunicator(
 
     private fun initInputValueSending(gateId: String, input: Input<*>) {
         if (device is LocalDevice) launch(Dispatchers.Default) {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.VALUE)
+            val route = listOf(RC.DAQC_GATE, gateId, RC.VALUE)
             input.updateBroadcaster.consumeEach {
                 val value = when (val measurementValue = it.value) {
                     is BinaryState -> Json.stringify(BinaryState.serializer(), measurementValue)
@@ -107,7 +107,7 @@ open class NetworkCommunicator(
 
     private fun initUpdateRateSending(gateId: String, updateRate: UpdateRate) {
         if (updateRate is UpdateRate.Configured && device is LocalDevice) launch(Dispatchers.Default) {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.UPDATE_RATE)
+            val route = listOf(RC.DAQC_GATE, gateId, RC.UPDATE_RATE)
             updateRate.updateBroadcaster.consumeEach {
                 val value = Json.stringify(ComparableQuantitySerializer, it)
                 send(route, value)
@@ -117,7 +117,7 @@ open class NetworkCommunicator(
 
     private fun initOutputValueSending(gateId: String, output: Output<*>) {
         launch(Dispatchers.Daqc) {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.VALUE)
+            val route = listOf(RC.DAQC_GATE, gateId, RC.VALUE)
 
             output.updateBroadcaster.consumeEach {
                 if (!output.ignoreNextUpdate) {
@@ -157,7 +157,7 @@ open class NetworkCommunicator(
 
     private fun initDigitalInputValueSending(gateId: String, input: DigitalInput) {
         if (device is LocalDevice) launch(Dispatchers.Default) {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.VALUE)
+            val route = listOf(RC.DAQC_GATE, gateId, RC.VALUE)
 
             input.updateBroadcaster.consumeEach {
                 val value = Json.stringify(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
@@ -168,7 +168,7 @@ open class NetworkCommunicator(
 
     private fun initDigitalOutputValueSending(gateId: String, output: DigitalOutput) {
         launch(Dispatchers.Daqc) {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.VALUE)
+            val route = listOf(RC.DAQC_GATE, gateId, RC.VALUE)
 
             output.updateBroadcaster.consumeEach {
                 if (!output.ignoreNextUpdate) {
@@ -182,8 +182,8 @@ open class NetworkCommunicator(
     }
 
     private fun initAvgFrequencySending(gateId: String, channel: DigitalChannel<*>) {
-        launch {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.AVG_FREQUENCY)
+        launch(Dispatchers.Daqc) {
+            val route = listOf(RC.DAQC_GATE, gateId, RC.AVG_FREQUENCY)
 
             channel.avgFrequency.updateBroadcaster.consumeEach {
                 if (!channel.avgFrequency.ignoreNextUpdate) {
@@ -197,8 +197,8 @@ open class NetworkCommunicator(
     }
 
     private fun initIsTransceivingBinStateSending(gateId: String, channel: DigitalChannel<*>) {
-        if (device is LocalDevice) launch {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING_BIN_STATE)
+        if (device is LocalDevice) launch(Dispatchers.Default) {
+            val route = listOf(RC.DAQC_GATE, gateId, RC.IS_TRANSCEIVING_BIN_STATE)
 
             channel.isTransceivingBinaryState.updateBroadcaster.consumeEach {
                 val value = Json.stringify(BooleanSerializer, it)
@@ -208,8 +208,8 @@ open class NetworkCommunicator(
     }
 
     private fun initIsTransceivingPwmSending(gateId: String, channel: DigitalChannel<*>) {
-        if (device is LocalDevice) launch {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING_PWM)
+        if (device is LocalDevice) launch(Dispatchers.Default) {
+            val route = listOf(RC.DAQC_GATE, gateId, RC.IS_TRANSCEIVING_PWM)
 
             channel.isTransceivingPwm.updateBroadcaster.consumeEach {
                 val value = Json.stringify(BooleanSerializer, it)
@@ -219,8 +219,8 @@ open class NetworkCommunicator(
     }
 
     private fun initIsTransceivingFrequencySending(gateId: String, channel: DigitalChannel<*>) {
-        if (device is LocalDevice) launch {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.IS_TRANSCEIVING_FREQUENCY)
+        if (device is LocalDevice) launch(Dispatchers.Default) {
+            val route = listOf(RC.DAQC_GATE, gateId, RC.IS_TRANSCEIVING_FREQUENCY)
 
             channel.isTransceivingFrequency.updateBroadcaster.consumeEach {
                 val value = Json.stringify(BooleanSerializer, it)
@@ -235,8 +235,8 @@ open class NetworkCommunicator(
     }
 
     private fun initMaxAcceptableErrorSending(gateId: String, channel: AnalogInput) {
-        launch {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.MAX_ACCEPTABLE_ERROR)
+        launch(Dispatchers.Daqc) {
+            val route = listOf(RC.DAQC_GATE, gateId, RC.MAX_ACCEPTABLE_ERROR)
 
             channel.maxAcceptableError.updateBroadcaster.consumeEach {
                 if (!channel.maxAcceptableError.ignoreNextUpdate) {
@@ -250,8 +250,8 @@ open class NetworkCommunicator(
     }
 
     private fun initMaxElectricPotentialSending(gateId: String, channel: AnalogInput) {
-        launch {
-            val route = listOf(Route.DAQC_GATE, gateId, Route.MAX_ELECTRIC_POTENTIAL)
+        launch(Dispatchers.Daqc) {
+            val route = listOf(RC.DAQC_GATE, gateId, RC.MAX_ELECTRIC_POTENTIAL)
 
             channel.maxElectricPotential.updateBroadcaster.consumeEach {
                 if (!channel.maxElectricPotential.ignoreNextUpdate) {
@@ -268,7 +268,7 @@ open class NetworkCommunicator(
     //TODO: Throw specific exceptions for errors in message reception, no !!
     internal suspend fun receiveMessage(route: List<String>, message: String?) {
         when (route.first()) {
-            Route.DAQC_GATE -> receiveDaqcGateMsg(route.drop(1), message)
+            RC.DAQC_GATE -> receiveDaqcGateMsg(route.drop(1), message)
             else -> receiveOtherMessage(route, message)
         }
     }
@@ -278,18 +278,18 @@ open class NetworkCommunicator(
         val command = route.drop(1).first()
 
         when (command) {
-            Route.BUFFER -> receiveBufferMsg(gateId, message)
-            Route.MAX_ACCEPTABLE_ERROR -> receiveMaxErrorMsg(gateId, message)
-            Route.MAX_ELECTRIC_POTENTIAL -> receiveMaxElectricPotential(gateId, message)
-            Route.VALUE -> receiveValueMsg(gateId, message)
-            Route.START_SAMPLING -> receiveStartSampling(gateId)
-            Route.START_SAMPLING_BINARY_STATE -> receiveStartSamplingBinaryState(gateId)
-            Route.START_SAMPLING_PWM -> receiveStartSamplingPwm(gateId)
-            Route.START_SAMPLING_TRANSITION_FREQUENCY -> receiveStartSamplingTransitionFrequency(gateId)
-            Route.STOP_TRANSCEIVING -> receiveStopTransceiving(gateId)
-            Route.PULSE_WIDTH_MODULATE -> receivePulseWidthModulate(gateId, message)
-            Route.SUSTAIN_TRANSITION_FREQUENCY -> receiveSustainTransitionFrequency(gateId, message)
-            Route.AVG_FREQUENCY -> receiveAvgFrequency(gateId, message)
+            RC.BUFFER -> receiveBufferMsg(gateId, message)
+            RC.MAX_ACCEPTABLE_ERROR -> receiveMaxErrorMsg(gateId, message)
+            RC.MAX_ELECTRIC_POTENTIAL -> receiveMaxElectricPotential(gateId, message)
+            RC.VALUE -> receiveValueMsg(gateId, message)
+            RC.START_SAMPLING -> receiveStartSampling(gateId)
+            RC.START_SAMPLING_BINARY_STATE -> receiveStartSamplingBinaryState(gateId)
+            RC.START_SAMPLING_PWM -> receiveStartSamplingPwm(gateId)
+            RC.START_SAMPLING_TRANSITION_FREQUENCY -> receiveStartSamplingTransitionFrequency(gateId)
+            RC.STOP_TRANSCEIVING -> receiveStopTransceiving(gateId)
+            RC.PULSE_WIDTH_MODULATE -> receivePulseWidthModulate(gateId, message)
+            RC.SUSTAIN_TRANSITION_FREQUENCY -> receiveSustainTransitionFrequency(gateId, message)
+            RC.AVG_FREQUENCY -> receiveAvgFrequency(gateId, message)
             else -> receiveOtherDaqcGateMessage(route, message)
         }
     }
@@ -397,7 +397,7 @@ open class NetworkCommunicator(
         if (additionalDataChannels == null) {
             //TODO: Handle invalid message
         } else {
-            val route = mutableListOf(Route.DAQC_GATE).apply { addAll(route) }
+            val route = mutableListOf(RC.DAQC_GATE).apply { addAll(route) }
             additionalDataChannels?.get(route)?.send(message) ?: TODO("Handle invalid message")
         }
     }
