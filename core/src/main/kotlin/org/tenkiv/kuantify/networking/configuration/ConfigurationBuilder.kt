@@ -4,43 +4,41 @@ import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.networking.device.*
 
-typealias PingReceiver<R> = (R) -> Unit
-typealias MessageReceiver<R> = (R, update: String) -> Unit
+typealias PingReceiver = () -> Unit
+typealias MessageReceiver = (update: String) -> Unit
 
 class NetworkCommunicatorBuilder internal constructor(val device: KuantifyDevice) {
 
-    internal val networkRouteHandlers = ArrayList<NetworkRouteHandler<*, *>>()
+    internal val networkRouteHandlers = ArrayList<NetworkRouteHandler<*>>()
 
     internal val networkUpdateChannelMap = HashMap<Route, Channel<String?>>()
 
     fun route(vararg components: String): Route = listOf(*components)
 
-    fun <R : Any, T> handler(
-        localReceiver: R,
+    fun <T> handler(
         localUpdateChannel: ReceiveChannel<T>,
-        build: RouteHandlerBuilder<R, T>.() -> Unit
-    ): HandlerParams<R, T> {
-        return HandlerParams(localReceiver, localUpdateChannel, build)
+        build: RouteHandlerBuilder<T>.() -> Unit
+    ): HandlerParams<T> {
+        return HandlerParams(localUpdateChannel, build)
     }
 
     @Suppress("NAME_SHADOWING")
-    infix fun <R : Any, T> Route.to(handler: HandlerParams<R, T>) {
-        val (localReceiver, localUpdateChannel, build) = handler
+    infix fun <T> Route.to(handler: HandlerParams<T>) {
+        val (localUpdateChannel, build) = handler
         val networkUpdateChannel = Channel<String?>(10_000)
         networkUpdateChannelMap += this to networkUpdateChannel
 
-        val routeHandlerBuilder = RouteHandlerBuilder<R, T>()
+        val routeHandlerBuilder = RouteHandlerBuilder<T>()
         routeHandlerBuilder.build()
 
-        val receiveUpdatesOnHost: UpdateReceiver<R>? = buildHostUpdateReceiver(routeHandlerBuilder)
+        val receiveUpdatesOnHost: UpdateReceiver? = buildHostUpdateReceiver(routeHandlerBuilder)
 
-        val receiveUpdatesOnRemote: UpdateReceiver<R>? = buildRemoteUpdateReceiver(routeHandlerBuilder)
+        val receiveUpdatesOnRemote: UpdateReceiver? = buildRemoteUpdateReceiver(routeHandlerBuilder)
 
         networkRouteHandlers += when (device) {
             is LocalDevice -> NetworkRouteHandler.Host(
                 device,
                 this,
-                localReceiver,
                 localUpdateChannel,
                 networkUpdateChannel,
                 routeHandlerBuilder.serializeUpdates,
@@ -50,7 +48,6 @@ class NetworkCommunicatorBuilder internal constructor(val device: KuantifyDevice
             is RemoteKuantifyDevice -> NetworkRouteHandler.Remote(
                 device,
                 this,
-                localReceiver,
                 localUpdateChannel,
                 networkUpdateChannel,
                 routeHandlerBuilder.serializeUpdates,
@@ -61,8 +58,8 @@ class NetworkCommunicatorBuilder internal constructor(val device: KuantifyDevice
         }
     }
 
-    private fun <R : Any, T> buildHostUpdateReceiver(routeHandlerBuilder: RouteHandlerBuilder<R, T>):
-            UpdateReceiver<R>? {
+    private fun <T> buildHostUpdateReceiver(routeHandlerBuilder: RouteHandlerBuilder<T>):
+            UpdateReceiver? {
         if (routeHandlerBuilder.receivePingsOnEither == null &&
             routeHandlerBuilder.receivePingsOnHost == null &&
             routeHandlerBuilder.withSerializer?.receiveMessagesOnEither == null &&
@@ -70,20 +67,20 @@ class NetworkCommunicatorBuilder internal constructor(val device: KuantifyDevice
         ) {
             return null
         } else {
-            return { receiver, update ->
+            return { update ->
                 if (update != null) {
-                    routeHandlerBuilder.withSerializer?.receiveMessagesOnEither?.invoke(receiver, update)
-                    routeHandlerBuilder.withSerializer?.receiveMessagesOnHost?.invoke(receiver, update)
+                    routeHandlerBuilder.withSerializer?.receiveMessagesOnEither?.invoke(update)
+                    routeHandlerBuilder.withSerializer?.receiveMessagesOnHost?.invoke(update)
                 } else {
-                    routeHandlerBuilder.receivePingsOnEither?.invoke(receiver)
-                    routeHandlerBuilder.receivePingsOnHost?.invoke(receiver)
+                    routeHandlerBuilder.receivePingsOnEither?.invoke()
+                    routeHandlerBuilder.receivePingsOnHost?.invoke()
                 }
             }
         }
     }
 
-    private fun <R : Any, T> buildRemoteUpdateReceiver(routeHandlerBuilder: RouteHandlerBuilder<R, T>):
-            UpdateReceiver<R>? {
+    private fun <T> buildRemoteUpdateReceiver(routeHandlerBuilder: RouteHandlerBuilder<T>):
+            UpdateReceiver? {
         if (routeHandlerBuilder.receivePingsOnEither == null &&
             routeHandlerBuilder.receivePingsOnRemote == null &&
             routeHandlerBuilder.withSerializer?.receiveMessagesOnEither == null &&
@@ -91,39 +88,38 @@ class NetworkCommunicatorBuilder internal constructor(val device: KuantifyDevice
         ) {
             return null
         } else {
-            return { receiver, update ->
+            return { update ->
                 if (update != null) {
-                    routeHandlerBuilder.withSerializer?.receiveMessagesOnEither?.invoke(receiver, update)
-                    routeHandlerBuilder.withSerializer?.receiveMessagesOnRemote?.invoke(receiver, update)
+                    routeHandlerBuilder.withSerializer?.receiveMessagesOnEither?.invoke(update)
+                    routeHandlerBuilder.withSerializer?.receiveMessagesOnRemote?.invoke(update)
                 } else {
-                    routeHandlerBuilder.receivePingsOnEither?.invoke(receiver)
-                    routeHandlerBuilder.receivePingsOnRemote?.invoke(receiver)
+                    routeHandlerBuilder.receivePingsOnEither?.invoke()
+                    routeHandlerBuilder.receivePingsOnRemote?.invoke()
                 }
             }
         }
     }
 
-    data class HandlerParams<R : Any, T> internal constructor(
-        val localReceiver: R,
+    data class HandlerParams<T> internal constructor(
         val localUpdateChannel: ReceiveChannel<T>,
-        val build: RouteHandlerBuilder<R, T>.() -> Unit
+        val build: RouteHandlerBuilder<T>.() -> Unit
     )
 }
 
-class RouteHandlerBuilder<R : Any, T> internal constructor() {
+class RouteHandlerBuilder<T> internal constructor() {
     internal var serializeUpdates: MessageSerializer<T>? = null
 
-    internal var withSerializer: WithSerializer<R, T>? = null
+    internal var withSerializer: WithSerializer<T>? = null
 
     internal var sendUpdatesFromRemote: Boolean = false
 
     internal var sendUpdatesFromHost: Boolean = false
 
-    internal var receivePingsOnEither: PingReceiver<R>? = null
+    internal var receivePingsOnEither: PingReceiver? = null
 
-    internal var receivePingsOnRemote: PingReceiver<R>? = null
+    internal var receivePingsOnRemote: PingReceiver? = null
 
-    internal var receivePingsOnHost: PingReceiver<R>? = null
+    internal var receivePingsOnHost: PingReceiver? = null
 
     fun serializeUpdates(messageSerializer: MessageSerializer<T>): MessageSerializer<T> {
         serializeUpdates = messageSerializer
@@ -138,41 +134,41 @@ class RouteHandlerBuilder<R : Any, T> internal constructor() {
         sendUpdatesFromHost = true
     }
 
-    fun receivePingsOnEither(pingReceiver: PingReceiver<R>) {
+    fun receivePingsOnEither(pingReceiver: PingReceiver) {
         receivePingsOnEither = pingReceiver
     }
 
-    fun receivePingsOnRemote(pingReceiver: PingReceiver<R>) {
+    fun receivePingsOnRemote(pingReceiver: PingReceiver) {
         receivePingsOnRemote = pingReceiver
     }
 
-    fun receivePingsOnHost(pingReceiver: PingReceiver<R>) {
+    fun receivePingsOnHost(pingReceiver: PingReceiver) {
         receivePingsOnHost = pingReceiver
     }
 
-    infix fun MessageSerializer<T>.withSerializer(build: WithSerializer<R, T>.() -> Unit) {
-        val ws = WithSerializer<R, T>(this)
+    infix fun MessageSerializer<T>.withSerializer(build: WithSerializer<T>.() -> Unit) {
+        val ws = WithSerializer(this)
         ws.build()
         withSerializer = ws
     }
 
-    class WithSerializer<R : Any, T> internal constructor(internal val messageSerializer: MessageSerializer<T>) {
+    class WithSerializer<T> internal constructor(internal val messageSerializer: MessageSerializer<T>) {
 
-        internal var receiveMessagesOnEither: MessageReceiver<R>? = null
+        internal var receiveMessagesOnEither: MessageReceiver? = null
 
-        internal var receiveMessagesOnRemote: MessageReceiver<R>? = null
+        internal var receiveMessagesOnRemote: MessageReceiver? = null
 
-        internal var receiveMessagesOnHost: MessageReceiver<R>? = null
+        internal var receiveMessagesOnHost: MessageReceiver? = null
 
-        fun receiveMessagesOnEither(messageReceiver: MessageReceiver<R>) {
+        fun receiveMessagesOnEither(messageReceiver: MessageReceiver) {
             receiveMessagesOnEither = messageReceiver
         }
 
-        fun receiveMessagesOnRemote(messageReceiver: MessageReceiver<R>) {
+        fun receiveMessagesOnRemote(messageReceiver: MessageReceiver) {
             receiveMessagesOnRemote = messageReceiver
         }
 
-        fun receiveMessagesOnHost(messageReceiver: MessageReceiver<R>) {
+        fun receiveMessagesOnHost(messageReceiver: MessageReceiver) {
             receiveMessagesOnHost = messageReceiver
         }
 

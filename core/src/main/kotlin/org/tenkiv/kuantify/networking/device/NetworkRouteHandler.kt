@@ -6,10 +6,10 @@ import org.tenkiv.kuantify.hardware.definitions.device.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
-typealias UpdateReceiver<R> = (R, update: String?) -> Unit
+typealias UpdateReceiver = (update: String?) -> Unit
 typealias MessageSerializer<T> = (update: T) -> String
 
-internal sealed class NetworkRouteHandler<R : Any, T>(protected val device: KuantifyDevice) : CoroutineScope {
+internal sealed class NetworkRouteHandler<T>(protected val device: KuantifyDevice) : CoroutineScope {
 
     @Volatile
     protected var job = Job(coroutineContext[Job])
@@ -21,16 +21,15 @@ internal sealed class NetworkRouteHandler<R : Any, T>(protected val device: Kuan
         this.job = job
     }
 
-    internal class Host<R : Any, T> internal constructor(
+    internal class Host<T> internal constructor(
         device: LocalDevice,
         private val route: Route,
-        private val localReceiver: R,
         private val localUpdateChannel: ReceiveChannel<T>,
         private val networkUpdateChannel: ReceiveChannel<String?>,
         private val serializeMessage: MessageSerializer<T>?,
         private val sendUpdatesFromHost: Boolean,
-        private val receiveUpdateOnHost: UpdateReceiver<R>?
-    ) : NetworkRouteHandler<R, T>(device) {
+        private val receiveUpdateOnHost: UpdateReceiver?
+    ) : NetworkRouteHandler<T>(device) {
 
         override fun start(job: Job) {
             super.start(job)
@@ -48,7 +47,7 @@ internal sealed class NetworkRouteHandler<R : Any, T>(protected val device: Kuan
             if (receiveUpdateOnHost != null) {
                 launch {
                     networkUpdateChannel.consumeEach {
-                        receiveUpdateOnHost.invoke(localReceiver, it)
+                        receiveUpdateOnHost.invoke(it)
                     }
                 }
             }
@@ -56,17 +55,16 @@ internal sealed class NetworkRouteHandler<R : Any, T>(protected val device: Kuan
 
     }
 
-    internal class Remote<R : Any, T> internal constructor(
+    internal class Remote<T> internal constructor(
         device: RemoteKuantifyDevice,
         private val route: Route,
-        private val localReceiver: R,
         private val localUpdateChannel: ReceiveChannel<T>,
         private val networkUpdateChannel: ReceiveChannel<String?>,
         private val serializeMessage: MessageSerializer<T>?,
         private val sendUpdatesFromRemote: Boolean,
         private val sendUpdatesFromHost: Boolean,
-        private val receiveUpdateOnRemote: UpdateReceiver<R>?
-    ) : NetworkRouteHandler<R, T>(device) {
+        private val receiveUpdateOnRemote: UpdateReceiver?
+    ) : NetworkRouteHandler<T>(device) {
 
         private val fullyBiDirectional get() = sendUpdatesFromHost && sendUpdatesFromRemote
 
@@ -103,13 +101,13 @@ internal sealed class NetworkRouteHandler<R : Any, T>(protected val device: Kuan
                     launch {
                         networkUpdateChannel.consumeEach {
                             ignoreNextUpdate.set(true)
-                            receiveUpdateOnRemote.invoke(localReceiver, it)
+                            receiveUpdateOnRemote.invoke(it)
                         }
                     }
                 } else {
                     launch {
                         networkUpdateChannel.consumeEach {
-                            receiveUpdateOnRemote.invoke(localReceiver, it)
+                            receiveUpdateOnRemote.invoke(it)
                         }
                     }
                 }

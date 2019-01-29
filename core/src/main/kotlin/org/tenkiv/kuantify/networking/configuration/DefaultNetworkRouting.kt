@@ -11,7 +11,6 @@ fun NetworkCommunicatorBuilder.addBuiltinRouting() {
     device.daqcGateMap.forEach { id, gate ->
         when (gate) {
             is Input<*> -> route(RC.DAQC_GATE, id, RC.VALUE) to handler(
-                gate,
                 gate.updateBroadcaster.openSubscription()
             ) {
                 serializeUpdates {
@@ -24,7 +23,7 @@ fun NetworkCommunicatorBuilder.addBuiltinRouting() {
                 }
 
                 sendFromHost()
-                receivePingsOnRemote { input ->
+                receivePingsOnRemote {
 
                 }
             }
