@@ -4,26 +4,37 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import java.util.concurrent.atomic.*
+import kotlin.coroutines.*
 
 typealias Route = List<String>
 typealias UpdateReceiver<R> = (R, update: String) -> Unit
 typealias UpdateSerializer<T> = (update: T) -> String
 
-sealed class NetworkRouteHandler<R : Any, T>(scope: CoroutineScope) : CoroutineScope by scope {
+internal sealed class NetworkRouteHandler<R : Any, T>(protected val device: KuantifyDevice) : CoroutineScope {
 
-    class Host<R : Any, T>(
-        scope: CoroutineScope,
-        val device: LocalDevice,
-        val route: Route,
-        val localReceiver: R,
-        val localUpdateChannel: ReceiveChannel<T>,
-        val networkUpdateChannel: ReceiveChannel<String>,
-        val serializeUpdate: UpdateSerializer<T>?,
-        val sendUpdatesFromHost: Boolean,
-        val receiveUpdateOnHost: UpdateReceiver<R>?
-    ) : NetworkRouteHandler<R, T>(scope) {
+    @Volatile
+    protected var job = Job(coroutineContext[Job])
 
-        fun start() {
+    final override val coroutineContext: CoroutineContext
+        get() = device.coroutineContext + job
+
+    open fun start(job: Job) {
+        this.job = job
+    }
+
+    internal class Host<R : Any, T> internal constructor(
+        device: LocalDevice,
+        private val route: Route,
+        private val localReceiver: R,
+        private val localUpdateChannel: ReceiveChannel<T>,
+        private val networkUpdateChannel: ReceiveChannel<String>,
+        private val serializeUpdate: UpdateSerializer<T>?,
+        private val sendUpdatesFromHost: Boolean,
+        private val receiveUpdateOnHost: UpdateReceiver<R>?
+    ) : NetworkRouteHandler<R, T>(device) {
+
+        override fun start(job: Job) {
+            super.start(job)
             // Send
             if (sendUpdatesFromHost) {
                 launch {
@@ -46,24 +57,24 @@ sealed class NetworkRouteHandler<R : Any, T>(scope: CoroutineScope) : CoroutineS
 
     }
 
-    class Remote<R : Any, T>(
-        scope: CoroutineScope,
-        val device: RemoteKuantifyDevice,
-        val route: Route,
-        val localReceiver: R,
-        val localUpdateChannel: ReceiveChannel<T>,
-        val networkUpdateChannel: ReceiveChannel<String>,
-        val serializeUpdate: UpdateSerializer<T>?,
-        val sendUpdatesFromRemote: Boolean,
-        val sendUpdatesFromHost: Boolean,
-        val receiveUpdateOnRemote: UpdateReceiver<R>?
-    ) : NetworkRouteHandler<R, T>(scope) {
+    internal class Remote<R : Any, T> internal constructor(
+        device: RemoteKuantifyDevice,
+        private val route: Route,
+        private val localReceiver: R,
+        private val localUpdateChannel: ReceiveChannel<T>,
+        private val networkUpdateChannel: ReceiveChannel<String>,
+        private val serializeUpdate: UpdateSerializer<T>?,
+        private val sendUpdatesFromRemote: Boolean,
+        private val sendUpdatesFromHost: Boolean,
+        private val receiveUpdateOnRemote: UpdateReceiver<R>?
+    ) : NetworkRouteHandler<R, T>(device) {
 
         private val fullyBiDirectional get() = sendUpdatesFromHost && sendUpdatesFromRemote
 
         private val ignoreNextUpdate = AtomicBoolean(false)
 
-        fun start() {
+        override fun start(job: Job) {
+            super.start(job)
             // Send
             if (sendUpdatesFromRemote) {
                 if (fullyBiDirectional) {
@@ -110,11 +121,11 @@ sealed class NetworkRouteHandler<R : Any, T>(scope: CoroutineScope) : CoroutineS
 
 }
 
-class NetworkCommunicatorBuilder(val device: KuantifyDevice) {
+class NetworkCommunicatorBuilder internal constructor(val device: KuantifyDevice) {
 
-    val networkRouteHandlers = ArrayList<NetworkRouteHandler<*, *>>()
+    internal val networkRouteHandlers = ArrayList<NetworkRouteHandler<*, *>>()
 
-    val networkUpdateChannelMap = HashMap<Route, Channel<String>>()
+    internal val networkUpdateChannelMap = HashMap<Route, Channel<String>>()
 
     fun route(vararg components: String): Route = listOf(*components)
 
@@ -147,7 +158,6 @@ class NetworkCommunicatorBuilder(val device: KuantifyDevice) {
 
         networkRouteHandlers += when (device) {
             is LocalDevice -> NetworkRouteHandler.Host(
-                GlobalScope,
                 device,
                 this,
                 localReceiver,
@@ -158,7 +168,6 @@ class NetworkCommunicatorBuilder(val device: KuantifyDevice) {
                 receiveUpdatesOnHost
             )
             is RemoteKuantifyDevice -> NetworkRouteHandler.Remote(
-                GlobalScope,
                 device,
                 this,
                 localReceiver,
@@ -180,7 +189,7 @@ class NetworkCommunicatorBuilder(val device: KuantifyDevice) {
 
 }
 
-class RouteHandlerBuilder<R : Any, T> {
+class RouteHandlerBuilder<R : Any, T> internal constructor() {
     internal var serializeUpdate: UpdateSerializer<T>? = null
 
     internal var sendUpdatesFromRemote: Boolean = false
