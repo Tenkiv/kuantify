@@ -1,7 +1,8 @@
 package org.tenkiv.kuantify.hardware.definitions.device
 
 import kotlinx.coroutines.*
-import org.tenkiv.kuantify.networking.property.handler.*
+import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.device.*
 import org.tenkiv.kuantify.networking.server.*
 import kotlin.coroutines.*
 
@@ -11,14 +12,24 @@ import kotlin.coroutines.*
  */
 sealed class KuantifyDevice : Device {
 
-    protected abstract val networkCommunicator: NetworkCommunicator
+    internal val networkCommunicator: NetworkCommunicator = run {
+        val networkCommunicatorBuilder = NetworkCommunicatorBuilder(this)
+        networkCommunicatorBuilder.configureNetworking()
 
-    internal suspend fun receiveMessage(route: Route, message: String?) {
-        networkCommunicator.receiveMessage(route, message)
+        NetworkCommunicator(
+            this,
+            networkCommunicatorBuilder.networkRouteHandlers,
+            networkCommunicatorBuilder.networkUpdateChannelMap
+        )
     }
 
-    internal abstract suspend fun sendMessage(route: Route, serializedValue: String?)
+    internal suspend fun receiveNetworkMessage(route: Route, message: String?) {
+        networkCommunicator.receiveNetworkMessage(route, message)
+    }
 
+    internal abstract fun sendMessage(route: Route, payload: String?)
+
+    protected abstract fun NetworkCommunicatorBuilder.configureNetworking()
 }
 
 abstract class LocalDevice : KuantifyDevice() {

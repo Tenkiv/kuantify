@@ -81,7 +81,7 @@ internal object KuantifyHost {
         val (route, message) = Json.parse(NetworkMessage.serializer(), message)
         when (route.first()) {
             RC.MESSAGE_ERROR -> clientReportedError()
-            else -> hostedDevice?.receiveMessage(route, message) ?: deviceNotHosted()
+            else -> hostedDevice?.receiveNetworkMessage(route, message) ?: deviceNotHosted()
         }
     }
 
