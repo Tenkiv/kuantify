@@ -7,8 +7,8 @@ import org.tenkiv.kuantify.hardware.definitions.device.*
 typealias Route = List<String>
 
 internal class NetworkCommunicator(
-    val device: KuantifyDevice,
-    private val networkRouteHandlers: List<NetworkRouteHandler<*, *>>,
+    val device: BaseKuantifyDevice,
+    private val networkRouteHandlers: List<NetworkRouteHandler<*>>,
     private val networkUpdateChannelMap: Map<Route, Channel<String?>>
 ) {
 
@@ -26,8 +26,8 @@ internal class NetworkCommunicator(
         job = Job(parentJob)
     }
 
-    suspend fun receiveNetworkMessage(route: Route, payload: String?) {
-        networkUpdateChannelMap[route]?.send(payload) ?: TODO("handle invalid route")
+    suspend fun receiveNetworkMessage(route: Route, message: String?) {
+        networkUpdateChannelMap[route]?.send(message) ?: TODO("handle invalid route")
     }
 
 }

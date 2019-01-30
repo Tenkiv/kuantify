@@ -7,13 +7,15 @@ import org.tenkiv.kuantify.networking.device.*
 typealias PingReceiver = () -> Unit
 typealias MessageReceiver = (update: String) -> Unit
 
-class NetworkCommunicatorBuilder internal constructor(val device: KuantifyDevice) {
+class NetworkConfig<D : KuantifyDevice> internal constructor(val device: D) {
 
     internal val networkRouteHandlers = ArrayList<NetworkRouteHandler<*>>()
 
     internal val networkUpdateChannelMap = HashMap<Route, Channel<String?>>()
 
-    fun route(vararg components: String): Route = listOf(*components)
+    fun route(vararg path: String): Route = listOf(*path)
+
+    fun route(path: List<String>): Route = path
 
     fun <T> handler(
         localUpdateChannel: ReceiveChannel<T>,
@@ -41,8 +43,8 @@ class NetworkCommunicatorBuilder internal constructor(val device: KuantifyDevice
                 this,
                 localUpdateChannel,
                 networkUpdateChannel,
-                routeHandlerBuilder.serializeUpdates,
-                routeHandlerBuilder.sendUpdatesFromHost,
+                routeHandlerBuilder.serializeMessage,
+                routeHandlerBuilder.sendFromHost,
                 receiveUpdatesOnHost
             )
             is RemoteKuantifyDevice -> NetworkRouteHandler.Remote(
@@ -50,51 +52,52 @@ class NetworkCommunicatorBuilder internal constructor(val device: KuantifyDevice
                 this,
                 localUpdateChannel,
                 networkUpdateChannel,
-                routeHandlerBuilder.serializeUpdates,
-                routeHandlerBuilder.sendUpdatesFromRemote,
-                routeHandlerBuilder.sendUpdatesFromHost,
+                routeHandlerBuilder.serializeMessage,
+                routeHandlerBuilder.sendFromRemote,
+                routeHandlerBuilder.sendFromHost,
                 receiveUpdatesOnRemote
+            )
+            else -> throw IllegalStateException(
+                "Concrete KuantifyDevice must extend either LocalDevice or RemoteKuantifyDevice"
             )
         }
     }
 
-    private fun <T> buildHostUpdateReceiver(routeHandlerBuilder: RouteHandlerBuilder<T>):
-            UpdateReceiver? {
-        if (routeHandlerBuilder.receivePingsOnEither == null &&
-            routeHandlerBuilder.receivePingsOnHost == null &&
-            routeHandlerBuilder.withSerializer?.receiveMessagesOnEither == null &&
-            routeHandlerBuilder.withSerializer?.receiveMessagesOnHost == null
+    private fun <T> buildHostUpdateReceiver(routeHandlerBuilder: RouteHandlerBuilder<T>): UpdateReceiver? {
+        if (routeHandlerBuilder.receivePingOnEither == null &&
+            routeHandlerBuilder.receivePingOnHost == null &&
+            routeHandlerBuilder.withSerializer?.receiveMessageOnEither == null &&
+            routeHandlerBuilder.withSerializer?.receiveMessageOnHost == null
         ) {
             return null
         } else {
             return { update ->
                 if (update != null) {
-                    routeHandlerBuilder.withSerializer?.receiveMessagesOnEither?.invoke(update)
-                    routeHandlerBuilder.withSerializer?.receiveMessagesOnHost?.invoke(update)
+                    routeHandlerBuilder.withSerializer?.receiveMessageOnEither?.invoke(update)
+                    routeHandlerBuilder.withSerializer?.receiveMessageOnHost?.invoke(update)
                 } else {
-                    routeHandlerBuilder.receivePingsOnEither?.invoke()
-                    routeHandlerBuilder.receivePingsOnHost?.invoke()
+                    routeHandlerBuilder.receivePingOnEither?.invoke()
+                    routeHandlerBuilder.receivePingOnHost?.invoke()
                 }
             }
         }
     }
 
-    private fun <T> buildRemoteUpdateReceiver(routeHandlerBuilder: RouteHandlerBuilder<T>):
-            UpdateReceiver? {
-        if (routeHandlerBuilder.receivePingsOnEither == null &&
-            routeHandlerBuilder.receivePingsOnRemote == null &&
-            routeHandlerBuilder.withSerializer?.receiveMessagesOnEither == null &&
-            routeHandlerBuilder.withSerializer?.receiveMessagesOnRemote == null
+    private fun <T> buildRemoteUpdateReceiver(routeHandlerBuilder: RouteHandlerBuilder<T>): UpdateReceiver? {
+        if (routeHandlerBuilder.receivePingOnEither == null &&
+            routeHandlerBuilder.receivePingOnRemote == null &&
+            routeHandlerBuilder.withSerializer?.receiveMessageOnEither == null &&
+            routeHandlerBuilder.withSerializer?.receiveMessageOnRemote == null
         ) {
             return null
         } else {
             return { update ->
                 if (update != null) {
-                    routeHandlerBuilder.withSerializer?.receiveMessagesOnEither?.invoke(update)
-                    routeHandlerBuilder.withSerializer?.receiveMessagesOnRemote?.invoke(update)
+                    routeHandlerBuilder.withSerializer?.receiveMessageOnEither?.invoke(update)
+                    routeHandlerBuilder.withSerializer?.receiveMessageOnRemote?.invoke(update)
                 } else {
-                    routeHandlerBuilder.receivePingsOnEither?.invoke()
-                    routeHandlerBuilder.receivePingsOnRemote?.invoke()
+                    routeHandlerBuilder.receivePingOnEither?.invoke()
+                    routeHandlerBuilder.receivePingOnRemote?.invoke()
                 }
             }
         }
@@ -107,43 +110,43 @@ class NetworkCommunicatorBuilder internal constructor(val device: KuantifyDevice
 }
 
 class RouteHandlerBuilder<T> internal constructor() {
-    internal var serializeUpdates: MessageSerializer<T>? = null
+    internal var serializeMessage: MessageSerializer<T>? = null
 
     internal var withSerializer: WithSerializer<T>? = null
 
-    internal var sendUpdatesFromRemote: Boolean = false
+    internal var sendFromRemote: Boolean = false
 
-    internal var sendUpdatesFromHost: Boolean = false
+    internal var sendFromHost: Boolean = false
 
-    internal var receivePingsOnEither: PingReceiver? = null
+    internal var receivePingOnEither: PingReceiver? = null
 
-    internal var receivePingsOnRemote: PingReceiver? = null
+    internal var receivePingOnRemote: PingReceiver? = null
 
-    internal var receivePingsOnHost: PingReceiver? = null
+    internal var receivePingOnHost: PingReceiver? = null
 
-    fun serializeUpdates(messageSerializer: MessageSerializer<T>): MessageSerializer<T> {
-        serializeUpdates = messageSerializer
+    fun serializeMessage(messageSerializer: MessageSerializer<T>): MessageSerializer<T> {
+        serializeMessage = messageSerializer
         return messageSerializer
     }
 
     fun sendFromRemote() {
-        sendUpdatesFromRemote = true
+        sendFromRemote = true
     }
 
     fun sendFromHost() {
-        sendUpdatesFromHost = true
+        sendFromHost = true
     }
 
-    fun receivePingsOnEither(pingReceiver: PingReceiver) {
-        receivePingsOnEither = pingReceiver
+    fun receivePingOnEither(pingReceiver: PingReceiver) {
+        receivePingOnEither = pingReceiver
     }
 
-    fun receivePingsOnRemote(pingReceiver: PingReceiver) {
-        receivePingsOnRemote = pingReceiver
+    fun receivePingOnRemote(pingReceiver: PingReceiver) {
+        receivePingOnRemote = pingReceiver
     }
 
-    fun receivePingsOnHost(pingReceiver: PingReceiver) {
-        receivePingsOnHost = pingReceiver
+    fun receivePingOnHost(pingReceiver: PingReceiver) {
+        receivePingOnHost = pingReceiver
     }
 
     infix fun MessageSerializer<T>.withSerializer(build: WithSerializer<T>.() -> Unit) {
@@ -154,22 +157,22 @@ class RouteHandlerBuilder<T> internal constructor() {
 
     class WithSerializer<T> internal constructor(internal val messageSerializer: MessageSerializer<T>) {
 
-        internal var receiveMessagesOnEither: MessageReceiver? = null
+        internal var receiveMessageOnEither: MessageReceiver? = null
 
-        internal var receiveMessagesOnRemote: MessageReceiver? = null
+        internal var receiveMessageOnRemote: MessageReceiver? = null
 
-        internal var receiveMessagesOnHost: MessageReceiver? = null
+        internal var receiveMessageOnHost: MessageReceiver? = null
 
-        fun receiveMessagesOnEither(messageReceiver: MessageReceiver) {
-            receiveMessagesOnEither = messageReceiver
+        fun receiveMessageOnEither(messageReceiver: MessageReceiver) {
+            receiveMessageOnEither = messageReceiver
         }
 
-        fun receiveMessagesOnRemote(messageReceiver: MessageReceiver) {
-            receiveMessagesOnRemote = messageReceiver
+        fun receiveMessageOnRemote(messageReceiver: MessageReceiver) {
+            receiveMessageOnRemote = messageReceiver
         }
 
-        fun receiveMessagesOnHost(messageReceiver: MessageReceiver) {
-            receiveMessagesOnHost = messageReceiver
+        fun receiveMessageOnHost(messageReceiver: MessageReceiver) {
+            receiveMessageOnHost = messageReceiver
         }
 
     }

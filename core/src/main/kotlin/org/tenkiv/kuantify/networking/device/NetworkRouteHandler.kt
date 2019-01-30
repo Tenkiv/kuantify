@@ -9,7 +9,7 @@ import kotlin.coroutines.*
 typealias UpdateReceiver = (update: String?) -> Unit
 typealias MessageSerializer<T> = (update: T) -> String
 
-internal sealed class NetworkRouteHandler<T>(protected val device: KuantifyDevice) : CoroutineScope {
+internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyDevice) : CoroutineScope {
 
     @Volatile
     protected var job = Job(coroutineContext[Job])
