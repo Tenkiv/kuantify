@@ -5,9 +5,12 @@ import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
+import tec.units.indriya.*
+import javax.measure.*
 import kotlin.coroutines.*
+import kotlin.reflect.*
 
-abstract class KuanitfyRemoteOutput<T : DaqcValue>(val device: RemoteKuantifyDevice) : Output<T> {
+sealed class KuanitfyRemoteOutput<T : DaqcValue>(val device: RemoteKuantifyDevice) : Output<T> {
     override val coroutineContext: CoroutineContext
         get() = device.coroutineContext
 
@@ -30,3 +33,17 @@ abstract class KuanitfyRemoteOutput<T : DaqcValue>(val device: RemoteKuantifyDev
     }
 
 }
+
+abstract class QuantityKuantifyRemoteOutput<Q : Quantity<Q>>(device: RemoteKuantifyDevice) :
+    KuanitfyRemoteOutput<DaqcQuantity<Q>>(device), QuantityOutput<Q> {
+
+    abstract val quantityType: KClass<Q>
+
+    internal fun unsafeSetOutput(setting: ComparableQuantity<*>) {
+        setOutput(setting.asType(quantityType.java))
+    }
+
+}
+
+abstract class BinaryStateKuantifyRemoteOutput(device: RemoteKuantifyDevice) :
+    KuanitfyRemoteOutput<BinaryState>(device), BinaryStateOutput

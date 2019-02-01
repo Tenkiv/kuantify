@@ -25,7 +25,6 @@ import tec.units.indriya.*
 import tec.units.indriya.unit.Units.*
 import javax.measure.*
 import javax.measure.quantity.*
-import kotlin.reflect.*
 
 /**
  * Interface defining classes which act as outputs and send controls or signals to devices.
@@ -50,12 +49,6 @@ interface Output<T : DaqcValue> : IOStrand<T> {
  * @param Q The type of signal sent by this Output.
  */
 interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
-
-    val quantityType: KClass<Q>
-
-    fun unsafeSetOutput(setting: ComparableQuantity<*>) {
-        setOutput(setting.asType(quantityType.java))
-    }
 
     /**
      * Adjust the output by applying a function to the current setting. For example double it or square it.
