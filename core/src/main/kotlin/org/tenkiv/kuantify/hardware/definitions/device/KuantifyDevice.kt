@@ -98,9 +98,9 @@ abstract class LocalDevice : BaseKuantifyDevice() {
         networkCommunicator.stop()
     }
 
-    protected abstract fun <D : BaseKuantifyDevice> SideRouteConfig<D>.localRouteConfig()
+    protected open fun <D : BaseKuantifyDevice> SideRouteConfig<D>.localRouteConfig() {}
 
-    override fun <D : BaseKuantifyDevice> SideRouteConfig<D>.sideRouteConfig() {
+    internal override fun <D : BaseKuantifyDevice> SideRouteConfig<D>.sideRouteConfig() {
         localRouteConfig()
     }
 }
@@ -157,9 +157,9 @@ abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : BaseKua
 
     }
 
-    protected abstract fun <D : BaseKuantifyDevice> SideRouteConfig<D>.remoteRouteConfig()
+    protected open fun <D : BaseKuantifyDevice> SideRouteConfig<D>.remoteRouteConfig() {}
 
-    override fun <D : BaseKuantifyDevice> SideRouteConfig<D>.sideRouteConfig() {
+    internal override fun <D : BaseKuantifyDevice> SideRouteConfig<D>.sideRouteConfig() {
         remoteRouteConfig()
     }
 
