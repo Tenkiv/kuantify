@@ -6,6 +6,7 @@ import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.json.*
+import mu.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.client.*
 import org.tenkiv.kuantify.networking.configuration.*
@@ -13,7 +14,13 @@ import org.tenkiv.kuantify.networking.device.*
 import org.tenkiv.kuantify.networking.server.*
 import kotlin.coroutines.*
 
-interface KuantifyDevice : Device
+private val logger = KotlinLogging.logger {}
+
+interface KuantifyDevice : Device {
+
+    fun CombinedRouteConfig.combinedRouteConfig()
+
+}
 
 /**
  * [Device] where the corresponding [LocalDevice] DAQC is managed by Kuantify. Therefore, all [LocalDevice]s are
@@ -22,13 +29,37 @@ interface KuantifyDevice : Device
 sealed class BaseKuantifyDevice : KuantifyDevice {
 
     internal val networkCommunicator: NetworkCommunicator = run {
-        val networkConfig = NetworkConfig(this)
-        networkConfig.configureNetworking()
+        val combinedNetworkConfig = CombinedRouteConfig(this)
+        combinedNetworkConfig.combinedRouteConfig()
+
+        val sideRouteConfig = SideRouteConfig(this)
+        sideRouteConfig.sideRouteConfig()
+
+        val resultRouteMap = combinedNetworkConfig.networkRouteHandlerMap
+        val resultUpdateChannelMap = combinedNetworkConfig.networkUpdateChannelMap
+
+        sideRouteConfig.networkRouteHandlerMap.forEach { route, handler ->
+            val currentHandler = resultRouteMap[route]
+            if (currentHandler != null) {
+                logger.warn { "Overriding combined route handler for route $this with side specific handler." }
+            }
+            resultRouteMap[route] = handler
+        }
+
+        sideRouteConfig.networkUpdateChannelMap.forEach { route, channel ->
+            val currentChannel = resultUpdateChannelMap[route]
+            if (currentChannel != null) {
+                logger.warn { "Overriding combined route channel for route $this with side specific channel." }
+            }
+            resultUpdateChannelMap[route] = channel
+        }
+
+        val networkRoutHandlers = resultRouteMap.values.toList()
 
         NetworkCommunicator(
             this,
-            networkConfig.networkRouteHandlers,
-            networkConfig.networkUpdateChannelMap
+            networkRoutHandlers,
+            resultUpdateChannelMap
         )
     }
 
@@ -38,9 +69,8 @@ sealed class BaseKuantifyDevice : KuantifyDevice {
 
     internal abstract fun sendMessage(route: Route, payload: String?)
 
-    protected open fun <D : BaseKuantifyDevice> NetworkConfig<D>.configureNetworking() {
-        addStandardRouting()
-    }
+    internal abstract fun <D : BaseKuantifyDevice> SideRouteConfig<D>.sideRouteConfig()
+
 }
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
@@ -68,6 +98,11 @@ abstract class LocalDevice : BaseKuantifyDevice() {
         networkCommunicator.stop()
     }
 
+    protected abstract fun <D : BaseKuantifyDevice> SideRouteConfig<D>.localRouteConfig()
+
+    override fun <D : BaseKuantifyDevice> SideRouteConfig<D>.sideRouteConfig() {
+        localRouteConfig()
+    }
 }
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
@@ -120,6 +155,12 @@ abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : BaseKua
 
     private fun hostReportedError() {
 
+    }
+
+    protected abstract fun <D : BaseKuantifyDevice> SideRouteConfig<D>.remoteRouteConfig()
+
+    override fun <D : BaseKuantifyDevice> SideRouteConfig<D>.sideRouteConfig() {
+        remoteRouteConfig()
     }
 
 }

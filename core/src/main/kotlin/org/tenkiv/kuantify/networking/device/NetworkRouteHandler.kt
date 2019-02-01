@@ -22,7 +22,7 @@ internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyD
     }
 
     internal class Host<T> internal constructor(
-        device: LocalDevice,
+        device: BaseKuantifyDevice,
         private val route: Route,
         private val localUpdateChannel: ReceiveChannel<T>,
         private val networkUpdateChannel: ReceiveChannel<String?>,
@@ -52,21 +52,18 @@ internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyD
                 }
             }
         }
-
     }
 
     internal class Remote<T> internal constructor(
-        device: RemoteKuantifyDevice,
+        device: BaseKuantifyDevice,
         private val route: Route,
         private val localUpdateChannel: ReceiveChannel<T>,
         private val networkUpdateChannel: ReceiveChannel<String?>,
         private val serializeMessage: MessageSerializer<T>?,
         private val sendUpdatesFromRemote: Boolean,
-        private val sendUpdatesFromHost: Boolean,
-        private val receiveUpdateOnRemote: UpdateReceiver?
+        private val receiveUpdateOnRemote: UpdateReceiver?,
+        private val isFullyBiDirectional: Boolean
     ) : NetworkRouteHandler<T>(device) {
-
-        private val fullyBiDirectional get() = sendUpdatesFromHost && sendUpdatesFromRemote
 
         private val ignoreNextUpdate = AtomicBoolean(false)
 
@@ -74,7 +71,7 @@ internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyD
             super.start(job)
             // Send
             if (sendUpdatesFromRemote) {
-                if (fullyBiDirectional) {
+                if (isFullyBiDirectional) {
                     launch {
                         localUpdateChannel.consumeEach {
                             if (!ignoreNextUpdate.get()) {
@@ -97,7 +94,7 @@ internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyD
 
             // Receive
             if (receiveUpdateOnRemote != null) {
-                if (fullyBiDirectional) {
+                if (isFullyBiDirectional) {
                     launch {
                         networkUpdateChannel.consumeEach {
                             ignoreNextUpdate.set(true)

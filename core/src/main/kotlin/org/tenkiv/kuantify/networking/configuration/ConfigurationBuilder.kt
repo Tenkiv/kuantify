@@ -1,15 +1,26 @@
 package org.tenkiv.kuantify.networking.configuration
 
 import kotlinx.coroutines.channels.*
+import mu.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.networking.device.*
 
 typealias PingReceiver = () -> Unit
 typealias MessageReceiver = (update: String) -> Unit
 
-class NetworkConfig<D : KuantifyDevice> internal constructor(val device: D) {
+private val logger = KotlinLogging.logger {}
 
-    internal val networkRouteHandlers = ArrayList<NetworkRouteHandler<*>>()
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
+//   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Combined ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
+
+@DslMarker
+annotation class CombinedRouteConfigMarker
+
+@CombinedRouteConfigMarker
+class CombinedRouteConfig internal constructor(val device: KuantifyDevice) {
+
+    internal val networkRouteHandlerMap = HashMap<Route, NetworkRouteHandler<*>>()
 
     internal val networkUpdateChannelMap = HashMap<Route, Channel<String?>>()
 
@@ -19,25 +30,31 @@ class NetworkConfig<D : KuantifyDevice> internal constructor(val device: D) {
 
     fun <T> handler(
         localUpdateChannel: ReceiveChannel<T>,
-        build: RouteHandlerBuilder<T>.() -> Unit
+        isFullyBiDirectional: Boolean,
+        build: CombinedRouteHandlerBuilder<T>.() -> Unit
     ): HandlerParams<T> {
-        return HandlerParams(localUpdateChannel, build)
+        return HandlerParams(localUpdateChannel, isFullyBiDirectional, build)
     }
 
     @Suppress("NAME_SHADOWING")
     infix fun <T> Route.to(handler: HandlerParams<T>) {
-        val (localUpdateChannel, build) = handler
+        val (localUpdateChannel, isFullyBiDirectional, build) = handler
         val networkUpdateChannel = Channel<String?>(10_000)
         networkUpdateChannelMap += this to networkUpdateChannel
 
-        val routeHandlerBuilder = RouteHandlerBuilder<T>()
+        val routeHandlerBuilder = CombinedRouteHandlerBuilder<T>()
         routeHandlerBuilder.build()
 
         val receiveUpdatesOnHost: UpdateReceiver? = buildHostUpdateReceiver(routeHandlerBuilder)
 
         val receiveUpdatesOnRemote: UpdateReceiver? = buildRemoteUpdateReceiver(routeHandlerBuilder)
 
-        networkRouteHandlers += when (device) {
+        val currentHandler = networkRouteHandlerMap[this]
+        if (currentHandler != null) {
+            logger.warn { "Overriding combined routing for route $this." }
+        }
+
+        networkRouteHandlerMap[this] = when (device) {
             is LocalDevice -> NetworkRouteHandler.Host(
                 device,
                 this,
@@ -54,8 +71,8 @@ class NetworkConfig<D : KuantifyDevice> internal constructor(val device: D) {
                 networkUpdateChannel,
                 routeHandlerBuilder.serializeMessage,
                 routeHandlerBuilder.sendFromRemote,
-                routeHandlerBuilder.sendFromHost,
-                receiveUpdatesOnRemote
+                receiveUpdatesOnRemote,
+                isFullyBiDirectional
             )
             else -> throw IllegalStateException(
                 "Concrete KuantifyDevice must extend either LocalDevice or RemoteKuantifyDevice"
@@ -63,11 +80,12 @@ class NetworkConfig<D : KuantifyDevice> internal constructor(val device: D) {
         }
     }
 
-    private fun <T> buildHostUpdateReceiver(routeHandlerBuilder: RouteHandlerBuilder<T>): UpdateReceiver? {
+    private fun <T> buildHostUpdateReceiver(routeHandlerBuilder: CombinedRouteHandlerBuilder<T>): UpdateReceiver? {
         if (routeHandlerBuilder.receivePingOnEither == null &&
             routeHandlerBuilder.receivePingOnHost == null &&
             routeHandlerBuilder.withSerializer?.receiveMessageOnEither == null &&
-            routeHandlerBuilder.withSerializer?.receiveMessageOnHost == null
+            routeHandlerBuilder.withSerializer?.receiveMessageOnHost == null &&
+            routeHandlerBuilder.onHost?.receivePing == null
         ) {
             return null
         } else {
@@ -78,12 +96,13 @@ class NetworkConfig<D : KuantifyDevice> internal constructor(val device: D) {
                 } else {
                     routeHandlerBuilder.receivePingOnEither?.invoke()
                     routeHandlerBuilder.receivePingOnHost?.invoke()
+                    routeHandlerBuilder.onHost?.receivePing?.invoke()
                 }
             }
         }
     }
 
-    private fun <T> buildRemoteUpdateReceiver(routeHandlerBuilder: RouteHandlerBuilder<T>): UpdateReceiver? {
+    private fun <T> buildRemoteUpdateReceiver(routeHandlerBuilder: CombinedRouteHandlerBuilder<T>): UpdateReceiver? {
         if (routeHandlerBuilder.receivePingOnEither == null &&
             routeHandlerBuilder.receivePingOnRemote == null &&
             routeHandlerBuilder.withSerializer?.receiveMessageOnEither == null &&
@@ -105,14 +124,20 @@ class NetworkConfig<D : KuantifyDevice> internal constructor(val device: D) {
 
     data class HandlerParams<T> internal constructor(
         val localUpdateChannel: ReceiveChannel<T>,
-        val build: RouteHandlerBuilder<T>.() -> Unit
+        val isFullyBiDirectional: Boolean,
+        val build: CombinedRouteHandlerBuilder<T>.() -> Unit
     )
 }
 
-class RouteHandlerBuilder<T> internal constructor() {
+@CombinedRouteConfigMarker
+class CombinedRouteHandlerBuilder<T> internal constructor() {
     internal var serializeMessage: MessageSerializer<T>? = null
 
     internal var withSerializer: WithSerializer<T>? = null
+
+    internal var onRemote: OnSide? = null
+
+    internal var onHost: OnSide? = null
 
     internal var sendFromRemote: Boolean = false
 
@@ -155,25 +180,179 @@ class RouteHandlerBuilder<T> internal constructor() {
         withSerializer = ws
     }
 
-    class WithSerializer<T> internal constructor(internal val messageSerializer: MessageSerializer<T>) {
+    fun onRemote(build: OnSide.() -> Unit) {
+        val onSideBuilder = OnSide()
+        onSideBuilder.build()
+        onRemote = onSideBuilder
+    }
 
-        internal var receiveMessageOnEither: MessageReceiver? = null
+    fun onHost(build: OnSide.() -> Unit) {
+        val onSideBuilder = OnSide()
+        onSideBuilder.build()
+        onHost = onSideBuilder
+    }
 
-        internal var receiveMessageOnRemote: MessageReceiver? = null
+}
 
-        internal var receiveMessageOnHost: MessageReceiver? = null
+@CombinedRouteConfigMarker
+class WithSerializer<T> internal constructor(internal val messageSerializer: MessageSerializer<T>) {
 
-        fun receiveMessageOnEither(messageReceiver: MessageReceiver) {
-            receiveMessageOnEither = messageReceiver
-        }
+    internal var onRemote: OnSide? = null
 
-        fun receiveMessageOnRemote(messageReceiver: MessageReceiver) {
-            receiveMessageOnRemote = messageReceiver
-        }
+    internal var onHost: OnSide? = null
 
-        fun receiveMessageOnHost(messageReceiver: MessageReceiver) {
-            receiveMessageOnHost = messageReceiver
+    internal var receiveMessageOnEither: MessageReceiver? = null
+
+    internal var receiveMessageOnRemote: MessageReceiver? = null
+
+    internal var receiveMessageOnHost: MessageReceiver? = null
+
+    fun receiveMessageOnEither(messageReceiver: MessageReceiver) {
+        receiveMessageOnEither = messageReceiver
+    }
+
+    fun receiveMessageOnRemote(messageReceiver: MessageReceiver) {
+        receiveMessageOnRemote = messageReceiver
+    }
+
+    fun receiveMessageOnHost(messageReceiver: MessageReceiver) {
+        receiveMessageOnHost = messageReceiver
+    }
+
+    fun onRemote(build: OnSide.() -> Unit) {
+        val onSideBuilder = OnSide()
+        onSideBuilder.build()
+        onRemote = onSideBuilder
+    }
+
+    fun onHost(build: OnSide.() -> Unit) {
+        val onSideBuilder = OnSide()
+        onSideBuilder.build()
+        onHost = onSideBuilder
+    }
+
+    @CombinedRouteConfigMarker
+    class OnSide internal constructor() {
+
+        internal var receiveMessage: MessageReceiver? = null
+
+        fun receiveMessag(messageReceiver: MessageReceiver) {
+            receiveMessage = messageReceiver
         }
 
     }
+
+}
+
+@CombinedRouteConfigMarker
+class OnSide internal constructor() {
+
+    internal var send: Boolean = false
+
+    internal var receivePing: PingReceiver? = null
+
+    fun send() {
+        send = true
+    }
+
+    fun receivePing(pingReceiver: PingReceiver) {
+        receivePing = pingReceiver
+    }
+
+}
+
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
+//   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Separate ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
+
+@DslMarker
+annotation class SideRouteConfigMarker
+
+@SideRouteConfigMarker
+class SideRouteConfig<D : BaseKuantifyDevice> internal constructor(val device: D) {
+
+    internal val networkRouteHandlerMap = HashMap<Route, NetworkRouteHandler<*>>()
+
+    internal val networkUpdateChannelMap = HashMap<Route, Channel<String?>>()
+
+    fun route(vararg path: String): Route = listOf(*path)
+
+    fun route(path: List<String>): Route = path
+
+    fun <T> handler(
+        localUpdateChannel: ReceiveChannel<T>,
+        isFullyBiDirectional: Boolean,
+        build: SideRouteHandlerBuilder<T>.() -> Unit
+    ): HandlerParams<T> {
+        return HandlerParams(localUpdateChannel, isFullyBiDirectional, build)
+    }
+
+    @Suppress("NAME_SHADOWING")
+    infix fun <T> Route.to(handler: HandlerParams<T>) {
+        val (localUpdateChannel, isFullyBiDirectional, build) = handler
+        val networkUpdateChannel = Channel<String?>(10_000)
+        networkUpdateChannelMap += this to networkUpdateChannel
+
+        val routeHandlerBuilder = SideRouteHandlerBuilder<T>()
+        routeHandlerBuilder.build()
+
+        val currentHandler = networkRouteHandlerMap[this]
+        if (currentHandler != null) {
+            logger.warn { "Overriding side routing for route $this." }
+        }
+
+        networkRouteHandlerMap[this] = when (device) {
+            is LocalDevice -> NetworkRouteHandler.Host(
+                device,
+                this,
+                localUpdateChannel,
+                networkUpdateChannel,
+                routeHandlerBuilder.serializeMessage,
+                routeHandlerBuilder.send,
+                routeHandlerBuilder.receive
+            )
+            is RemoteKuantifyDevice -> NetworkRouteHandler.Remote(
+                device,
+                this,
+                localUpdateChannel,
+                networkUpdateChannel,
+                routeHandlerBuilder.serializeMessage,
+                routeHandlerBuilder.send,
+                routeHandlerBuilder.receive,
+                isFullyBiDirectional
+            )
+            else -> throw IllegalStateException(
+                "Concrete KuantifyDevice must extend either LocalDevice or RemoteKuantifyDevice"
+            )
+        }
+    }
+
+    data class HandlerParams<T> internal constructor(
+        val localUpdateChannel: ReceiveChannel<T>,
+        val isFullyBiDirectional: Boolean,
+        val build: SideRouteHandlerBuilder<T>.() -> Unit
+    )
+}
+
+@SideRouteConfigMarker
+class SideRouteHandlerBuilder<T> internal constructor() {
+
+    internal var serializeMessage: MessageSerializer<T>? = null
+
+    internal var send: Boolean = false
+
+    internal var receive: UpdateReceiver? = null
+
+    fun serializeMessage(messageSerializer: MessageSerializer<T>) {
+        serializeMessage = messageSerializer
+    }
+
+    fun send() {
+        send = true
+    }
+
+    fun receive(receiver: UpdateReceiver) {
+        receive = receiver
+    }
+
 }

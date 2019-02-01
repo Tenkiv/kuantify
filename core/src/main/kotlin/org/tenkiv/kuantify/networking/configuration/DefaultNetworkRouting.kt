@@ -7,7 +7,7 @@ import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 
-fun NetworkConfig<*>.addStandardRouting() {
+fun CombinedRouteConfig.addStandardRouting() {
 
     device.daqcGateMap.forEach { id, gate ->
         when (gate) {
@@ -18,10 +18,10 @@ fun NetworkConfig<*>.addStandardRouting() {
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun NetworkConfig<*>.addInputRouting(id: String, input: Input<*>) {
+private fun CombinedRouteConfig.addInputRouting(id: String, input: Input<*>) {
     val thisInputRc = route(RC.DAQC_GATE, id)
 
-    route(thisInputRc + RC.VALUE) to handler(input.updateBroadcaster.openSubscription()) {
+    route(thisInputRc + RC.VALUE) to handler(input.updateBroadcaster.openSubscription(), isFullyBiDirectional = false) {
         sendFromHost()
 
         serializeMessage {
@@ -38,6 +38,7 @@ private fun NetworkConfig<*>.addInputRouting(id: String, input: Input<*>) {
         } withSerializer {
 
             receiveMessageOnRemote {
+
 
             }
 

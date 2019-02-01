@@ -20,6 +20,7 @@ package org.tenkiv.kuantify.data
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.*
 import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.lib.*
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
 import tec.units.indriya.quantity.*
@@ -377,3 +378,11 @@ class DaqcQuantity<Q : Quantity<Q>>(internal val wrappedQuantity: ComparableQuan
 
 fun <Q : Quantity<Q>> ComparableQuantity<Q>.toDaqc() =
     DaqcQuantity(this)
+
+//TODO: This is a temporary workaround for serializing DaqcValue as we currently can't make DaqcQuantities of an unknown
+// type
+@Serializable
+data class DaqcValueEnvelope(
+    @Serializable(with = ComparableQuantitySerializer::class) @Optional val quantity: ComparableQuantity<*>? = null,
+    @Serializable(with = BinaryState.Companion::class) @Optional val binaryState: BinaryState? = null
+)

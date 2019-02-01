@@ -43,13 +43,6 @@ interface Input<out T : DaqcValue> : IOStrand<T>, RatedTrackable<T> {
      */
     fun startSampling()
 
-    //TODO: This should be moved to IOStrand.
-    fun addTrigger(condition: (ValueInstant<T>) -> Boolean, onTrigger: () -> Unit): Trigger<out T> =
-        Trigger(
-            triggerConditions = *arrayOf(TriggerCondition(this@Input, condition)),
-            triggerFunction = onTrigger
-        )
-
 }
 
 /**

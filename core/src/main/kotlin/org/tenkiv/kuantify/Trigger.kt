@@ -20,13 +20,12 @@ package org.tenkiv.kuantify
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
-import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.lib.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
-fun <T : DaqcValue> CoroutineScope.Trigger(
+fun <T> CoroutineScope.Trigger(
     triggerOnSimultaneousValues: Boolean = false,
     maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
     vararg triggerConditions: TriggerCondition<T>,
@@ -39,7 +38,7 @@ fun <T : DaqcValue> CoroutineScope.Trigger(
     triggerFunction = triggerFunction
 )
 
-fun <T : DaqcValue> CoroutineScope.Trigger(
+fun <T> CoroutineScope.Trigger(
     vararg triggerConditions: TriggerCondition<T>,
     triggerFunction: () -> Unit
 ): Trigger<T> = Trigger(
@@ -50,7 +49,7 @@ fun <T : DaqcValue> CoroutineScope.Trigger(
     triggerFunction = triggerFunction
 )
 
-fun <T : DaqcValue> CoroutineScope.Trigger(
+fun <T> CoroutineScope.Trigger(
     maxTriggerCount: MaxTriggerCount,
     vararg triggerConditions: TriggerCondition<T>,
     triggerFunction: () -> Unit
@@ -62,7 +61,7 @@ fun <T : DaqcValue> CoroutineScope.Trigger(
     triggerFunction = triggerFunction
 )
 
-fun <T : DaqcValue> CoroutineScope.Trigger(
+fun <T> CoroutineScope.Trigger(
     triggerOnSimultaneousValues: Boolean,
     vararg triggerConditions: TriggerCondition<T>,
     triggerFunction: () -> Unit
@@ -82,7 +81,7 @@ fun <T : DaqcValue> CoroutineScope.Trigger(
  * @param triggerConditions The [TriggerCondition]s which need to be met for a trigger to fire.
  * @param triggerFunction The function to be executed when the trigger fires.
  */
-class Trigger<T : DaqcValue> internal constructor(
+class Trigger<T> internal constructor(
     scope: CoroutineScope,
     val triggerOnSimultaneousValues: Boolean = false,
     val maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
@@ -112,7 +111,7 @@ class Trigger<T : DaqcValue> internal constructor(
     init {
         if (!(maxTriggerCount is MaxTriggerCount.Limited && maxTriggerCount.atomicCount.get() == 0)) {
             triggerConditions.forEach {
-                channelList.add(it.input.updateBroadcaster.consumeAndReturn(this) { update ->
+                channelList.add(it.trackable.updateBroadcaster.consumeAndReturn(this) { update ->
                     val currentVal = update
 
                     it.lastValue = currentVal
@@ -167,10 +166,13 @@ sealed class MaxTriggerCount {
 /**
  * The condition upon which the [Trigger] will fire.
  *
- * @param input The [Input] to monitor.
+ * @param trackable The [Input] to monitor.
  * @param condition The conditions upon which to execute the [Trigger]'s function.
  */
-data class TriggerCondition<T : DaqcValue>(val input: Input<T>, val condition: (ValueInstant<T>) -> Boolean) {
+data class TriggerCondition<T>(
+    val trackable: Trackable<ValueInstant<T>>,
+    val condition: (ValueInstant<T>) -> Boolean
+) {
     var lastValue: ValueInstant<T>? = null
     var hasBeenReached: Boolean = false
 }
