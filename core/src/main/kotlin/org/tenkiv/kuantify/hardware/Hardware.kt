@@ -17,8 +17,8 @@
 
 package org.tenkiv.kuantify.hardware
 
-import tec.units.indriya.ComparableQuantity
-import javax.measure.quantity.Frequency
+import tec.units.indriya.*
+import javax.measure.quantity.*
 
 sealed class LineNoiseFrequency {
 
@@ -26,11 +26,4 @@ sealed class LineNoiseFrequency {
 
     object Ignore : LineNoiseFrequency()
 
-}
-
-enum class DigitalStatus {
-    ACTIVATED_STATE,
-    ACTIVATED_FREQUENCY,
-    ACTIVATED_PWM,
-    DEACTIVATED
 }

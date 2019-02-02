@@ -21,7 +21,6 @@ import kotlinx.coroutines.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.hardware.definitions.channel.*
 import javax.measure.quantity.*
-import kotlin.reflect.*
 
 /**
  * A simple implementation of a binary pulse width modulation controller.
@@ -30,9 +29,6 @@ import kotlin.reflect.*
  */
 class SimplePwmController internal constructor(digitalOutput: DigitalOutput) :
     ScPwmController<Dimensionless>(digitalOutput), CoroutineScope by digitalOutput {
-
-    override val quantityType: KClass<Dimensionless>
-        get() = Dimensionless::class
 
     override fun convertOutput(setting: DaqcQuantity<Dimensionless>) = setting
 
