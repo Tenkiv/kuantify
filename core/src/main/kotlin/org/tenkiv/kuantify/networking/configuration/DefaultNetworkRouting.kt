@@ -44,13 +44,14 @@ private fun CombinedRouteConfig.addInputRouting(id: String, input: Input<*>) {
                 }
             }
         } withSerializer {
+            when (input) {
+                is QuantityKuantifyRemoteInput<*> -> receiveMessageOnRemote {
 
-            receiveMessageOnRemote {
+                }
+                is BinaryStateKuantifyRemoteInput -> receiveMessageOnRemote {
 
-
+                }
             }
-
         }
-
     }
 }
