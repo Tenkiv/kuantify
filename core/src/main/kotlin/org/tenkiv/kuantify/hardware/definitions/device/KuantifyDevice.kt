@@ -18,7 +18,7 @@ private val logger = KotlinLogging.logger {}
 
 interface KuantifyDevice : Device {
 
-    fun CombinedRouteConfig.combinedRouteConfig()
+    fun CombinedRouteConfig.combinedRouteConfig() {}
 
 }
 

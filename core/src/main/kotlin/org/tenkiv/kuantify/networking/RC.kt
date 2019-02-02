@@ -20,6 +20,7 @@ object RC {
     const val PULSE_WIDTH_MODULATE = "pulse_width_modulate"
     const val SUSTAIN_TRANSITION_FREQUENCY = "sustain_transition_frequency"
     const val AVG_FREQUENCY = "avg_frequency"
+    const val FAILURE = "failure"
 
     const val CRITICAL_ERROR = "critical_error"
 

@@ -24,8 +24,8 @@ internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyD
     internal class Host<T> internal constructor(
         device: BaseKuantifyDevice,
         private val route: Route,
-        private val localUpdateChannel: ReceiveChannel<T>,
-        private val networkUpdateChannel: ReceiveChannel<String?>,
+        private val localUpdateChannel: ReceiveChannel<T>?,
+        private val networkUpdateChannel: ReceiveChannel<String?>?,
         private val serializeMessage: MessageSerializer<T>?,
         private val sendUpdatesFromHost: Boolean,
         private val receiveUpdateOnHost: UpdateReceiver?
@@ -36,19 +36,19 @@ internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyD
             // Send
             if (sendUpdatesFromHost) {
                 launch {
-                    localUpdateChannel.consumeEach {
+                    localUpdateChannel?.consumeEach {
                         val payload = serializeMessage?.invoke(it)
                         device.sendMessage(route, payload)
-                    }
+                    } ?: TODO("Throw specific exception")
                 }
             }
 
             // Receive
             if (receiveUpdateOnHost != null) {
                 launch {
-                    networkUpdateChannel.consumeEach {
+                    networkUpdateChannel?.consumeEach {
                         receiveUpdateOnHost.invoke(it)
-                    }
+                    } ?: TODO("Throw specific exception")
                 }
             }
         }
@@ -57,8 +57,8 @@ internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyD
     internal class Remote<T> internal constructor(
         device: BaseKuantifyDevice,
         private val route: Route,
-        private val localUpdateChannel: ReceiveChannel<T>,
-        private val networkUpdateChannel: ReceiveChannel<String?>,
+        private val localUpdateChannel: ReceiveChannel<T>?,
+        private val networkUpdateChannel: ReceiveChannel<String?>?,
         private val serializeMessage: MessageSerializer<T>?,
         private val sendUpdatesFromRemote: Boolean,
         private val receiveUpdateOnRemote: UpdateReceiver?,
@@ -73,21 +73,21 @@ internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyD
             if (sendUpdatesFromRemote) {
                 if (isFullyBiDirectional) {
                     launch {
-                        localUpdateChannel.consumeEach {
+                        localUpdateChannel?.consumeEach {
                             if (!ignoreNextUpdate.get()) {
                                 val payload = serializeMessage?.invoke(it)
                                 device.sendMessage(route, payload)
                             } else {
                                 ignoreNextUpdate.set(false)
                             }
-                        }
+                        } ?: TODO("Throw specific exception")
                     }
                 } else {
                     launch {
-                        localUpdateChannel.consumeEach {
+                        localUpdateChannel?.consumeEach {
                             val payload = serializeMessage?.invoke(it)
                             device.sendMessage(route, payload)
-                        }
+                        } ?: TODO("Throw specific exception")
                     }
                 }
             }
@@ -96,16 +96,16 @@ internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyD
             if (receiveUpdateOnRemote != null) {
                 if (isFullyBiDirectional) {
                     launch {
-                        networkUpdateChannel.consumeEach {
+                        networkUpdateChannel?.consumeEach {
                             ignoreNextUpdate.set(true)
                             receiveUpdateOnRemote.invoke(it)
-                        }
+                        } ?: TODO("Throw specific exception")
                     }
                 } else {
                     launch {
-                        networkUpdateChannel.consumeEach {
+                        networkUpdateChannel?.consumeEach {
                             receiveUpdateOnRemote.invoke(it)
-                        }
+                        } ?: TODO("Throw specific exception")
                     }
                 }
             }

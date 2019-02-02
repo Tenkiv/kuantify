@@ -10,7 +10,7 @@ import org.tenkiv.kuantify.networking.*
 
 private val logger = KotlinLogging.logger {}
 
-fun CombinedRouteConfig.addStandardRouting() {
+fun CombinedRouteConfig.addStandardConfig() {
 
     device.daqcGateMap.forEach { id, gate ->
         when (gate) {
@@ -22,7 +22,6 @@ fun CombinedRouteConfig.addStandardRouting() {
             }
         }
     }
-
 }
 
 @Suppress("UNCHECKED_CAST")
