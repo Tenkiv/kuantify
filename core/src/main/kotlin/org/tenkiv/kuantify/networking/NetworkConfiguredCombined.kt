@@ -8,26 +8,20 @@ interface NetworkConfiguredCombined {
 
 }
 
-interface NetworkConfiguredLocal {
+interface NetworkConfiguredSide {
 
-    fun localConfig(config: SideRouteConfig)
-
-}
-
-interface NetworkConfiguredRemote {
-
-    fun remoteConfig(config: SideRouteConfig)
+    fun sideConfig(config: SideRouteConfig)
 
 }
 
-fun Iterable<NetworkConfiguredLocal>.applyLocalConfigsTo(config: SideRouteConfig) {
+fun Iterable<NetworkConfiguredCombined>.applyCombinedConfigsTo(config: CombinedRouteConfig) {
     forEach {
-        it.localConfig(config)
+        it.combinedConfig(config)
     }
 }
 
-fun Iterable<NetworkConfiguredRemote>.applyRemoteConfigsTo(config: SideRouteConfig) {
+fun Iterable<NetworkConfiguredSide>.applySideConfigsTo(config: SideRouteConfig) {
     forEach {
-        it.remoteConfig(config)
+        it.sideConfig(config)
     }
 }

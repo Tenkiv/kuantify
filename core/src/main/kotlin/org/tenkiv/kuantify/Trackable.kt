@@ -19,7 +19,12 @@ package org.tenkiv.kuantify
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.networking.*
+import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
 import java.time.*
@@ -122,6 +127,26 @@ class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, p
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>): UpdateRate.RunningAverage =
         UpdateRate.RunningAverage(updatable)
+}
+
+class KuantifyConfiguredUpdateRate(private val input: KuanitfyRemoteInput<*>) {
+
+    private val updateRate = input.Updatable<ComparableQuantity<Frequency>>()
+
+    fun addToConfig(config: SideRouteConfig) {
+        config.add {
+            route(RC.DAQC_GATE, input.uid, RC.UPDATE_RATE) to
+                    handler<ComparableQuantity<Frequency>>(isFullyBiDirectional = false) {
+                        receiveMessage(NullResolutionStrategy.PANIC) {
+                            val value = Json.parse(ComparableQuantitySerializer, it).asType<Frequency>()
+                            updateRate.set(value)
+                        }
+                    }
+        }
+    }
+
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): UpdateRate.Configured =
+        UpdateRate.Configured(updateRate)
 }
 
 private class CombinedTrackable<out T>(scope: CoroutineScope, trackables: Array<out Trackable<T>>) :

@@ -22,7 +22,7 @@ interface KuantifyDevice : Device, NetworkConfiguredCombined
  * [Device] where the corresponding [LocalDevice] DAQC is managed by Kuantify. Therefore, all [LocalDevice]s are
  * [BaseKuantifyDevice]s but not all [RemoteDevice]s are.
  */
-sealed class BaseKuantifyDevice : KuantifyDevice {
+sealed class BaseKuantifyDevice : KuantifyDevice, NetworkConfiguredSide {
 
     internal val networkCommunicator: NetworkCommunicator = run {
         val combinedNetworkConfig = CombinedRouteConfig(this)
@@ -65,15 +65,13 @@ sealed class BaseKuantifyDevice : KuantifyDevice {
 
     internal abstract fun sendMessage(route: Route, payload: String?)
 
-    internal abstract fun sideConfig(config: SideRouteConfig)
-
 }
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Local Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class LocalDevice : BaseKuantifyDevice(), NetworkConfiguredLocal {
+abstract class LocalDevice : BaseKuantifyDevice() {
 
     @Volatile
     private var job = Job()
@@ -93,18 +91,13 @@ abstract class LocalDevice : BaseKuantifyDevice(), NetworkConfiguredLocal {
         KuantifyHost.stopHosting()
         networkCommunicator.stop()
     }
-
-    override fun sideConfig(config: SideRouteConfig) {
-        localConfig(config)
-    }
 }
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Remote Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : BaseKuantifyDevice(), RemoteDevice,
-    NetworkConfiguredRemote {
+abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : BaseKuantifyDevice(), RemoteDevice {
 
     @Volatile
     private var job = Job(scope.coroutineContext[Job])
@@ -150,10 +143,6 @@ abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : BaseKua
 
     private fun hostReportedError() {
 
-    }
-
-    override fun sideConfig(config: SideRouteConfig) {
-        remoteConfig(config)
     }
 
 }

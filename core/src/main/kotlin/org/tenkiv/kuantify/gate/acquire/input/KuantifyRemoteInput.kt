@@ -16,7 +16,7 @@ import kotlin.coroutines.*
 import kotlin.reflect.*
 
 sealed class KuanitfyRemoteInput<T : DaqcValue>(val device: RemoteKuantifyDevice) : Input<T>,
-    NetworkConfiguredRemote {
+    NetworkConfiguredSide {
 
     abstract val uid: String
 
@@ -46,7 +46,7 @@ sealed class KuanitfyRemoteInput<T : DaqcValue>(val device: RemoteKuantifyDevice
         stopTransceivingChannel.offer(Unit)
     }
 
-    override fun remoteConfig(config: SideRouteConfig) {
+    override fun sideConfig(config: SideRouteConfig) {
         val inputRoute = listOf(RC.DAQC_GATE, uid)
 
         config.add {
@@ -83,8 +83,8 @@ abstract class QuantityKuantifyRemoteInput<Q : Quantity<Q>>(device: RemoteKuanti
         _updateBroadcaster.offer(value.asType(quantityType.java).toDaqc() at instant)
     }
 
-    override fun remoteConfig(config: SideRouteConfig) {
-        super.remoteConfig(config)
+    override fun sideConfig(config: SideRouteConfig) {
+        super.sideConfig(config)
         val inputRoute = listOf(RC.DAQC_GATE, uid)
 
         config.add {
@@ -101,4 +101,19 @@ abstract class QuantityKuantifyRemoteInput<Q : Quantity<Q>>(device: RemoteKuanti
 }
 
 abstract class BinaryStateKuantifyRemoteInput(device: RemoteKuantifyDevice) : KuanitfyRemoteInput<BinaryState>(device),
-    BinaryStateInput
+    BinaryStateInput {
+
+    override fun sideConfig(config: SideRouteConfig) {
+        super.sideConfig(config)
+        val inputRoute = listOf(RC.DAQC_GATE, uid)
+
+        config.add {
+            route(inputRoute + RC.VALUE) to handler<BinaryState>(isFullyBiDirectional = false) {
+                receiveMessage(NullResolutionStrategy.PANIC) {
+                    val measurement = Json.parse(ValueInstantSerializer(BinaryState.serializer()), it)
+                    _updateBroadcaster.offer(measurement)
+                }
+            }
+        }
+    }
+}
