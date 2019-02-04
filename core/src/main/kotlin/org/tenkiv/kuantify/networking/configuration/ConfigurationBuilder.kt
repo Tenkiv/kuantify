@@ -18,11 +18,15 @@ private val logger = KotlinLogging.logger {}
 annotation class CombinedRouteConfigMarker
 
 @CombinedRouteConfigMarker
-class CombinedRouteConfig internal constructor(val device: KuantifyDevice) {
+class CombinedRouteConfig internal constructor(private val device: KuantifyDevice) {
 
     internal val networkRouteHandlerMap = HashMap<Route, NetworkRouteHandler<*>>()
 
     internal val networkUpdateChannelMap = HashMap<Route, Channel<String?>>()
+
+    fun add(additions: CombinedRouteConfig.() -> Unit) {
+        this.additions()
+    }
 
     fun route(vararg path: String): Route = listOf(*path)
 
@@ -328,11 +332,15 @@ class OnSide<T> internal constructor() {
 annotation class SideRouteConfigMarker
 
 @SideRouteConfigMarker
-class SideRouteConfig<D : BaseKuantifyDevice> internal constructor(val device: D) {
+class SideRouteConfig internal constructor(private val device: BaseKuantifyDevice) {
 
     internal val networkRouteHandlerMap = HashMap<Route, NetworkRouteHandler<*>>()
 
     internal val networkUpdateChannelMap = HashMap<Route, Channel<String?>>()
+
+    fun add(additions: SideRouteConfig.() -> Unit) {
+        this.additions()
+    }
 
     fun route(vararg path: String): Route = listOf(*path)
 

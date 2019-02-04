@@ -16,11 +16,7 @@ import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
 
-interface KuantifyDevice : Device {
-
-    fun CombinedRouteConfig.combinedRouteConfig() {}
-
-}
+interface KuantifyDevice : Device, NetworkConfiguredCombined
 
 /**
  * [Device] where the corresponding [LocalDevice] DAQC is managed by Kuantify. Therefore, all [LocalDevice]s are
@@ -30,10 +26,10 @@ sealed class BaseKuantifyDevice : KuantifyDevice {
 
     internal val networkCommunicator: NetworkCommunicator = run {
         val combinedNetworkConfig = CombinedRouteConfig(this)
-        combinedNetworkConfig.combinedRouteConfig()
+        combinedConfig(combinedNetworkConfig)
 
         val sideRouteConfig = SideRouteConfig(this)
-        sideRouteConfig.sideRouteConfig()
+        sideConfig(sideRouteConfig)
 
         val resultRouteMap = combinedNetworkConfig.networkRouteHandlerMap
         val resultUpdateChannelMap = combinedNetworkConfig.networkUpdateChannelMap
@@ -69,7 +65,7 @@ sealed class BaseKuantifyDevice : KuantifyDevice {
 
     internal abstract fun sendMessage(route: Route, payload: String?)
 
-    internal abstract fun <D : BaseKuantifyDevice> SideRouteConfig<D>.sideRouteConfig()
+    internal abstract fun sideConfig(config: SideRouteConfig)
 
 }
 
@@ -77,7 +73,7 @@ sealed class BaseKuantifyDevice : KuantifyDevice {
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Local Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class LocalDevice : BaseKuantifyDevice() {
+abstract class LocalDevice : BaseKuantifyDevice(), NetworkConfiguredLocal {
 
     @Volatile
     private var job = Job()
@@ -98,10 +94,8 @@ abstract class LocalDevice : BaseKuantifyDevice() {
         networkCommunicator.stop()
     }
 
-    protected open fun <D : BaseKuantifyDevice> SideRouteConfig<D>.localRouteConfig() {}
-
-    internal override fun <D : BaseKuantifyDevice> SideRouteConfig<D>.sideRouteConfig() {
-        localRouteConfig()
+    override fun sideConfig(config: SideRouteConfig) {
+        localConfig(config)
     }
 }
 
@@ -109,7 +103,8 @@ abstract class LocalDevice : BaseKuantifyDevice() {
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Remote Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : BaseKuantifyDevice(), RemoteDevice {
+abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : BaseKuantifyDevice(), RemoteDevice,
+    NetworkConfiguredRemote {
 
     @Volatile
     private var job = Job(scope.coroutineContext[Job])
@@ -157,10 +152,8 @@ abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : BaseKua
 
     }
 
-    protected open fun <D : BaseKuantifyDevice> SideRouteConfig<D>.remoteRouteConfig() {}
-
-    internal override fun <D : BaseKuantifyDevice> SideRouteConfig<D>.sideRouteConfig() {
-        remoteRouteConfig()
+    override fun sideConfig(config: SideRouteConfig) {
+        remoteConfig(config)
     }
 
 }

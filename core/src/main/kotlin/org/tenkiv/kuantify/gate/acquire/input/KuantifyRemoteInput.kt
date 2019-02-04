@@ -16,7 +16,7 @@ import kotlin.coroutines.*
 import kotlin.reflect.*
 
 sealed class KuanitfyRemoteInput<T : DaqcValue>(val device: RemoteKuantifyDevice) : Input<T>,
-    NetworkConfigured<RemoteKuantifyDevice> {
+    NetworkConfiguredRemote {
 
     abstract val uid: String
 
@@ -45,6 +45,31 @@ sealed class KuanitfyRemoteInput<T : DaqcValue>(val device: RemoteKuantifyDevice
     override fun stopTransceiving() {
         stopTransceivingChannel.offer(Unit)
     }
+
+    override fun remoteConfig(config: SideRouteConfig) {
+        val inputRoute = listOf(RC.DAQC_GATE, uid)
+
+        config.add {
+            route(inputRoute + RC.IS_TRANSCEIVING) to handler<Boolean>(isFullyBiDirectional = false) {
+                receiveMessage(NullResolutionStrategy.PANIC) {
+                    val value = Json.parse(BooleanSerializer, it)
+                    _isTransceiving.value = value
+                }
+            }
+
+            route(inputRoute + RC.START_SAMPLING) to handler<Unit>(isFullyBiDirectional = false) {
+                setLocalUpdateChannel(startSamplingChannel) withUpdateChannel {
+                    send()
+                }
+            }
+
+            route(inputRoute + RC.STOP_TRANSCEIVING) to handler<Unit>(isFullyBiDirectional = false) {
+                setLocalUpdateChannel(stopTransceivingChannel) withUpdateChannel {
+                    send()
+                }
+            }
+        }
+    }
 }
 
 abstract class QuantityKuantifyRemoteInput<Q : Quantity<Q>>(device: RemoteKuantifyDevice) :
@@ -58,32 +83,16 @@ abstract class QuantityKuantifyRemoteInput<Q : Quantity<Q>>(device: RemoteKuanti
         _updateBroadcaster.offer(value.asType(quantityType.java).toDaqc() at instant)
     }
 
-    override fun SideRouteConfig<RemoteKuantifyDevice>.configure() {
+    override fun remoteConfig(config: SideRouteConfig) {
+        super.remoteConfig(config)
         val inputRoute = listOf(RC.DAQC_GATE, uid)
 
-        route(inputRoute + RC.VALUE) to handler<DaqcQuantity<Q>>(isFullyBiDirectional = false) {
-            receiveMessage(NullResolutionStrategy.PANIC) {
-                val measurement = Json.parse(ValueInstantSerializer(ComparableQuantitySerializer), it)
-                unsafeUpdate(measurement)
-            }
-        }
-
-        route(inputRoute + RC.IS_TRANSCEIVING) to handler<Boolean>(isFullyBiDirectional = false) {
-            receiveMessage(NullResolutionStrategy.PANIC) {
-                val value = Json.parse(BooleanSerializer, it)
-                _isTransceiving.value = value
-            }
-        }
-
-        route(inputRoute + RC.START_SAMPLING) to handler<Unit>(isFullyBiDirectional = false) {
-            setLocalUpdateChannel(startSamplingChannel) withUpdateChannel {
-                send()
-            }
-        }
-
-        route(inputRoute + RC.STOP_TRANSCEIVING) to handler<Unit>(isFullyBiDirectional = false) {
-            setLocalUpdateChannel(stopTransceivingChannel) withUpdateChannel {
-                send()
+        config.add {
+            route(inputRoute + RC.VALUE) to handler<DaqcQuantity<Q>>(isFullyBiDirectional = false) {
+                receiveMessage(NullResolutionStrategy.PANIC) {
+                    val measurement = Json.parse(ValueInstantSerializer(ComparableQuantitySerializer), it)
+                    unsafeUpdate(measurement)
+                }
             }
         }
 
