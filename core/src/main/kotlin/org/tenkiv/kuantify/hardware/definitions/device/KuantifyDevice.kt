@@ -63,8 +63,11 @@ sealed class BaseKuantifyDevice : KuantifyDevice, NetworkConfiguredSide {
         networkCommunicator.receiveNetworkMessage(route, message)
     }
 
-    internal abstract fun sendMessage(route: Route, payload: String?)
+    internal abstract suspend fun sendMessage(route: Route, payload: String?)
 
+    internal fun serializeMessage(route: Route, message: String?): String {
+        return Json.stringify(NetworkMessage.serializer(), NetworkMessage(route, message))
+    }
 }
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
@@ -91,6 +94,10 @@ abstract class LocalDevice : BaseKuantifyDevice() {
         KuantifyHost.stopHosting()
         networkCommunicator.stop()
     }
+
+    override suspend fun sendMessage(route: Route, payload: String?) {
+        ClientHandler.sendToAll(serializeMessage(route, payload))
+    }
 }
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
@@ -111,7 +118,7 @@ abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : BaseKua
             httpClient.webSocket(method = HttpMethod.Get, host = hostIp, port = 80, path = "/") {
                 launch {
                     sendChannel.consumeEach { message ->
-
+                        outgoing.send(Frame.Text(message))
                     }
 
                     incoming.consumeEach { frame ->
@@ -145,4 +152,7 @@ abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : BaseKua
 
     }
 
+    override suspend fun sendMessage(route: Route, payload: String?) {
+        sendChannel.send(serializeMessage(route, payload))
+    }
 }
