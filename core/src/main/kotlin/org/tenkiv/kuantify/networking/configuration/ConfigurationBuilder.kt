@@ -5,8 +5,8 @@ import mu.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.networking.device.*
 
-typealias PingReceiver = () -> Unit
-typealias MessageReceiver = (update: String) -> Unit
+typealias PingReceiver = suspend () -> Unit
+typealias MessageReceiver = suspend (update: String) -> Unit
 
 private val logger = KotlinLogging.logger {}
 
@@ -428,7 +428,7 @@ class SideRouteHandlerBuilder<T> internal constructor() {
     }
 
     fun receiveMessage(resolutionStrategy: NullResolutionStrategy, receiver: MessageReceiver) {
-        receive = fun(message: String?) {
+        receive = { message ->
             if (message == null) {
                 if (resolutionStrategy === NullResolutionStrategy.PANIC) {
                     TODO("throw specific exception")

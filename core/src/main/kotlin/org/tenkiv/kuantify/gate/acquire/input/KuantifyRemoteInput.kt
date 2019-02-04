@@ -88,7 +88,7 @@ abstract class QuantityKuantifyRemoteInput<Q : Quantity<Q>>(device: RemoteKuanti
         val inputRoute = listOf(RC.DAQC_GATE, uid)
 
         config.add {
-            route(inputRoute + RC.VALUE) to handler<DaqcQuantity<Q>>(isFullyBiDirectional = false) {
+            route(inputRoute + RC.VALUE) to handler<QuantityMeasurement<Q>>(isFullyBiDirectional = false) {
                 receiveMessage(NullResolutionStrategy.PANIC) {
                     val measurement = Json.parse(ValueInstantSerializer(ComparableQuantitySerializer), it)
                     unsafeUpdate(measurement)
@@ -108,7 +108,7 @@ abstract class BinaryStateKuantifyRemoteInput(device: RemoteKuantifyDevice) : Ku
         val inputRoute = listOf(RC.DAQC_GATE, uid)
 
         config.add {
-            route(inputRoute + RC.VALUE) to handler<BinaryState>(isFullyBiDirectional = false) {
+            route(inputRoute + RC.VALUE) to handler<BinaryStateMeasurement>(isFullyBiDirectional = false) {
                 receiveMessage(NullResolutionStrategy.PANIC) {
                     val measurement = Json.parse(ValueInstantSerializer(BinaryState.serializer()), it)
                     _updateBroadcaster.offer(measurement)

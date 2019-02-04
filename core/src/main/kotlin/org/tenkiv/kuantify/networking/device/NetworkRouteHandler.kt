@@ -6,7 +6,7 @@ import org.tenkiv.kuantify.hardware.definitions.device.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
-typealias UpdateReceiver = (update: String?) -> Unit
+typealias UpdateReceiver = suspend (update: String?) -> Unit
 typealias MessageSerializer<T> = (update: T) -> String
 
 internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyDevice) : CoroutineScope {
