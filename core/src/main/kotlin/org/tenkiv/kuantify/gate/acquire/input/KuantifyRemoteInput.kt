@@ -36,14 +36,14 @@ sealed class KuanitfyRemoteInput<T : DaqcValue>(val device: RemoteKuantifyDevice
     override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    internal val startSamplingChannel = Channel<Unit>(Channel.CONFLATED)
+    internal val startSamplingChannel = Channel<Unit?>(Channel.CONFLATED)
     override fun startSampling() {
-        startSamplingChannel.offer(Unit)
+        startSamplingChannel.offer(null)
     }
 
-    internal val stopTransceivingChannel = Channel<Unit>(Channel.CONFLATED)
+    internal val stopTransceivingChannel = Channel<Unit?>(Channel.CONFLATED)
     override fun stopTransceiving() {
-        stopTransceivingChannel.offer(Unit)
+        stopTransceivingChannel.offer(null)
     }
 
     override fun sideConfig(config: SideRouteConfig) {
@@ -57,13 +57,13 @@ sealed class KuanitfyRemoteInput<T : DaqcValue>(val device: RemoteKuantifyDevice
                 }
             }
 
-            route(inputRoute + RC.START_SAMPLING) to handler<Unit>(isFullyBiDirectional = false) {
+            route(inputRoute + RC.START_SAMPLING) to handler<Ping>(isFullyBiDirectional = false) {
                 setLocalUpdateChannel(startSamplingChannel) withUpdateChannel {
                     send()
                 }
             }
 
-            route(inputRoute + RC.STOP_TRANSCEIVING) to handler<Unit>(isFullyBiDirectional = false) {
+            route(inputRoute + RC.STOP_TRANSCEIVING) to handler<Ping>(isFullyBiDirectional = false) {
                 setLocalUpdateChannel(stopTransceivingChannel) withUpdateChannel {
                     send()
                 }

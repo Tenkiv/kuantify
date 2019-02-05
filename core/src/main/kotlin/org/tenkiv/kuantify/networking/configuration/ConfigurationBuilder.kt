@@ -5,6 +5,7 @@ import mu.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.networking.device.*
 
+typealias Ping = Unit?
 typealias PingReceiver = suspend () -> Unit
 typealias MessageReceiver = suspend (update: String) -> Unit
 

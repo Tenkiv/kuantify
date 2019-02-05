@@ -16,7 +16,11 @@ import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
 
-interface KuantifyDevice : Device, NetworkConfiguredCombined
+interface KuantifyDevice : Device, NetworkConfiguredCombined {
+    override fun combinedConfig(config: CombinedRouteConfig) {
+
+    }
+}
 
 /**
  * [Device] where the corresponding [LocalDevice] DAQC is managed by Kuantify. Therefore, all [LocalDevice]s are
@@ -154,5 +158,9 @@ abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : BaseKua
 
     override suspend fun sendMessage(route: Route, payload: String?) {
         sendChannel.send(serializeMessage(route, payload))
+    }
+
+    override fun sideConfig(config: SideRouteConfig) {
+
     }
 }
