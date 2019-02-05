@@ -17,7 +17,6 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
@@ -28,16 +27,9 @@ import javax.measure.quantity.*
 /**
  * Class defining the basic features of an output which sends binary signals.
  */
-@Suppress("LeakingThis")
-abstract class DigitalOutput : DigitalChannel<DigitalDaqDevice>() {
+interface DigitalOutput : DigitalChannel<DigitalDaqDevice> {
 
-    private val thisAsBinaryStateController = SimpleBinaryStateController(this)
-
-    private val thisAsPwmController = SimplePwmController(this)
-
-    private val thisAsFrequencyController = SimpleFrequencyController(this)
-
-    abstract fun setOutputState(
+    fun setOutputState(
         state: BinaryState,
         panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult
@@ -47,7 +39,7 @@ abstract class DigitalOutput : DigitalChannel<DigitalDaqDevice>() {
      *
      * @param percent The percentage of the time the output is supposed to be active.
      */
-    abstract fun pulseWidthModulate(
+    fun pulseWidthModulate(
         percent: ComparableQuantity<Dimensionless>,
         panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult
@@ -57,7 +49,7 @@ abstract class DigitalOutput : DigitalChannel<DigitalDaqDevice>() {
      *
      * @param freq The frequency of state change.
      */
-    abstract fun sustainTransitionFrequency(
+    fun sustainTransitionFrequency(
         freq: ComparableQuantity<Frequency>,
         panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult
@@ -72,25 +64,19 @@ abstract class DigitalOutput : DigitalChannel<DigitalDaqDevice>() {
      * @param inverted Denotes if [BinaryState.ON] is Low as well as the inverse. By default false.
      * @return A [SimpleBinaryStateController] with this [DigitalOutput] as the controlled output.
      */
-    fun asBinaryStateController() = thisAsBinaryStateController
+    fun asBinaryStateController()
 
     /**
      * Ease of use function to create a [SimplePwmController] from this [DigitalOutput].
      *
      * @return A [SimplePwmController] with this [DigitalOutput] as the controlled output.
      */
-    fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): SimplePwmController {
-        this.avgFrequency.set(avgFrequency)
-        return thisAsPwmController
-    }
+    fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): SimplePwmController
 
     /**
      * Ease of use function to create a [SimpleFrequencyController] from this [DigitalOutput].
      *
      * @return A [SimpleFrequencyController] with this [DigitalOutput] as the controlled output.
      */
-    fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): SimpleFrequencyController {
-        this.avgFrequency.set(avgFrequency)
-        return thisAsFrequencyController
-    }
+    fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): SimpleFrequencyController
 }

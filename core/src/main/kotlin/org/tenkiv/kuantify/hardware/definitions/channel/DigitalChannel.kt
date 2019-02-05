@@ -30,24 +30,24 @@ import javax.measure.quantity.*
 /**
  * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
  */
-abstract class DigitalChannel<D : DigitalDaqDevice> : DaqcGate<DigitalChannelValue>, DaqcChannel<D> {
+interface DigitalChannel<D : DigitalDaqDevice> : DaqcGate<DigitalChannelValue>, DaqcChannel<D> {
 
     /**
      * Gets if the pulse width modulation state for this channel is simulated using software.
      */
-    abstract val pwmIsSimulated: Boolean
+    val pwmIsSimulated: Boolean
 
     /**
      * Gets if the transition frequency state for this channel is simulated using software.
      */
-    abstract val transitionFrequencyIsSimulated: Boolean
+    val transitionFrequencyIsSimulated: Boolean
 
     /**
      * The frequency with which pwm and transition frequency input and output will be averaged.
      * e.g. you want an output to be [BinaryState.High] 60% of the time. This will set if it's high 60% of the time
      * after 2 seconds, 1 second, 0.5 seconds, etc.
      */
-    val avgFrequency: UpdatableQuantity<Frequency> = Updatable()
+    val avgFrequency: UpdatableQuantity<Frequency>
 
     /**
      * Gets if the channel is active for binary state.
@@ -55,7 +55,7 @@ abstract class DigitalChannel<D : DigitalDaqDevice> : DaqcGate<DigitalChannelVal
      * Implementing backing  field must be atomic or otherwise provide safety for
      * reads from multiple threads.
      */
-    abstract val isTransceivingBinaryState: InitializedTrackable<Boolean>
+    val isTransceivingBinaryState: InitializedTrackable<Boolean>
 
     /**
      * Gets if the channel is active for pulse width modulation.
@@ -63,7 +63,7 @@ abstract class DigitalChannel<D : DigitalDaqDevice> : DaqcGate<DigitalChannelVal
      * Implementing backing  field must be atomic or otherwise provide safety for
      * reads from multiple threads.
      */
-    abstract val isTransceivingPwm: InitializedTrackable<Boolean>
+    val isTransceivingPwm: InitializedTrackable<Boolean>
 
     /**
      * Gets if the channel is active for state transitions.
@@ -71,33 +71,21 @@ abstract class DigitalChannel<D : DigitalDaqDevice> : DaqcGate<DigitalChannelVal
      * Implementing backing  field must be atomic or otherwise provide safety for
      * reads from multiple threads.
      */
-    abstract val isTransceivingFrequency: InitializedTrackable<Boolean>
+    val isTransceivingFrequency: InitializedTrackable<Boolean>
 
-    protected val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalChannelValue>>()
-    final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalChannelValue>>
-        get() = _updateBroadcaster
-
-    protected val _binaryStateBroadcaster = ConflatedBroadcastChannel<BinaryStateMeasurement>()
     val binaryStateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
-        get() = _binaryStateBroadcaster
 
-    protected val _pwmBroadcaster = ConflatedBroadcastChannel<QuantityMeasurement<Dimensionless>>()
     /**
      * [ConflatedBroadcastChannel] for receiving pulse width modulation data.
      */
     val pwmBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Dimensionless>>
-        get() = _pwmBroadcaster
 
-    protected val _transitionFrequencyBroadcaster = ConflatedBroadcastChannel<QuantityMeasurement<Frequency>>()
     /**
      * [ConflatedBroadcastChannel] for receiving transition frequency data.
      */
     val transitionFrequencyBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Frequency>>
-        get() = _transitionFrequencyBroadcaster
 
-    protected val _failureBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
     val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = _failureBroadcaster
 
 }
 

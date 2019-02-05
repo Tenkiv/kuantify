@@ -27,33 +27,26 @@ import javax.measure.quantity.*
 /**
  * Class defining the basic features of an input which reads binary signals.
  */
-@Suppress("LeakingThis")
-abstract class DigitalInput : DigitalChannel<DigitalDaqDevice>(), RatedTrackable<DigitalChannelValue> {
-
-    private val thisAsBinaryStateSensor = SimpleBinaryStateSensor(this)
-
-    private val thisAsTransitionFrequencyInput = SimpleDigitalFrequencySensor(this)
-
-    private val thisAsPwmSensor = SimplePwmSensor(this)
+interface DigitalInput : DigitalChannel<DigitalDaqDevice>, RatedTrackable<DigitalChannelValue> {
 
     /**
      * Activates this channel to gather data for transition frequency averaged over a certain period of time.
      *
      * @param avgFrequency The period of time to average the transition frequency.
      */
-    abstract fun startSamplingTransitionFrequency()
+    fun startSamplingTransitionFrequency()
 
     /**
      * Activates this channel to gather data for PWM averaged over a certain period of time.
      *
      * @param avgFrequency The period of time to average the PWM frequency.
      */
-    abstract fun startSamplingPwm()
+    fun startSamplingPwm()
 
     /**
      * Activates the channel to receive data about the current state of the [DigitalInput]
      */
-    abstract fun startSamplingBinaryState()
+    fun startSamplingBinaryState()
 
     /**
      * Creates a [SimpleBinaryStateSensor] with the input being this channel.
@@ -61,7 +54,7 @@ abstract class DigitalInput : DigitalChannel<DigitalDaqDevice>(), RatedTrackable
      * @param inverted If the channel has inverted values, ie Low == [BinaryState.High]. Default is false.
      * @return A [SimpleBinaryStateSensor] with the input as this channel.
      */
-    fun asBinaryStateSensor() = thisAsBinaryStateSensor
+    fun asBinaryStateSensor()
 
     /**
      * Creates a [SimpleDigitalFrequencySensor] with the input being this channel.
@@ -69,10 +62,7 @@ abstract class DigitalInput : DigitalChannel<DigitalDaqDevice>(), RatedTrackable
      * @param avgFrequency The average period of time over which to average.
      * @return A [SimpleDigitalFrequencySensor] with the input as this channel.
      */
-    fun asTransitionFrequencySensor(avgFrequency: ComparableQuantity<Frequency>): SimpleDigitalFrequencySensor {
-        this.avgFrequency.set(avgFrequency)
-        return thisAsTransitionFrequencyInput
-    }
+    fun asTransitionFrequencySensor(avgFrequency: ComparableQuantity<Frequency>): SimpleDigitalFrequencySensor
 
     /**
      * Creates a [SimplePwmSensor] with the input being this channel.
@@ -80,8 +70,5 @@ abstract class DigitalInput : DigitalChannel<DigitalDaqDevice>(), RatedTrackable
      * @param avgFrequency The average period of time over which to average.
      * @return A [SimplePwmSensor] with the input as this channel.
      */
-    fun asPwmSensor(avgFrequency: ComparableQuantity<Frequency>): SimplePwmSensor {
-        this.avgFrequency.set(avgFrequency)
-        return thisAsPwmSensor
-    }
+    fun asPwmSensor(avgFrequency: ComparableQuantity<Frequency>): SimplePwmSensor
 }

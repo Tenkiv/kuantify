@@ -24,4 +24,4 @@ import javax.measure.quantity.*
 /**
  * Class defining the basic features of an output which sends analog signals.
  */
-abstract class AnalogOutput : QuantityOutput<ElectricPotential>, DaqcChannel<AnalogOutputDevice>
+interface AnalogOutput : QuantityOutput<ElectricPotential>, DaqcChannel<AnalogOutputDevice>
