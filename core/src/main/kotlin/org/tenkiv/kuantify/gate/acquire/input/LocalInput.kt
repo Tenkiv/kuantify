@@ -4,18 +4,13 @@ import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.*
-import kotlin.coroutines.*
 
-sealed class LocalInput<T : DaqcValue>(val device: LocalDevice) : Input<T>, NetworkConfiguredSide {
-    abstract val uid: String
-
-    override val coroutineContext: CoroutineContext
-        get() = device.coroutineContext
+interface LocalInput<T : DaqcValue> : Input<T>, NetworkConfiguredSide {
+    val uid: String
 
     override fun sideConfig(config: SideRouteConfig) {
         val inputRoute = listOf(RC.DAQC_GATE, uid)
@@ -46,8 +41,7 @@ sealed class LocalInput<T : DaqcValue>(val device: LocalDevice) : Input<T>, Netw
     }
 }
 
-abstract class LocalQuantityInput<Q : Quantity<Q>>(device: LocalDevice) :
-    LocalInput<DaqcQuantity<Q>>(device), QuantityInput<Q> {
+interface LocalQuantityInput<Q : Quantity<Q>> : LocalInput<DaqcQuantity<Q>>, QuantityInput<Q> {
 
 
     override fun sideConfig(config: SideRouteConfig) {
@@ -68,8 +62,7 @@ abstract class LocalQuantityInput<Q : Quantity<Q>>(device: LocalDevice) :
     }
 }
 
-abstract class LocalBinaryStateInput(device: LocalDevice) : LocalInput<BinaryState>(device),
-    BinaryStateInput {
+interface LocalBinaryStateInput : LocalInput<BinaryState>, BinaryStateInput {
 
     override fun sideConfig(config: SideRouteConfig) {
         super.sideConfig(config)

@@ -4,19 +4,14 @@ import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.*
-import kotlin.coroutines.*
 import kotlin.reflect.*
 
-sealed class LocalOutput<T : DaqcValue>(val device: LocalDevice) : Output<T>, NetworkConfiguredSide {
-    abstract val uid: String
-
-    override val coroutineContext: CoroutineContext
-        get() = device.coroutineContext
+interface LocalOutput<T : DaqcValue> : Output<T>, NetworkConfiguredSide {
+    val uid: String
 
     override fun sideConfig(config: SideRouteConfig) {
         val outputRoute = listOf(RC.DAQC_GATE, uid)
@@ -41,10 +36,9 @@ sealed class LocalOutput<T : DaqcValue>(val device: LocalDevice) : Output<T>, Ne
     }
 }
 
-abstract class LocalQuantityOutput<Q : Quantity<Q>>(device: LocalDevice) :
-    LocalOutput<DaqcQuantity<Q>>(device), QuantityOutput<Q> {
+interface LocalQuantityOutput<Q : Quantity<Q>> : LocalOutput<DaqcQuantity<Q>>, QuantityOutput<Q> {
 
-    abstract val quantityType: KClass<Q>
+    val quantityType: KClass<Q>
 
     override fun sideConfig(config: SideRouteConfig) {
         super.sideConfig(config)
@@ -71,8 +65,7 @@ abstract class LocalQuantityOutput<Q : Quantity<Q>>(device: LocalDevice) :
     }
 }
 
-abstract class LocalBinaryStateOutput(device: LocalDevice) : LocalOutput<BinaryState>(device),
-    BinaryStateOutput {
+interface LocalBinaryStateOutput : LocalOutput<BinaryState>, BinaryStateOutput {
 
 
     override fun sideConfig(config: SideRouteConfig) {
