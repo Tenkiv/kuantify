@@ -16,7 +16,7 @@ import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
 
-interface KuantifyDevice : Device, NetworkConfiguredCombined {
+interface FSDevice : Device, NetworkConfiguredCombined {
     override fun combinedConfig(config: CombinedRouteConfig) {
 
     }
@@ -24,9 +24,9 @@ interface KuantifyDevice : Device, NetworkConfiguredCombined {
 
 /**
  * [Device] where the corresponding [LocalDevice] DAQC is managed by Kuantify. Therefore, all [LocalDevice]s are
- * [BaseKuantifyDevice]s but not all [RemoteDevice]s are.
+ * [FSBaseDevice]s but not all [RemoteDevice]s are.
  */
-sealed class BaseKuantifyDevice : KuantifyDevice, NetworkConfiguredSide {
+sealed class FSBaseDevice : FSDevice, NetworkConfiguredSide {
 
     internal val networkCommunicator: NetworkCommunicator = run {
         val combinedNetworkConfig = CombinedRouteConfig(this)
@@ -78,7 +78,7 @@ sealed class BaseKuantifyDevice : KuantifyDevice, NetworkConfiguredSide {
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Local Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class LocalDevice : BaseKuantifyDevice() {
+abstract class LocalDevice : FSBaseDevice() {
 
     @Volatile
     private var job = Job()
@@ -108,7 +108,7 @@ abstract class LocalDevice : BaseKuantifyDevice() {
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Remote Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class RemoteKuantifyDevice(private val scope: CoroutineScope) : BaseKuantifyDevice(), RemoteDevice {
+abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(), RemoteDevice {
 
     @Volatile
     private var job = Job(scope.coroutineContext[Job])

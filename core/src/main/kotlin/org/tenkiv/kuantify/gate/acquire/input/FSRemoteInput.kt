@@ -15,7 +15,7 @@ import javax.measure.*
 import kotlin.coroutines.*
 import kotlin.reflect.*
 
-sealed class KuanitfyRemoteInput<T : DaqcValue>(val device: RemoteKuantifyDevice) : Input<T>,
+sealed class FSRemoteInput<T : DaqcValue>(val device: FSRemoteDevice) : Input<T>,
     NetworkConfiguredSide {
 
     abstract val uid: String
@@ -72,8 +72,8 @@ sealed class KuanitfyRemoteInput<T : DaqcValue>(val device: RemoteKuantifyDevice
     }
 }
 
-abstract class QuantityKuantifyRemoteInput<Q : Quantity<Q>>(device: RemoteKuantifyDevice) :
-    KuanitfyRemoteInput<DaqcQuantity<Q>>(device), QuantityInput<Q> {
+abstract class FSRemoteQuantityInput<Q : Quantity<Q>>(device: FSRemoteDevice) :
+    FSRemoteInput<DaqcQuantity<Q>>(device), QuantityInput<Q> {
 
     abstract val quantityType: KClass<Q>
 
@@ -100,7 +100,7 @@ abstract class QuantityKuantifyRemoteInput<Q : Quantity<Q>>(device: RemoteKuanti
 
 }
 
-abstract class BinaryStateKuantifyRemoteInput(device: RemoteKuantifyDevice) : KuanitfyRemoteInput<BinaryState>(device),
+abstract class FSRemoteBinaryStateInput(device: FSRemoteDevice) : FSRemoteInput<BinaryState>(device),
     BinaryStateInput {
 
     override fun sideConfig(config: SideRouteConfig) {

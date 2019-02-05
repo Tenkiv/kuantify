@@ -12,7 +12,7 @@ import javax.measure.*
 import kotlin.coroutines.*
 import kotlin.reflect.*
 
-sealed class KuantifyLocalOutput<T : DaqcValue>(val device: LocalDevice) : Output<T>, NetworkConfiguredSide {
+sealed class LocalOutput<T : DaqcValue>(val device: LocalDevice) : Output<T>, NetworkConfiguredSide {
     abstract val uid: String
 
     override val coroutineContext: CoroutineContext
@@ -41,8 +41,8 @@ sealed class KuantifyLocalOutput<T : DaqcValue>(val device: LocalDevice) : Outpu
     }
 }
 
-abstract class QuantityKuantifyLocalOutput<Q : Quantity<Q>>(device: LocalDevice) :
-    KuantifyLocalOutput<DaqcQuantity<Q>>(device), QuantityOutput<Q> {
+abstract class LocalQuantityOutput<Q : Quantity<Q>>(device: LocalDevice) :
+    LocalOutput<DaqcQuantity<Q>>(device), QuantityOutput<Q> {
 
     abstract val quantityType: KClass<Q>
 
@@ -71,7 +71,7 @@ abstract class QuantityKuantifyLocalOutput<Q : Quantity<Q>>(device: LocalDevice)
     }
 }
 
-abstract class BinaryStateKuantifyLocalOutput(device: LocalDevice) : KuantifyLocalOutput<BinaryState>(device),
+abstract class LocalBinaryStateOutput(device: LocalDevice) : LocalOutput<BinaryState>(device),
     BinaryStateOutput {
 
 

@@ -9,7 +9,7 @@ import kotlin.coroutines.*
 typealias UpdateReceiver = suspend (update: String?) -> Unit
 typealias MessageSerializer<T> = (update: T) -> String
 
-internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyDevice) : CoroutineScope {
+internal sealed class NetworkRouteHandler<T>(protected val device: FSBaseDevice) : CoroutineScope {
 
     @Volatile
     protected var job = Job(coroutineContext[Job])
@@ -22,7 +22,7 @@ internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyD
     }
 
     internal class Host<T> internal constructor(
-        device: BaseKuantifyDevice,
+        device: FSBaseDevice,
         private val route: Route,
         private val localUpdateChannel: ReceiveChannel<T>?,
         private val networkUpdateChannel: ReceiveChannel<String?>?,
@@ -55,7 +55,7 @@ internal sealed class NetworkRouteHandler<T>(protected val device: BaseKuantifyD
     }
 
     internal class Remote<T> internal constructor(
-        device: BaseKuantifyDevice,
+        device: FSBaseDevice,
         private val route: Route,
         private val localUpdateChannel: ReceiveChannel<T>?,
         private val networkUpdateChannel: ReceiveChannel<String?>?,

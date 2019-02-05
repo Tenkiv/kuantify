@@ -19,7 +19,7 @@ private val logger = KotlinLogging.logger {}
 annotation class CombinedRouteConfigMarker
 
 @CombinedRouteConfigMarker
-class CombinedRouteConfig internal constructor(private val device: KuantifyDevice) {
+class CombinedRouteConfig internal constructor(private val device: FSDevice) {
 
     internal val networkRouteHandlerMap = HashMap<Route, NetworkRouteHandler<*>>()
 
@@ -48,7 +48,7 @@ class CombinedRouteConfig internal constructor(private val device: KuantifyDevic
         routeHandlerBuilder.build()
 
         val networkUpdateChannel = if ((device is LocalDevice && routeHandlerBuilder.receiveFromNetworkOnHost) ||
-            (device is RemoteKuantifyDevice && routeHandlerBuilder.receiveFromNetworkOnRemote)
+            (device is FSRemoteDevice && routeHandlerBuilder.receiveFromNetworkOnRemote)
         ) {
             Channel<String?>(10_000).also { networkUpdateChannelMap += this to it }
         } else {
@@ -74,7 +74,7 @@ class CombinedRouteConfig internal constructor(private val device: KuantifyDevic
                 routeHandlerBuilder.sendFromHost,
                 receiveUpdatesOnHost
             )
-            is RemoteKuantifyDevice -> NetworkRouteHandler.Remote(
+            is FSRemoteDevice -> NetworkRouteHandler.Remote(
                 device,
                 this,
                 routeHandlerBuilder.localUpdateChannel,
@@ -85,7 +85,7 @@ class CombinedRouteConfig internal constructor(private val device: KuantifyDevic
                 isFullyBiDirectional
             )
             else -> throw IllegalStateException(
-                "Concrete KuantifyDevice must extend either LocalDevice or RemoteKuantifyDevice"
+                "Concrete FSDevice must extend either LocalDevice or FSRemoteDevice"
             )
         }
     }
@@ -333,7 +333,7 @@ class OnSide<T> internal constructor() {
 annotation class SideRouteConfigMarker
 
 @SideRouteConfigMarker
-class SideRouteConfig internal constructor(private val device: BaseKuantifyDevice) {
+class SideRouteConfig internal constructor(private val device: FSBaseDevice) {
 
     internal val networkRouteHandlerMap = HashMap<Route, NetworkRouteHandler<*>>()
 
@@ -382,7 +382,7 @@ class SideRouteConfig internal constructor(private val device: BaseKuantifyDevic
                 routeHandlerBuilder.send,
                 routeHandlerBuilder.receive
             )
-            is RemoteKuantifyDevice -> NetworkRouteHandler.Remote(
+            is FSRemoteDevice -> NetworkRouteHandler.Remote(
                 device,
                 this,
                 routeHandlerBuilder.localUpdateChannel,
@@ -393,7 +393,7 @@ class SideRouteConfig internal constructor(private val device: BaseKuantifyDevic
                 isFullyBiDirectional
             )
             else -> throw IllegalStateException(
-                "Concrete KuantifyDevice must extend either LocalDevice or RemoteKuantifyDevice"
+                "Concrete FSDevice must extend either LocalDevice or FSRemoteDevice"
             )
         }
     }

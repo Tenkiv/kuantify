@@ -11,7 +11,7 @@ import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.*
 import kotlin.coroutines.*
 
-sealed class KuantifyLocalInput<T : DaqcValue>(val device: LocalDevice) : Input<T>, NetworkConfiguredSide {
+sealed class LocalInput<T : DaqcValue>(val device: LocalDevice) : Input<T>, NetworkConfiguredSide {
     abstract val uid: String
 
     override val coroutineContext: CoroutineContext
@@ -46,8 +46,8 @@ sealed class KuantifyLocalInput<T : DaqcValue>(val device: LocalDevice) : Input<
     }
 }
 
-abstract class QuantityKuantifyLocalInput<Q : Quantity<Q>>(device: LocalDevice) :
-    KuantifyLocalInput<DaqcQuantity<Q>>(device), QuantityInput<Q> {
+abstract class LocalQuantityInput<Q : Quantity<Q>>(device: LocalDevice) :
+    LocalInput<DaqcQuantity<Q>>(device), QuantityInput<Q> {
 
 
     override fun sideConfig(config: SideRouteConfig) {
@@ -68,7 +68,7 @@ abstract class QuantityKuantifyLocalInput<Q : Quantity<Q>>(device: LocalDevice) 
     }
 }
 
-abstract class BinaryStateKuantifyLocalInput(device: LocalDevice) : KuantifyLocalInput<BinaryState>(device),
+abstract class LocalBinaryStateInput(device: LocalDevice) : LocalInput<BinaryState>(device),
     BinaryStateInput {
 
     override fun sideConfig(config: SideRouteConfig) {

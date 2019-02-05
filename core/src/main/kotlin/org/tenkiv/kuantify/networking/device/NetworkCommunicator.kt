@@ -7,7 +7,7 @@ import org.tenkiv.kuantify.hardware.definitions.device.*
 typealias Route = List<String>
 
 internal class NetworkCommunicator(
-    val device: BaseKuantifyDevice,
+    val device: FSBaseDevice,
     private val networkRouteHandlers: List<NetworkRouteHandler<*>>,
     private val networkUpdateChannelMap: Map<Route, Channel<String?>>
 ) {
