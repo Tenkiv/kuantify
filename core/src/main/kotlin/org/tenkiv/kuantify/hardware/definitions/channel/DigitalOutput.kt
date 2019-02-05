@@ -64,19 +64,19 @@ interface DigitalOutput : DigitalChannel<DigitalDaqDevice> {
      * @param inverted Denotes if [BinaryState.ON] is Low as well as the inverse. By default false.
      * @return A [SimpleBinaryStateController] with this [DigitalOutput] as the controlled output.
      */
-    fun asBinaryStateController()
+    fun asBinaryStateController(): BinaryStateOutput
 
     /**
      * Ease of use function to create a [SimplePwmController] from this [DigitalOutput].
      *
      * @return A [SimplePwmController] with this [DigitalOutput] as the controlled output.
      */
-    fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): SimplePwmController
+    fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Dimensionless>
 
     /**
      * Ease of use function to create a [SimpleFrequencyController] from this [DigitalOutput].
      *
      * @return A [SimpleFrequencyController] with this [DigitalOutput] as the controlled output.
      */
-    fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): SimpleFrequencyController
+    fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Frequency>
 }

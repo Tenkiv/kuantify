@@ -19,6 +19,7 @@ package org.tenkiv.kuantify.hardware.definitions.channel
 
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.hardware.inputs.*
 import tec.units.indriya.*
@@ -54,7 +55,7 @@ interface DigitalInput : DigitalChannel<DigitalDaqDevice>, RatedTrackable<Digita
      * @param inverted If the channel has inverted values, ie Low == [BinaryState.High]. Default is false.
      * @return A [SimpleBinaryStateSensor] with the input as this channel.
      */
-    fun asBinaryStateSensor()
+    fun asBinaryStateSensor(): BinaryStateInput
 
     /**
      * Creates a [SimpleDigitalFrequencySensor] with the input being this channel.
@@ -62,7 +63,7 @@ interface DigitalInput : DigitalChannel<DigitalDaqDevice>, RatedTrackable<Digita
      * @param avgFrequency The average period of time over which to average.
      * @return A [SimpleDigitalFrequencySensor] with the input as this channel.
      */
-    fun asTransitionFrequencySensor(avgFrequency: ComparableQuantity<Frequency>): SimpleDigitalFrequencySensor
+    fun asTransitionFrequencySensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Frequency>
 
     /**
      * Creates a [SimplePwmSensor] with the input being this channel.
@@ -70,5 +71,5 @@ interface DigitalInput : DigitalChannel<DigitalDaqDevice>, RatedTrackable<Digita
      * @param avgFrequency The average period of time over which to average.
      * @return A [SimplePwmSensor] with the input as this channel.
      */
-    fun asPwmSensor(avgFrequency: ComparableQuantity<Frequency>): SimplePwmSensor
+    fun asPwmSensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Dimensionless>
 }
