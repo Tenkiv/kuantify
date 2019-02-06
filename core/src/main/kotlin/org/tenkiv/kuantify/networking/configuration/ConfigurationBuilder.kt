@@ -413,6 +413,7 @@ class SideRouteHandlerBuilder<T> internal constructor() {
 
     internal var send: Boolean = false
 
+    @PublishedApi
     internal var receive: UpdateReceiver? = null
 
     fun serializeMessage(messageSerializer: MessageSerializer<T>) {
@@ -428,7 +429,7 @@ class SideRouteHandlerBuilder<T> internal constructor() {
         receive = receiver
     }
 
-    fun receiveMessage(resolutionStrategy: NullResolutionStrategy, receiver: MessageReceiver) {
+    inline fun receiveMessage(resolutionStrategy: NullResolutionStrategy, crossinline receiver: MessageReceiver) {
         receive = { message ->
             if (message == null) {
                 if (resolutionStrategy === NullResolutionStrategy.PANIC) {

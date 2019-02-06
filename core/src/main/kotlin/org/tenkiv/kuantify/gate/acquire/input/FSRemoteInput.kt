@@ -31,12 +31,12 @@ sealed class FSRemoteInput<T : DaqcValue> : Input<T>,
     override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    internal val startSamplingChannel = Channel<Unit?>(Channel.CONFLATED)
+    internal val startSamplingChannel = Channel<Ping>(Channel.CONFLATED)
     override fun startSampling() {
         startSamplingChannel.offer(null)
     }
 
-    internal val stopTransceivingChannel = Channel<Unit?>(Channel.CONFLATED)
+    internal val stopTransceivingChannel = Channel<Ping>(Channel.CONFLATED)
     override fun stopTransceiving() {
         stopTransceivingChannel.offer(null)
     }

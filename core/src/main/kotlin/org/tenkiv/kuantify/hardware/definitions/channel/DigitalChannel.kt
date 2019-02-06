@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.hardware.definitions.channel
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.*
@@ -87,6 +88,36 @@ interface DigitalChannel<D : DigitalDaqDevice> : DaqcGate<DigitalChannelValue>, 
 
     val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
 
+}
+
+fun <D : DigitalDaqDevice> DigitalChannel<D>.onAnyTransceivingChange(block: (anyTransceiving: Boolean) -> Unit) {
+    launch {
+        isTransceivingBinaryState.updateBroadcaster.consumeEach {
+            block(
+                isTransceivingBinaryState.value ||
+                        isTransceivingFrequency.value ||
+                        isTransceivingFrequency.value
+            )
+        }
+    }
+    launch {
+        isTransceivingPwm.updateBroadcaster.consumeEach {
+            block(
+                isTransceivingBinaryState.value ||
+                        isTransceivingFrequency.value ||
+                        isTransceivingFrequency.value
+            )
+        }
+    }
+    launch {
+        isTransceivingFrequency.updateBroadcaster.consumeEach {
+            block(
+                isTransceivingBinaryState.value ||
+                        isTransceivingFrequency.value ||
+                        isTransceivingFrequency.value
+            )
+        }
+    }
 }
 
 @Serializable
