@@ -5,9 +5,12 @@ import kotlinx.coroutines.channels.*
 import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
+import tec.units.indriya.*
 import javax.measure.quantity.*
 
 private inline fun SideRouteConfig.startSamplingLocal(uid: String, rc: String, crossinline start: () -> Unit) {
@@ -26,9 +29,39 @@ private fun SideRouteConfig.startSamplingRemote(uid: String, rc: String, channel
     }
 }
 
-interface LocalDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkConfiguredCombined {
+@Suppress("LeakingThis")
+abstract class LocalDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkConfiguredCombined {
 
-    val uid: String
+    abstract val uid: String
+
+    private val thisAsBinaryStateSensor = SimpleBinaryStateSensor(this)
+
+    private val thisAsTransitionFrequencyInput = SimpleDigitalFrequencySensor(this)
+
+    private val thisAsPwmSensor = SimplePwmSensor(this)
+
+    private val _isTransceiving: InitializedUpdatable<Boolean> = Updatable(false)
+    override val isTransceiving: InitializedTrackable<Boolean>
+        get() = _isTransceiving
+
+    init {
+        onAnyTransceivingChange {
+            _isTransceiving.value = it
+        }
+    }
+
+    override fun asBinaryStateSensor(): BinaryStateInput = thisAsBinaryStateSensor
+
+    override fun asTransitionFrequencySensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Frequency> {
+        this.avgFrequency.set(avgFrequency)
+        return thisAsTransitionFrequencyInput
+    }
+
+    override fun asPwmSensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Dimensionless> {
+        this.avgFrequency.set(avgFrequency)
+        return thisAsPwmSensor
+
+    }
 
     override fun combinedConfig(config: CombinedRouteConfig) {
         config.add {
@@ -61,6 +94,7 @@ interface LocalDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkConfig
     }
 }
 
+@Suppress("LeakingThis")
 abstract class FSRemoteDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkConfiguredCombined {
     abstract val uid: String
 
@@ -100,6 +134,12 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkConfiguredSide, Netwo
     override val isTransceivingFrequency: InitializedTrackable<Boolean>
         get() = _isTransceivingFrequency
 
+    private val thisAsBinaryStateSensor = SimpleBinaryStateSensor(this)
+
+    private val thisAsTransitionFrequencyInput = SimpleDigitalFrequencySensor(this)
+
+    private val thisAsPwmSensor = SimplePwmSensor(this)
+
     init {
         launch {
             updateBroadcaster.consumeEach { (value, instant) ->
@@ -136,6 +176,19 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkConfiguredSide, Netwo
     private val stopTransceivingChannel = Channel<Ping>(Channel.CONFLATED)
     override fun stopTransceiving() {
         stopTransceivingChannel.offer(null)
+    }
+
+    override fun asBinaryStateSensor(): BinaryStateInput = thisAsBinaryStateSensor
+
+    override fun asTransitionFrequencySensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Frequency> {
+        this.avgFrequency.set(avgFrequency)
+        return thisAsTransitionFrequencyInput
+    }
+
+    override fun asPwmSensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Dimensionless> {
+        this.avgFrequency.set(avgFrequency)
+        return thisAsPwmSensor
+
     }
 
     override fun combinedConfig(config: CombinedRouteConfig) {
