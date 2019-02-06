@@ -16,7 +16,7 @@
  */
 
 object Vof {
-    const val kotlin = "1.3.20"
+    const val kotlin = "1.3.21"
 
     // Kotlin extensions
     const val coroutinesX = "1.1.1"
