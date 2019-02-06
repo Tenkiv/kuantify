@@ -87,9 +87,16 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkConfiguredSide, Networ
     }
 }
 
+@Suppress("LeakingThis")
 abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkConfiguredSide, NetworkConfiguredCombined {
 
     abstract val uid: String
+
+    private val thisAsBinaryStateController = SimpleBinaryStateController(this)
+
+    private val thisAsPwmController = SimplePwmController(this)
+
+    private val thisAsFrequencyController = SimpleFrequencyController(this)
 
     private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalChannelValue>>()
     override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalChannelValue>>
@@ -132,6 +139,18 @@ abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkConfiguredSide, Net
         onAnyTransceivingChange {
             _isTransceiving.value = it
         }
+    }
+
+    override fun asBinaryStateController(): BinaryStateOutput = thisAsBinaryStateController
+
+    override fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Dimensionless> {
+        this.avgFrequency.set(avgFrequency)
+        return thisAsPwmController
+    }
+
+    override fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Frequency> {
+        this.avgFrequency.set(avgFrequency)
+        return thisAsFrequencyController
     }
 
     override fun combinedConfig(config: CombinedRouteConfig) {

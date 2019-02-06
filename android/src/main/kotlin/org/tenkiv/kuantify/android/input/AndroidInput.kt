@@ -26,7 +26,6 @@ import org.tenkiv.kuantify.android.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import java.time.*
-import javax.measure.quantity.*
 import kotlin.coroutines.*
 
 /**
@@ -43,7 +42,7 @@ abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val 
 
     override val coroutineContext: CoroutineContext get() = device.coroutineContext
 
-    override val updateRate: TrackableQuantity<Frequency> by runningAverage()
+    override val updateRate: UpdateRate by runningAverage()
 
     private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<Q>>()
     final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Q>>

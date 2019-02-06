@@ -7,7 +7,7 @@ import android.provider.*
 import org.tenkiv.kuantify.android.input.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 
-open class LocalAndroidDevice internal constructor(context: Context) : LocalDevice {
+open class LocalAndroidDevice internal constructor(context: Context) : LocalDevice() {
 
     internal val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         ?: throw ClassCastException(
