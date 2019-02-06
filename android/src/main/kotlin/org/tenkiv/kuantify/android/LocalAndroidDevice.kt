@@ -15,17 +15,32 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
         )
 
     val lightSensors: List<AndroidLightSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_LIGHT).map { AndroidLightSensor(this, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_LIGHT).map {
+            AndroidLightSensor(
+                this,
+                it
+            )
+        }
 
     val hasLightSensors = lightSensors.isNotEmpty()
 
     val proximitySensors: List<AndroidProximitySensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PROXIMITY).map { AndroidProximitySensor(this, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_PROXIMITY).map {
+            AndroidProximitySensor(
+                this,
+                it
+            )
+        }
 
     val hasProximitySensors = proximitySensors.isNotEmpty()
 
     val pressureSensors: List<AndroidPressureSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE).map { AndroidPressureSensor(this, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE).map {
+            AndroidPressureSensor(
+                this,
+                it
+            )
+        }
 
     val hasPressureSensors = pressureSensors.isNotEmpty()
 
@@ -41,28 +56,16 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
 
     val hasAmbientTemperatureSensors = ambientTemperatureSensors.isNotEmpty()
 
-    val stationarySensors: List<AndroidStationarySensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_STATIONARY_DETECT)
-            .map { AndroidStationarySensor(this, it) }
-
-    val hasStationarySensors = stationarySensors.isNotEmpty()
-
-    val motionSensors: List<AndroidMotionSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_MOTION_DETECT).map { AndroidMotionSensor(this, it) }
-
-    val hasMotionSensors = motionSensors.isNotEmpty()
-
     //DEBUG: What is the difference between heart beat and heart rate?
     val heartBeatSensors: List<AndroidHeartBeatSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_HEART_BEAT).map { AndroidHeartBeatSensor(this, it) }
+        sensorManager.getDynamicSensorList(Sensor.TYPE_HEART_BEAT).map {
+            AndroidHeartBeatSensor(
+                this,
+                it
+            )
+        }
 
     val hasHeartBeatSensors = heartBeatSensors.isNotEmpty()
-
-    //DEBUG: What is this?
-    val onBodySensors: List<AndroidOnBodySensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE).map { AndroidOnBodySensor(this, it) }
-
-    val hasOnBodySensors = stationarySensors.isNotEmpty()
 
     /**
      * We are using a hardware ID as opposed to an installation UID as we have to try to ensure a UUID against other

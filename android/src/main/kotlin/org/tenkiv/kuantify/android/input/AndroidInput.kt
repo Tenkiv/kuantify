@@ -31,7 +31,8 @@ import kotlin.coroutines.*
 /**
  * Class which defines the basic aspects of any Android Sensor.
  */
-abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val sensor: Sensor) : Input<Q> {
+@Suppress("LeakingThis")
+abstract class AndroidSensor<T : DaqcValue>(val device: LocalAndroidDevice, val sensor: Sensor) : Input<T> {
 
     private val manager: SensorManager get() = device.sensorManager
 
@@ -44,8 +45,8 @@ abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val 
 
     override val updateRate: UpdateRate by runningAverage()
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<Q>>()
-    final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Q>>
+    private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<T>>()
+    final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = _broadcastChannel
 
     private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
@@ -60,13 +61,6 @@ abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val 
     val accuracyBroadcastChannel: ConflatedBroadcastChannel<out AndroidSensorAccuracy>
         get() = _accuracyBroadcastChannel
 
-    /**
-     * The minimum acceptable accuracy for samples from the sensor. Samples which fall below it will be discarded.
-     */
-    @Volatile
-    var minimumAccuracy: AndroidSensorAccuracy =
-        AndroidSensorAccuracy.LOW_ACCURACY
-
     protected val _isTransceiving = Updatable(false)
     override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
@@ -77,8 +71,7 @@ abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val 
         }
 
         override fun onSensorChanged(event: SensorEvent) {
-            if (event.accuracy >= minimumAccuracy.flag)
-                _broadcastChannel.offer(convertData(event.values).at(Instant.ofEpochSecond(event.timestamp)))
+            _broadcastChannel.offer(convertData(event.values).at(Instant.ofEpochSecond(event.timestamp)))
         }
     }
 
@@ -104,7 +97,7 @@ abstract class AndroidSensor<Q : DaqcValue>(val device: LocalAndroidDevice, val 
      * @param data The [FloatArray] tuple given by a [SensorEvent].
      * @return The data in the form of a [DaqcValue].
      */
-    abstract fun convertData(data: FloatArray): Q
+    abstract fun convertData(data: FloatArray): T
 }
 
 /**
