@@ -1,6 +1,5 @@
 package org.tenkiv.kuantify.hardware.definitions.channel
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
@@ -141,16 +140,6 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkConfiguredSide, Netwo
     private val thisAsPwmSensor = SimplePwmSensor(this)
 
     init {
-        launch {
-            updateBroadcaster.consumeEach { (value, instant) ->
-                when (value) {
-                    is DigitalChannelValue.BinaryState -> _binaryStateBroadcaster.send(value.state at instant)
-                    is DigitalChannelValue.Percentage -> _pwmBroadcaster.send(value.percent at instant)
-                    is DigitalChannelValue.Frequency -> _transitionFrequencyBroadcaster.send(value.frequency at instant)
-                }
-            }
-        }
-
         onAnyTransceivingChange {
             _isTransceiving.value = it
         }
@@ -212,6 +201,13 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkConfiguredSide, Netwo
             ) {
                 receiveMessage(NullResolutionStrategy.PANIC) {
                     val measurement = Json.parse(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
+                    val (value, instant) = measurement
+                    when (value) {
+                        is DigitalChannelValue.BinaryState -> _binaryStateBroadcaster.send(value.state at instant)
+                        is DigitalChannelValue.Percentage -> _pwmBroadcaster.send(value.percent at instant)
+                        is DigitalChannelValue.Frequency ->
+                            _transitionFrequencyBroadcaster.send(value.frequency at instant)
+                    }
                     _updateBroadcaster.send(measurement)
                 }
             }
