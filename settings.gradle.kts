@@ -17,7 +17,7 @@
 
 rootProject.name = "kuantify"
 
-include("core", "learning", "android")
+include("core", "learning", ":android-core", ":android-local")
 
 pluginManagement {
     resolutionStrategy {

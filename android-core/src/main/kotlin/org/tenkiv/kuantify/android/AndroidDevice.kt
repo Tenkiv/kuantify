@@ -1,4 +1,4 @@
-package org.tenkiv.kuantify.android.device
+package org.tenkiv.kuantify.android
 
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
