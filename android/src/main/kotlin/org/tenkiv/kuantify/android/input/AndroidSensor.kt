@@ -22,17 +22,25 @@ import android.hardware.SensorManager.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.android.*
+import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import java.time.*
 import kotlin.coroutines.*
 
+interface AndroidSensor {
+    val uid: String
+}
+
 /**
  * Class which defines the basic aspects of any Android Sensor.
  */
 @Suppress("LeakingThis")
-abstract class AndroidSensor<T : DaqcValue>(val device: LocalAndroidDevice, val sensor: Sensor) : Input<T> {
+abstract class LocalAndroidSensor<T : DaqcValue>(
+    val device: LocalAndroidDevice,
+    val sensor: Sensor,
+    override val uid: String
+) : Input<T>, AndroidSensor {
 
     private val manager: SensorManager get() = device.sensorManager
 

@@ -1,7 +1,7 @@
 package org.tenkiv.kuantify.android.input
 
 import android.hardware.*
-import org.tenkiv.kuantify.android.*
+import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.android.lib.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.physikal.core.*
@@ -13,16 +13,16 @@ import javax.measure.quantity.*
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Temperature>>(device, sensor) {
+class LocalAndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
+    LocalAndroidSensor<DaqcQuantity<Temperature>>(device, sensor, uid) {
 
     override val type: Int get() = Sensor.TYPE_AMBIENT_TEMPERATURE
 
     override fun convertData(data: FloatArray): DaqcQuantity<Temperature> = data[0].celsius.toDaqc()
 }
 
-class AndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Frequency>>(device, sensor) {
+class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
+    LocalAndroidSensor<DaqcQuantity<Frequency>>(device, sensor, uid) {
     override val type: Int get() = Sensor.TYPE_HEART_RATE
 
     override fun convertData(data: FloatArray): DaqcQuantity<Frequency> = data[0].beatsPerMinute.toDaqc()
@@ -34,8 +34,8 @@ class AndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor) :
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Illuminance>>(device, sensor) {
+class LocalAndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
+    LocalAndroidSensor<DaqcQuantity<Illuminance>>(device, sensor, uid) {
 
     override val type: Int get() = Sensor.TYPE_LIGHT
 
@@ -48,8 +48,8 @@ class AndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor) :
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Length>>(device, sensor) {
+class LocalAndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
+    LocalAndroidSensor<DaqcQuantity<Length>>(device, sensor, uid) {
 
     override val type: Int get() = Sensor.TYPE_PROXIMITY
 
@@ -62,8 +62,8 @@ class AndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor) :
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Pressure>>(device, sensor) {
+class LocalAndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
+    LocalAndroidSensor<DaqcQuantity<Pressure>>(device, sensor, uid) {
 
     override val type: Int get() = Sensor.TYPE_PRESSURE
 
@@ -76,24 +76,19 @@ class AndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor) :
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class AndroidRelativeHumiditySensor(device: LocalAndroidDevice, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Dimensionless>>(device, sensor) {
+class LocalAndroidRelativeHumiditySensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
+    LocalAndroidSensor<DaqcQuantity<Dimensionless>>(device, sensor, uid) {
 
     override val type: Int get() = Sensor.TYPE_RELATIVE_HUMIDITY
 
     override fun convertData(data: FloatArray): DaqcQuantity<Dimensionless> = data[0].percent.toDaqc()
 }
 
-/**
- * Android heartbeat sensor.
- *
- * @param manager The Android device's [SensorManager].
- * @param sensor The sensor to be integrated.
- */
-class AndroidHeartBeatSensor(device: LocalAndroidDevice, sensor: Sensor) :
-    AndroidSensor<DaqcQuantity<Frequency>>(device, sensor) {
-
-    override val type: Int get() = Sensor.TYPE_HEART_BEAT
-
-    override fun convertData(data: FloatArray): DaqcQuantity<Frequency> = data[0].beatsPerMinute.toDaqc()
+object AndroidSensorTypeId {
+    const val AMBIENT_TEMPERATURE = "AT"
+    const val HEART_RATE = "HR"
+    const val LIGHT = "LI"
+    const val PROXIMITY = "PX"
+    const val PRESSURE = "PS"
+    const val RELATIVE_HUMIDITY = "HU"
 }
