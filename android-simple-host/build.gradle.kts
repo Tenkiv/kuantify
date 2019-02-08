@@ -36,6 +36,7 @@ dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 
     implementation(project(":android-local"))
+    implementation(group = "io.ktor", name = "ktor-server-netty", version = Vof.ktor)
 
     testImplementation(group = "junit", name = "junit", version = Vof.junit)
 }
