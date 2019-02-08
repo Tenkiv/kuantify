@@ -7,9 +7,12 @@ import android.provider.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.android.*
 import org.tenkiv.kuantify.android.input.*
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
+
+private typealias SensorConstructor<S> = (LocalAndroidDevice, Sensor, String) -> S
 
 open class LocalAndroidDevice internal constructor(context: Context) : LocalDevice(),
     AndroidDevice {
@@ -20,48 +23,43 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
         )
 
     override val ambientTemperatureSensors: List<LocalAndroidAmbientTemperatureSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_AMBIENT_TEMPERATURE).mapIndexed { index, value ->
-            LocalAndroidAmbientTemperatureSensor(
-                this,
-                value,
-                "${AndroidSensorTypeId.AMBIENT_TEMPERATURE}$index"
-            )
+        getSensors(
+            Sensor.TYPE_AMBIENT_TEMPERATURE,
+            AndroidSensorTypeId.AMBIENT_TEMPERATURE
+        ) { device, sensor, id ->
+            LocalAndroidAmbientTemperatureSensor(device, sensor, id)
         }
 
     override val heartRateSensors: List<LocalAndroidHeartRateSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_HEART_RATE).mapIndexed { index, value ->
-            LocalAndroidHeartRateSensor(
-                this,
-                value,
-                "${AndroidSensorTypeId.HEART_RATE}$index"
-            )
+        getSensors(
+            Sensor.TYPE_HEART_RATE,
+            AndroidSensorTypeId.HEART_RATE
+        ) { device, sensor, id ->
+            LocalAndroidHeartRateSensor(device, sensor, id)
         }
 
     override val lightSensors: List<LocalAndroidLightSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_LIGHT).mapIndexed { index, value ->
-            LocalAndroidLightSensor(
-                this,
-                value,
-                "${AndroidSensorTypeId.LIGHT}$index"
-            )
+        getSensors(
+            Sensor.TYPE_LIGHT,
+            AndroidSensorTypeId.LIGHT
+        ) { device, sensor, id ->
+            LocalAndroidLightSensor(device, sensor, id)
         }
 
     override val proximitySensors: List<LocalAndroidProximitySensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PROXIMITY).mapIndexed { index, value ->
-            LocalAndroidProximitySensor(
-                this,
-                value,
-                "${AndroidSensorTypeId.PROXIMITY}$index"
-            )
+        getSensors(
+            Sensor.TYPE_PROXIMITY,
+            AndroidSensorTypeId.PROXIMITY
+        ) { device, sensor, id ->
+            LocalAndroidProximitySensor(device, sensor, id)
         }
 
     override val pressureSensors: List<LocalAndroidPressureSensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_PRESSURE).mapIndexed { index, value ->
-            LocalAndroidPressureSensor(
-                this,
-                value,
-                "${AndroidSensorTypeId.PRESSURE}$index"
-            )
+        getSensors(
+            Sensor.TYPE_PRESSURE,
+            AndroidSensorTypeId.PRESSURE
+        ) { device, sensor, id ->
+            LocalAndroidPressureSensor(device, sensor, id)
         }
 
     override val relativeHumiditySensors: List<LocalAndroidRelativeHumiditySensor> =
@@ -72,6 +70,35 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
                 "${AndroidSensorTypeId.RELATIVE_HUMIDITY}$index"
             )
         }
+
+    private inline fun <T : DaqcValue, S : LocalAndroidSensor<T>> getSensors(
+        sensorType: Int,
+        sensorTypeId: String,
+        sensorConstructor: SensorConstructor<S>
+    ): List<S> {
+        var number = 0
+        val result = ArrayList<S>()
+
+        sensorManager.getSensorList(sensorType).forEach { value ->
+            result += sensorConstructor(
+                this,
+                value,
+                "$sensorTypeId$number"
+            )
+            number++
+        }
+
+        sensorManager.getDynamicSensorList(sensorType).forEach { value ->
+            result += sensorConstructor(
+                this,
+                value,
+                "$sensorTypeId$number"
+            )
+            number++
+        }
+
+        return result
+    }
 
     override fun getInfo(): String {
         val info = AndroidDevice.Info(

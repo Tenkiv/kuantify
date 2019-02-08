@@ -30,7 +30,8 @@ interface FSDevice : Device, NetworkConfiguredCombined {
  */
 sealed class FSBaseDevice : FSDevice, NetworkConfiguredSide {
 
-    internal val networkCommunicator: NetworkCommunicator = run {
+    //TODO Lazy thread safety mode
+    internal val networkCommunicator: NetworkCommunicator by lazy {
         val combinedNetworkConfig = CombinedRouteConfig(this)
         combinedConfig(combinedNetworkConfig)
 

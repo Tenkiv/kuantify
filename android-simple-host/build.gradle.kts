@@ -26,6 +26,10 @@ android {
         getByName("test").java.srcDirs("src/test/kotlin")
     }
 
+    packagingOptions {
+        pickFirst("META-INF/**")
+        pickFirst("tec/units/indriya/format/messages.properties")
+    }
 }
 
 dependencies {

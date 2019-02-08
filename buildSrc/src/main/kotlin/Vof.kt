@@ -38,6 +38,9 @@ object Vof {
     const val logging = "1.6.22"
     const val slf4j = "1.7.9"
 
+    // Android
+    const val anko = "0.10.8"
+
     // Test
     const val junit = "4.12"
 }
