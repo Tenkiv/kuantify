@@ -37,7 +37,7 @@ abstract class LocalAndroidSensor<T : DaqcValue>(
     val device: LocalAndroidDevice,
     val sensor: Sensor,
     override val uid: String
-) : Input<T>, AndroidSensor {
+) : AndroidSensor<T>, LocalInput<T> {
 
     private val manager: SensorManager get() = device.sensorManager
 

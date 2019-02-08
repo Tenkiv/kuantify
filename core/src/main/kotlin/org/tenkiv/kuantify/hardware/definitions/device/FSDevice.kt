@@ -1,6 +1,7 @@
 package org.tenkiv.kuantify.hardware.definitions.device
 
 import io.ktor.client.features.websocket.*
+import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*
@@ -12,6 +13,7 @@ import org.tenkiv.kuantify.networking.client.*
 import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.kuantify.networking.device.*
 import org.tenkiv.kuantify.networking.server.*
+import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
@@ -80,11 +82,8 @@ sealed class FSBaseDevice : FSDevice, NetworkConfiguredSide {
 
 abstract class LocalDevice : FSBaseDevice() {
 
-    @Volatile
-    private var job = Job()
-
     override val coroutineContext: CoroutineContext
-        get() = GlobalScope.coroutineContext + job
+        get() = GlobalScope.coroutineContext
 
     val isHosting: Boolean
         get() = KuantifyHost.isHosting
@@ -99,8 +98,16 @@ abstract class LocalDevice : FSBaseDevice() {
         networkCommunicator.stop()
     }
 
-    override suspend fun sendMessage(route: Route, payload: String?) {
+    final override suspend fun sendMessage(route: Route, payload: String?) {
         ClientHandler.sendToAll(serializeMessage(route, payload))
+    }
+
+    override fun sideConfig(config: SideRouteConfig) {
+
+    }
+
+    open fun getInfo(): String {
+        return "null"
     }
 }
 
@@ -115,11 +122,15 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
 
     override val coroutineContext: CoroutineContext get() = scope.coroutineContext + job
 
+    private val _isConnected = AtomicBoolean(false)
+    override val isConnected: Boolean
+        get() = _isConnected.get()
+
     internal val sendChannel = Channel<String>(10_000)
 
     private fun startWebsocket() {
         launch {
-            httpClient.webSocket(method = HttpMethod.Get, host = hostIp, port = 80, path = "/") {
+            httpClient.webSocket(method = HttpMethod.Get, host = hostIp, port = 80, path = RC.WEBSOCKET) {
                 launch {
                     sendChannel.consumeEach { message ->
                         outgoing.send(Frame.Text(message))
@@ -135,11 +146,13 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
 
     override suspend fun connect() {
         startWebsocket()
+        _isConnected.set(true)
     }
 
     override suspend fun disconnect() {
         job.cancel()
         job = Job(scope.coroutineContext[Job])
+        _isConnected.set(false)
     }
 
     @Suppress("NAME_SHADOWING")
@@ -156,11 +169,16 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
 
     }
 
-    override suspend fun sendMessage(route: Route, payload: String?) {
+    final override suspend fun sendMessage(route: Route, payload: String?) {
         sendChannel.send(serializeMessage(route, payload))
     }
 
     override fun sideConfig(config: SideRouteConfig) {
 
+    }
+
+    companion object {
+        suspend fun getInfo(hostIp: String): String =
+            httpClient.get("$hostIp${RC.INFO}")
     }
 }

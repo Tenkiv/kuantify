@@ -4,9 +4,12 @@ import android.annotation.*
 import android.content.*
 import android.hardware.*
 import android.provider.*
+import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.android.*
 import org.tenkiv.kuantify.android.input.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.networking.*
+import org.tenkiv.kuantify.networking.configuration.*
 
 open class LocalAndroidDevice internal constructor(context: Context) : LocalDevice(),
     AndroidDevice {
@@ -70,6 +73,19 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
             )
         }
 
+    override fun getInfo(): String {
+        val info = AndroidDevice.Info(
+            deviceId = uid,
+            numAmbientTemperatureSensors = ambientTemperatureSensors.size,
+            numHeartRateSensors = heartRateSensors.size,
+            numLightSensors = lightSensors.size,
+            numProximitySensors = proximitySensors.size,
+            numPressureSensors = pressureSensors.size,
+            numRelativeHumiditySensors = relativeHumiditySensors.size
+        )
+
+        return Json.stringify(AndroidDevice.Info.serializer(), info)
+    }
 
     /**
      * We are using a hardware ID as opposed to an installation UID as we have to try to ensure a UUID against other
@@ -81,6 +97,16 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
     @SuppressLint("HardwareIds")
     final override val uid: String =
         Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+
+    override fun sideConfig(config: SideRouteConfig) {
+        super.sideConfig(config)
+        ambientTemperatureSensors.applySideConfigsTo(config)
+        heartRateSensors.applySideConfigsTo(config)
+        lightSensors.applySideConfigsTo(config)
+        pressureSensors.applySideConfigsTo(config)
+        proximitySensors.applySideConfigsTo(config)
+        relativeHumiditySensors.applySideConfigsTo(config)
+    }
 
     companion object {
         @Volatile

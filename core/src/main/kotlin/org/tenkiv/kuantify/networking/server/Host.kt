@@ -3,6 +3,7 @@ package org.tenkiv.kuantify.networking.server
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.cio.websocket.*
+import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.sessions.*
 import io.ktor.util.*
@@ -43,7 +44,11 @@ internal object KuantifyHost {
         }
 
         routing {
-            webSocket("/") {
+            get(RC.INFO) {
+                call.respondText(hostedDevice?.getInfo() ?: "null")
+            }
+
+            webSocket(RC.WEBSOCKET) {
 
                 val clientID = call.sessions.get<ClientId>()
 

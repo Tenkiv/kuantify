@@ -1,7 +1,11 @@
 package org.tenkiv.kuantify.networking
 
 object RC {
+    //HTTP routes
+    const val WEBSOCKET = "/ws"
+    const val INFO = "/info"
 
+    // Websocket routes
     const val DAQC_GATE = "gaqc_gate"
     const val BUFFER = "buffer"
     const val MAX_ACCEPTABLE_ERROR = "max_acceptable_error"

@@ -83,12 +83,3 @@ class LocalAndroidRelativeHumiditySensor(device: LocalAndroidDevice, sensor: Sen
 
     override fun convertData(data: FloatArray): DaqcQuantity<Dimensionless> = data[0].percent.toDaqc()
 }
-
-object AndroidSensorTypeId {
-    const val AMBIENT_TEMPERATURE = "AT"
-    const val HEART_RATE = "HR"
-    const val LIGHT = "LI"
-    const val PROXIMITY = "PX"
-    const val PRESSURE = "PS"
-    const val RELATIVE_HUMIDITY = "HU"
-}

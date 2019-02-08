@@ -41,7 +41,7 @@ dependencies {
     implementation(group = "io.github.microutils", name = "kotlin-logging", version = Vof.logging)
 
     //Serialization
-    implementation(
+    compile(
         group = "org.jetbrains.kotlinx",
         name = "kotlinx-serialization-runtime",
         version = Vof.serializationX
