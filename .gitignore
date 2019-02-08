@@ -3,6 +3,7 @@
 learning/build
 android-local/build
 android-core/build
+android-simple-host/build
 core/build
 
 ### Java template

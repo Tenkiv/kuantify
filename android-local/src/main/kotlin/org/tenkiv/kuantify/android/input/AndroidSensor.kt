@@ -22,15 +22,12 @@ import android.hardware.SensorManager.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.android.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import java.time.*
 import kotlin.coroutines.*
-
-interface AndroidSensor {
-    val uid: String
-}
 
 /**
  * Class which defines the basic aspects of any Android Sensor.
