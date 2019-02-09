@@ -36,7 +36,7 @@ object Vof {
     const val jackson = "2.9.8"
     const val androidGradle = "3.3.0"
     const val logging = "1.6.22"
-    const val slf4j = "1.7.9"
+    const val slf4j = "1.7.25"
 
     // Android
     const val anko = "0.10.8"
