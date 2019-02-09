@@ -24,7 +24,7 @@ plugins {
     kotlin("android.extensions") version Vof.kotlin apply false
     id("kotlinx-serialization") version Vof.kotlin apply false
 
-    //  id("com.android.library") version Vof.androidLibrary apply false
+    //  id("com.android.library") version Vof.androidGradle apply false
 }
 
 buildscript {
@@ -34,7 +34,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:${Vof.androidLibrary}")
+        classpath("com.android.tools.build:gradle:${Vof.androidGradle}")
 //        classpath(kotlin("gradle-plugin", version = "1.3.10"))
     }
 }
