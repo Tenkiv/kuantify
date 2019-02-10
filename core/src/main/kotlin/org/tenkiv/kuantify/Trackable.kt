@@ -102,6 +102,7 @@ class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, p
             var updateRate: ComparableQuantity<Frequency>
             val sampleInstants = ArrayList<Instant>()
 
+            //TODO: This can give a null pointer exception if UpdateRate is initialized before updateBroadcaster.
             input.updateBroadcaster.consumeEach {
                 sampleInstants += it.instant
                 clean(sampleInstants)

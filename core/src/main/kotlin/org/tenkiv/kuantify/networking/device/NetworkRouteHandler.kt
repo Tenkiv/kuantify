@@ -11,11 +11,11 @@ typealias MessageSerializer<T> = (update: T) -> String
 
 internal sealed class NetworkRouteHandler<T>(protected val device: FSBaseDevice) : CoroutineScope {
 
-    @Volatile
-    protected var job = Job(coroutineContext[Job])
-
     final override val coroutineContext: CoroutineContext
         get() = device.coroutineContext + job
+
+    @Volatile
+    protected var job = Job(device.coroutineContext[Job])
 
     open fun start(job: Job) {
         this.job = job

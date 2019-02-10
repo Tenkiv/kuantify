@@ -31,7 +31,7 @@ interface FSDevice : Device, NetworkConfiguredCombined {
 sealed class FSBaseDevice : FSDevice, NetworkConfiguredSide {
 
     //TODO Lazy thread safety mode
-    internal val networkCommunicator: NetworkCommunicator by lazy {
+    internal val networkCommunicator: NetworkCommunicator by lazy(LazyThreadSafetyMode.NONE) {
         val combinedNetworkConfig = CombinedRouteConfig(this)
         combinedConfig(combinedNetworkConfig)
 

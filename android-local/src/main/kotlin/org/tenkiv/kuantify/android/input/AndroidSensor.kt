@@ -48,11 +48,11 @@ abstract class LocalAndroidSensor<T : DaqcValue>(
 
     override val coroutineContext: CoroutineContext get() = device.coroutineContext
 
-    override val updateRate: UpdateRate by runningAverage()
-
-    private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<T>>()
+    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
     final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
-        get() = _broadcastChannel
+        get() = _updateBroadcaster
+
+    override val updateRate: UpdateRate by runningAverage()
 
     private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
     override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
@@ -76,7 +76,7 @@ abstract class LocalAndroidSensor<T : DaqcValue>(
         }
 
         override fun onSensorChanged(event: SensorEvent) {
-            _broadcastChannel.offer(convertData(event.values).at(Instant.ofEpochSecond(event.timestamp)))
+            _updateBroadcaster.offer(convertData(event.values).at(Instant.ofEpochSecond(event.timestamp)))
         }
     }
 
