@@ -43,9 +43,3 @@ debugTests:
   stage: test
   script:
     - ./gradlew -Pci --console=plain :app:testDebug
-
-gradle_test:
-  stage: test
-  script:
-    - gradle build
-    - gradle test
