@@ -4,7 +4,6 @@ import android.app.*
 import android.os.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import kotlinx.coroutines.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.networking.server.*
 
@@ -20,8 +19,6 @@ class MainActivity : Activity() {
             kuantifyHost()
         }
         server.start()
-
-        println("GlobalScope: ${GlobalScope.coroutineContext}")
 
         val device = LocalAndroidDevice.get(this)
         device.startHosting()
