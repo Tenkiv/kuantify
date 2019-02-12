@@ -23,8 +23,7 @@ plugins {
     kotlin("android") version Vof.kotlin apply false
     kotlin("android.extensions") version Vof.kotlin apply false
     id("kotlinx-serialization") version Vof.kotlin apply false
-
-    //  id("com.android.library") version Vof.androidGradle apply false
+    id("maven-deploy")
 }
 
 buildscript {
