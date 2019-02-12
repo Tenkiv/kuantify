@@ -40,8 +40,6 @@ plugins {
     id("kotlinx-serialization")
 }
 
-apply(from = "../maven_push.gradle")
-
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
