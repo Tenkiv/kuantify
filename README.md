@@ -39,14 +39,27 @@ GlobalScope.launch { // make sure you're familiar with Kotlin coroutines, probab
 }
 ```
 
-This example assumes your program is acually running in Android.\
-`val device = LocalAndroidDevice.get(this)` gets the device it's running on as a Kuantify device. Since different
+This example assumes your program is acually running in Android.
+
+```
+val device = LocalAndroidDevice.get(this)
+```
+
+Gets the device it's running on as a Kuantify device. Since different
 Android devices have different sensors and controllers available each type of sensor or controller is given as a list
 that may be empty if the device doesn't support a given type.
 
-`lightSensor.startSampling()` start sampling the light sensor, you won't receive any updates from it until you start it.
+```
+lightSensor.startSampling()
+```
 
-`lightSensor.updateBroadcaster.consumeEach` Each `Input` has a [BroadcastChannel](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-broadcast-channel/index.html)
+Starts sampling the light sensor; you won't receive any updates from it until you start it.
+
+```
+lightSensor.updateBroadcaster.consumeEach
+```
+
+Each `Input` has a [BroadcastChannel](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-broadcast-channel/index.html)
 called `updateBroadcaster` that broadcasts updates from that `Input`. Here we're just consuming all updates.
 
 In the above example we're using Kuantify on the device with the sensors and controllers. But Kuantify is primarily
@@ -91,7 +104,7 @@ on the functionality of the device you're adding support for. At this time Kuant
 for this process and we're still brainstorming what we may be able to abstract out. In most cases this process is a
 matter of establishing some connection, serializing / deserialzing commands and incoming data and sending / receiving
 these things to and from the device. Kuantify already depends on [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization)
-and parts of [ktor](https://ktor.io/) so you should consider using them for these tasks. [ktor supports raw tcp and udp
+and parts of [ktor](https://ktor.io/) so you should consider using them for these tasks. [Ktor supports raw tcp and udp
 sockets](https://ktor.io/clients/raw-sockets.html) which are often necessary for supporting a device. Both of these
 libraries are pure kotlin and multiplatform so you only need to make one set of common code to support the device on all
 platforms if you use them.
