@@ -69,15 +69,16 @@ val projectList = listOf(
 
 publishing {
     publications {
-        for (p in projectList) {
-            create<MavenPublication>("maven-${p.name}") {
+        for (proj in projectList) {
+            println("The filetree of the project $proj is :" + proj.fileTree("/build/libs").files)
+            println("System variables: ${System.getenv("MAVEN_REPO_USER")}")
+
+            create<MavenPublication>("maven-${proj.name}") {
                 groupId = "org.tenkiv.kuantify"
-                artifactId = "kuantify-${p.name}"
+                artifactId = "kuantify-${proj.name}"
                 version = project.version.toString()
 
-                println("The filetree of the project $p is :" + p.fileTree("/build/libs").files)
-
-                for (file in p.fileTree("build/libs").files) {
+                for (file in proj.fileTree("build/libs").files) {
                     println("the file is: $file")
                     val a = artifact(file)
 
@@ -89,8 +90,8 @@ publishing {
                     println("added artifact $a with classifier ${a.classifier}")
                 }
 
-                if (p == project(":android-local")) {
-                    for (file in p.fileTree("build/outputs/aar").files) {
+                if (proj == project(":android-local")) {
+                    for (file in proj.fileTree("build/outputs/aar").files) {
                         if (file.name.contains("release")) {
                             val a = artifact(file)
                             a.classifier = "aar"
