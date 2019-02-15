@@ -21,6 +21,7 @@ import org.jetbrains.dokka.gradle.*
 plugins {
     kotlin("jvm")
     id("kotlinx-serialization")
+    id("org.jetbrains.dokka")
 }
 
 dependencies {
@@ -33,12 +34,6 @@ tasks {
     register<Jar>("sourcesJar") {
         from(kotlin.sourceSets["main"].kotlin)
         classifier = "sources"
-    }
-
-    register<DokkaTask>("dokka") {
-        outputFormat = "javadoc"
-        outputDirectory = "$buildDir/javadoc"
-        noStdlibLink = false
     }
 
     register<Jar>("javadocJar") {

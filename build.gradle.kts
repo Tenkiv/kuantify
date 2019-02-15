@@ -24,7 +24,7 @@ plugins {
     kotlin("android") version Vof.kotlin apply false
     kotlin("android.extensions") version Vof.kotlin apply false
     id("kotlinx-serialization") version Vof.kotlin apply false
-    id("org.jetbrains.dokka") version Vof.dokkaKotlin
+    id("org.jetbrains.dokka") version Vof.dokka apply false
     `maven-publish`
     signing
 }
@@ -96,32 +96,20 @@ publishing {
 
                 pom {
                     name.set(project.name)
-                    description.set("API for easily managing, controlling, and interfacing with different data acquisition systems.")
-                    url.set("https://gitlab.com/tenkiv/software/kuantify")
+                    description.set(Info.pomDescription)
+                    url.set(System.getenv("CI_PROJECT_URL"))
                     licenses {
                         license {
-                            name.set("The Apache License, Version 2.0")
-                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id.set(System.getenv("DEVELOPER_ID"))
-                            name.set(System.getenv("DEVELOPER_NAME"))
-                            email.set(System.getenv("DEVELOPER_EMAIL"))
-                        }
-                        developer {
-                            id.set(System.getenv("DEVELOPER_ID2"))
-                            name.set(System.getenv("DEVELOPER_NAME2"))
-                            email.set(System.getenv("DEVELOPER_EMAIL2"))
+                            name.set(Info.pomLicense)
+                            url.set(Info.pomLicenseUrl)
                         }
                     }
                     organization {
-                        name.set("Tenkiv, Inc.")
+                        name.set(Info.pomOrg)
                     }
                     scm {
-                        connection.set("git@gitlab.com:tenkiv/software/kuantify.git")
-                        url.set("https://gitlab.com/tenkiv/software/kuantify")
+                        connection.set(System.getenv("CI_REPOSITORY_URL"))
+                        url.set(System.getenv("CI_PROJECT_URL"))
                     }
                 }
             }
@@ -130,8 +118,8 @@ publishing {
     repositories {
         maven {
             // change URLs to point to your repos, e.g. http://my.org/repo
-            val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
-            val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots")
+            val releasesRepoUrl = uri(Info.sonatypeReleaseRepoUrl)
+            val snapshotsRepoUrl = uri(Info.sonatypeSnapshotRepoUrl)
             url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
             credentials {
                 username = System.getenv("MAVEN_REPO_USER")

@@ -40,6 +40,7 @@ plugins {
     kotlin("android")
     kotlin("android.extensions")
     id("kotlinx-serialization")
+    id("org.jetbrains.dokka")
 }
 
 android {
@@ -78,12 +79,6 @@ tasks {
     register<Jar>("sourcesJar") {
         from(kotlin.sourceSets["main"].kotlin)
         classifier = "sources"
-    }
-
-    register<DokkaTask>("dokka") {
-        outputFormat = "javadoc"
-        outputDirectory = "$buildDir/javadoc"
-        noStdlibLink = false
     }
 
     register<Jar>("javadocJar") {
