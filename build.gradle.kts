@@ -25,6 +25,7 @@ plugins {
     kotlin("android.extensions") version Vof.kotlin apply false
     id("kotlinx-serialization") version Vof.kotlin apply false
     id("org.jetbrains.dokka") version Vof.dokka apply false
+    `java-library`
     `maven-publish`
     signing
 }
@@ -74,6 +75,8 @@ publishing {
                 groupId = "org.tenkiv.kuantify"
                 artifactId = "kuantify-${proj.name}"
                 version = project.version.toString()
+
+                from(components["java"])
 
                 for (file in proj.fileTree("build/libs").files) {
                     val a = artifact(file)
