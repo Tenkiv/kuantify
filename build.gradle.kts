@@ -75,7 +75,10 @@ publishing {
                 artifactId = "kuantify-${p.name}"
                 version = project.version.toString()
 
+                println("The filetree of the project $p is :" + p.fileTree("/build/libs").files)
+
                 for (file in p.fileTree("build/libs").files) {
+                    println("the file is: $file")
                     val a = artifact(file)
 
                     a.classifier = when {
@@ -83,6 +86,7 @@ publishing {
                         file.name.contains("sources") -> "sources"
                         else -> null
                     }
+                    println("added artifact $a with classifier ${a.classifier}")
                 }
 
                 if (p == project(":android-local")) {
@@ -90,6 +94,8 @@ publishing {
                         if (file.name.contains("release")) {
                             val a = artifact(file)
                             a.classifier = "aar"
+
+                            println("added artifact $a with classifier ${a.classifier}")
                         }
                     }
                 }
