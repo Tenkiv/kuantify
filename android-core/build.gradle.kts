@@ -1,3 +1,5 @@
+import org.jetbrains.dokka.gradle.*
+
 /*
  * Copyright 2019 Tenkiv, Inc.
  *
@@ -23,4 +25,29 @@ plugins {
 
 dependencies {
     compile(project(":core"))
+}
+
+println(project(":core").tasks)
+
+tasks {
+    register<Jar>("sourcesJar") {
+        from(kotlin.sourceSets["main"].kotlin)
+        classifier = "sources"
+    }
+
+    register<DokkaTask>("dokka") {
+        outputFormat = "javadoc"
+        outputDirectory = "$buildDir/javadoc"
+        noStdlibLink = false
+    }
+
+    register<Jar>("javadocJar") {
+        from(tasks["dokka"])
+        classifier = "javadoc"
+    }
+
+    getByName("build") {
+        dependsOn("sourcesJar")
+        dependsOn("javadocJar")
+    }
 }

@@ -1,3 +1,5 @@
+import org.jetbrains.dokka.gradle.*
+
 /*
  * Copyright 2019 Tenkiv, Inc.
  *
@@ -44,4 +46,27 @@ dependencies {
     implementation(group = "org.nield", name = "kotlin-statistics", version = Vof.statistics)
 
     testImplementation(group = "org.nd4j", name = "nd4j-native-platform", version = Vof.dl4j)
+}
+
+tasks {
+    register<Jar>("sourcesJar") {
+        from(kotlin.sourceSets["main"].kotlin)
+        classifier = "sources"
+    }
+
+    register<DokkaTask>("dokka") {
+        outputFormat = "javadoc"
+        outputDirectory = "$buildDir/javadoc"
+        noStdlibLink = false
+    }
+
+    register<Jar>("javadocJar") {
+        from(tasks["dokka"])
+        classifier = "javadoc"
+    }
+
+    getByName("build") {
+        dependsOn("sourcesJar")
+        dependsOn("javadocJar")
+    }
 }

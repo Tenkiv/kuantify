@@ -26,6 +26,7 @@ object Vof {
 
     // Jetbrains
     const val ktor = "1.1.2"
+    const val dokkaKotlin = "0.9.17"
 
     // Tenkiv
     const val coral = "2.1.2.3-SNAPSHOT"
