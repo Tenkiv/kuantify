@@ -18,11 +18,9 @@
 
 package org.tenkiv.kuantify.gate.acquire.input
 
-import kotlinx.coroutines.channels.*
-import org.tenkiv.coral.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.gate.acquire.*
 import javax.measure.*
 
 typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
@@ -32,19 +30,7 @@ typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
  *
  * @param T The type of data given by this Input.
  */
-interface Input<out T : DaqcValue> : IOStrand<T>, RatedTrackable<T> {
-
-    /**
-     * Exception is sent over this channel when something prevents the input from being received.
-     */
-    val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-
-    /**
-     * Activates the input alerting it to begin collecting and sending data.
-     */
-    fun startSampling()
-
-}
+interface Input<out T : DaqcValue> : AcquireGate<T>, IOStrand<T>
 
 /**
  * An Input whose type is both a [DaqcValue] and [Comparable] allowing it to be used in the default learning module

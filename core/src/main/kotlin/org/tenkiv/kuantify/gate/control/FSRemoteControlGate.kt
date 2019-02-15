@@ -16,28 +16,31 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.channel
+package org.tenkiv.kuantify.gate.control
 
 import kotlinx.coroutines.channels.*
-import org.tenkiv.coral.*
-import org.tenkiv.kuantify.gate.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.networking.*
+import org.tenkiv.kuantify.networking.configuration.*
 
-/**
- * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
- */
-interface DigitalChannel<D : DigitalDaqDevice> : DigitalGate, DaqcChannel<D> {
+abstract class FSRemoteControlGate<T : DaqcData> : ControlGate<T>, NetworkConfiguredSide {
+    abstract val uid: String
 
-    /**
-     * Gets if the pulse width modulation state for this channel is simulated using software.
-     */
-    val pwmIsSimulated: Boolean
+    internal val stopTransceivingChannel = Channel<Unit>(Channel.CONFLATED)
+    override fun stopTransceiving() {
+        stopTransceivingChannel.offer(Unit)
+    }
 
-    /**
-     * Gets if the transition frequency state for this channel is simulated using software.
-     */
-    val transitionFrequencyIsSimulated: Boolean
+    override fun sideConfig(config: SideRouteConfig) {
+        val outputRoute = listOf(RC.DAQC_GATE, uid)
 
-    val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        config.add {
+
+            route(outputRoute + RC.STOP_TRANSCEIVING) to handler<Ping>(isFullyBiDirectional = false) {
+                setLocalUpdateChannel(stopTransceivingChannel) withUpdateChannel {
+                    send()
+                }
+            }
+        }
+    }
 }
-

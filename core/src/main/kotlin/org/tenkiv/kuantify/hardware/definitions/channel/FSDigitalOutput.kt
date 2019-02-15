@@ -22,6 +22,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.outputs.*
 import org.tenkiv.kuantify.lib.*
@@ -45,8 +46,8 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkConfiguredSide, Networ
     override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalChannelValue>>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalChannelValue>>
+    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalGateValue>>()
+    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalGateValue>>
         get() = _updateBroadcaster
 
     init {
@@ -79,20 +80,20 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkConfiguredSide, Networ
             digitalChannelIsTransceivingLocal(isTransceivingPwm, uid, RC.IS_TRANSCEIVING_PWM)
             digitalChannelIsTransceivingLocal(isTransceivingFrequency, uid, RC.IS_TRANSCEIVING_FREQUENCY)
 
-            route(RC.DAQC_GATE, uid, RC.VALUE) to handler<ValueInstant<DigitalChannelValue>>(
+            route(RC.DAQC_GATE, uid, RC.VALUE) to handler<ValueInstant<DigitalGateValue>>(
                 isFullyBiDirectional = true
             ) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
+                    Json.stringify(ValueInstantSerializer(DigitalGateValue.serializer()), it)
                 }
 
                 receiveMessage(NullResolutionStrategy.PANIC) {
-                    val setting = Json.parse(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
+                    val setting = Json.parse(ValueInstantSerializer(DigitalGateValue.serializer()), it)
                     val (value, _) = setting
                     when (value) {
-                        is DigitalChannelValue.BinaryState -> setOutputState(value.state)
-                        is DigitalChannelValue.Percentage -> pulseWidthModulate(value.percent)
-                        is DigitalChannelValue.Frequency -> sustainTransitionFrequency(value.frequency)
+                        is DigitalGateValue.BinaryState -> setOutputState(value.state)
+                        is DigitalGateValue.Percentage -> pulseWidthModulate(value.percent)
+                        is DigitalGateValue.Frequency -> sustainTransitionFrequency(value.frequency)
                     }
                     _updateBroadcaster.send(setting)
                 }
@@ -116,8 +117,8 @@ abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkConfiguredSide, Net
 
     private val thisAsFrequencyController = SimpleFrequencyController(this)
 
-    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalChannelValue>>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalChannelValue>>
+    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalGateValue>>()
+    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalGateValue>>
         get() = _updateBroadcaster
 
     private val _binaryStateBroadcaster = ConflatedBroadcastChannel<BinaryStateMeasurement>()
@@ -183,20 +184,20 @@ abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkConfiguredSide, Net
             digitalChannelIsTransceivingRemote(_isTransceivingPwm, uid, RC.IS_TRANSCEIVING_PWM)
             digitalChannelIsTransceivingRemote(_isTransceivingFrequency, uid, RC.IS_TRANSCEIVING_FREQUENCY)
 
-            route(RC.DAQC_GATE, uid, RC.VALUE) to handler<ValueInstant<DigitalChannelValue>>(
+            route(RC.DAQC_GATE, uid, RC.VALUE) to handler<ValueInstant<DigitalGateValue>>(
                 isFullyBiDirectional = true
             ) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
+                    Json.stringify(ValueInstantSerializer(DigitalGateValue.serializer()), it)
                 }
 
                 receiveMessage(NullResolutionStrategy.PANIC) {
-                    val setting = Json.parse(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
+                    val setting = Json.parse(ValueInstantSerializer(DigitalGateValue.serializer()), it)
                     val (value, instant) = setting
                     when (value) {
-                        is DigitalChannelValue.BinaryState -> _binaryStateBroadcaster.send(value.state at instant)
-                        is DigitalChannelValue.Percentage -> _pwmBroadcaster.send(value.percent at instant)
-                        is DigitalChannelValue.Frequency ->
+                        is DigitalGateValue.BinaryState -> _binaryStateBroadcaster.send(value.state at instant)
+                        is DigitalGateValue.Percentage -> _pwmBroadcaster.send(value.percent at instant)
+                        is DigitalGateValue.Frequency ->
                             _transitionFrequencyBroadcaster.send(value.frequency at instant)
                     }
                     _updateBroadcaster.send(setting)

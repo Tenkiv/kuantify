@@ -20,6 +20,7 @@ package org.tenkiv.kuantify.hardware.definitions.channel
 
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.hardware.inputs.*
@@ -29,7 +30,7 @@ import javax.measure.quantity.*
 /**
  * Class defining the basic features of an input which reads binary signals.
  */
-interface DigitalInput : DigitalChannel<DigitalDaqDevice>, RatedTrackable<DigitalChannelValue> {
+interface DigitalInput : DigitalChannel<DigitalDaqDevice>, RatedTrackable<DigitalGateValue> {
 
     /**
      * Activates this channel to gather data for transition frequency averaged over a certain period of time.

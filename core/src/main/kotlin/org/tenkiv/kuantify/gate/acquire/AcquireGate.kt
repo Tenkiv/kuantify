@@ -16,28 +16,24 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.channel
+package org.tenkiv.kuantify.gate.acquire
 
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
 
-/**
- * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
- */
-interface DigitalChannel<D : DigitalDaqDevice> : DigitalGate, DaqcChannel<D> {
+interface AcquireGate<out T : DaqcData> : DaqcGate<T>, RatedTrackable<T> {
 
     /**
-     * Gets if the pulse width modulation state for this channel is simulated using software.
+     * Exception is sent over this channel when something prevents the input from being received.
      */
-    val pwmIsSimulated: Boolean
-
-    /**
-     * Gets if the transition frequency state for this channel is simulated using software.
-     */
-    val transitionFrequencyIsSimulated: Boolean
-
     val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-}
 
+    /**
+     * Activates the input alerting it to begin collecting and sending data.
+     */
+    fun startSampling()
+
+}

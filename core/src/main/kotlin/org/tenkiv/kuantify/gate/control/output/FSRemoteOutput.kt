@@ -24,6 +24,7 @@ import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
@@ -32,9 +33,7 @@ import javax.measure.*
 import kotlin.coroutines.*
 import kotlin.reflect.*
 
-sealed class FSRemoteOutput<T : DaqcValue>(val device: FSRemoteDevice) : Output<T>, NetworkConfiguredSide {
-
-    abstract val uid: String
+sealed class FSRemoteOutput<T : DaqcValue>(val device: FSRemoteDevice) : FSRemoteControlGate<T>(), Output<T> {
 
     override val coroutineContext: CoroutineContext
         get() = device.coroutineContext
@@ -52,12 +51,8 @@ sealed class FSRemoteOutput<T : DaqcValue>(val device: FSRemoteDevice) : Output<
     override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    internal val stopTransceivingChannel = Channel<Unit>(Channel.CONFLATED)
-    override fun stopTransceiving() {
-        stopTransceivingChannel.offer(Unit)
-    }
-
     override fun sideConfig(config: SideRouteConfig) {
+        super.sideConfig(config)
         val outputRoute = listOf(RC.DAQC_GATE, uid)
 
         config.add {
@@ -65,12 +60,6 @@ sealed class FSRemoteOutput<T : DaqcValue>(val device: FSRemoteDevice) : Output<
                 receiveMessage(NullResolutionStrategy.PANIC) {
                     val value = Json.parse(BooleanSerializer, it)
                     _isTransceiving.value = value
-                }
-            }
-
-            route(outputRoute + RC.STOP_TRANSCEIVING) to handler<Ping>(isFullyBiDirectional = false) {
-                setLocalUpdateChannel(stopTransceivingChannel) withUpdateChannel {
-                    send()
                 }
             }
         }

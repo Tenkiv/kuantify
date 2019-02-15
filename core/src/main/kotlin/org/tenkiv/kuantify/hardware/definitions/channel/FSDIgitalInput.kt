@@ -22,6 +22,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
@@ -96,11 +97,11 @@ abstract class LocalDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkC
             startSamplingLocal(uid, RC.START_SAMPLING_PWM, ::startSamplingPwm)
             startSamplingLocal(uid, RC.START_SAMPLING_TRANSITION_FREQUENCY, ::startSamplingTransitionFrequency)
 
-            route(RC.DAQC_GATE, uid, RC.VALUE) to handler<ValueInstant<DigitalChannelValue>>(
+            route(RC.DAQC_GATE, uid, RC.VALUE) to handler<ValueInstant<DigitalGateValue>>(
                 isFullyBiDirectional = false
             ) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
+                    Json.stringify(ValueInstantSerializer(DigitalGateValue.serializer()), it)
                 }
 
                 setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
@@ -115,8 +116,8 @@ abstract class LocalDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkC
 abstract class FSRemoteDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkConfiguredCombined {
     abstract val uid: String
 
-    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalChannelValue>>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalChannelValue>>
+    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalGateValue>>()
+    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalGateValue>>
         get() = _updateBroadcaster
 
     private val _binaryStateBroadcaster = ConflatedBroadcastChannel<BinaryStateMeasurement>()
@@ -214,16 +215,16 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkConfiguredSide, Netwo
             startSamplingRemote(uid, RC.START_SAMPLING_PWM, startSamplingPwmChannel)
             startSamplingRemote(uid, RC.START_SAMPLING_BINARY_STATE, startSamplingBinaryStateChannel)
 
-            route(RC.DAQC_GATE, uid, RC.VALUE) to handler<ValueInstant<DigitalChannelValue>>(
+            route(RC.DAQC_GATE, uid, RC.VALUE) to handler<ValueInstant<DigitalGateValue>>(
                 isFullyBiDirectional = false
             ) {
                 receiveMessage(NullResolutionStrategy.PANIC) {
-                    val measurement = Json.parse(ValueInstantSerializer(DigitalChannelValue.serializer()), it)
+                    val measurement = Json.parse(ValueInstantSerializer(DigitalGateValue.serializer()), it)
                     val (value, instant) = measurement
                     when (value) {
-                        is DigitalChannelValue.BinaryState -> _binaryStateBroadcaster.send(value.state at instant)
-                        is DigitalChannelValue.Percentage -> _pwmBroadcaster.send(value.percent at instant)
-                        is DigitalChannelValue.Frequency ->
+                        is DigitalGateValue.BinaryState -> _binaryStateBroadcaster.send(value.state at instant)
+                        is DigitalGateValue.Percentage -> _pwmBroadcaster.send(value.percent at instant)
+                        is DigitalGateValue.Frequency ->
                             _transitionFrequencyBroadcaster.send(value.frequency at instant)
                     }
                     _updateBroadcaster.send(measurement)

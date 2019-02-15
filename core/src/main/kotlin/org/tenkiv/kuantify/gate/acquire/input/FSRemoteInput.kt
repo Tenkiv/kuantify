@@ -24,6 +24,7 @@ import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
@@ -31,35 +32,18 @@ import tec.units.indriya.*
 import javax.measure.*
 import kotlin.reflect.*
 
-sealed class FSRemoteInput<T : DaqcValue> : Input<T>,
-    NetworkConfiguredSide {
-
-    abstract val uid: String
+sealed class FSRemoteInput<T : DaqcValue> : FSRemoteAcquireGate<T>(), Input<T>, NetworkConfiguredSide {
 
     internal val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
     override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = _updateBroadcaster
 
-    //TODO
-    internal val _failureBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = _failureBroadcaster
-
     internal val _isTransceiving = Updatable(false)
     override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    internal val startSamplingChannel = Channel<Ping>(Channel.CONFLATED)
-    override fun startSampling() {
-        startSamplingChannel.offer(null)
-    }
-
-    internal val stopTransceivingChannel = Channel<Ping>(Channel.CONFLATED)
-    override fun stopTransceiving() {
-        stopTransceivingChannel.offer(null)
-    }
-
     override fun sideConfig(config: SideRouteConfig) {
+        super.sideConfig(config)
         val inputRoute = listOf(RC.DAQC_GATE, uid)
 
         config.add {
@@ -69,19 +53,8 @@ sealed class FSRemoteInput<T : DaqcValue> : Input<T>,
                     _isTransceiving.value = value
                 }
             }
-
-            route(inputRoute + RC.START_SAMPLING) to handler<Ping>(isFullyBiDirectional = false) {
-                setLocalUpdateChannel(startSamplingChannel) withUpdateChannel {
-                    send()
-                }
-            }
-
-            route(inputRoute + RC.STOP_TRANSCEIVING) to handler<Ping>(isFullyBiDirectional = false) {
-                setLocalUpdateChannel(stopTransceivingChannel) withUpdateChannel {
-                    send()
-                }
-            }
         }
+
     }
 }
 

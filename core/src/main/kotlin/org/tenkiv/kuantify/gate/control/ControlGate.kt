@@ -16,28 +16,19 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.channel
+package org.tenkiv.kuantify.gate.control
 
-import kotlinx.coroutines.channels.*
-import org.tenkiv.coral.*
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.gate.control.output.*
 
-/**
- * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
- */
-interface DigitalChannel<D : DigitalDaqDevice> : DigitalGate, DaqcChannel<D> {
-
+interface ControlGate<T : DaqcData> : DaqcGate<T> {
     /**
-     * Gets if the pulse width modulation state for this channel is simulated using software.
+     * @param panicOnFailure If true invoking setOutput will throw an exception instead of returning a [SettingResult].
      */
-    val pwmIsSimulated: Boolean
+    fun setOutput(setting: T, panicOnFailure: Boolean = DEFAULT_PANIC_ON_FAILURE): SettingResult
 
-    /**
-     * Gets if the transition frequency state for this channel is simulated using software.
-     */
-    val transitionFrequencyIsSimulated: Boolean
-
-    val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    companion object {
+        internal const val DEFAULT_PANIC_ON_FAILURE = false
+    }
 }
-

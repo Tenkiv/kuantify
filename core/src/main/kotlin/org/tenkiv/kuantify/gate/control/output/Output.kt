@@ -21,6 +21,7 @@ package org.tenkiv.kuantify.gate.control.output
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
 import tec.units.indriya.unit.Units.*
@@ -32,17 +33,7 @@ import javax.measure.quantity.*
  *
  * @param T The type of signal given by this output.
  */
-interface Output<T : DaqcValue> : IOStrand<T> {
-
-    /**
-     * @param panicOnFailure If true invoking setOutput will throw an exception instead of returning a [SettingResult].
-     */
-    fun setOutput(setting: T, panicOnFailure: Boolean = DEFAULT_PANIC_ON_FAILURE): SettingResult
-
-    companion object {
-        internal const val DEFAULT_PANIC_ON_FAILURE = false
-    }
-}
+interface Output<T : DaqcValue> : IOStrand<T>, ControlGate<T>
 
 /**
  * An [Output] which sends signals in the form of a [DaqcQuantity].
@@ -58,7 +49,7 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
      */
     fun adjustOutputOrFail(
         adjustment: (Double) -> Double,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult {
         val setting = valueOrNull
         return if (setting != null) {
@@ -74,7 +65,7 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
      */
     suspend fun adjustOutput(
         adjustment: (Double) -> Double,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult = setOutput(adjustment(getValue().value.valueToDouble())(getValue().value.unit), panicOnFailure)
 
 }
@@ -86,7 +77,7 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
  */
 fun <Q : Quantity<Q>> QuantityOutput<Q>.setOutput(
     setting: ComparableQuantity<Q>,
-    panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+    panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
 ) =
     setOutput(setting.toDaqc(), panicOnFailure)
 
@@ -108,7 +99,7 @@ interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>,
 
     fun increaseByRatioOfRange(
         ratioIncrease: Double,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult {
         val setting = valueOrNull
 
@@ -126,7 +117,7 @@ interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>,
 
     fun decreaseByRatioOfRange(
         ratioDecrease: Double,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult = increaseByRatioOfRange(-ratioDecrease, panicOnFailure)
 
     /**
@@ -134,7 +125,7 @@ interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>,
      */
     fun increaseByPercentOfRange(
         percentIncrease: ComparableQuantity<Dimensionless>,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult = increaseByRatioOfRange(percentIncrease.toDoubleIn(PERCENT) / 100, panicOnFailure)
 
     /**
@@ -142,25 +133,25 @@ interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>,
      */
     fun decreaseByPercentOfRange(
         percentDecrease: ComparableQuantity<Dimensionless>,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
     ) = decreaseByRatioOfRange(percentDecrease.toDoubleIn(PERCENT) / 100, panicOnFailure)
 
     fun setOutputToPercentMaximum(
         percent: ComparableQuantity<Dimensionless>,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult =
         setOutputToRatioMaximum(percent.toDoubleIn(PERCENT) / 100, panicOnFailure)
 
     fun setOutputToRatioMaximum(
         ratio: Double,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult =
         setOutput(ratioOfRange(ratio), panicOnFailure)
 
     /**
      * Sets this output to random setting within the allowable range.
      */
-    fun setOutputToRandom(panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE): SettingResult {
+    fun setOutputToRandom(panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE): SettingResult {
         val random = Math.random()
 
         val setting = ratioOfRange(random)
