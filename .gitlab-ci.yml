@@ -48,4 +48,5 @@ debugTests:
 mavenDeploy:
   stage: deploy
   script:
-    - ./gradlew clean build publish --debug
+    - ./gradlew clean build
+    - ./gradlew publish --debug
