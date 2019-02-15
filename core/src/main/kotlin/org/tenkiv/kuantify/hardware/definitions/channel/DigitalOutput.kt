@@ -19,6 +19,7 @@
 package org.tenkiv.kuantify.hardware.definitions.channel
 
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.hardware.outputs.*
@@ -32,7 +33,7 @@ interface DigitalOutput : DigitalChannel<DigitalDaqDevice> {
 
     fun setOutputState(
         state: BinaryState,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult
 
     /**
@@ -42,7 +43,7 @@ interface DigitalOutput : DigitalChannel<DigitalDaqDevice> {
      */
     fun pulseWidthModulate(
         percent: ComparableQuantity<Dimensionless>,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult
 
     /**
@@ -52,7 +53,7 @@ interface DigitalOutput : DigitalChannel<DigitalDaqDevice> {
      */
     fun sustainTransitionFrequency(
         freq: ComparableQuantity<Frequency>,
-        panicOnFailure: Boolean = Output.DEFAULT_PANIC_ON_FAILURE
+        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
     ): SettingResult
 
     override fun stopTransceiving() {

@@ -16,28 +16,30 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.channel
+package org.tenkiv.kuantify.gate.acquire
 
-import kotlinx.coroutines.channels.*
-import org.tenkiv.coral.*
-import org.tenkiv.kuantify.gate.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.networking.*
+import org.tenkiv.kuantify.networking.configuration.*
 
-/**
- * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
- */
-interface DigitalChannel<D : DigitalDaqDevice> : DigitalGate, DaqcChannel<D> {
+interface LocalAcquireGate<T : DaqcData> : AcquireGate<T>, NetworkConfiguredSide {
+    val uid: String
 
-    /**
-     * Gets if the pulse width modulation state for this channel is simulated using software.
-     */
-    val pwmIsSimulated: Boolean
+    override fun sideConfig(config: SideRouteConfig) {
+        val gateRoute = listOf(RC.DAQC_GATE, uid)
 
-    /**
-     * Gets if the transition frequency state for this channel is simulated using software.
-     */
-    val transitionFrequencyIsSimulated: Boolean
+        config.add {
+            route(gateRoute + RC.START_SAMPLING) to handler<Ping>(isFullyBiDirectional = false) {
+                receive {
+                    startSampling()
+                }
+            }
 
-    val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+            route(gateRoute + RC.STOP_TRANSCEIVING) to handler<Ping>(isFullyBiDirectional = false) {
+                receive {
+                    stopTransceiving()
+                }
+            }
+        }
+    }
 }
-

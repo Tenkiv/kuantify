@@ -22,16 +22,17 @@ import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.*
 import kotlin.reflect.*
 
-interface LocalOutput<T : DaqcValue> : Output<T>, NetworkConfiguredSide {
-    val uid: String
+interface LocalOutput<T : DaqcValue> : LocalControlGate<T>, Output<T> {
 
     override fun sideConfig(config: SideRouteConfig) {
+        super.sideConfig(config)
         val outputRoute = listOf(RC.DAQC_GATE, uid)
 
         config.add {
@@ -45,11 +46,6 @@ interface LocalOutput<T : DaqcValue> : Output<T>, NetworkConfiguredSide {
                 }
             }
 
-            route(outputRoute + RC.STOP_TRANSCEIVING) to handler<Unit?>(isFullyBiDirectional = false) {
-                receive {
-                    stopTransceiving()
-                }
-            }
         }
     }
 }
