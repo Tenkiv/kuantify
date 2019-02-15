@@ -79,12 +79,15 @@ publishing {
                 from(components["java"])
 
                 for (file in proj.fileTree("build/libs").files) {
-                    val a = artifact(file)
-
-                    a.classifier = when {
-                        file.name.contains("javadoc") -> "javadoc"
-                        file.name.contains("sources") -> "sources"
-                        else -> null
+                    when {
+                        file.name.contains("javadoc") -> {
+                            val a = artifact(file)
+                            a.classifier = "javadoc"
+                        }
+                        file.name.contains("sources") -> {
+                            val a = artifact(file)
+                            a.classifier = "sources"
+                        }
                     }
                 }
 
