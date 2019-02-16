@@ -48,4 +48,6 @@ internal class NetworkCommunicator(
         networkUpdateChannelMap[route]?.send(message) ?: TODO("handle invalid route")
     }
 
+    override fun toString(): String =
+        "NetworkCommunicator for device: ${device.uid}. \nHandled network routes: ${networkUpdateChannelMap.keys}"
 }

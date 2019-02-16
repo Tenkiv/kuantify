@@ -81,7 +81,9 @@ sealed class FSBaseDevice : FSDevice, NetworkConfiguredSide {
             this,
             networkRoutHandlers,
             resultUpdateChannelMap
-        )
+        ).also {
+            logger.debug { "Network Communicator created for device $uid:\n $it" }
+        }
     }
 
     internal suspend fun receiveNetworkMessage(route: Route, message: String?) {
@@ -160,12 +162,12 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
                         outgoing.send(Frame.Text(message))
                         logger.trace { "Sent message - $message - to remote device: $uid" }
                     }
+                }
 
-                    incoming.consumeEach { frame ->
-                        if (frame is Frame.Text) {
-                            receiveMessage(frame.readText())
-                            logger.trace { "Received message - ${frame.readText()} - from remote device: $uid" }
-                        }
+                incoming.consumeEach { frame ->
+                    if (frame is Frame.Text) {
+                        receiveMessage(frame.readText())
+                        logger.trace { "Received message - ${frame.readText()} - from remote device: $uid" }
                     }
                 }
             }
