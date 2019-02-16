@@ -1,5 +1,3 @@
-import org.jetbrains.dokka.gradle.*
-
 /*
  * Copyright 2019 Tenkiv, Inc.
  *
@@ -41,6 +39,7 @@ plugins {
     kotlin("android.extensions")
     id("kotlinx-serialization")
     id("org.jetbrains.dokka")
+    id("digital.wup.android-maven-publish") version "3.6.2"
 }
 
 android {
@@ -89,5 +88,66 @@ tasks {
     getByName("build") {
         dependsOn("sourcesJar")
         dependsOn("javadocJar")
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven-${project.name}") {
+            groupId = "org.tenkiv.kuantify"
+            artifactId = "kuantify-${project.name}"
+            version = project.version.toString()
+            
+            for (file in project.fileTree("build/libs").files) {
+                when {
+                    file.name.contains("javadoc") -> {
+                        val a = artifact(file)
+                        a.classifier = "javadoc"
+                    }
+                    file.name.contains("sources") -> {
+                        val a = artifact(file)
+                        a.classifier = "sources"
+                    }
+                }
+            }
+
+            for (file in project.fileTree("build/outputs/aar").files) {
+                if (file.name.contains("release")) {
+                    val a = artifact(file)
+                    a.classifier = null
+                }
+            }
+
+            pom {
+                name.set(project.name)
+                description.set(Info.pomDescription)
+                url.set(System.getenv("CI_PROJECT_URL"))
+                licenses {
+                    license {
+                        name.set(Info.pomLicense)
+                        url.set(Info.pomLicenseUrl)
+                    }
+                }
+                organization {
+                    name.set(Info.pomOrg)
+                }
+                scm {
+                    connection.set(System.getenv("CI_REPOSITORY_URL"))
+                    url.set(System.getenv("CI_PROJECT_URL"))
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            // change URLs to point to your repos, e.g. http://my.org/repo
+            val releasesRepoUrl = uri(Info.sonatypeReleaseRepoUrl)
+            val snapshotsRepoUrl = uri(Info.sonatypeSnapshotRepoUrl)
+            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+            credentials {
+                username = System.getenv("MAVEN_REPO_USER")
+                password = System.getenv("MAVEN_REPO_PASSWORD")
+            }
+        }
     }
 }
