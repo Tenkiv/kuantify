@@ -113,13 +113,6 @@ publishing {
                 }
             }
 
-            for (file in project.fileTree("build/outputs/aar").files) {
-                if (file.name.contains("release")) {
-                    val a = artifact(file)
-                    a.classifier = null
-                }
-            }
-
             pom {
                 name.set(project.name)
                 description.set(Info.pomDescription)
