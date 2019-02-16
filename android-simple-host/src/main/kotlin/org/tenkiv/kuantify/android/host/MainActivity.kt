@@ -23,6 +23,7 @@ import android.os.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import org.tenkiv.kuantify.android.device.*
+import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.server.*
 
 class MainActivity : Activity() {
@@ -33,7 +34,7 @@ class MainActivity : Activity() {
 //        setContentView(R.layout.activity_main)
 //        val textView = findViewById<TextView>(R.id.textView)
 
-        val server = embeddedServer(Netty, port = 8080) {
+        val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) {
             kuantifyHost()
         }
         server.start()
