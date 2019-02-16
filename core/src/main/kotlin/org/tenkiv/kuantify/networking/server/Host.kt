@@ -28,9 +28,12 @@ import io.ktor.util.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.json.*
+import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.*
+
+private val logger = KotlinLogging.logger {}
 
 fun Application.kuantifyHost() {
     KuantifyHost.apply { init() }
@@ -79,10 +82,14 @@ internal object KuantifyHost {
 
                 try {
                     incoming.consumeEach { frame ->
-                        if (frame is Frame.Text) receiveMessage(clientID.id, frame.readText())
+                        if (frame is Frame.Text) {
+                            receiveMessage(clientID.id, frame.readText())
+                            logger.trace { "Received message - ${frame.readText()} - on device ${hostedDevice?.uid}" }
+                        }
                     }
                 } finally {
                     ClientHandler.connectionClosed(clientID.id, this@webSocket)
+                    logger.trace { "Websocket connection closed for client ${clientID.id}" }
                 }
 
             }

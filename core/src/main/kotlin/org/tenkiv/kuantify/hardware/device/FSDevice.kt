@@ -158,10 +158,14 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
                 launch {
                     sendChannel.consumeEach { message ->
                         outgoing.send(Frame.Text(message))
+                        logger.trace { "Sent message - $message - to remote device: $uid" }
                     }
 
                     incoming.consumeEach { frame ->
-                        if (frame is Frame.Text) receiveMessage(frame.readText())
+                        if (frame is Frame.Text) {
+                            receiveMessage(frame.readText())
+                            logger.trace { "Received message - ${frame.readText()} - from remote device: $uid" }
+                        }
                     }
                 }
             }
