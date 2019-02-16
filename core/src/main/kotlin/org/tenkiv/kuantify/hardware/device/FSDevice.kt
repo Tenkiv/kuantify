@@ -149,9 +149,9 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
 
     private fun startWebsocket() {
         launch {
-            httpClient.webSocket(
+            httpClient.ws(
                 method = HttpMethod.Get,
-                host = "ws://$hostIp",
+                host = hostIp,
                 port = RC.DEFAULT_PORT,
                 path = RC.WEBSOCKET
             ) {
