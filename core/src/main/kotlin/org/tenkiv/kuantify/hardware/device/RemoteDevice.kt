@@ -16,28 +16,26 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.channel
-
-import kotlinx.coroutines.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
-import kotlin.coroutines.*
-import org.tenkiv.kuantify.data.BinaryState as DaqcValueBinaryState
-import javax.measure.quantity.Frequency as FrequencyDimension
+package org.tenkiv.kuantify.hardware.device
 
 /**
- * Defines the basic features of a channel owned by a [Device].
+ * Interface defining the basic features of a device that can be connected to. This is in most cases a device located
+ * across a network or serial connection.
  */
-interface DaqcChannel<out D : Device> : CoroutineScope {
+interface RemoteDevice : Device {
+
+    val hostIp: String
 
     /**
-     * The [Device] which hosts this channel.
+     * Value representing if the Device is connected.
+     *
+     * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
+     * reads from multiple threads.
      */
-    val device: D
+    val isConnected: Boolean
 
-    /**
-     * The hardware number of the channel on the [device].
-     */
-    val hardwareNumber: Int
+    suspend fun connect()
 
-    override val coroutineContext: CoroutineContext get() = device.coroutineContext
+    suspend fun disconnect()
+
 }

@@ -16,13 +16,15 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.channel
+package org.tenkiv.kuantify.hardware.device
 
-import org.tenkiv.kuantify.gate.control.output.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.hardware.channel.*
 
-/**
- * Class defining the basic features of an output which sends analog signals.
- */
-interface AnalogOutput : QuantityOutput<ElectricPotential>, DaqcChannel<AnalogOutputDevice>
+interface AnalogOutputDevice : Device {
+
+    /**
+     * List of all [AnalogOutput]s that this device has.
+     */
+    val analogOutputMap: Map<String, AnalogOutput>
+
+}

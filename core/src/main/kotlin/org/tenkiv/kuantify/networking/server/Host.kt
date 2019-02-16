@@ -29,7 +29,7 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.*
 
 fun Application.kuantifyHost() {

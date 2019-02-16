@@ -18,6 +18,7 @@
 
 package org.tenkiv.kuantify.gate.acquire.input
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
@@ -32,7 +33,8 @@ import tec.units.indriya.*
 import javax.measure.*
 import kotlin.reflect.*
 
-sealed class FSRemoteInput<T : DaqcValue> : FSRemoteAcquireGate<T>(), Input<T>, NetworkConfiguredSide {
+sealed class FSRemoteInput<T : DaqcValue>(scope: CoroutineScope) : FSRemoteAcquireGate<T>(scope), Input<T>,
+    NetworkConfiguredSide {
 
     internal val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
     override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
@@ -58,7 +60,8 @@ sealed class FSRemoteInput<T : DaqcValue> : FSRemoteAcquireGate<T>(), Input<T>, 
     }
 }
 
-abstract class FSRemoteQuantityInput<Q : Quantity<Q>> : FSRemoteInput<DaqcQuantity<Q>>(), QuantityInput<Q> {
+abstract class FSRemoteQuantityInput<Q : Quantity<Q>>(scope: CoroutineScope) : FSRemoteInput<DaqcQuantity<Q>>(scope),
+    QuantityInput<Q> {
 
     abstract val quantityType: KClass<Q>
 
@@ -85,7 +88,7 @@ abstract class FSRemoteQuantityInput<Q : Quantity<Q>> : FSRemoteInput<DaqcQuanti
 
 }
 
-abstract class FSRemoteBinaryStateInput : FSRemoteInput<BinaryState>(),
+abstract class FSRemoteBinaryStateInput(scope: CoroutineScope) : FSRemoteInput<BinaryState>(scope),
     BinaryStateInput {
 
     override fun sideConfig(config: SideRouteConfig) {

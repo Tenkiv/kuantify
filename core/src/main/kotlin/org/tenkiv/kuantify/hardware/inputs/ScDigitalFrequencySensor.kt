@@ -25,7 +25,7 @@ import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
-import org.tenkiv.kuantify.hardware.definitions.channel.*
+import org.tenkiv.kuantify.hardware.channel.*
 import tec.units.indriya.*
 import javax.measure.*
 import javax.measure.quantity.*

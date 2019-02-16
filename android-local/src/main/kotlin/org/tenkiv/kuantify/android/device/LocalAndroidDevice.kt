@@ -26,7 +26,7 @@ import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.android.*
 import org.tenkiv.kuantify.android.input.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
 

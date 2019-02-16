@@ -16,7 +16,7 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.channel
+package org.tenkiv.kuantify.hardware.channel
 
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*

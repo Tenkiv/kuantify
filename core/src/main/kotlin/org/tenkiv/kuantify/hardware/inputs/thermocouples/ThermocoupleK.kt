@@ -21,7 +21,7 @@ package org.tenkiv.kuantify.hardware.inputs.thermocouples
 import arrow.core.*
 import kotlinx.coroutines.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.hardware.definitions.channel.*
+import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.physikal.core.*

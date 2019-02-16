@@ -22,7 +22,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.gate.acquire.input.*
-import org.tenkiv.kuantify.hardware.definitions.channel.*
+import org.tenkiv.kuantify.hardware.channel.*
 
 /**
  * A simple simple implementation of a binary sensor

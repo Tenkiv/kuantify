@@ -16,28 +16,28 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.channel
+package org.tenkiv.kuantify.hardware.device
 
-import kotlinx.coroutines.channels.*
-import org.tenkiv.coral.*
-import org.tenkiv.kuantify.gate.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.hardware.channel.*
+import tec.units.indriya.*
+import javax.measure.quantity.*
 
-/**
- * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
- */
-interface DigitalChannel<D : DigitalDaqDevice> : DigitalGate, DaqcChannel<D> {
+interface AnalogDaqDevice : Device {
 
     /**
-     * Gets if the pulse width modulation state for this channel is simulated using software.
+     * The line frequency of the local electrical.
      */
-    val pwmIsSimulated: Boolean
+    val lineFrequency: ComparableQuantity<Frequency>
 
     /**
-     * Gets if the transition frequency state for this channel is simulated using software.
+     * The temperature reference of the board for error correction on samples.
      */
-    val transitionFrequencyIsSimulated: Boolean
+    val temperatureReference: QuantityInput<Temperature>
 
-    val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    /**
+     * List of all [AnalogInput]s that this device has.
+     */
+    val analogInputMap: Map<String, AnalogInput>
+
 }
-

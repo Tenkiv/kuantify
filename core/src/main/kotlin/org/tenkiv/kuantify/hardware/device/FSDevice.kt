@@ -16,7 +16,7 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.device
+package org.tenkiv.kuantify.hardware.device
 
 import io.ktor.client.features.websocket.*
 import io.ktor.client.request.*
@@ -149,7 +149,7 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
 
     private fun startWebsocket() {
         launch {
-            httpClient.webSocket(method = HttpMethod.Get, host = hostIp, port = 80, path = RC.WEBSOCKET) {
+            httpClient.webSocket(method = HttpMethod.Get, host = "${RC.HTTP}$hostIp", port = 80, path = RC.WEBSOCKET) {
                 launch {
                     sendChannel.consumeEach { message ->
                         outgoing.send(Frame.Text(message))
@@ -198,6 +198,6 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
 
     companion object {
         suspend fun getInfo(hostIp: String): String =
-            httpClient.get("$hostIp${RC.INFO}")
+            httpClient.get("${RC.HTTP}$hostIp${RC.INFO}")
     }
 }

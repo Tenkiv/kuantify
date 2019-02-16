@@ -16,7 +16,7 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.device
+package org.tenkiv.kuantify.hardware.device
 
 import kotlinx.coroutines.*
 

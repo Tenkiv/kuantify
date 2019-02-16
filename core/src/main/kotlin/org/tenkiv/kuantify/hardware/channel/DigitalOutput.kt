@@ -16,12 +16,12 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.channel
+package org.tenkiv.kuantify.hardware.channel
 
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.hardware.outputs.*
 import tec.units.indriya.*
 import javax.measure.quantity.*

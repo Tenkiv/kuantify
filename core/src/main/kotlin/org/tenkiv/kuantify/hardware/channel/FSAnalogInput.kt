@@ -16,13 +16,14 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.channel
+package org.tenkiv.kuantify.hardware.channel
 
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
@@ -96,8 +97,8 @@ interface LocalAnalogInput : AnalogInput, LocalQuantityInput<ElectricPotential>,
 
 }
 
-abstract class FSRemoteAnalogInput : FSRemoteQuantityInput<ElectricPotential>(),
-    AnalogInput, NetworkConfiguredCombined {
+abstract class FSRemoteAnalogInput<D>(override val device: D) : FSRemoteQuantityInput<ElectricPotential>(device),
+    AnalogInput, NetworkConfiguredCombined where D : AnalogDaqDevice, D : FSRemoteDevice {
 
     override fun combinedConfig(config: CombinedRouteConfig) {
         config.add {

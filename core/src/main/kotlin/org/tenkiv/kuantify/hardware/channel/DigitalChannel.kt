@@ -16,15 +16,28 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.device
+package org.tenkiv.kuantify.hardware.channel
 
-import org.tenkiv.kuantify.hardware.definitions.channel.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.hardware.device.*
 
-interface DigitalOutputDevice : Device {
+/**
+ * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
+ */
+interface DigitalChannel<D : DigitalDaqDevice> : DigitalGate, DaqcChannel<D> {
 
     /**
-     * List of all [DigitalOutput]s that this device has.
+     * Gets if the pulse width modulation state for this channel is simulated using software.
      */
-    val digitalOutputMap: Map<String, DigitalOutput>
+    val pwmIsSimulated: Boolean
 
+    /**
+     * Gets if the transition frequency state for this channel is simulated using software.
+     */
+    val transitionFrequencyIsSimulated: Boolean
+
+    val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
 }
+

@@ -22,7 +22,7 @@ import arrow.core.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.hardware.device.*
 import java.time.*
 
 /**

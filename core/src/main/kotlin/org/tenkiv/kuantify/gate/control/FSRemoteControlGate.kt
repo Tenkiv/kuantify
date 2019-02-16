@@ -18,13 +18,20 @@
 
 package org.tenkiv.kuantify.gate.control
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
+import kotlin.coroutines.*
 
-abstract class FSRemoteControlGate<T : DaqcData> : ControlGate<T>, NetworkConfiguredSide {
+abstract class FSRemoteControlGate<T : DaqcData>(private val scope: CoroutineScope) : ControlGate<T>,
+    NetworkConfiguredSide {
+
     abstract val uid: String
+
+    final override val coroutineContext: CoroutineContext
+        get() = scope.coroutineContext
 
     internal val stopTransceivingChannel = Channel<Unit>(Channel.CONFLATED)
     override fun stopTransceiving() {

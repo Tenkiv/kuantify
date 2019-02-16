@@ -23,7 +23,6 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import javax.measure.*
-import kotlin.coroutines.*
 import kotlin.reflect.*
 
 typealias QuantityAndroidSensor<Q> = AndroidSensor<DaqcQuantity<Q>>
@@ -33,22 +32,18 @@ interface AndroidSensor<T : DaqcValue> : Input<T> {
 }
 
 class RemoteQuantityAndroidSensor<Q : Quantity<Q>>(
-    private val scope: CoroutineScope,
+    scope: CoroutineScope,
     override val uid: String,
     override val quantityType: KClass<Q>
-) : FSRemoteQuantityInput<Q>(), QuantityAndroidSensor<Q> {
-
-    override val coroutineContext: CoroutineContext get() = scope.coroutineContext
+) : FSRemoteQuantityInput<Q>(scope), QuantityAndroidSensor<Q> {
 
     override val updateRate: UpdateRate by runningAverage()
 }
 
 class RemoteBinaryStateAndroidSensor(
-    private val scope: CoroutineScope,
+    scope: CoroutineScope,
     override val uid: String
-) : FSRemoteBinaryStateInput(), AndroidSensor<BinaryState> {
-
-    override val coroutineContext: CoroutineContext get() = scope.coroutineContext
+) : FSRemoteBinaryStateInput(scope), AndroidSensor<BinaryState> {
 
     override val updateRate: UpdateRate by runningAverage()
 

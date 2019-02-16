@@ -20,7 +20,7 @@ package org.tenkiv.kuantify.hardware.inputs
 
 import kotlinx.coroutines.*
 import org.tenkiv.kuantify.gate.acquire.input.*
-import org.tenkiv.kuantify.hardware.definitions.channel.*
+import org.tenkiv.kuantify.hardware.channel.*
 import javax.measure.quantity.*
 
 /**

@@ -131,7 +131,7 @@ class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, p
         UpdateRate.RunningAverage(updatable)
 }
 
-class KuantifyConfiguredUpdateRate(private val input: FSRemoteInput<*>) {
+class FSConfiguredUpdateRate(private val input: FSRemoteInput<*>) {
 
     private val updateRate = input.Updatable<ComparableQuantity<Frequency>>()
 

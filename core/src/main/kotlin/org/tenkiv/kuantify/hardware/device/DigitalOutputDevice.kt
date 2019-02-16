@@ -16,15 +16,15 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.device
+package org.tenkiv.kuantify.hardware.device
 
-import org.tenkiv.kuantify.hardware.definitions.channel.*
+import org.tenkiv.kuantify.hardware.channel.*
 
-interface DigitalDaqDevice : Device {
+interface DigitalOutputDevice : Device {
 
     /**
-     * List of all [DigitalInput]s that this device has.
+     * List of all [DigitalOutput]s that this device has.
      */
-    val digitalInputMap: Map<String, DigitalInput>
+    val digitalOutputMap: Map<String, DigitalOutput>
 
 }

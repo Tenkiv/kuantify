@@ -16,28 +16,25 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.device
+package org.tenkiv.kuantify.hardware.channel
 
-import org.tenkiv.kuantify.gate.acquire.input.*
-import org.tenkiv.kuantify.hardware.definitions.channel.*
-import tec.units.indriya.*
-import javax.measure.quantity.*
+import kotlinx.coroutines.*
+import org.tenkiv.kuantify.hardware.device.*
+import org.tenkiv.kuantify.data.BinaryState as DaqcValueBinaryState
+import javax.measure.quantity.Frequency as FrequencyDimension
 
-interface AnalogDaqDevice : Device {
-
-    /**
-     * The line frequency of the local electrical.
-     */
-    val lineFrequency: ComparableQuantity<Frequency>
+/**
+ * Defines the basic features of a channel owned by a [Device].
+ */
+interface DaqcChannel<out D : Device> : CoroutineScope {
 
     /**
-     * The temperature reference of the board for error correction on samples.
+     * The [Device] which hosts this channel.
      */
-    val temperatureReference: QuantityInput<Temperature>
+    val device: D
 
     /**
-     * List of all [AnalogInput]s that this device has.
+     * The hardware number of the channel on the [device].
      */
-    val analogInputMap: Map<String, AnalogInput>
-
+    val hardwareNumber: Int
 }

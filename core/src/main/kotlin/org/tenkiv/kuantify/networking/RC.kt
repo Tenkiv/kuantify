@@ -20,6 +20,7 @@ package org.tenkiv.kuantify.networking
 
 object RC {
     //HTTP routes
+    const val HTTP = "http://"
     const val WEBSOCKET = "/ws"
     const val INFO = "/info"
 

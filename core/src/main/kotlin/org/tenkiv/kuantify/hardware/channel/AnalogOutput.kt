@@ -16,26 +16,13 @@
  *
  */
 
-package org.tenkiv.kuantify.hardware.definitions.device
+package org.tenkiv.kuantify.hardware.channel
+
+import org.tenkiv.kuantify.gate.control.output.*
+import org.tenkiv.kuantify.hardware.device.*
+import javax.measure.quantity.*
 
 /**
- * Interface defining the basic features of a device that can be connected to. This is in most cases a device located
- * across a network or serial connection.
+ * Class defining the basic features of an output which sends analog signals.
  */
-interface RemoteDevice : Device {
-
-    val hostIp: String
-
-    /**
-     * Value representing if the Device is connected.
-     *
-     * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
-     * reads from multiple threads.
-     */
-    val isConnected: Boolean
-
-    suspend fun connect()
-
-    suspend fun disconnect()
-
-}
+interface AnalogOutput : QuantityOutput<ElectricPotential>, DaqcChannel<AnalogOutputDevice>

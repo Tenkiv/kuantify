@@ -18,6 +18,7 @@
 
 package org.tenkiv.kuantify.gate.control.output
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
@@ -25,18 +26,13 @@ import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.control.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.*
-import kotlin.coroutines.*
 import kotlin.reflect.*
 
-sealed class FSRemoteOutput<T : DaqcValue>(val device: FSRemoteDevice) : FSRemoteControlGate<T>(), Output<T> {
-
-    override val coroutineContext: CoroutineContext
-        get() = device.coroutineContext
+sealed class FSRemoteOutput<T : DaqcValue>(scope: CoroutineScope) : FSRemoteControlGate<T>(scope), Output<T> {
 
     internal val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
     override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
@@ -66,8 +62,8 @@ sealed class FSRemoteOutput<T : DaqcValue>(val device: FSRemoteDevice) : FSRemot
     }
 }
 
-abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(device: FSRemoteDevice) :
-    FSRemoteOutput<DaqcQuantity<Q>>(device), QuantityOutput<Q> {
+abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(scope: CoroutineScope) :
+    FSRemoteOutput<DaqcQuantity<Q>>(scope), QuantityOutput<Q> {
 
     abstract val quantityType: KClass<Q>
 
@@ -96,8 +92,8 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(device: FSRemoteDevice) :
     }
 }
 
-abstract class FSRemoteBinaryStateOutput(device: FSRemoteDevice) :
-    FSRemoteOutput<BinaryState>(device), BinaryStateOutput {
+abstract class FSRemoteBinaryStateOutput(scope: CoroutineScope) :
+    FSRemoteOutput<BinaryState>(scope), BinaryStateOutput {
 
     override fun sideConfig(config: SideRouteConfig) {
         super.sideConfig(config)

@@ -20,7 +20,7 @@ package org.tenkiv.kuantify.networking.configuration
 
 import kotlinx.coroutines.channels.*
 import mu.*
-import org.tenkiv.kuantify.hardware.definitions.device.*
+import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.device.*
 
 typealias Ping = Unit?
