@@ -97,7 +97,9 @@ publishing {
             groupId = "org.tenkiv.kuantify"
             artifactId = "kuantify-${project.name}"
             version = project.version.toString()
-            
+
+            from(components["android"])
+
             for (file in project.fileTree("build/libs").files) {
                 when {
                     file.name.contains("javadoc") -> {
