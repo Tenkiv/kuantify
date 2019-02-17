@@ -46,8 +46,8 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkConfiguredSide, Networ
     override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalGateValue>>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalGateValue>>
+    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalValue>>()
+    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalValue>>
         get() = _updateBroadcaster
 
     init {
@@ -68,32 +68,30 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkConfiguredSide, Networ
         return thisAsFrequencyController
     }
 
-    override fun combinedConfig(config: CombinedRouteConfig) {
-        config.add {
-            digitalChannelRouting(this@LocalDigitalOutput, uid)
+    override fun combinedRouting(route: CombinedNetworkRoute) {
+        route.add {
+            digitalGateRouting(this@LocalDigitalOutput)
         }
     }
 
-    override fun sideConfig(config: SideRouteConfig) {
-        config.add {
-            digitalChannelIsTransceivingLocal(isTransceivingBinaryState, uid, RC.IS_TRANSCEIVING_BIN_STATE)
-            digitalChannelIsTransceivingLocal(isTransceivingPwm, uid, RC.IS_TRANSCEIVING_PWM)
-            digitalChannelIsTransceivingLocal(isTransceivingFrequency, uid, RC.IS_TRANSCEIVING_FREQUENCY)
+    override fun sideRouting(route: SideNetworkRoute) {
+        route.add {
+            digitalGateIsTransceivingLocal(isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
+            digitalGateIsTransceivingLocal(isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
+            digitalGateIsTransceivingLocal(isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
 
-            route(RC.DAQC_GATE, uid, RC.VALUE) to handler<ValueInstant<DigitalGateValue>>(
-                isFullyBiDirectional = true
-            ) {
+            route<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = true) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(DigitalGateValue.serializer()), it)
+                    Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
                 }
 
                 receiveMessage(NullResolutionStrategy.PANIC) {
-                    val setting = Json.parse(ValueInstantSerializer(DigitalGateValue.serializer()), it)
+                    val setting = Json.parse(ValueInstantSerializer(DigitalValue.serializer()), it)
                     val (value, _) = setting
                     when (value) {
-                        is DigitalGateValue.BinaryState -> setOutputState(value.state)
-                        is DigitalGateValue.Percentage -> pulseWidthModulate(value.percent)
-                        is DigitalGateValue.Frequency -> sustainTransitionFrequency(value.frequency)
+                        is DigitalValue.BinaryState -> setOutputState(value.state)
+                        is DigitalValue.Percentage -> pulseWidthModulate(value.percent)
+                        is DigitalValue.Frequency -> sustainTransitionFrequency(value.frequency)
                     }
                     _updateBroadcaster.send(setting)
                 }
@@ -117,8 +115,8 @@ abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkConfiguredSide, Net
 
     private val thisAsFrequencyController = SimpleFrequencyController(this)
 
-    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalGateValue>>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalGateValue>>
+    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalValue>>()
+    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalValue>>
         get() = _updateBroadcaster
 
     private val _binaryStateBroadcaster = ConflatedBroadcastChannel<BinaryStateMeasurement>()
@@ -172,32 +170,30 @@ abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkConfiguredSide, Net
         return thisAsFrequencyController
     }
 
-    override fun combinedConfig(config: CombinedRouteConfig) {
-        config.add {
-            digitalChannelRouting(this@FSRemoteDigitalOutput, uid)
+    override fun combinedRouting(route: CombinedNetworkRoute) {
+        route.add {
+            digitalGateRouting(this@FSRemoteDigitalOutput)
         }
     }
 
-    override fun sideConfig(config: SideRouteConfig) {
-        config.add {
-            digitalChannelIsTransceivingRemote(_isTransceivingBinaryState, uid, RC.IS_TRANSCEIVING_BIN_STATE)
-            digitalChannelIsTransceivingRemote(_isTransceivingPwm, uid, RC.IS_TRANSCEIVING_PWM)
-            digitalChannelIsTransceivingRemote(_isTransceivingFrequency, uid, RC.IS_TRANSCEIVING_FREQUENCY)
+    override fun sideRouting(route: SideNetworkRoute) {
+        route.add {
+            digitalGateIsTransceivingRemote(_isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
+            digitalGateIsTransceivingRemote(_isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
+            digitalGateIsTransceivingRemote(_isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
 
-            route(RC.DAQC_GATE, uid, RC.VALUE) to handler<ValueInstant<DigitalGateValue>>(
-                isFullyBiDirectional = true
-            ) {
+            route<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = true) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(DigitalGateValue.serializer()), it)
+                    Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
                 }
 
                 receiveMessage(NullResolutionStrategy.PANIC) {
-                    val setting = Json.parse(ValueInstantSerializer(DigitalGateValue.serializer()), it)
+                    val setting = Json.parse(ValueInstantSerializer(DigitalValue.serializer()), it)
                     val (value, instant) = setting
                     when (value) {
-                        is DigitalGateValue.BinaryState -> _binaryStateBroadcaster.send(value.state at instant)
-                        is DigitalGateValue.Percentage -> _pwmBroadcaster.send(value.percent at instant)
-                        is DigitalGateValue.Frequency ->
+                        is DigitalValue.BinaryState -> _binaryStateBroadcaster.send(value.state at instant)
+                        is DigitalValue.Percentage -> _pwmBroadcaster.send(value.percent at instant)
+                        is DigitalValue.Frequency ->
                             _transitionFrequencyBroadcaster.send(value.frequency at instant)
                     }
                     _updateBroadcaster.send(setting)

@@ -22,12 +22,12 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.hardware.device.*
 
-typealias Route = List<String>
+typealias Path = List<String>
 
 internal class NetworkCommunicator(
     val device: FSBaseDevice,
     private val networkRouteHandlers: List<NetworkRouteHandler<*>>,
-    private val networkUpdateChannelMap: Map<Route, Channel<String?>>
+    private val networkUpdateChannelMap: Map<Path, Channel<String?>>
 ) {
 
     private val parentJob: Job? = device.coroutineContext[Job]
@@ -44,7 +44,7 @@ internal class NetworkCommunicator(
         job = Job(parentJob)
     }
 
-    suspend fun receiveNetworkMessage(route: Route, message: String?) {
+    suspend fun receiveNetworkMessage(route: Path, message: String?) {
         networkUpdateChannelMap[route]?.send(message) ?: TODO("handle invalid route")
     }
 

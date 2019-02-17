@@ -31,16 +31,16 @@ import org.tenkiv.kuantify.networking.configuration.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
 
-private inline fun SideRouteConfig.startSamplingLocal(uid: String, rc: String, crossinline start: () -> Unit) {
-    route(RC.DAQC_GATE, uid, rc) to handler<Ping>(isFullyBiDirectional = false) {
+private inline fun SideNetworkRoute.startSamplingLocal(rc: String, crossinline start: () -> Unit) {
+    route<Ping>(rc, isFullyBiDirectional = false) {
         receive {
             start()
         }
     }
 }
 
-private fun SideRouteConfig.startSamplingRemote(uid: String, rc: String, channel: ReceiveChannel<Ping>) {
-    route(RC.DAQC_GATE, uid, rc) to handler<Ping>(isFullyBiDirectional = false) {
+private fun SideNetworkRoute.startSamplingRemote(rc: String, channel: ReceiveChannel<Ping>) {
+    route<Ping>(rc, isFullyBiDirectional = false) {
         setLocalUpdateChannel(channel) withUpdateChannel {
             send()
         }
@@ -81,27 +81,25 @@ abstract class LocalDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkC
 
     }
 
-    override fun combinedConfig(config: CombinedRouteConfig) {
-        config.add {
-            digitalChannelRouting(this@LocalDigitalInput, uid)
+    override fun combinedRouting(route: CombinedNetworkRoute) {
+        route.add {
+            digitalGateRouting(this@LocalDigitalInput)
         }
     }
 
-    override fun sideConfig(config: SideRouteConfig) {
-        config.add {
-            digitalChannelIsTransceivingLocal(isTransceivingBinaryState, uid, RC.IS_TRANSCEIVING_BIN_STATE)
-            digitalChannelIsTransceivingLocal(isTransceivingPwm, uid, RC.IS_TRANSCEIVING_PWM)
-            digitalChannelIsTransceivingLocal(isTransceivingFrequency, uid, RC.IS_TRANSCEIVING_FREQUENCY)
+    override fun sideRouting(route: SideNetworkRoute) {
+        route.add {
+            digitalGateIsTransceivingLocal(isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
+            digitalGateIsTransceivingLocal(isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
+            digitalGateIsTransceivingLocal(isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
 
-            startSamplingLocal(uid, RC.START_SAMPLING_BINARY_STATE, ::startSamplingBinaryState)
-            startSamplingLocal(uid, RC.START_SAMPLING_PWM, ::startSamplingPwm)
-            startSamplingLocal(uid, RC.START_SAMPLING_TRANSITION_FREQUENCY, ::startSamplingTransitionFrequency)
+            startSamplingLocal(RC.START_SAMPLING_BINARY_STATE, ::startSamplingBinaryState)
+            startSamplingLocal(RC.START_SAMPLING_PWM, ::startSamplingPwm)
+            startSamplingLocal(RC.START_SAMPLING_TRANSITION_FREQUENCY, ::startSamplingTransitionFrequency)
 
-            route(RC.DAQC_GATE, uid, RC.VALUE) to handler<ValueInstant<DigitalGateValue>>(
-                isFullyBiDirectional = false
-            ) {
+            route<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = false) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(DigitalGateValue.serializer()), it)
+                    Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
                 }
 
                 setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
@@ -116,8 +114,8 @@ abstract class LocalDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkC
 abstract class FSRemoteDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkConfiguredCombined {
     abstract val uid: String
 
-    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalGateValue>>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalGateValue>>
+    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalValue>>()
+    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalValue>>
         get() = _updateBroadcaster
 
     private val _binaryStateBroadcaster = ConflatedBroadcastChannel<BinaryStateMeasurement>()
@@ -199,32 +197,30 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkConfiguredSide, Netwo
 
     }
 
-    override fun combinedConfig(config: CombinedRouteConfig) {
-        config.add {
-            digitalChannelRouting(this@FSRemoteDigitalInput, uid)
+    override fun combinedRouting(route: CombinedNetworkRoute) {
+        route.add {
+            digitalGateRouting(this@FSRemoteDigitalInput)
         }
     }
 
-    override fun sideConfig(config: SideRouteConfig) {
-        config.add {
-            digitalChannelIsTransceivingRemote(_isTransceivingBinaryState, uid, RC.IS_TRANSCEIVING_BIN_STATE)
-            digitalChannelIsTransceivingRemote(_isTransceivingPwm, uid, RC.IS_TRANSCEIVING_PWM)
-            digitalChannelIsTransceivingRemote(_isTransceivingFrequency, uid, RC.IS_TRANSCEIVING_FREQUENCY)
+    override fun sideRouting(route: SideNetworkRoute) {
+        route.add {
+            digitalGateIsTransceivingRemote(_isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
+            digitalGateIsTransceivingRemote(_isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
+            digitalGateIsTransceivingRemote(_isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
 
-            startSamplingRemote(uid, RC.START_SAMPLING_TRANSITION_FREQUENCY, startSamplingTransitionFrequencyChannel)
-            startSamplingRemote(uid, RC.START_SAMPLING_PWM, startSamplingPwmChannel)
-            startSamplingRemote(uid, RC.START_SAMPLING_BINARY_STATE, startSamplingBinaryStateChannel)
+            startSamplingRemote(RC.START_SAMPLING_TRANSITION_FREQUENCY, startSamplingTransitionFrequencyChannel)
+            startSamplingRemote(RC.START_SAMPLING_PWM, startSamplingPwmChannel)
+            startSamplingRemote(RC.START_SAMPLING_BINARY_STATE, startSamplingBinaryStateChannel)
 
-            route(RC.DAQC_GATE, uid, RC.VALUE) to handler<ValueInstant<DigitalGateValue>>(
-                isFullyBiDirectional = false
-            ) {
+            route<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = false) {
                 receiveMessage(NullResolutionStrategy.PANIC) {
-                    val measurement = Json.parse(ValueInstantSerializer(DigitalGateValue.serializer()), it)
+                    val measurement = Json.parse(ValueInstantSerializer(DigitalValue.serializer()), it)
                     val (value, instant) = measurement
                     when (value) {
-                        is DigitalGateValue.BinaryState -> _binaryStateBroadcaster.send(value.state at instant)
-                        is DigitalGateValue.Percentage -> _pwmBroadcaster.send(value.percent at instant)
-                        is DigitalGateValue.Frequency ->
+                        is DigitalValue.BinaryState -> _binaryStateBroadcaster.send(value.state at instant)
+                        is DigitalValue.Percentage -> _pwmBroadcaster.send(value.percent at instant)
+                        is DigitalValue.Frequency ->
                             _transitionFrequencyBroadcaster.send(value.frequency at instant)
                     }
                     _updateBroadcaster.send(measurement)

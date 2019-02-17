@@ -27,6 +27,8 @@ import org.tenkiv.kuantify.android.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.networking.*
+import org.tenkiv.kuantify.networking.device.*
 import java.time.*
 import kotlin.coroutines.*
 
@@ -46,6 +48,8 @@ abstract class LocalAndroidSensor<T : DaqcValue>(
      * The sensor constant for the type of Android sensor.
      */
     abstract val type: Int
+
+    override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
     override val coroutineContext: CoroutineContext get() = device.coroutineContext
 

@@ -41,7 +41,7 @@ internal sealed class NetworkRouteHandler<T>(protected val device: FSBaseDevice)
 
     internal class Host<T> internal constructor(
         device: FSBaseDevice,
-        private val route: Route,
+        private val route: Path,
         private val localUpdateChannel: ReceiveChannel<T>?,
         private val networkUpdateChannel: ReceiveChannel<String?>?,
         private val serializeMessage: MessageSerializer<T>?,
@@ -74,7 +74,7 @@ internal sealed class NetworkRouteHandler<T>(protected val device: FSBaseDevice)
 
     internal class Remote<T> internal constructor(
         device: FSBaseDevice,
-        private val route: Route,
+        private val route: Path,
         private val localUpdateChannel: ReceiveChannel<T>?,
         private val networkUpdateChannel: ReceiveChannel<String?>?,
         private val serializeMessage: MessageSerializer<T>?,

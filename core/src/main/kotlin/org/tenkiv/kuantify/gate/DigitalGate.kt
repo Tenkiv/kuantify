@@ -22,11 +22,17 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.*
+import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.networking.*
+import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.physikal.core.*
+import tec.units.indriya.*
 import javax.measure.quantity.*
 
-interface DigitalGate : DaqcGate<DigitalGateValue> {
+interface DigitalGate : DaqcGate<DigitalValue> {
     /**
      * The frequency with which pwm and transition frequency input and output will be averaged.
      * e.g. you want an output to be [BinaryState.High] 60% of the time. This will set if it's high 60% of the time
@@ -103,13 +109,65 @@ inline fun DigitalGate.onAnyTransceivingChange(
     }
 }
 
+internal fun CombinedNetworkRoute.digitalGateRouting(digitalChannel: DigitalGate) {
+
+    route<ComparableQuantity<Frequency>>(RC.AVG_FREQUENCY, isFullyBiDirectional = true) {
+        serializeMessage {
+            Json.stringify(ComparableQuantitySerializer, it)
+        } withSerializer {
+            receiveMessageOnEither {
+                val setting = Json.parse(ComparableQuantitySerializer, it).asType<Frequency>().toDaqc()
+                digitalChannel.avgFrequency.set(setting)
+            }
+        }
+
+        setLocalUpdateChannel(digitalChannel.avgFrequency.updateBroadcaster.openSubscription()) withUpdateChannel {
+            sendFromRemote()
+            sendFromHost()
+        }
+    }
+
+    route<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
+        receivePingOnEither {
+            digitalChannel.stopTransceiving()
+        }
+    }
+}
+
+internal fun SideNetworkRoute.digitalGateIsTransceivingRemote(
+    updatable: Updatable<Boolean>,
+    transceivingRC: String
+) {
+    route<Boolean>(transceivingRC, isFullyBiDirectional = false) {
+        receiveMessage(NullResolutionStrategy.PANIC) {
+            val value = Json.parse(BooleanSerializer, it)
+            updatable.set(value)
+        }
+    }
+}
+
+internal fun SideNetworkRoute.digitalGateIsTransceivingLocal(
+    trackable: Trackable<Boolean>,
+    transceivingRC: String
+) {
+    route<Boolean>(transceivingRC, isFullyBiDirectional = false) {
+        serializeMessage {
+            Json.stringify(BooleanSerializer, it)
+        }
+
+        setLocalUpdateChannel(trackable.updateBroadcaster.openSubscription()) withUpdateChannel {
+            send()
+        }
+    }
+}
+
 @Serializable
-sealed class DigitalGateValue : DaqcData {
+sealed class DigitalValue : DaqcData {
 
     override val size: Int
         get() = 1
 
-    data class BinaryState(val state: org.tenkiv.kuantify.data.BinaryState) : DigitalGateValue() {
+    data class BinaryState(val state: org.tenkiv.kuantify.data.BinaryState) : DigitalValue() {
 
         override fun toDaqcValues(): List<DaqcValue> = listOf(state)
 
@@ -118,7 +176,7 @@ sealed class DigitalGateValue : DaqcData {
         }
     }
 
-    data class Frequency(val frequency: DaqcQuantity<javax.measure.quantity.Frequency>) : DigitalGateValue() {
+    data class Frequency(val frequency: DaqcQuantity<javax.measure.quantity.Frequency>) : DigitalValue() {
 
         override fun toDaqcValues(): List<DaqcValue> = listOf(frequency)
 
@@ -127,7 +185,7 @@ sealed class DigitalGateValue : DaqcData {
         }
     }
 
-    data class Percentage(val percent: DaqcQuantity<Dimensionless>) : DigitalGateValue() {
+    data class Percentage(val percent: DaqcQuantity<Dimensionless>) : DigitalValue() {
 
         override fun toDaqcValues(): List<DaqcValue> = listOf(percent)
 
@@ -137,7 +195,7 @@ sealed class DigitalGateValue : DaqcData {
     }
 
     //TODO: Redo this horrific abomination of a serialization hack
-    @Serializer(forClass = DigitalGateValue::class)
+    @Serializer(forClass = DigitalValue::class)
     companion object {
         override val descriptor: SerialDescriptor = object : SerialClassDescImpl("DigitalGateValue") {
             init {
@@ -146,7 +204,7 @@ sealed class DigitalGateValue : DaqcData {
             }
         }
 
-        override fun deserialize(decoder: Decoder): DigitalGateValue {
+        override fun deserialize(decoder: Decoder): DigitalValue {
             val inp: CompositeDecoder = decoder.beginStructure(descriptor)
             var type: Byte = -1
             lateinit var value: String
@@ -167,7 +225,7 @@ sealed class DigitalGateValue : DaqcData {
             }
         }
 
-        override fun serialize(encoder: Encoder, obj: DigitalGateValue) {
+        override fun serialize(encoder: Encoder, obj: DigitalValue) {
             val compositeOutput: CompositeEncoder = encoder.beginStructure(descriptor)
 
             val type = when (obj) {

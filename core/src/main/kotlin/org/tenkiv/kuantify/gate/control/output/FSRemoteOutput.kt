@@ -47,12 +47,11 @@ sealed class FSRemoteOutput<T : DaqcValue>(scope: CoroutineScope) : FSRemoteCont
     override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    override fun sideConfig(config: SideRouteConfig) {
-        super.sideConfig(config)
-        val outputRoute = listOf(RC.DAQC_GATE, uid)
+    override fun sideRouting(route: SideNetworkRoute) {
+        super.sideRouting(route)
 
-        config.add {
-            route(outputRoute + RC.IS_TRANSCEIVING) to handler<Boolean>(isFullyBiDirectional = false) {
+        route.add {
+            route<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
                 receiveMessage(NullResolutionStrategy.PANIC) {
                     val value = Json.parse(BooleanSerializer, it)
                     _isTransceiving.value = value
@@ -67,12 +66,11 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(scope: CoroutineScope) :
 
     abstract val quantityType: KClass<Q>
 
-    override fun sideConfig(config: SideRouteConfig) {
-        super.sideConfig(config)
-        val outputRoute = listOf(RC.DAQC_GATE, uid)
+    override fun sideRouting(route: SideNetworkRoute) {
+        super.sideRouting(route)
 
-        config.add {
-            route(outputRoute + RC.VALUE) to handler<QuantityMeasurement<Q>>(isFullyBiDirectional = true) {
+        route.add {
+            route<QuantityMeasurement<Q>>(RC.VALUE, isFullyBiDirectional = true) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(ComparableQuantitySerializer), it)
                 }
@@ -95,15 +93,14 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(scope: CoroutineScope) :
 abstract class FSRemoteBinaryStateOutput(scope: CoroutineScope) :
     FSRemoteOutput<BinaryState>(scope), BinaryStateOutput {
 
-    override fun sideConfig(config: SideRouteConfig) {
-        super.sideConfig(config)
-        val outputRoute = listOf(RC.DAQC_GATE, uid)
+    override fun sideRouting(route: SideNetworkRoute) {
+        super.sideRouting(route)
 
         //TODO: This means the time associated with the update will be the time of the update on the local device if
         // the command came from another remote but if it comes from this one it will be the time at which it was sent
         // inconsistency is bad.
-        config.add {
-            route(outputRoute + RC.VALUE) to handler<BinaryStateMeasurement>(isFullyBiDirectional = true) {
+        route.add {
+            route<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = true) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(BinaryState.serializer()), it)
                 }

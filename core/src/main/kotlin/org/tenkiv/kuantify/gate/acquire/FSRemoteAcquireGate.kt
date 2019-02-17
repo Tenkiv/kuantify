@@ -24,12 +24,13 @@ import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.device.*
 import kotlin.coroutines.*
 
-abstract class FSRemoteAcquireGate<T : DaqcData>(private val scope: CoroutineScope) : AcquireGate<T>,
+abstract class FSRemoteAcquireGate<T : DaqcData>(private val scope: CoroutineScope, val uid: String) : AcquireGate<T>,
     NetworkConfiguredSide {
 
-    abstract val uid: String
+    final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
     final override val coroutineContext: CoroutineContext
         get() = scope.coroutineContext
@@ -49,21 +50,21 @@ abstract class FSRemoteAcquireGate<T : DaqcData>(private val scope: CoroutineSco
         stopTransceivingChannel.offer(null)
     }
 
-    override fun sideConfig(config: SideRouteConfig) {
-        val inputRoute = listOf(RC.DAQC_GATE, uid)
+    override fun sideRouting(route: SideNetworkRoute) {
+        route.add {
 
-        config.add {
-            route(inputRoute + RC.START_SAMPLING) to handler<Ping>(isFullyBiDirectional = false) {
+            route<Ping>(RC.START_SAMPLING, isFullyBiDirectional = false) {
                 setLocalUpdateChannel(startSamplingChannel) withUpdateChannel {
                     send()
                 }
             }
 
-            route(inputRoute + RC.STOP_TRANSCEIVING) to handler<Ping>(isFullyBiDirectional = false) {
+            route<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
                 setLocalUpdateChannel(stopTransceivingChannel) withUpdateChannel {
                     send()
                 }
             }
+
         }
 
     }

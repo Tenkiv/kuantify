@@ -33,17 +33,17 @@ interface AndroidSensor<T : DaqcValue> : Input<T> {
 
 class RemoteQuantityAndroidSensor<Q : Quantity<Q>>(
     scope: CoroutineScope,
-    override val uid: String,
+    uid: String,
     override val quantityType: KClass<Q>
-) : FSRemoteQuantityInput<Q>(scope), QuantityAndroidSensor<Q> {
+) : FSRemoteQuantityInput<Q>(scope, uid), QuantityAndroidSensor<Q> {
 
     override val updateRate: UpdateRate by runningAverage()
 }
 
 class RemoteBinaryStateAndroidSensor(
     scope: CoroutineScope,
-    override val uid: String
-) : FSRemoteBinaryStateInput(scope), AndroidSensor<BinaryState> {
+    uid: String
+) : FSRemoteBinaryStateInput(scope, uid), AndroidSensor<BinaryState> {
 
     override val updateRate: UpdateRate by runningAverage()
 

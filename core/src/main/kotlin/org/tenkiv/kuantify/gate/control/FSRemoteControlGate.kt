@@ -38,12 +38,11 @@ abstract class FSRemoteControlGate<T : DaqcData>(private val scope: CoroutineSco
         stopTransceivingChannel.offer(Unit)
     }
 
-    override fun sideConfig(config: SideRouteConfig) {
-        val outputRoute = listOf(RC.DAQC_GATE, uid)
+    override fun sideRouting(route: SideNetworkRoute) {
 
-        config.add {
+        route.add {
 
-            route(outputRoute + RC.STOP_TRANSCEIVING) to handler<Ping>(isFullyBiDirectional = false) {
+            route<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
                 setLocalUpdateChannel(stopTransceivingChannel) withUpdateChannel {
                     send()
                 }

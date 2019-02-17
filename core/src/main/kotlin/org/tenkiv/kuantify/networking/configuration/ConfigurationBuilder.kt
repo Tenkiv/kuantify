@@ -34,41 +34,29 @@ private val logger = KotlinLogging.logger {}
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
 @DslMarker
-annotation class CombinedRouteConfigMarker
+annotation class CombinedRouteMarker
 
-@CombinedRouteConfigMarker
-class CombinedRouteConfig internal constructor(private val device: FSDevice) {
+internal class CombinedRouteConfig(private val device: FSDevice) {
 
-    internal val networkRouteHandlerMap = HashMap<Route, NetworkRouteHandler<*>>()
+    val networkRouteHandlerMap = HashMap<Path, NetworkRouteHandler<*>>()
 
-    internal val networkUpdateChannelMap = HashMap<Route, Channel<String?>>()
+    val networkUpdateChannelMap = HashMap<Path, Channel<String?>>()
 
-    fun add(additions: CombinedRouteConfig.() -> Unit) {
-        this.additions()
-    }
+    val baseRoute: CombinedNetworkRoute get() = CombinedNetworkRoute(this, emptyList())
 
-    fun route(vararg path: String): Route = listOf(*path)
-
-    fun route(path: List<String>): Route = path
-
-    fun <T> handler(
+    fun <T> addRouteHandler(
+        path: Path,
         isFullyBiDirectional: Boolean,
         build: CombinedRouteHandlerBuilder<T>.() -> Unit
-    ): HandlerParams<T> {
-        return HandlerParams(isFullyBiDirectional, build)
-    }
-
-    @Suppress("NAME_SHADOWING")
-    infix fun <T> Route.to(handler: HandlerParams<T>) {
-        val (isFullyBiDirectional, build) = handler
-
+    ) {
         val routeHandlerBuilder = CombinedRouteHandlerBuilder<T>()
         routeHandlerBuilder.build()
 
         val networkUpdateChannel = if ((device is LocalDevice && routeHandlerBuilder.receiveFromNetworkOnHost) ||
             (device is FSRemoteDevice && routeHandlerBuilder.receiveFromNetworkOnRemote)
         ) {
-            Channel<String?>(10_000).also { networkUpdateChannelMap += this to it }
+            //TODO: Might be able to change this to just be a function.
+            Channel<String?>(10_000).also { networkUpdateChannelMap += path to it }
         } else {
             null
         }
@@ -77,15 +65,15 @@ class CombinedRouteConfig internal constructor(private val device: FSDevice) {
 
         val receiveUpdatesOnRemote: UpdateReceiver? = buildRemoteUpdateReceiver(routeHandlerBuilder)
 
-        val currentHandler = networkRouteHandlerMap[this]
+        val currentHandler = networkRouteHandlerMap[path]
         if (currentHandler != null) {
-            logger.warn { "Overriding combined routing for route $this." }
+            logger.warn { "Overriding combined routing for route $path." }
         }
 
-        networkRouteHandlerMap[this] = when (device) {
+        networkRouteHandlerMap[path] = when (device) {
             is LocalDevice -> NetworkRouteHandler.Host(
                 device,
-                this,
+                path,
                 routeHandlerBuilder.localUpdateChannel,
                 networkUpdateChannel,
                 routeHandlerBuilder.serializeMessage,
@@ -94,7 +82,7 @@ class CombinedRouteConfig internal constructor(private val device: FSDevice) {
             )
             is FSRemoteDevice -> NetworkRouteHandler.Remote(
                 device,
-                this,
+                path,
                 routeHandlerBuilder.localUpdateChannel,
                 networkUpdateChannel,
                 routeHandlerBuilder.serializeMessage,
@@ -149,18 +137,50 @@ class CombinedRouteConfig internal constructor(private val device: FSDevice) {
             }
         }
     }
-
-    data class HandlerParams<T> internal constructor(
-        val isFullyBiDirectional: Boolean,
-        val build: CombinedRouteHandlerBuilder<T>.() -> Unit
-    )
 }
 
-@CombinedRouteConfigMarker
+@Suppress("NAME_SHADOWING")
+@CombinedRouteMarker
+class CombinedNetworkRoute internal constructor(private val config: CombinedRouteConfig, private val path: Path) {
+
+    fun <T> route(
+        vararg path: String,
+        isFullyBiDirectional: Boolean,
+        build: CombinedRouteHandlerBuilder<T>.() -> Unit
+    ) {
+        route(path.toList(), isFullyBiDirectional, build)
+    }
+
+    fun <T> route(
+        path: Path,
+        isFullyBiDirectional: Boolean,
+        build: CombinedRouteHandlerBuilder<T>.() -> Unit
+    ) {
+        val path = this.path + path
+
+        config.addRouteHandler(
+            path,
+            isFullyBiDirectional,
+            build
+        )
+    }
+
+    fun route(vararg path: String, build: CombinedNetworkRoute.() -> Unit) {
+        route(path.toList(), build)
+    }
+
+    fun route(path: Path, build: CombinedNetworkRoute.() -> Unit) {
+        val path = this.path + path
+
+        CombinedNetworkRoute(config, path).apply(build)
+    }
+}
+
+@CombinedRouteMarker
 class CombinedRouteHandlerBuilder<T> internal constructor() {
     internal var serializeMessage: MessageSerializer<T>? = null
 
-    internal var withSerializer: WithSerializer<T>? = null
+    internal var withSerializer: WithSerializer? = null
 
     internal var onRemote: OnSide<T>? = null
 
@@ -227,8 +247,8 @@ class CombinedRouteHandlerBuilder<T> internal constructor() {
         receivePingOnHost = pingReceiver
     }
 
-    infix fun SetSerializer<T>.withSerializer(build: WithSerializer<T>.() -> Unit) {
-        val ws = WithSerializer(this.serializer)
+    infix fun SetSerializer<T>.withSerializer(build: WithSerializer.() -> Unit) {
+        val ws = WithSerializer()
         ws.build()
         this@CombinedRouteHandlerBuilder.withSerializer = ws
     }
@@ -247,7 +267,7 @@ class CombinedRouteHandlerBuilder<T> internal constructor() {
         localUpdateChannel = onSideBuilder.localUpdateChannel
     }
 
-    @CombinedRouteConfigMarker
+    @CombinedRouteMarker
     class WithUpdateChannel {
         internal var sendFromHost: Boolean = false
 
@@ -264,8 +284,8 @@ class CombinedRouteHandlerBuilder<T> internal constructor() {
 
 }
 
-@CombinedRouteConfigMarker
-class WithSerializer<T> internal constructor(internal val messageSerializer: MessageSerializer<T>) {
+@CombinedRouteMarker
+class WithSerializer internal constructor() {
 
     internal var onRemote: OnSide? = null
 
@@ -301,7 +321,7 @@ class WithSerializer<T> internal constructor(internal val messageSerializer: Mes
         onHost = onSideBuilder
     }
 
-    @CombinedRouteConfigMarker
+    @CombinedRouteMarker
     class OnSide internal constructor() {
 
         internal var receiveMessage: MessageReceiver? = null
@@ -314,10 +334,10 @@ class WithSerializer<T> internal constructor(internal val messageSerializer: Mes
 
 }
 
-@CombinedRouteConfigMarker
+@CombinedRouteMarker
 class SetSerializer<T> internal constructor(val serializer: MessageSerializer<T>)
 
-@CombinedRouteConfigMarker
+@CombinedRouteMarker
 class OnSide<T> internal constructor() {
 
     internal var localUpdateChannel: ReceiveChannel<T>? = null
@@ -348,52 +368,39 @@ class OnSide<T> internal constructor() {
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
 @DslMarker
-annotation class SideRouteConfigMarker
+annotation class SideRouteMarker
 
-@SideRouteConfigMarker
-class SideRouteConfig internal constructor(private val device: FSBaseDevice) {
+internal class SideRouteConfig(private val device: FSBaseDevice) {
 
-    internal val networkRouteHandlerMap = HashMap<Route, NetworkRouteHandler<*>>()
+    val networkRouteHandlerMap = HashMap<Path, NetworkRouteHandler<*>>()
 
-    internal val networkUpdateChannelMap = HashMap<Route, Channel<String?>>()
+    val networkUpdateChannelMap = HashMap<Path, Channel<String?>>()
 
-    fun add(additions: SideRouteConfig.() -> Unit) {
-        this.additions()
-    }
+    val baseRoute: SideNetworkRoute get() = SideNetworkRoute(this, emptyList())
 
-    fun route(vararg path: String): Route = listOf(*path)
-
-    fun route(path: List<String>): Route = path
-
-    fun <T> handler(
+    fun <T> addRouteHandler(
+        path: Path,
         isFullyBiDirectional: Boolean,
         build: SideRouteHandlerBuilder<T>.() -> Unit
-    ): HandlerParams<T> {
-        return HandlerParams(isFullyBiDirectional, build)
-    }
-
-    @Suppress("NAME_SHADOWING")
-    infix fun <T> Route.to(handler: HandlerParams<T>) {
-        val (isFullyBiDirectional, build) = handler
-
-        val routeHandlerBuilder = SideRouteHandlerBuilder<T>()
+    ) {
+        val routeHandlerBuilder = SideRouteHandlerBuilder<T>(path)
         routeHandlerBuilder.build()
 
         val networkUpdateChannel = if (routeHandlerBuilder.receive != null) {
-            Channel<String?>(10_000).also { networkUpdateChannelMap += this to it }
+            Channel<String?>(10_000).also { networkUpdateChannelMap += path to it }
         } else {
             null
         }
 
-        val currentHandler = networkRouteHandlerMap[this]
+        val currentHandler = networkRouteHandlerMap[path]
         if (currentHandler != null) {
             logger.warn { "Overriding side routing for route $this." }
         }
 
-        networkRouteHandlerMap[this] = when (device) {
+        networkRouteHandlerMap[path] = when (device) {
             is LocalDevice -> NetworkRouteHandler.Host(
                 device,
-                this,
+                path,
                 routeHandlerBuilder.localUpdateChannel,
                 networkUpdateChannel,
                 routeHandlerBuilder.serializeMessage,
@@ -402,7 +409,7 @@ class SideRouteConfig internal constructor(private val device: FSBaseDevice) {
             )
             is FSRemoteDevice -> NetworkRouteHandler.Remote(
                 device,
-                this,
+                path,
                 routeHandlerBuilder.localUpdateChannel,
                 networkUpdateChannel,
                 routeHandlerBuilder.serializeMessage,
@@ -410,20 +417,50 @@ class SideRouteConfig internal constructor(private val device: FSBaseDevice) {
                 routeHandlerBuilder.receive,
                 isFullyBiDirectional
             )
-            else -> throw IllegalStateException(
-                "Concrete FSDevice must extend either LocalDevice or FSRemoteDevice"
-            )
         }
     }
-
-    data class HandlerParams<T> internal constructor(
-        val isFullyBiDirectional: Boolean,
-        val build: SideRouteHandlerBuilder<T>.() -> Unit
-    )
 }
 
-@SideRouteConfigMarker
-class SideRouteHandlerBuilder<T> internal constructor() {
+@Suppress("NAME_SHADOWING")
+@SideRouteMarker
+class SideNetworkRoute internal constructor(private val config: SideRouteConfig, private val path: Path) {
+
+    fun <T> route(
+        vararg path: String,
+        isFullyBiDirectional: Boolean,
+        build: SideRouteHandlerBuilder<T>.() -> Unit
+    ) {
+        route(path.toList(), isFullyBiDirectional, build)
+    }
+
+    fun <T> route(
+        path: Path,
+        isFullyBiDirectional: Boolean,
+        build: SideRouteHandlerBuilder<T>.() -> Unit
+    ) {
+        val path = this.path + path
+
+        config.addRouteHandler(
+            path,
+            isFullyBiDirectional = isFullyBiDirectional,
+            build = build
+        )
+    }
+
+    fun route(vararg path: String, build: SideNetworkRoute.() -> Unit) {
+        route(path.toList(), build)
+    }
+
+
+    fun route(path: Path, build: SideNetworkRoute.() -> Unit) {
+        val path = this.path + path
+
+        SideNetworkRoute(config, path).apply(build)
+    }
+}
+
+@SideRouteMarker
+class SideRouteHandlerBuilder<T> internal constructor(internal val path: Path) {
 
     internal var localUpdateChannel: ReceiveChannel<T>? = null
 
@@ -464,18 +501,17 @@ class SideRouteHandlerBuilder<T> internal constructor() {
         wuc.build()
         this@SideRouteHandlerBuilder.send = wuc.send
     }
-
 }
 
-@SideRouteConfigMarker
+@SideRouteMarker
 class SetUpdateChannel internal constructor()
 
 enum class NullResolutionStrategy {
     PANIC, SKIP
 }
 
-@CombinedRouteConfigMarker
-@SideRouteConfigMarker
+@CombinedRouteMarker
+@SideRouteMarker
 class SideWithUpdateChannel {
     internal var send: Boolean = false
 

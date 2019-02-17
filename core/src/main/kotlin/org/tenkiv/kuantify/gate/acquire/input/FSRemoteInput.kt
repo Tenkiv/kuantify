@@ -33,8 +33,8 @@ import tec.units.indriya.*
 import javax.measure.*
 import kotlin.reflect.*
 
-sealed class FSRemoteInput<T : DaqcValue>(scope: CoroutineScope) : FSRemoteAcquireGate<T>(scope), Input<T>,
-    NetworkConfiguredSide {
+sealed class FSRemoteInput<T : DaqcValue>(scope: CoroutineScope, uid: String) : FSRemoteAcquireGate<T>(scope, uid),
+    Input<T>, NetworkConfiguredSide {
 
     internal val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
     override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
@@ -44,12 +44,11 @@ sealed class FSRemoteInput<T : DaqcValue>(scope: CoroutineScope) : FSRemoteAcqui
     override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    override fun sideConfig(config: SideRouteConfig) {
-        super.sideConfig(config)
-        val inputRoute = listOf(RC.DAQC_GATE, uid)
+    override fun sideRouting(route: SideNetworkRoute) {
+        super.sideRouting(route)
 
-        config.add {
-            route(inputRoute + RC.IS_TRANSCEIVING) to handler<Boolean>(isFullyBiDirectional = false) {
+        route.add {
+            route<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
                 receiveMessage(NullResolutionStrategy.PANIC) {
                     val value = Json.parse(BooleanSerializer, it)
                     _isTransceiving.value = value
@@ -60,8 +59,8 @@ sealed class FSRemoteInput<T : DaqcValue>(scope: CoroutineScope) : FSRemoteAcqui
     }
 }
 
-abstract class FSRemoteQuantityInput<Q : Quantity<Q>>(scope: CoroutineScope) : FSRemoteInput<DaqcQuantity<Q>>(scope),
-    QuantityInput<Q> {
+abstract class FSRemoteQuantityInput<Q : Quantity<Q>>(scope: CoroutineScope, uid: String) :
+    FSRemoteInput<DaqcQuantity<Q>>(scope, uid), QuantityInput<Q> {
 
     abstract val quantityType: KClass<Q>
 
@@ -71,12 +70,11 @@ abstract class FSRemoteQuantityInput<Q : Quantity<Q>>(scope: CoroutineScope) : F
         _updateBroadcaster.offer(value.asType(quantityType.java).toDaqc() at instant)
     }
 
-    override fun sideConfig(config: SideRouteConfig) {
-        super.sideConfig(config)
-        val inputRoute = listOf(RC.DAQC_GATE, uid)
+    override fun sideRouting(route: SideNetworkRoute) {
+        super.sideRouting(route)
 
-        config.add {
-            route(inputRoute + RC.VALUE) to handler<QuantityMeasurement<Q>>(isFullyBiDirectional = false) {
+        route.add {
+            route<QuantityMeasurement<Q>>(RC.VALUE, isFullyBiDirectional = false) {
                 receiveMessage(NullResolutionStrategy.PANIC) {
                     val measurement = Json.parse(ValueInstantSerializer(ComparableQuantitySerializer), it)
                     unsafeUpdate(measurement)
@@ -88,20 +86,20 @@ abstract class FSRemoteQuantityInput<Q : Quantity<Q>>(scope: CoroutineScope) : F
 
 }
 
-abstract class FSRemoteBinaryStateInput(scope: CoroutineScope) : FSRemoteInput<BinaryState>(scope),
+abstract class FSRemoteBinaryStateInput(scope: CoroutineScope, uid: String) : FSRemoteInput<BinaryState>(scope, uid),
     BinaryStateInput {
 
-    override fun sideConfig(config: SideRouteConfig) {
-        super.sideConfig(config)
-        val inputRoute = listOf(RC.DAQC_GATE, uid)
+    override fun sideRouting(route: SideNetworkRoute) {
+        super.sideRouting(route)
 
-        config.add {
-            route(inputRoute + RC.VALUE) to handler<BinaryStateMeasurement>(isFullyBiDirectional = false) {
+        route.add {
+            route<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = false) {
                 receiveMessage(NullResolutionStrategy.PANIC) {
                     val measurement = Json.parse(ValueInstantSerializer(BinaryState.serializer()), it)
                     _updateBroadcaster.offer(measurement)
                 }
             }
         }
+
     }
 }

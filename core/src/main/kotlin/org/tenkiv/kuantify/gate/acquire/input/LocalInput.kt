@@ -28,14 +28,13 @@ import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.*
 
-interface LocalInput<T : DaqcValue> : LocalAcquireGate<T>, Input<T>, NetworkConfiguredSide {
+interface LocalInput<T : DaqcValue> : LocalAcquireGate<T>, Input<T> {
 
-    override fun sideConfig(config: SideRouteConfig) {
-        super.sideConfig(config)
-        val inputRoute = listOf(RC.DAQC_GATE, uid)
+    override fun sideRouting(route: SideNetworkRoute) {
+        super.sideRouting(route)
 
-        config.add {
-            route(inputRoute + RC.IS_TRANSCEIVING) to handler<Boolean>(isFullyBiDirectional = false) {
+        route.add {
+            route<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
                 serializeMessage {
                     Json.stringify(BooleanSerializer, it)
                 }
@@ -50,13 +49,11 @@ interface LocalInput<T : DaqcValue> : LocalAcquireGate<T>, Input<T>, NetworkConf
 
 interface LocalQuantityInput<Q : Quantity<Q>> : LocalInput<DaqcQuantity<Q>>, QuantityInput<Q> {
 
+    override fun sideRouting(route: SideNetworkRoute) {
+        super.sideRouting(route)
 
-    override fun sideConfig(config: SideRouteConfig) {
-        super.sideConfig(config)
-        val inputRoute = listOf(RC.DAQC_GATE, uid)
-
-        config.add {
-            route(inputRoute + RC.VALUE) to handler<QuantityMeasurement<Q>>(isFullyBiDirectional = false) {
+        route.add {
+            route<QuantityMeasurement<Q>>(RC.VALUE, isFullyBiDirectional = false) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(ComparableQuantitySerializer), it)
                 }
@@ -71,12 +68,11 @@ interface LocalQuantityInput<Q : Quantity<Q>> : LocalInput<DaqcQuantity<Q>>, Qua
 
 interface LocalBinaryStateInput : LocalInput<BinaryState>, BinaryStateInput {
 
-    override fun sideConfig(config: SideRouteConfig) {
-        super.sideConfig(config)
-        val inputRoute = listOf(RC.DAQC_GATE, uid)
+    override fun sideRouting(route: SideNetworkRoute) {
+        super.sideRouting(route)
 
-        config.add {
-            route(inputRoute + RC.VALUE) to handler<BinaryStateMeasurement>(isFullyBiDirectional = false) {
+        route.add {
+            route<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = false) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(BinaryState.serializer()), it)
                 }

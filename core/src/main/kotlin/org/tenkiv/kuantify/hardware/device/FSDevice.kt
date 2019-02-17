@@ -37,7 +37,7 @@ import kotlin.coroutines.*
 private val logger = KotlinLogging.logger {}
 
 interface FSDevice : Device, NetworkConfiguredCombined {
-    override fun combinedConfig(config: CombinedRouteConfig) {
+    override fun combinedRouting(route: CombinedNetworkRoute) {
 
     }
 }
@@ -48,13 +48,15 @@ interface FSDevice : Device, NetworkConfiguredCombined {
  */
 sealed class FSBaseDevice : FSDevice, NetworkConfiguredSide {
 
+    final override val basePath: Path = emptyList()
+
     //TODO Lazy thread safety mode
     internal val networkCommunicator: NetworkCommunicator by lazy(LazyThreadSafetyMode.NONE) {
         val combinedNetworkConfig = CombinedRouteConfig(this)
-        combinedConfig(combinedNetworkConfig)
+        combinedRouting(combinedNetworkConfig.baseRoute)
 
         val sideRouteConfig = SideRouteConfig(this)
-        sideConfig(sideRouteConfig)
+        sideRouting(sideRouteConfig.baseRoute)
 
         val resultRouteMap = combinedNetworkConfig.networkRouteHandlerMap
         val resultUpdateChannelMap = combinedNetworkConfig.networkUpdateChannelMap
@@ -86,13 +88,13 @@ sealed class FSBaseDevice : FSDevice, NetworkConfiguredSide {
         }
     }
 
-    internal suspend fun receiveNetworkMessage(route: Route, message: String?) {
+    internal suspend fun receiveNetworkMessage(route: Path, message: String?) {
         networkCommunicator.receiveNetworkMessage(route, message)
     }
 
-    internal abstract suspend fun sendMessage(route: Route, payload: String?)
+    internal abstract suspend fun sendMessage(route: Path, payload: String?)
 
-    internal fun serializeMessage(route: Route, message: String?): String {
+    internal fun serializeMessage(route: Path, message: String?): String {
         return Json.stringify(NetworkMessage.serializer(), NetworkMessage(route, message))
     }
 }
@@ -119,11 +121,11 @@ abstract class LocalDevice : FSBaseDevice() {
         networkCommunicator.stop()
     }
 
-    final override suspend fun sendMessage(route: Route, payload: String?) {
+    final override suspend fun sendMessage(route: Path, payload: String?) {
         ClientHandler.sendToAll(serializeMessage(route, payload))
     }
 
-    override fun sideConfig(config: SideRouteConfig) {
+    override fun sideRouting(route: SideNetworkRoute) {
 
     }
 
@@ -199,11 +201,11 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
 
     }
 
-    final override suspend fun sendMessage(route: Route, payload: String?) {
+    final override suspend fun sendMessage(route: Path, payload: String?) {
         sendChannel.send(serializeMessage(route, payload))
     }
 
-    override fun sideConfig(config: SideRouteConfig) {
+    override fun sideRouting(route: SideNetworkRoute) {
 
     }
 
