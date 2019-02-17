@@ -84,7 +84,9 @@ internal object KuantifyHost {
                     incoming.consumeEach { frame ->
                         if (frame is Frame.Text) {
                             receiveMessage(clientID.id, frame.readText())
-                            logger.trace { "Received message - ${frame.readText()} - on device ${hostedDevice?.uid}" }
+                            logger.trace {
+                                "Received message - ${frame.readText()} - on local device ${hostedDevice?.uid}"
+                            }
                         }
                     }
                 } finally {

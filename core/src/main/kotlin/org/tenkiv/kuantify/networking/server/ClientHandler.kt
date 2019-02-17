@@ -20,7 +20,10 @@ package org.tenkiv.kuantify.networking.server
 
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.sync.*
+import mu.*
 import org.tenkiv.kuantify.lib.*
+
+private val logger = KotlinLogging.logger {}
 
 internal object ClientHandler {
 
@@ -49,6 +52,7 @@ internal object ClientHandler {
             clients.values.forEach {
                 it.sendMessage(message)
             }
+            logger.trace { "Sent message - $message - from local device" }
         }
     }
 
