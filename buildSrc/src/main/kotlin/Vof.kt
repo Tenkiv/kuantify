@@ -24,7 +24,7 @@ object Vof {
     const val serializationX = "0.10.0"
 
     // Jetbrains
-    const val ktor = "1.1.2"
+    const val ktor = "1.1.3"
     const val dokka = "0.9.17"
 
     // Tenkiv
