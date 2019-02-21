@@ -27,7 +27,10 @@ import kotlin.coroutines.*
 typealias UpdateReceiver = suspend (update: String?) -> Unit
 typealias MessageSerializer<T> = (update: T) -> String
 
-internal sealed class NetworkRouteHandler<T>(protected val device: FSBaseDevice) : CoroutineScope {
+internal sealed class NetworkRouteBinding<T>(
+    protected val device: FSBaseDevice,
+    val networkUpdateChannel: Channel<String?>?
+) : CoroutineScope {
 
     final override val coroutineContext: CoroutineContext
         get() = device.coroutineContext + job
@@ -43,11 +46,11 @@ internal sealed class NetworkRouteHandler<T>(protected val device: FSBaseDevice)
         device: FSBaseDevice,
         private val route: Path,
         private val localUpdateChannel: ReceiveChannel<T>?,
-        private val networkUpdateChannel: ReceiveChannel<String?>?,
+        networkUpdateChannel: Channel<String?>?,
         private val serializeMessage: MessageSerializer<T>?,
         private val sendUpdatesFromHost: Boolean,
         private val receiveUpdateOnHost: UpdateReceiver?
-    ) : NetworkRouteHandler<T>(device) {
+    ) : NetworkRouteBinding<T>(device, networkUpdateChannel) {
 
         override fun start(job: Job) {
             super.start(job)
@@ -76,12 +79,12 @@ internal sealed class NetworkRouteHandler<T>(protected val device: FSBaseDevice)
         device: FSBaseDevice,
         private val route: Path,
         private val localUpdateChannel: ReceiveChannel<T>?,
-        private val networkUpdateChannel: ReceiveChannel<String?>?,
+        networkUpdateChannel: Channel<String?>?,
         private val serializeMessage: MessageSerializer<T>?,
         private val sendUpdatesFromRemote: Boolean,
         private val receiveUpdateOnRemote: UpdateReceiver?,
         private val isFullyBiDirectional: Boolean
-    ) : NetworkRouteHandler<T>(device) {
+    ) : NetworkRouteBinding<T>(device, networkUpdateChannel) {
 
         private val ignoreNextUpdate = AtomicBoolean(false)
 

@@ -47,11 +47,11 @@ sealed class FSRemoteOutput<T : DaqcValue>(scope: CoroutineScope) : FSRemoteCont
     override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        super.sideRouting(route)
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super.sideRouting(routing)
 
-        route.add {
-            route<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
+        routing.addToThisPath {
+            bind<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
                 receiveMessage(NullResolutionStrategy.PANIC) {
                     val value = Json.parse(BooleanSerializer, it)
                     _isTransceiving.value = value
@@ -66,11 +66,11 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(scope: CoroutineScope) :
 
     abstract val quantityType: KClass<Q>
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        super.sideRouting(route)
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super.sideRouting(routing)
 
-        route.add {
-            route<QuantityMeasurement<Q>>(RC.VALUE, isFullyBiDirectional = true) {
+        routing.addToThisPath {
+            bind<QuantityMeasurement<Q>>(RC.VALUE, isFullyBiDirectional = true) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(ComparableQuantitySerializer), it)
                 }
@@ -93,14 +93,14 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(scope: CoroutineScope) :
 abstract class FSRemoteBinaryStateOutput(scope: CoroutineScope) :
     FSRemoteOutput<BinaryState>(scope), BinaryStateOutput {
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        super.sideRouting(route)
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super.sideRouting(routing)
 
         //TODO: This means the time associated with the update will be the time of the update on the local device if
         // the command came from another remote but if it comes from this one it will be the time at which it was sent
         // inconsistency is bad.
-        route.add {
-            route<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = true) {
+        routing.addToThisPath {
+            bind<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = true) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(BinaryState.serializer()), it)
                 }

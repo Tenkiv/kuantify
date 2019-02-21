@@ -22,13 +22,13 @@ import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
 
-interface LocalControlGate<T : DaqcData> : ControlGate<T>, NetworkConfiguredSide {
+interface LocalControlGate<T : DaqcData> : ControlGate<T>, NetworkBoundSide {
     val uid: String
 
-    override fun sideRouting(route: SideNetworkRoute) {
+    override fun sideRouting(routing: SideNetworkRouting) {
 
-        route.add {
-            route<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
+        routing.addToThisPath {
+            bind<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
                 receive {
                     stopTransceiving()
                 }

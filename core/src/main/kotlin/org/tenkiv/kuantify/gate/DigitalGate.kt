@@ -109,9 +109,9 @@ inline fun DigitalGate.onAnyTransceivingChange(
     }
 }
 
-internal fun CombinedNetworkRoute.digitalGateRouting(digitalChannel: DigitalGate) {
+internal fun CombinedNetworkRouting.digitalGateRouting(digitalChannel: DigitalGate) {
 
-    route<ComparableQuantity<Frequency>>(RC.AVG_FREQUENCY, isFullyBiDirectional = true) {
+    bind<ComparableQuantity<Frequency>>(RC.AVG_FREQUENCY, isFullyBiDirectional = true) {
         serializeMessage {
             Json.stringify(ComparableQuantitySerializer, it)
         } withSerializer {
@@ -127,18 +127,18 @@ internal fun CombinedNetworkRoute.digitalGateRouting(digitalChannel: DigitalGate
         }
     }
 
-    route<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
+    bind<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
         receivePingOnEither {
             digitalChannel.stopTransceiving()
         }
     }
 }
 
-internal fun SideNetworkRoute.digitalGateIsTransceivingRemote(
+internal fun SideNetworkRouting.digitalGateIsTransceivingRemote(
     updatable: Updatable<Boolean>,
     transceivingRC: String
 ) {
-    route<Boolean>(transceivingRC, isFullyBiDirectional = false) {
+    bind<Boolean>(transceivingRC, isFullyBiDirectional = false) {
         receiveMessage(NullResolutionStrategy.PANIC) {
             val value = Json.parse(BooleanSerializer, it)
             updatable.set(value)
@@ -146,11 +146,11 @@ internal fun SideNetworkRoute.digitalGateIsTransceivingRemote(
     }
 }
 
-internal fun SideNetworkRoute.digitalGateIsTransceivingLocal(
+internal fun SideNetworkRouting.digitalGateIsTransceivingLocal(
     trackable: Trackable<Boolean>,
     transceivingRC: String
 ) {
-    route<Boolean>(transceivingRC, isFullyBiDirectional = false) {
+    bind<Boolean>(transceivingRC, isFullyBiDirectional = false) {
         serializeMessage {
             Json.stringify(BooleanSerializer, it)
         }

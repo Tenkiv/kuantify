@@ -31,16 +31,16 @@ import org.tenkiv.kuantify.networking.configuration.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
 
-private inline fun SideNetworkRoute.startSamplingLocal(rc: String, crossinline start: () -> Unit) {
-    route<Ping>(rc, isFullyBiDirectional = false) {
+private inline fun SideNetworkRouting.startSamplingLocal(rc: String, crossinline start: () -> Unit) {
+    bind<Ping>(rc, isFullyBiDirectional = false) {
         receive {
             start()
         }
     }
 }
 
-private fun SideNetworkRoute.startSamplingRemote(rc: String, channel: ReceiveChannel<Ping>) {
-    route<Ping>(rc, isFullyBiDirectional = false) {
+private fun SideNetworkRouting.startSamplingRemote(rc: String, channel: ReceiveChannel<Ping>) {
+    bind<Ping>(rc, isFullyBiDirectional = false) {
         setLocalUpdateChannel(channel) withUpdateChannel {
             send()
         }
@@ -48,7 +48,7 @@ private fun SideNetworkRoute.startSamplingRemote(rc: String, channel: ReceiveCha
 }
 
 @Suppress("LeakingThis")
-abstract class LocalDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkConfiguredCombined {
+abstract class LocalDigitalInput : DigitalInput, NetworkBoundSide, NetworkBoundCombined {
 
     abstract val uid: String
 
@@ -81,14 +81,14 @@ abstract class LocalDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkC
 
     }
 
-    override fun combinedRouting(route: CombinedNetworkRoute) {
-        route.add {
+    override fun combinedRouting(routing: CombinedNetworkRouting) {
+        routing.addToThisPath {
             digitalGateRouting(this@LocalDigitalInput)
         }
     }
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        route.add {
+    override fun sideRouting(routing: SideNetworkRouting) {
+        routing.addToThisPath {
             digitalGateIsTransceivingLocal(isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingLocal(isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
             digitalGateIsTransceivingLocal(isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
@@ -97,7 +97,7 @@ abstract class LocalDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkC
             startSamplingLocal(RC.START_SAMPLING_PWM, ::startSamplingPwm)
             startSamplingLocal(RC.START_SAMPLING_TRANSITION_FREQUENCY, ::startSamplingTransitionFrequency)
 
-            route<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = false) {
+            bind<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = false) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
                 }
@@ -111,7 +111,7 @@ abstract class LocalDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkC
 }
 
 @Suppress("LeakingThis")
-abstract class FSRemoteDigitalInput : DigitalInput, NetworkConfiguredSide, NetworkConfiguredCombined {
+abstract class FSRemoteDigitalInput : DigitalInput, NetworkBoundSide, NetworkBoundCombined {
     abstract val uid: String
 
     private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalValue>>()
@@ -197,14 +197,14 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkConfiguredSide, Netwo
 
     }
 
-    override fun combinedRouting(route: CombinedNetworkRoute) {
-        route.add {
+    override fun combinedRouting(routing: CombinedNetworkRouting) {
+        routing.addToThisPath {
             digitalGateRouting(this@FSRemoteDigitalInput)
         }
     }
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        route.add {
+    override fun sideRouting(routing: SideNetworkRouting) {
+        routing.addToThisPath {
             digitalGateIsTransceivingRemote(_isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingRemote(_isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
             digitalGateIsTransceivingRemote(_isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
@@ -213,7 +213,7 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkConfiguredSide, Netwo
             startSamplingRemote(RC.START_SAMPLING_PWM, startSamplingPwmChannel)
             startSamplingRemote(RC.START_SAMPLING_BINARY_STATE, startSamplingBinaryStateChannel)
 
-            route<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = false) {
+            bind<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = false) {
                 receiveMessage(NullResolutionStrategy.PANIC) {
                     val measurement = Json.parse(ValueInstantSerializer(DigitalValue.serializer()), it)
                     val (value, instant) = measurement

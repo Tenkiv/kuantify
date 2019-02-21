@@ -135,8 +135,8 @@ class FSConfiguredUpdateRate(private val input: FSRemoteInput<*>) {
 
     private val updateRate = input.Updatable<ComparableQuantity<Frequency>>()
 
-    fun addToRoute(route: SideNetworkRoute) {
-        route.route<ComparableQuantity<Frequency>>(RC.UPDATE_RATE, isFullyBiDirectional = false) {
+    fun addToRoute(routing: SideNetworkRouting) {
+        routing.bind<ComparableQuantity<Frequency>>(RC.UPDATE_RATE, isFullyBiDirectional = false) {
             receiveMessage(NullResolutionStrategy.PANIC) {
                 val value = Json.parse(ComparableQuantitySerializer, it).asType<Frequency>()
                 updateRate.set(value)

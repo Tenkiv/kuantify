@@ -26,7 +26,7 @@ import org.tenkiv.kuantify.networking.configuration.*
 import kotlin.coroutines.*
 
 abstract class FSRemoteControlGate<T : DaqcData>(private val scope: CoroutineScope) : ControlGate<T>,
-    NetworkConfiguredSide {
+    NetworkBoundSide {
 
     abstract val uid: String
 
@@ -38,11 +38,11 @@ abstract class FSRemoteControlGate<T : DaqcData>(private val scope: CoroutineSco
         stopTransceivingChannel.offer(Unit)
     }
 
-    override fun sideRouting(route: SideNetworkRoute) {
+    override fun sideRouting(routing: SideNetworkRouting) {
 
-        route.add {
+        routing.addToThisPath {
 
-            route<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
+            bind<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
                 setLocalUpdateChannel(stopTransceivingChannel) withUpdateChannel {
                     send()
                 }

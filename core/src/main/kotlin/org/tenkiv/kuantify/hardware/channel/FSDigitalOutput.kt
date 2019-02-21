@@ -32,7 +32,7 @@ import tec.units.indriya.*
 import javax.measure.quantity.*
 
 @Suppress("LeakingThis")
-abstract class LocalDigitalOutput : DigitalOutput, NetworkConfiguredSide, NetworkConfiguredCombined {
+abstract class LocalDigitalOutput : DigitalOutput, NetworkBoundSide, NetworkBoundCombined {
 
     abstract val uid: String
 
@@ -68,19 +68,19 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkConfiguredSide, Networ
         return thisAsFrequencyController
     }
 
-    override fun combinedRouting(route: CombinedNetworkRoute) {
-        route.add {
+    override fun combinedRouting(routing: CombinedNetworkRouting) {
+        routing.addToThisPath {
             digitalGateRouting(this@LocalDigitalOutput)
         }
     }
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        route.add {
+    override fun sideRouting(routing: SideNetworkRouting) {
+        routing.addToThisPath {
             digitalGateIsTransceivingLocal(isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingLocal(isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
             digitalGateIsTransceivingLocal(isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
 
-            route<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = true) {
+            bind<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = true) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
                 }
@@ -105,7 +105,7 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkConfiguredSide, Networ
 }
 
 @Suppress("LeakingThis")
-abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkConfiguredSide, NetworkConfiguredCombined {
+abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkBoundSide, NetworkBoundCombined {
 
     abstract val uid: String
 
@@ -170,19 +170,19 @@ abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkConfiguredSide, Net
         return thisAsFrequencyController
     }
 
-    override fun combinedRouting(route: CombinedNetworkRoute) {
-        route.add {
+    override fun combinedRouting(routing: CombinedNetworkRouting) {
+        routing.addToThisPath {
             digitalGateRouting(this@FSRemoteDigitalOutput)
         }
     }
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        route.add {
+    override fun sideRouting(routing: SideNetworkRouting) {
+        routing.addToThisPath {
             digitalGateIsTransceivingRemote(_isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingRemote(_isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
             digitalGateIsTransceivingRemote(_isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
 
-            route<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = true) {
+            bind<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = true) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
                 }

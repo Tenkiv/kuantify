@@ -64,14 +64,14 @@ class RemoteAndroidDevice internal constructor(
     override val relativeHumiditySensors: List<RemoteQuantityAndroidSensor<Dimensionless>>
 ) : FSRemoteDevice(scope), AndroidDevice {
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        super.sideRouting(route)
-        ambientTemperatureSensors.addSideRoutesTo(route)
-        heartRateSensors.addSideRoutesTo(route)
-        lightSensors.addSideRoutesTo(route)
-        pressureSensors.addSideRoutesTo(route)
-        proximitySensors.addSideRoutesTo(route)
-        relativeHumiditySensors.addSideRoutesTo(route)
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super.sideRouting(routing)
+        ambientTemperatureSensors.addSideRoutingTo(routing)
+        heartRateSensors.addSideRoutingTo(routing)
+        lightSensors.addSideRoutingTo(routing)
+        pressureSensors.addSideRoutingTo(routing)
+        proximitySensors.addSideRoutingTo(routing)
+        relativeHumiditySensors.addSideRoutingTo(routing)
     }
 }
 

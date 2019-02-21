@@ -36,8 +36,8 @@ import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
 
-interface FSDevice : Device, NetworkConfiguredCombined {
-    override fun combinedRouting(route: CombinedNetworkRoute) {
+interface FSDevice : Device, NetworkBoundCombined {
+    override fun combinedRouting(routing: CombinedNetworkRouting) {
 
     }
 }
@@ -46,7 +46,7 @@ interface FSDevice : Device, NetworkConfiguredCombined {
  * [Device] where the corresponding [LocalDevice] DAQC is managed by Kuantify. Therefore, all [LocalDevice]s are
  * [FSBaseDevice]s but not all [RemoteDevice]s are.
  */
-sealed class FSBaseDevice : FSDevice, NetworkConfiguredSide {
+sealed class FSBaseDevice : FSDevice, NetworkBoundSide {
 
     final override val basePath: Path = emptyList()
 
@@ -58,31 +58,19 @@ sealed class FSBaseDevice : FSDevice, NetworkConfiguredSide {
         val sideRouteConfig = SideRouteConfig(this)
         sideRouting(sideRouteConfig.baseRoute)
 
-        val resultRouteMap = combinedNetworkConfig.networkRouteHandlerMap
-        val resultUpdateChannelMap = combinedNetworkConfig.networkUpdateChannelMap
+        val resultRouteBindingMap = combinedNetworkConfig.networkRouteBindingMap
 
-        sideRouteConfig.networkRouteHandlerMap.forEach { route, handler ->
-            val currentHandler = resultRouteMap[route]
+        sideRouteConfig.networkRouteBindingMap.forEach { path, handler ->
+            val currentHandler = resultRouteBindingMap[path]
             if (currentHandler != null) {
-                logger.warn { "Overriding combined route handler for route $this with side specific handler." }
+                logger.warn { "Overriding combined route binding for route $this with side specific handler." }
             }
-            resultRouteMap[route] = handler
+            resultRouteBindingMap[path] = handler
         }
-
-        sideRouteConfig.networkUpdateChannelMap.forEach { route, channel ->
-            val currentChannel = resultUpdateChannelMap[route]
-            if (currentChannel != null) {
-                logger.warn { "Overriding combined route channel for route $this with side specific channel." }
-            }
-            resultUpdateChannelMap[route] = channel
-        }
-
-        val networkRoutHandlers = resultRouteMap.values.toList()
 
         NetworkCommunicator(
             this,
-            networkRoutHandlers,
-            resultUpdateChannelMap
+            resultRouteBindingMap
         ).also {
             logger.debug { "Network Communicator created for device $uid:\n $it" }
         }
@@ -125,7 +113,7 @@ abstract class LocalDevice : FSBaseDevice() {
         ClientHandler.sendToAll(serializeMessage(route, payload))
     }
 
-    override fun sideRouting(route: SideNetworkRoute) {
+    override fun sideRouting(routing: SideNetworkRouting) {
 
     }
 
@@ -205,7 +193,7 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
         sendChannel.send(serializeMessage(route, payload))
     }
 
-    override fun sideRouting(route: SideNetworkRoute) {
+    override fun sideRouting(routing: SideNetworkRouting) {
 
     }
 

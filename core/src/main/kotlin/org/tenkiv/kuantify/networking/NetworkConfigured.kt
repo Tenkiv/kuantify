@@ -21,13 +21,13 @@ package org.tenkiv.kuantify.networking
 import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.kuantify.networking.device.*
 
-interface NetworkConfiguredCombined {
+interface NetworkBoundCombined {
 
     val basePath: Path
 
-    fun combinedRouting(route: CombinedNetworkRoute)
+    fun combinedRouting(routing: CombinedNetworkRouting)
 
-    fun CombinedNetworkRoute.add(build: CombinedNetworkRoute.() -> Unit) {
+    fun CombinedNetworkRouting.addToThisPath(build: CombinedNetworkRouting.() -> Unit) {
         route(basePath) {
             build()
         }
@@ -35,27 +35,27 @@ interface NetworkConfiguredCombined {
 
 }
 
-interface NetworkConfiguredSide {
+interface NetworkBoundSide {
 
     val basePath: Path
 
-    fun sideRouting(route: SideNetworkRoute)
+    fun sideRouting(routing: SideNetworkRouting)
 
-    fun SideNetworkRoute.add(build: SideNetworkRoute.() -> Unit) {
+    fun SideNetworkRouting.addToThisPath(build: SideNetworkRouting.() -> Unit) {
         route(basePath) {
             build()
         }
     }
 }
 
-fun Iterable<NetworkConfiguredCombined>.addCombinedRoutesTo(route: CombinedNetworkRoute) {
+fun Iterable<NetworkBoundCombined>.addCombinedRoutingTo(routing: CombinedNetworkRouting) {
     forEach {
-        it.combinedRouting(route)
+        it.combinedRouting(routing)
     }
 }
 
-fun Iterable<NetworkConfiguredSide>.addSideRoutesTo(route: SideNetworkRoute) {
+fun Iterable<NetworkBoundSide>.addSideRoutingTo(routing: SideNetworkRouting) {
     forEach {
-        it.sideRouting(route)
+        it.sideRouting(routing)
     }
 }

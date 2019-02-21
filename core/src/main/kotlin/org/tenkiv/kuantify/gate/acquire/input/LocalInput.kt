@@ -30,11 +30,11 @@ import javax.measure.*
 
 interface LocalInput<T : DaqcValue> : LocalAcquireGate<T>, Input<T> {
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        super.sideRouting(route)
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super.sideRouting(routing)
 
-        route.add {
-            route<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
+        routing.addToThisPath {
+            bind<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
                 serializeMessage {
                     Json.stringify(BooleanSerializer, it)
                 }
@@ -49,11 +49,11 @@ interface LocalInput<T : DaqcValue> : LocalAcquireGate<T>, Input<T> {
 
 interface LocalQuantityInput<Q : Quantity<Q>> : LocalInput<DaqcQuantity<Q>>, QuantityInput<Q> {
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        super.sideRouting(route)
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super.sideRouting(routing)
 
-        route.add {
-            route<QuantityMeasurement<Q>>(RC.VALUE, isFullyBiDirectional = false) {
+        routing.addToThisPath {
+            bind<QuantityMeasurement<Q>>(RC.VALUE, isFullyBiDirectional = false) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(ComparableQuantitySerializer), it)
                 }
@@ -68,11 +68,11 @@ interface LocalQuantityInput<Q : Quantity<Q>> : LocalInput<DaqcQuantity<Q>>, Qua
 
 interface LocalBinaryStateInput : LocalInput<BinaryState>, BinaryStateInput {
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        super.sideRouting(route)
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super.sideRouting(routing)
 
-        route.add {
-            route<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = false) {
+        routing.addToThisPath {
+            bind<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = false) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(BinaryState.serializer()), it)
                 }

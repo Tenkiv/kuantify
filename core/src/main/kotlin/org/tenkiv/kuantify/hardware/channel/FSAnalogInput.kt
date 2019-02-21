@@ -31,9 +31,9 @@ import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
 
-internal fun CombinedNetworkRoute.combinedAnalogInputRouting(analogInput: AnalogInput) {
+internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: AnalogInput) {
 
-    route<Boolean>(RC.BUFFER, isFullyBiDirectional = true) {
+    bind<Boolean>(RC.BUFFER, isFullyBiDirectional = true) {
         serializeMessage {
             Json.stringify(BooleanSerializer, it)
         } withSerializer {
@@ -49,7 +49,7 @@ internal fun CombinedNetworkRoute.combinedAnalogInputRouting(analogInput: Analog
         }
     }
 
-    route<ComparableQuantity<ElectricPotential>>(RC.MAX_ACCEPTABLE_ERROR, isFullyBiDirectional = true) {
+    bind<ComparableQuantity<ElectricPotential>>(RC.MAX_ACCEPTABLE_ERROR, isFullyBiDirectional = true) {
         serializeMessage {
             Json.stringify(ComparableQuantitySerializer, it)
         } withSerializer {
@@ -65,7 +65,7 @@ internal fun CombinedNetworkRoute.combinedAnalogInputRouting(analogInput: Analog
         }
     }
 
-    route<ComparableQuantity<ElectricPotential>>(RC.MAX_ELECTRIC_POTENTIAL, isFullyBiDirectional = true) {
+    bind<ComparableQuantity<ElectricPotential>>(RC.MAX_ELECTRIC_POTENTIAL, isFullyBiDirectional = true) {
         serializeMessage {
             Json.stringify(ComparableQuantitySerializer, it)
         } withSerializer {
@@ -82,10 +82,10 @@ internal fun CombinedNetworkRoute.combinedAnalogInputRouting(analogInput: Analog
     }
 }
 
-interface LocalAnalogInput : AnalogInput, LocalQuantityInput<ElectricPotential>, NetworkConfiguredCombined {
+interface LocalAnalogInput : AnalogInput, LocalQuantityInput<ElectricPotential>, NetworkBoundCombined {
 
-    override fun combinedRouting(route: CombinedNetworkRoute) {
-        route.add {
+    override fun combinedRouting(routing: CombinedNetworkRouting) {
+        routing.addToThisPath {
             combinedAnalogInputRouting(this@LocalAnalogInput)
         }
     }
@@ -95,10 +95,10 @@ interface LocalAnalogInput : AnalogInput, LocalQuantityInput<ElectricPotential>,
 abstract class FSRemoteAnalogInput<D>(override val device: D, uid: String) :
     FSRemoteQuantityInput<ElectricPotential>(device, uid),
     AnalogInput,
-    NetworkConfiguredCombined where D : AnalogDaqDevice, D : FSRemoteDevice {
+    NetworkBoundCombined where D : AnalogDaqDevice, D : FSRemoteDevice {
 
-    override fun combinedRouting(route: CombinedNetworkRoute) {
-        route.add {
+    override fun combinedRouting(routing: CombinedNetworkRouting) {
+        routing.addToThisPath {
             combinedAnalogInputRouting(this@FSRemoteAnalogInput)
         }
     }

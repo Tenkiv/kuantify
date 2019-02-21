@@ -31,11 +31,11 @@ import kotlin.reflect.*
 
 interface LocalOutput<T : DaqcValue> : LocalControlGate<T>, Output<T> {
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        super.sideRouting(route)
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super.sideRouting(routing)
 
-        route.add {
-            route<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
+        routing.addToThisPath {
+            bind<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
                 serializeMessage {
                     Json.stringify(BooleanSerializer, it)
                 }
@@ -53,11 +53,11 @@ interface LocalQuantityOutput<Q : Quantity<Q>> : LocalOutput<DaqcQuantity<Q>>, Q
 
     val quantityType: KClass<Q>
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        super.sideRouting(route)
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super.sideRouting(routing)
 
-        route.add {
-            route<QuantityMeasurement<Q>>(RC.VALUE, isFullyBiDirectional = true) {
+        routing.addToThisPath {
+            bind<QuantityMeasurement<Q>>(RC.VALUE, isFullyBiDirectional = true) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(ComparableQuantitySerializer), it)
                 }
@@ -79,11 +79,11 @@ interface LocalQuantityOutput<Q : Quantity<Q>> : LocalOutput<DaqcQuantity<Q>>, Q
 
 interface LocalBinaryStateOutput : LocalOutput<BinaryState>, BinaryStateOutput {
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        super.sideRouting(route)
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super.sideRouting(routing)
 
-        route.add {
-            route<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = true) {
+        routing.addToThisPath {
+            bind<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = true) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(BinaryState.serializer()), it)
                 }

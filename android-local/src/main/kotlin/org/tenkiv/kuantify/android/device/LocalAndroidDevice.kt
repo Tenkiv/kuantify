@@ -143,14 +143,14 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
     final override val uid: String =
         Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
-    override fun sideRouting(route: SideNetworkRoute) {
-        super.sideRouting(route)
-        ambientTemperatureSensors.addSideRoutesTo(route)
-        heartRateSensors.addSideRoutesTo(route)
-        lightSensors.addSideRoutesTo(route)
-        pressureSensors.addSideRoutesTo(route)
-        proximitySensors.addSideRoutesTo(route)
-        relativeHumiditySensors.addSideRoutesTo(route)
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super.sideRouting(routing)
+        ambientTemperatureSensors.addSideRoutingTo(routing)
+        heartRateSensors.addSideRoutingTo(routing)
+        lightSensors.addSideRoutingTo(routing)
+        pressureSensors.addSideRoutingTo(routing)
+        proximitySensors.addSideRoutingTo(routing)
+        relativeHumiditySensors.addSideRoutingTo(routing)
     }
 
     companion object {

@@ -22,19 +22,19 @@ import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
 
-interface LocalAcquireGate<T : DaqcData> : AcquireGate<T>, NetworkConfiguredSide {
+interface LocalAcquireGate<T : DaqcData> : AcquireGate<T>, NetworkBoundSide {
     val uid: String
 
-    override fun sideRouting(route: SideNetworkRoute) {
+    override fun sideRouting(routing: SideNetworkRouting) {
 
-        route.add {
-            route<Ping>(RC.START_SAMPLING, isFullyBiDirectional = false) {
+        routing.addToThisPath {
+            bind<Ping>(RC.START_SAMPLING, isFullyBiDirectional = false) {
                 receive {
                     startSampling()
                 }
             }
 
-            route<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
+            bind<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
                 receive {
                     stopTransceiving()
                 }
