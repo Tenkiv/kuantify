@@ -28,6 +28,8 @@ import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.NetworkBoundCombined
+import org.tenkiv.kuantify.networking.configuration.NetworkBoundSide
 import tec.units.indriya.*
 import javax.measure.quantity.*
 
@@ -48,7 +50,8 @@ private fun SideNetworkRouting.startSamplingRemote(rc: String, channel: ReceiveC
 }
 
 @Suppress("LeakingThis")
-abstract class LocalDigitalInput : DigitalInput, NetworkBoundSide, NetworkBoundCombined {
+abstract class LocalDigitalInput : DigitalInput, NetworkBoundSide,
+    NetworkBoundCombined {
 
     abstract val uid: String
 
@@ -111,7 +114,8 @@ abstract class LocalDigitalInput : DigitalInput, NetworkBoundSide, NetworkBoundC
 }
 
 @Suppress("LeakingThis")
-abstract class FSRemoteDigitalInput : DigitalInput, NetworkBoundSide, NetworkBoundCombined {
+abstract class FSRemoteDigitalInput : DigitalInput, NetworkBoundSide,
+    NetworkBoundCombined {
     abstract val uid: String
 
     private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalValue>>()

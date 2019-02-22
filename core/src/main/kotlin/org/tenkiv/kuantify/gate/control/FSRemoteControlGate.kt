@@ -23,6 +23,7 @@ import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.NetworkBoundSide
 import kotlin.coroutines.*
 
 abstract class FSRemoteControlGate<T : DaqcData>(private val scope: CoroutineScope) : ControlGate<T>,

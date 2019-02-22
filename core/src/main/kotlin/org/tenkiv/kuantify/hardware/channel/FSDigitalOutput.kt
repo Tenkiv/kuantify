@@ -28,11 +28,14 @@ import org.tenkiv.kuantify.hardware.outputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.NetworkBoundCombined
+import org.tenkiv.kuantify.networking.configuration.NetworkBoundSide
 import tec.units.indriya.*
 import javax.measure.quantity.*
 
 @Suppress("LeakingThis")
-abstract class LocalDigitalOutput : DigitalOutput, NetworkBoundSide, NetworkBoundCombined {
+abstract class LocalDigitalOutput : DigitalOutput, NetworkBoundSide,
+    NetworkBoundCombined {
 
     abstract val uid: String
 
@@ -105,7 +108,8 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkBoundSide, NetworkBoun
 }
 
 @Suppress("LeakingThis")
-abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkBoundSide, NetworkBoundCombined {
+abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkBoundSide,
+    NetworkBoundCombined {
 
     abstract val uid: String
 

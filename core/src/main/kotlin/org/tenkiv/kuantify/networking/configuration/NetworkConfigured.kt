@@ -16,18 +16,45 @@
  *
  */
 
-package org.tenkiv.kuantify.gate.hardware.device
+package org.tenkiv.kuantify.networking.configuration
 
-import org.tenkiv.kuantify.hardware.device.*
+import org.tenkiv.kuantify.networking.device.*
 
-interface TestFSDevice : FSDevice {
+interface NetworkBoundCombined {
+
+    val basePath: Path
+
+    fun combinedRouting(routing: CombinedNetworkRouting)
+
+    fun CombinedNetworkRouting.addToThisPath(build: CombinedNetworkRouting.() -> Unit) {
+        route(basePath) {
+            build()
+        }
+    }
 
 }
 
-class TestLocalDevice : TestFSDevice {
+interface NetworkBoundSide {
 
+    val basePath: Path
+
+    fun sideRouting(routing: SideNetworkRouting)
+
+    fun SideNetworkRouting.addToThisPath(build: SideNetworkRouting.() -> Unit) {
+        route(basePath) {
+            build()
+        }
+    }
 }
 
-class TestRemoteDevice : TestFSDevice {
+fun Iterable<NetworkBoundCombined>.addCombinedRoutingTo(routing: CombinedNetworkRouting) {
+    forEach {
+        it.combinedRouting(routing)
+    }
+}
 
+fun Iterable<NetworkBoundSide>.addSideRoutingTo(routing: SideNetworkRouting) {
+    forEach {
+        it.sideRouting(routing)
+    }
 }

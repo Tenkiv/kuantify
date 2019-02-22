@@ -22,7 +22,6 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.hardware.device.*
-import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.quantity.*
 

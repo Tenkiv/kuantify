@@ -24,6 +24,7 @@ import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.NetworkBoundSide
 import org.tenkiv.kuantify.networking.device.*
 import kotlin.coroutines.*
 

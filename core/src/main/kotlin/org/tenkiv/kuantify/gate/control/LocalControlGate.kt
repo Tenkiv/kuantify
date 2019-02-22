@@ -21,8 +21,10 @@ package org.tenkiv.kuantify.gate.control
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.NetworkBoundSide
 
-interface LocalControlGate<T : DaqcData> : ControlGate<T>, NetworkBoundSide {
+interface LocalControlGate<T : DaqcData> : ControlGate<T>,
+    NetworkBoundSide {
     val uid: String
 
     override fun sideRouting(routing: SideNetworkRouting) {

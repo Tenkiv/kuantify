@@ -29,6 +29,7 @@ import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.NetworkBoundSide
 import tec.units.indriya.*
 import javax.measure.*
 import kotlin.reflect.*

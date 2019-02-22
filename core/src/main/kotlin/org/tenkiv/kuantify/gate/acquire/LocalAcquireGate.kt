@@ -21,8 +21,10 @@ package org.tenkiv.kuantify.gate.acquire
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.NetworkBoundSide
 
-interface LocalAcquireGate<T : DaqcData> : AcquireGate<T>, NetworkBoundSide {
+interface LocalAcquireGate<T : DaqcData> : AcquireGate<T>,
+    NetworkBoundSide {
     val uid: String
 
     override fun sideRouting(routing: SideNetworkRouting) {

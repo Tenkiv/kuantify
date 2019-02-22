@@ -27,6 +27,7 @@ import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.NetworkBoundCombined
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
@@ -82,7 +83,8 @@ internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: Anal
     }
 }
 
-interface LocalAnalogInput : AnalogInput, LocalQuantityInput<ElectricPotential>, NetworkBoundCombined {
+interface LocalAnalogInput : AnalogInput, LocalQuantityInput<ElectricPotential>,
+    NetworkBoundCombined {
 
     override fun combinedRouting(routing: CombinedNetworkRouting) {
         routing.addToThisPath {

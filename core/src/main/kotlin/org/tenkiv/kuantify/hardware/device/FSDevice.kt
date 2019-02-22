@@ -29,6 +29,8 @@ import mu.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.client.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.NetworkBoundCombined
+import org.tenkiv.kuantify.networking.configuration.NetworkBoundSide
 import org.tenkiv.kuantify.networking.device.*
 import org.tenkiv.kuantify.networking.server.*
 import java.util.concurrent.atomic.*

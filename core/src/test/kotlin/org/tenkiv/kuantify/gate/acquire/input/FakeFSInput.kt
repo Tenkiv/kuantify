@@ -29,10 +29,9 @@ import org.tenkiv.kuantify.networking.device.*
 import org.tenkiv.physikal.core.*
 import javax.measure.quantity.*
 import kotlin.coroutines.*
-import kotlin.random.*
 import kotlin.reflect.*
 
-class TestLocalTemperatureInput(private val scope: CoroutineScope, override val uid: String) :
+class FakeLocalInput(private val scope: CoroutineScope, override val uid: String) :
     LocalQuantityInput<Temperature> {
 
     @Volatile
@@ -65,16 +64,12 @@ class TestLocalTemperatureInput(private val scope: CoroutineScope, override val 
     private fun startProducing() = launch {
         loop {
             delay(50.millisSpan)
-            _updateBroadcaster.send(getRandomTemperature().now())
+            _updateBroadcaster.send(25.kelvin.toDaqc().now())
         }
-    }
-
-    private fun getRandomTemperature(): DaqcQuantity<Temperature> {
-        return Random.nextDouble(0.0, 100.0).celsius.toDaqc()
     }
 }
 
-class TestRemoteTemperatureInput(scope: CoroutineScope, uid: String) : FSRemoteQuantityInput<Temperature>(scope, uid) {
+class FakeFSRemoteInput(scope: CoroutineScope, uid: String) : FSRemoteQuantityInput<Temperature>(scope, uid) {
 
     override val quantityType: KClass<Temperature> = Temperature::class
 
