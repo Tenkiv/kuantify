@@ -57,5 +57,5 @@ dependencies {
     implementation(group = "io.ktor", name = "ktor-server-netty", version = Vof.ktor)
     implementation(group = "org.slf4j", name = "slf4j-android", version = Vof.slf4j)
 
-    testImplementation(group = "junit", name = "junit", version = Vof.junit)
+//    testImplementation(group = "junit", name = "junit", version = Vof.junit)
 }

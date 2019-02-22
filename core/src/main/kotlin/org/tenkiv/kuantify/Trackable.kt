@@ -95,16 +95,16 @@ sealed class UpdateRate(rate: TrackableQuantity<Frequency>) : TrackableQuantity<
 fun RatedTrackable<*>.runningAverage(avgPeriod: Duration = 1.minutesSpan): AverageUpdateRateDelegate =
     AverageUpdateRateDelegate(this, avgPeriod)
 
-class AverageUpdateRateDelegate internal constructor(input: RatedTrackable<*>, private val avgPeriod: Duration) {
-    private val updatable: InitializedUpdatable<ComparableQuantity<Frequency>> = input.Updatable(0.hertz)
+class AverageUpdateRateDelegate internal constructor(trackable: RatedTrackable<*>, private val avgPeriod: Duration) {
+    private val updatable = trackable.Updatable(0.hertz)
 
     init {
-        input.launch {
+        trackable.launch {
             var updateRate: ComparableQuantity<Frequency>
             val sampleInstants = ArrayList<Instant>()
 
             //TODO: This can give a null pointer exception if UpdateRate is initialized before updateBroadcaster.
-            input.updateBroadcaster.consumeEach {
+            trackable.updateBroadcaster.consumeEach {
                 sampleInstants += it.instant
                 clean(sampleInstants)
 

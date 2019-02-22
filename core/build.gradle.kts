@@ -62,6 +62,15 @@ dependencies {
 
 
     //Test
+    testImplementation(group = "org.spekframework.spek2", name = "spek-dsl-jvm", version = Vof.spek) {
+        exclude(group = "org.jetbrains.kotlin")
+    }
+    testRuntimeOnly(group = "org.spekframework.spek2", name = "spek-runner-junit5", version = Vof.spek) {
+        exclude(group = "org.jetbrains.kotlin")
+        exclude(group = "org.junit.platform")
+    }
+    testRuntimeOnly(group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = Vof.kotlin)
+
     testImplementation(group = "org.slf4j", name = "slf4j-simple", version = Vof.slf4j)
     testImplementation(group = "io.ktor", name = "ktor-server-test-host", version = Vof.ktor)
     testImplementation(group = "io.ktor", name = "ktor-client-cio", version = Vof.ktor)
@@ -71,6 +80,12 @@ dependencies {
 tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"
+    }
+
+    withType<Test> {
+        useJUnitPlatform {
+            includeEngines("spek2")
+        }
     }
 
     register<Jar>("sourcesJar") {

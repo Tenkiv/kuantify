@@ -16,33 +16,18 @@
  *
  */
 
-object Vof {
-    const val kotlin = "1.3.20"
+package org.tenkiv.kuantify.gate.hardware.device
 
-    // Kotlin extensions
-    const val coroutinesX = "1.1.1"
-    const val serializationX = "0.10.0"
+import org.tenkiv.kuantify.hardware.device.*
 
-    // Jetbrains
-    const val ktor = "1.1.3"
-    const val dokka = "0.9.17"
+interface TestFSDevice : FSDevice {
 
-    // Tenkiv
-    const val coral = "2.1.2.3-SNAPSHOT"
-    const val physikal = "2.0.6.3-SNAPSHOT"
+}
 
-    // Android
-    const val androidGradle = "3.3.0"
-    const val anko = "0.10.8"
+class TestLocalDevice : TestFSDevice {
 
-    // Other
-    const val arrow = "0.8.1"
-    const val statistics = "1.2.1"
-    const val dl4j = "1.0.0-beta3"
-    const val logging = "1.6.22"
-    const val slf4j = "1.7.25"
+}
 
-    // Test
-    const val spek = "2.0.0"
-//    const val junit = "4.12"
+class TestRemoteDevice : TestFSDevice {
+
 }

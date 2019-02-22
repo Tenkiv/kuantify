@@ -36,7 +36,6 @@ buildscript {
 
     dependencies {
         classpath("com.android.tools.build:gradle:${Vof.androidGradle}")
-//        classpath(kotlin("gradle-plugin", version = "1.3.10"))
     }
 }
 
@@ -65,74 +64,3 @@ val projectList = listOf(
     project(":android-local"),
     project(":learning")
 )
-
-//publishing {
-//    publications {
-//        for (proj in projectList) {
-//            create<MavenPublication>("maven-${proj.name}") {
-//                groupId = "org.tenkiv.kuantify"
-//                artifactId = "kuantify-${proj.name}"
-//                version = project.version.toString()
-//
-//                from(components["java"])
-//
-//                for (file in proj.fileTree("build/libs").files) {
-//                    when {
-//                        file.name.contains("javadoc") -> {
-//                            val a = artifact(file)
-//                            a.classifier = "javadoc"
-//                        }
-//                        file.name.contains("sources") -> {
-//                            val a = artifact(file)
-//                            a.classifier = "sources"
-//                        }
-//                    }
-//                }
-//
-//                if (proj == project(":android-local")) {
-//                    for (file in proj.fileTree("build/outputs/aar").files) {
-//                        if (file.name.contains("release")) {
-//                            val a = artifact(file)
-//                            a.classifier = null
-//                        }
-//                    }
-//                }
-//
-//                pom {
-//                    name.set(project.name)
-//                    description.set(Info.pomDescription)
-//                    url.set(System.getenv("CI_PROJECT_URL"))
-//                    licenses {
-//                        license {
-//                            name.set(Info.pomLicense)
-//                            url.set(Info.pomLicenseUrl)
-//                        }
-//                    }
-//                    organization {
-//                        name.set(Info.pomOrg)
-//                    }
-//                    scm {
-//                        connection.set(System.getenv("CI_REPOSITORY_URL"))
-//                        url.set(System.getenv("CI_PROJECT_URL"))
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    repositories {
-//        maven {
-//            // change URLs to point to your repos, e.g. http://my.org/repo
-//            val releasesRepoUrl = uri(Info.sonatypeReleaseRepoUrl)
-//            val snapshotsRepoUrl = uri(Info.sonatypeSnapshotRepoUrl)
-//            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-//            credentials {
-//                username = System.getenv("MAVEN_REPO_USER")
-//                password = System.getenv("MAVEN_REPO_PASSWORD")
-//            }
-//        }
-//    }
-//}
-
-//signing {
-//    sign(publishing.publications["mavenJava"])
-//}
