@@ -44,5 +44,6 @@ object Vof {
 
     // Test
     const val spek = "2.0.0"
-//    const val junit = "4.12"
+    const val mockk = "1.9.1.kotlin12"
+    const val junit = "5.4.0"
 }

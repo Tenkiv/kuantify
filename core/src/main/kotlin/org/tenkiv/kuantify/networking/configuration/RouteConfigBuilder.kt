@@ -42,7 +42,7 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
 
     val baseRoute: CombinedNetworkRouting get() = CombinedNetworkRouting(this, emptyList())
 
-    fun <T> addRouteHandler(
+    fun <T> addRouteBinding(
         path: Path,
         isFullyBiDirectional: Boolean,
         build: CombinedRouteBindingBuilder<T>.() -> Unit
@@ -156,7 +156,7 @@ class CombinedNetworkRouting internal constructor(private val config: CombinedRo
     ) {
         val path = this.path + path
 
-        config.addRouteHandler(
+        config.addRouteBinding(
             path,
             isFullyBiDirectional,
             build
@@ -374,7 +374,7 @@ internal class SideRouteConfig(private val device: FSBaseDevice) {
 
     val baseRoute: SideNetworkRouting get() = SideNetworkRouting(this, emptyList())
 
-    fun <T> addRouteHandler(
+    fun <T> addRouteBinding(
         path: Path,
         isFullyBiDirectional: Boolean,
         build: SideRouteBindingBuilder<T>.() -> Unit
@@ -436,7 +436,7 @@ class SideNetworkRouting internal constructor(private val config: SideRouteConfi
     ) {
         val path = this.path + path
 
-        config.addRouteHandler(
+        config.addRouteBinding(
             path,
             isFullyBiDirectional = isFullyBiDirectional,
             build = build

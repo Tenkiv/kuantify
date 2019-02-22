@@ -20,10 +20,11 @@ import org.jetbrains.kotlin.gradle.tasks.*
 
 plugins {
     kotlin("jvm")
+    java
     id("kotlinx-serialization")
     id("org.jetbrains.dokka")
+
     `maven-publish`
-    java
 }
 
 dependencies {
@@ -71,7 +72,8 @@ dependencies {
     }
     testRuntimeOnly(group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = Vof.kotlin)
 
-    testImplementation(group = "org.slf4j", name = "slf4j-simple", version = Vof.slf4j)
+    testImplementation(group = "io.mockk", name = "mockk", version = Vof.mockk)
+
     testImplementation(group = "io.ktor", name = "ktor-server-test-host", version = Vof.ktor)
     testImplementation(group = "io.ktor", name = "ktor-client-cio", version = Vof.ktor)
 
