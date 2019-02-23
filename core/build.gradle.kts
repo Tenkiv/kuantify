@@ -75,7 +75,7 @@ dependencies {
         exclude(group = "org.junit.platform")
     }
 
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:${Vof.junitPlatform}") {
+    testRuntimeOnly(group = "org.junit.platform", name = "junit-platform-launcher", version = Vof.junitPlatform) {
         because("Needed to run tests IDEs that bundle an older version")
     }
 

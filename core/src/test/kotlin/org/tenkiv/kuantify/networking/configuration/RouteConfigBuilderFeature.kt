@@ -30,36 +30,60 @@ import org.tenkiv.kuantify.networking.device.*
 val logger = KotlinLogging.logger {}
 
 object RouteConfigBuilderFeature : Spek({
+    val localDevice = mockkClass(LocalDevice::class)
+    every { localDevice.coroutineContext } returns GlobalScope.coroutineContext
+
+    val remoteDevice = mockkClass(FSRemoteDevice::class)
+    every { remoteDevice.coroutineContext } returns GlobalScope.coroutineContext
+
     Feature("CombinedRouteConfig") {
-        val configWithLocalDevice by memoized {
-            val device = mockkClass(LocalDevice::class)
-            every { device.coroutineContext } returns GlobalScope.coroutineContext
+        val configWithLocalDevice by memoized { CombinedRouteConfig(localDevice) }
+        val configWithRemoteDevice by memoized { CombinedRouteConfig(remoteDevice) }
 
-            CombinedRouteConfig(device)
+        val builder by memoized { CombinedRouteBindingBuilder<String>() }
+        val build: CombinedRouteBindingBuilder<String>.() -> Unit = {
+            setLocalUpdateChannel(Channel()) withUpdateChannel {
+                sendFromHost()
+                sendFromRemote()
+            }
+
+            serializeMessage {
+                it
+            } withSerializer {
+                receiveMessageOnEither {
+
+                }
+            }
         }
 
-        val configWithRemoteDevice by memoized {
+        Scenario("creating route binding builder") {
+            When("creating route binding builder that sends and receives messages on both sides") {
+                builder.build()
+            }
 
+            Then("builder should have non-null message serializer") {
+                assert(builder.serializeMessage != null)
+            }
+
+            Then("builder send from host should be true") {
+                assert(builder.sendFromHost)
+            }
+
+            Then("builder send from remote should be true") {
+                assert(builder.sendFromRemote)
+            }
+
+            Then("builder receive message on either should be non-null") {
+                assert(builder.withSerializer?.receiveMessageOnEither != null)
+            }
         }
 
-        Scenario("adding route bindings") {
+        Scenario("adding route binding to local device config") {
+            builder.build()
 
-            When("adding route binding that sends and receives messages on both sides") {
+            When("adding binding to config") {
                 configWithLocalDevice.baseRoute.route("a", "b", "c") {
-                    bind<String>("d", isFullyBiDirectional = true) {
-                        setLocalUpdateChannel(Channel()) withUpdateChannel {
-                            sendFromHost()
-                            sendFromRemote()
-                        }
-
-                        serializeMessage {
-                            it
-                        } withSerializer {
-                            receiveMessageOnEither {
-
-                            }
-                        }
-                    }
+                    bind("d", isFullyBiDirectional = true, build = build)
                 }
             }
 
@@ -71,27 +95,27 @@ object RouteConfigBuilderFeature : Spek({
 
             Then("route binding should be of type host") {
                 assert(configWithLocalDevice.networkRouteBindingMap[networkBindingPath] is NetworkRouteBinding.Host)
-                assert(configWithLocalDevice.networkRouteBindingMap[networkBindingPath] !is NetworkRouteBinding.Host)
             }
 
-            Then("route binding should have non-null message serializer") {
+        }
 
+        Scenario("adding route binding to remote device config") {
+            builder.build()
+
+            When("adding binding to config") {
+                configWithRemoteDevice.baseRoute.route("a", "b", "c") {
+                    bind("d", isFullyBiDirectional = true, build = build)
+                }
             }
 
-            Then("route binding send from host should be true") {
+            val networkBindingPath = listOf("a", "b", "c", "d")
 
+            Then("network config should contain binding for route") {
+                assert(configWithRemoteDevice.networkRouteBindingMap.contains(networkBindingPath))
             }
 
-            Then("route binding send from remote should be true") {
-
-            }
-
-            Then("route binding receive message on either should be non-null") {
-
-            }
-
-            Then("route config should contain route binding") {
-
+            Then("route binding should be of type remote") {
+                assert(configWithRemoteDevice.networkRouteBindingMap[networkBindingPath] is NetworkRouteBinding.Remote)
             }
 
         }
@@ -99,6 +123,85 @@ object RouteConfigBuilderFeature : Spek({
     }
 
     Feature("SideRouteConfig") {
+        val configWithLocalDevice by memoized { SideRouteConfig(localDevice) }
+        val configWithRemoteDevice by memoized { SideRouteConfig(remoteDevice) }
+
+        val builder by memoized { SideRouteBindingBuilder<String>() }
+        val build: SideRouteBindingBuilder<String>.() -> Unit = {
+
+            serializeMessage {
+                it
+            }
+
+            setLocalUpdateChannel(Channel()) withUpdateChannel {
+                send()
+            }
+
+            receiveMessage(NullResolutionStrategy.PANIC) {
+
+            }
+        }
+
+        Scenario("creating route binding builder") {
+            When("builing route binding builder that sends and receives messages") {
+                builder.build()
+            }
+
+            Then("builder should have non-null message serializer") {
+                assert(builder.serializeMessage != null)
+            }
+
+            Then("builder send should be true") {
+                assert(builder.send)
+            }
+
+            Then("builder receive should be non-null") {
+                assert(builder.receive != null)
+            }
+        }
+
+
+        Scenario("adding route binding to local device config") {
+            builder.build()
+
+            When("adding binding to config") {
+                configWithLocalDevice.baseRoute.route("a", "b", "c") {
+                    bind("d", isFullyBiDirectional = true, build = build)
+                }
+            }
+
+            val networkBindingPath = listOf("a", "b", "c", "d")
+
+            Then("network config should contain binding for route") {
+                assert(configWithLocalDevice.networkRouteBindingMap.contains(networkBindingPath))
+            }
+
+            Then("route binding should be of type host") {
+                assert(configWithLocalDevice.networkRouteBindingMap[networkBindingPath] is NetworkRouteBinding.Host)
+            }
+
+        }
+
+        Scenario("adding route binding to remote device config") {
+            builder.build()
+
+            When("adding binding to config") {
+                configWithRemoteDevice.baseRoute.route("a", "b", "c") {
+                    bind("d", isFullyBiDirectional = true, build = build)
+                }
+            }
+
+            val networkBindingPath = listOf("a", "b", "c", "d")
+
+            Then("network config should contain binding for route") {
+                assert(configWithRemoteDevice.networkRouteBindingMap.contains(networkBindingPath))
+            }
+
+            Then("route binding should be of type remote") {
+                assert(configWithRemoteDevice.networkRouteBindingMap[networkBindingPath] is NetworkRouteBinding.Remote)
+            }
+
+        }
 
     }
 })
