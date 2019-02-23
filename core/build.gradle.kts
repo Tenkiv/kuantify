@@ -63,14 +63,23 @@ dependencies {
 
 
     //Test
+    testImplementation(kotlin("reflect", Vof.kotlin))
+    testImplementation(kotlin("test", Vof.kotlin))
+
     testImplementation(group = "org.spekframework.spek2", name = "spek-dsl-jvm", version = Vof.spek) {
         exclude(group = "org.jetbrains.kotlin")
     }
+
     testRuntimeOnly(group = "org.spekframework.spek2", name = "spek-runner-junit5", version = Vof.spek) {
         exclude(group = "org.jetbrains.kotlin")
         exclude(group = "org.junit.platform")
     }
-    testRuntimeOnly(group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = Vof.kotlin)
+
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:${Vof.junitPlatform}") {
+        because("Needed to run tests IDEs that bundle an older version")
+    }
+
+    testImplementation(gradleTestKit())
 
     testImplementation(group = "io.mockk", name = "mockk", version = Vof.mockk)
 
