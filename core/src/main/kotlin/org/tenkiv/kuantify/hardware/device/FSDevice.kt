@@ -143,6 +143,7 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
             path = RC.WEBSOCKET
         ) {
             webSocketSession = this
+            logger.debug { "Websocket connection opened for device: ${this@FSRemoteDevice.uid}" }
 
             try {
                 incoming.consumeEach { frame ->
@@ -153,12 +154,14 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
                 }
             } finally {
                 // TODO: Connection closed.
+                logger.debug { "Websocket connection closed for device: ${this@FSRemoteDevice.uid}" }
             }
         }
     }
 
     override suspend fun connect() {
         networkCommunicator.start()
+        logger.debug { "Network communicator started for device: ${this.uid}, now running websocket" }
         runWebsocket()
     }
 
