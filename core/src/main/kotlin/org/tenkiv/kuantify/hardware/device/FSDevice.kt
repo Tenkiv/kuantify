@@ -29,8 +29,6 @@ import mu.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.client.*
 import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.kuantify.networking.configuration.NetworkBoundCombined
-import org.tenkiv.kuantify.networking.configuration.NetworkBoundSide
 import org.tenkiv.kuantify.networking.device.*
 import org.tenkiv.kuantify.networking.server.*
 import java.util.concurrent.atomic.*
@@ -52,8 +50,9 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide {
 
     final override val basePath: Path = emptyList()
 
-    //TODO Lazy thread safety mode
-    internal val networkCommunicator: NetworkCommunicator by lazy(LazyThreadSafetyMode.NONE) {
+    internal abstract val networkCommunicator: NetworkCommunicator
+
+    internal fun createNetworkCommunicator(): NetworkCommunicator {
         val combinedNetworkConfig = CombinedRouteConfig(this)
         combinedRouting(combinedNetworkConfig.baseRoute)
 
@@ -70,7 +69,7 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide {
             resultRouteBindingMap[path] = handler
         }
 
-        NetworkCommunicator(
+        return NetworkCommunicator(
             this,
             resultRouteBindingMap
         ).also {
@@ -95,8 +94,10 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide {
 
 abstract class LocalDevice : FSBaseDevice() {
 
-    override val coroutineContext: CoroutineContext
+    final override val coroutineContext: CoroutineContext
         get() = GlobalScope.coroutineContext
+
+    final override val networkCommunicator: NetworkCommunicator = createNetworkCommunicator()
 
     val isHosting: Boolean
         get() = KuantifyHost.isHosting
@@ -131,9 +132,10 @@ abstract class LocalDevice : FSBaseDevice() {
 abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(), RemoteDevice {
 
     @Volatile
-    private var job = Job(scope.coroutineContext[Job])
+    private var _coroutineContext = newContext()
+    final override val coroutineContext: CoroutineContext get() = _coroutineContext
 
-    override val coroutineContext: CoroutineContext get() = scope.coroutineContext + job
+    final override val networkCommunicator: NetworkCommunicator = createNetworkCommunicator()
 
     private val _isConnected = AtomicBoolean(false)
     override val isConnected: Boolean
@@ -172,8 +174,9 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
     }
 
     override suspend fun disconnect() {
-        job.cancel()
-        job = Job(scope.coroutineContext[Job])
+        coroutineContext[Job]?.cancel()
+        _coroutineContext = newContext()
+
         _isConnected.set(false)
     }
 
@@ -194,6 +197,8 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
     final override suspend fun sendMessage(route: Path, payload: String?) {
         sendChannel.send(serializeMessage(route, payload))
     }
+
+    private fun newContext() = scope.coroutineContext + Job(scope.coroutineContext[Job])
 
     override fun sideRouting(routing: SideNetworkRouting) {
 
