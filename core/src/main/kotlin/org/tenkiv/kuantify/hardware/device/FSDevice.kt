@@ -31,7 +31,6 @@ import org.tenkiv.kuantify.networking.client.*
 import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.kuantify.networking.device.*
 import org.tenkiv.kuantify.networking.server.*
-import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
@@ -131,53 +130,46 @@ abstract class LocalDevice : FSBaseDevice() {
 
 abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(), RemoteDevice {
 
-    @Volatile
-    private var _coroutineContext = newContext()
-    final override val coroutineContext: CoroutineContext get() = _coroutineContext
+    final override val coroutineContext: CoroutineContext get() = scope.coroutineContext
 
     final override val networkCommunicator: NetworkCommunicator = createNetworkCommunicator()
 
-    private val _isConnected = AtomicBoolean(false)
+    @Volatile
+    private var webSocketSession: WebSocketSession? = null
+
     override val isConnected: Boolean
-        get() = _isConnected.get()
+        get() = webSocketSession != null
 
-    internal val sendChannel = Channel<String>(10_000)
+    private suspend fun runWebsocket() {
+        httpClient.ws(
+            method = HttpMethod.Get,
+            host = hostIp,
+            port = RC.DEFAULT_PORT,
+            path = RC.WEBSOCKET
+        ) {
+            webSocketSession = this
 
-    private fun startWebsocket() {
-        launch {
-            httpClient.ws(
-                method = HttpMethod.Get,
-                host = hostIp,
-                port = RC.DEFAULT_PORT,
-                path = RC.WEBSOCKET
-            ) {
-                launch {
-                    sendChannel.consumeEach { message ->
-                        outgoing.send(Frame.Text(message))
-                        logger.trace { "Sent message - $message - to remote device: $uid" }
-                    }
-                }
-
+            try {
                 incoming.consumeEach { frame ->
                     if (frame is Frame.Text) {
                         receiveMessage(frame.readText())
                         logger.trace { "Received message - ${frame.readText()} - from remote device: $uid" }
                     }
                 }
+            } finally {
+                // TODO: Connection closed.
             }
         }
     }
 
     override suspend fun connect() {
-        startWebsocket()
-        _isConnected.set(true)
+        networkCommunicator.start()
+        runWebsocket()
     }
 
     override suspend fun disconnect() {
-        coroutineContext[Job]?.cancel()
-        _coroutineContext = newContext()
-
-        _isConnected.set(false)
+        webSocketSession?.close()
+        networkCommunicator.stop()
     }
 
     @Suppress("NAME_SHADOWING")
@@ -195,10 +187,8 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
     }
 
     final override suspend fun sendMessage(route: Path, payload: String?) {
-        sendChannel.send(serializeMessage(route, payload))
+        webSocketSession?.send(Frame.Text(serializeMessage(route, payload))) ?: TODO("Throw specific exception")
     }
-
-    private fun newContext() = scope.coroutineContext + Job(scope.coroutineContext[Job])
 
     override fun sideRouting(routing: SideNetworkRouting) {
 

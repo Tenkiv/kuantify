@@ -29,7 +29,7 @@ interface RemoteDevice : Device {
     /**
      * Value representing if the Device is connected.
      *
-     * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
+     * Implementing backing  field must be atomic or otherwise provide safety for
      * reads from multiple threads.
      */
     val isConnected: Boolean

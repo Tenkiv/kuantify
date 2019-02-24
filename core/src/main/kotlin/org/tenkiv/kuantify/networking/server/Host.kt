@@ -91,7 +91,7 @@ internal object KuantifyHost {
                     }
                 } finally {
                     ClientHandler.connectionClosed(clientID.id, this@webSocket)
-                    logger.trace { "Websocket connection closed for client ${clientID.id}" }
+                    logger.debug { "Websocket connection closed for client ${clientID.id}" }
                 }
 
             }
