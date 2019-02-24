@@ -18,7 +18,6 @@
 
 package org.tenkiv.kuantify.gate.acquire.input
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
@@ -29,13 +28,13 @@ import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.kuantify.networking.configuration.NetworkBoundSide
 import tec.units.indriya.*
 import javax.measure.*
+import kotlin.coroutines.*
 import kotlin.reflect.*
 
-sealed class FSRemoteInput<T : DaqcValue>(scope: CoroutineScope, uid: String) : FSRemoteAcquireGate<T>(scope, uid),
-    Input<T>, NetworkBoundSide {
+sealed class FSRemoteInput<T : DaqcValue>(coroutineContext: CoroutineContext, uid: String) :
+    FSRemoteAcquireGate<T>(coroutineContext, uid), Input<T>, NetworkBoundSide {
 
     internal val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
     override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
@@ -60,8 +59,8 @@ sealed class FSRemoteInput<T : DaqcValue>(scope: CoroutineScope, uid: String) : 
     }
 }
 
-abstract class FSRemoteQuantityInput<Q : Quantity<Q>>(scope: CoroutineScope, uid: String) :
-    FSRemoteInput<DaqcQuantity<Q>>(scope, uid), QuantityInput<Q> {
+abstract class FSRemoteQuantityInput<Q : Quantity<Q>>(coroutineContext: CoroutineContext, uid: String) :
+    FSRemoteInput<DaqcQuantity<Q>>(coroutineContext, uid), QuantityInput<Q> {
 
     abstract val quantityType: KClass<Q>
 
@@ -87,8 +86,8 @@ abstract class FSRemoteQuantityInput<Q : Quantity<Q>>(scope: CoroutineScope, uid
 
 }
 
-abstract class FSRemoteBinaryStateInput(scope: CoroutineScope, uid: String) : FSRemoteInput<BinaryState>(scope, uid),
-    BinaryStateInput {
+abstract class FSRemoteBinaryStateInput(coroutineContext: CoroutineContext, uid: String) :
+    FSRemoteInput<BinaryState>(coroutineContext, uid), BinaryStateInput {
 
     override fun sideRouting(routing: SideNetworkRouting) {
         super.sideRouting(routing)

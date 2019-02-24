@@ -18,23 +18,20 @@
 
 package org.tenkiv.kuantify.gate.acquire
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.kuantify.networking.configuration.NetworkBoundSide
 import org.tenkiv.kuantify.networking.device.*
 import kotlin.coroutines.*
 
-abstract class FSRemoteAcquireGate<T : DaqcData>(private val scope: CoroutineScope, val uid: String) : AcquireGate<T>,
-    NetworkBoundSide {
+abstract class FSRemoteAcquireGate<T : DaqcData>(
+    final override val coroutineContext: CoroutineContext,
+    val uid: String
+) : AcquireGate<T>, NetworkBoundSide {
 
     final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
-
-    final override val coroutineContext: CoroutineContext
-        get() = scope.coroutineContext
 
     //TODO
     internal val _failureBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()

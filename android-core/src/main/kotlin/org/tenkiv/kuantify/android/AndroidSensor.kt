@@ -35,7 +35,7 @@ class RemoteQuantityAndroidSensor<Q : Quantity<Q>>(
     scope: CoroutineScope,
     uid: String,
     override val quantityType: KClass<Q>
-) : FSRemoteQuantityInput<Q>(scope, uid), QuantityAndroidSensor<Q> {
+) : FSRemoteQuantityInput<Q>(scope.coroutineContext, uid), QuantityAndroidSensor<Q> {
 
     override val updateRate: UpdateRate by runningAverage()
 }
@@ -43,7 +43,7 @@ class RemoteQuantityAndroidSensor<Q : Quantity<Q>>(
 class RemoteBinaryStateAndroidSensor(
     scope: CoroutineScope,
     uid: String
-) : FSRemoteBinaryStateInput(scope, uid), AndroidSensor<BinaryState> {
+) : FSRemoteBinaryStateInput(scope.coroutineContext, uid), AndroidSensor<BinaryState> {
 
     override val updateRate: UpdateRate by runningAverage()
 

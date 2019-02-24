@@ -27,7 +27,6 @@ import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.kuantify.networking.configuration.NetworkBoundCombined
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
@@ -95,7 +94,7 @@ interface LocalAnalogInput : AnalogInput, LocalQuantityInput<ElectricPotential>,
 }
 
 abstract class FSRemoteAnalogInput<D>(override val device: D, uid: String) :
-    FSRemoteQuantityInput<ElectricPotential>(device, uid),
+    FSRemoteQuantityInput<ElectricPotential>(device.coroutineContext, uid),
     AnalogInput,
     NetworkBoundCombined where D : AnalogDaqDevice, D : FSRemoteDevice {
 

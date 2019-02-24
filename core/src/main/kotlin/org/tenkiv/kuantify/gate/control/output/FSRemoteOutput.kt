@@ -18,7 +18,6 @@
 
 package org.tenkiv.kuantify.gate.control.output
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
@@ -30,9 +29,11 @@ import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.*
+import kotlin.coroutines.*
 import kotlin.reflect.*
 
-sealed class FSRemoteOutput<T : DaqcValue>(scope: CoroutineScope) : FSRemoteControlGate<T>(scope), Output<T> {
+sealed class FSRemoteOutput<T : DaqcValue>(coroutineContext: CoroutineContext, uid: String) :
+    FSRemoteControlGate<T>(coroutineContext, uid), Output<T> {
 
     internal val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
     override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
@@ -61,8 +62,8 @@ sealed class FSRemoteOutput<T : DaqcValue>(scope: CoroutineScope) : FSRemoteCont
     }
 }
 
-abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(scope: CoroutineScope) :
-    FSRemoteOutput<DaqcQuantity<Q>>(scope), QuantityOutput<Q> {
+abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(coroutineContext: CoroutineContext, uid: String) :
+    FSRemoteOutput<DaqcQuantity<Q>>(coroutineContext, uid), QuantityOutput<Q> {
 
     abstract val quantityType: KClass<Q>
 
@@ -90,15 +91,15 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(scope: CoroutineScope) :
     }
 }
 
-abstract class FSRemoteBinaryStateOutput(scope: CoroutineScope) :
-    FSRemoteOutput<BinaryState>(scope), BinaryStateOutput {
+abstract class FSRemoteBinaryStateOutput(coroutineContext: CoroutineContext, uid: String) :
+    FSRemoteOutput<BinaryState>(coroutineContext, uid), BinaryStateOutput {
 
     override fun sideRouting(routing: SideNetworkRouting) {
         super.sideRouting(routing)
 
         //TODO: This means the time associated with the update will be the time of the update on the local device if
-        // the command came from another remote but if it comes from this one it will be the time at which it was sent
-        // inconsistency is bad.
+        //  the command came from another remote but if it comes from this one it will be the time at which it was sent
+        //  inconsistency is bad.
         routing.addToThisPath {
             bind<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = true) {
                 serializeMessage {
