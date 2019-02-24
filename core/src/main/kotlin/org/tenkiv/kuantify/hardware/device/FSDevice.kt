@@ -49,9 +49,8 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide {
 
     final override val basePath: Path = emptyList()
 
-    internal abstract val networkCommunicator: NetworkCommunicator
-
-    internal fun createNetworkCommunicator(): NetworkCommunicator {
+    //TODO: Thread safety
+    internal val networkCommunicator: NetworkCommunicator by lazy(LazyThreadSafetyMode.NONE) {
         val combinedNetworkConfig = CombinedRouteConfig(this)
         combinedRouting(combinedNetworkConfig.baseRoute)
 
@@ -68,7 +67,7 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide {
             resultRouteBindingMap[path] = handler
         }
 
-        return NetworkCommunicator(
+        NetworkCommunicator(
             this,
             resultRouteBindingMap
         ).also {
@@ -95,8 +94,6 @@ abstract class LocalDevice : FSBaseDevice() {
 
     final override val coroutineContext: CoroutineContext
         get() = GlobalScope.coroutineContext
-
-    final override val networkCommunicator: NetworkCommunicator = createNetworkCommunicator()
 
     val isHosting: Boolean
         get() = KuantifyHost.isHosting
@@ -131,8 +128,6 @@ abstract class LocalDevice : FSBaseDevice() {
 abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(), RemoteDevice {
 
     final override val coroutineContext: CoroutineContext get() = scope.coroutineContext
-
-    final override val networkCommunicator: NetworkCommunicator = createNetworkCommunicator()
 
     @Volatile
     private var webSocketSession: WebSocketSession? = null
