@@ -65,7 +65,7 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
 
         val currentHandler = networkRouteBindingMap[path]
         if (currentHandler != null) {
-            logger.warn { "Overriding combined routing for route $path." }
+            logger.warn { "Overriding combined route binding for route $path." }
         }
 
         networkRouteBindingMap[path] = when (device) {
@@ -197,7 +197,7 @@ class CombinedRouteBindingBuilder<T> internal constructor() {
     internal var localUpdateChannel: ReceiveChannel<T>? = null
         set(value) {
             if (field != null) {
-                logger.warn { "localUpdateChannel for route handler was overriden" }
+                logger.warn { "localUpdateChannel for route binding was overriden" }
             }
             field = value
         }
@@ -390,7 +390,7 @@ internal class SideRouteConfig(private val device: FSBaseDevice) {
 
         val currentHandler = networkRouteBindingMap[path]
         if (currentHandler != null) {
-            logger.warn { "Overriding side routing for route $this." }
+            logger.warn { "Overriding side route binding for route $path." }
         }
 
         networkRouteBindingMap[path] = when (device) {

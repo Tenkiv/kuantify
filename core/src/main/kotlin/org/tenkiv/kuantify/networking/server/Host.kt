@@ -67,11 +67,14 @@ internal object KuantifyHost {
         routing {
             get(RC.INFO) {
                 call.respondText(hostedDevice?.getInfo() ?: "null")
+                logger.trace { "Sent info for local device" }
             }
 
             webSocket(RC.WEBSOCKET) {
 
                 val clientID = call.sessions.get<ClientId>()
+
+                logger.debug { "Websocket connection opened for client $clientID" }
 
                 if (clientID == null) {
                     close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "No session"))
@@ -79,6 +82,8 @@ internal object KuantifyHost {
                 }
 
                 ClientHandler.connectionOpened(clientID.id, this@webSocket)
+
+                logger.debug { "Starting websocket receive loop" }
 
                 try {
                     incoming.consumeEach { frame ->
@@ -101,10 +106,12 @@ internal object KuantifyHost {
 
     internal fun startHosting(device: LocalDevice) {
         hostedDevice = device
+        logger.debug { "Started hosting local device" }
     }
 
     internal suspend fun stopHosting() {
         ClientHandler.closeAllSessions()
+        logger.debug { "Stopped hosting local device" }
         hostedDevice = null
     }
 

@@ -59,12 +59,12 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide {
 
         val resultRouteBindingMap = combinedNetworkConfig.networkRouteBindingMap
 
-        sideRouteConfig.networkRouteBindingMap.forEach { path, handler ->
+        sideRouteConfig.networkRouteBindingMap.forEach { path, binding ->
             val currentHandler = resultRouteBindingMap[path]
             if (currentHandler != null) {
-                logger.warn { "Overriding combined route binding for route $this with side specific handler." }
+                logger.warn { "Overriding combined route binding for route $path with side specific binding." }
             }
-            resultRouteBindingMap[path] = handler
+            resultRouteBindingMap[path] = binding
         }
 
         NetworkCommunicator(
