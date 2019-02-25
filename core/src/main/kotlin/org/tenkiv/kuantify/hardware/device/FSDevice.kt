@@ -194,6 +194,8 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
 
     companion object {
         suspend fun getInfo(hostIp: String): String =
-            httpClient.get("${RC.HTTP}$hostIp:${RC.DEFAULT_PORT}${RC.INFO}")
+            httpClient.get<String>("${RC.HTTP}$hostIp:${RC.DEFAULT_PORT}${RC.INFO}").also {
+                logger.trace { "Got info for device at IP address $hostIp" }
+            }
     }
 }

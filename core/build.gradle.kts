@@ -23,7 +23,6 @@ plugins {
     java
     id("kotlinx-serialization")
     id("org.jetbrains.dokka")
-
     `maven-publish`
 }
 

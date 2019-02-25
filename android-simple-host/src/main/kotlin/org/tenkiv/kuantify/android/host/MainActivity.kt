@@ -22,6 +22,7 @@ import android.app.*
 import android.os.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import mu.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.server.*
@@ -30,7 +31,6 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
 //        setContentView(R.layout.activity_main)
 //        val textView = findViewById<TextView>(R.id.textView)
 
@@ -41,6 +41,9 @@ class MainActivity : Activity() {
 
         val device = LocalAndroidDevice.get(this)
         device.startHosting()
+
+        logger.trace { "This is logging of - kotlin-logging" }
     }
 
+    companion object : KLogging()
 }

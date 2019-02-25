@@ -55,7 +55,8 @@ dependencies {
 
     implementation(project(":android-local"))
     implementation(group = "io.ktor", name = "ktor-server-netty", version = Vof.ktor)
-    implementation(group = "org.slf4j", name = "slf4j-android", version = Vof.slf4j)
+    implementation(group ="com.noveogroup.android", name = "android-logger", version = "1.3.1")
+    implementation(group = "io.github.microutils", name = "kotlin-logging", version = "1.6.24")
 
 //    testImplementation(group = "junit", name = "junit", version = Vof.junit)
 }
