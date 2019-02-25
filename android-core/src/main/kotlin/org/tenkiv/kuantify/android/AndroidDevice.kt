@@ -91,7 +91,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     for (i in 0 until info.numHeartRateSensors) {
         heartRateSensors += RemoteQuantityAndroidSensor(
             this,
-            "${AndroidSensorTypeId.AMBIENT_TEMPERATURE}$i",
+            "${AndroidSensorTypeId.HEART_RATE}$i",
             Frequency::class
         )
     }
