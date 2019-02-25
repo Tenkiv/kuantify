@@ -79,7 +79,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     val info = Json.parse(AndroidDevice.Info.serializer(), FSRemoteDevice.getInfo(hostIp))
 
     val ambientTemperatureSensors = ArrayList<RemoteQuantityAndroidSensor<Temperature>>()
-    for (i in 0..info.numAmbientTemperatureSensors) {
+    for (i in 0 until info.numAmbientTemperatureSensors) {
         ambientTemperatureSensors += RemoteQuantityAndroidSensor(
             this,
             "${AndroidSensorTypeId.AMBIENT_TEMPERATURE}$i",
@@ -88,7 +88,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     }
 
     val heartRateSensors = ArrayList<RemoteQuantityAndroidSensor<Frequency>>()
-    for (i in 0..info.numHeartRateSensors) {
+    for (i in 0 until info.numHeartRateSensors) {
         heartRateSensors += RemoteQuantityAndroidSensor(
             this,
             "${AndroidSensorTypeId.AMBIENT_TEMPERATURE}$i",
@@ -97,7 +97,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     }
 
     val lightSensors = ArrayList<RemoteQuantityAndroidSensor<Illuminance>>()
-    for (i in 0..info.numHeartRateSensors) {
+    for (i in 0 until info.numHeartRateSensors) {
         lightSensors += RemoteQuantityAndroidSensor(
             this,
             "${AndroidSensorTypeId.LIGHT}$i",
@@ -106,7 +106,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     }
 
     val pressureSensors = ArrayList<RemoteQuantityAndroidSensor<Pressure>>()
-    for (i in 0..info.numPressureSensors) {
+    for (i in 0 until info.numPressureSensors) {
         pressureSensors += RemoteQuantityAndroidSensor(
             this,
             "${AndroidSensorTypeId.PRESSURE}$i",
@@ -115,7 +115,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     }
 
     val proximitySensors = ArrayList<RemoteQuantityAndroidSensor<Length>>()
-    for (i in 0..info.numPressureSensors) {
+    for (i in 0 until info.numPressureSensors) {
         proximitySensors += RemoteQuantityAndroidSensor(
             this,
             "${AndroidSensorTypeId.PROXIMITY}$i",
@@ -124,7 +124,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     }
 
     val relativeHumiditySensors = ArrayList<RemoteQuantityAndroidSensor<Dimensionless>>()
-    for (i in 0..info.numPressureSensors) {
+    for (i in 0 until info.numPressureSensors) {
         relativeHumiditySensors += RemoteQuantityAndroidSensor(
             this,
             "${AndroidSensorTypeId.RELATIVE_HUMIDITY}$i",

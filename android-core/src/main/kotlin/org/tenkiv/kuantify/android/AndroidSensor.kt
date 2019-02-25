@@ -31,7 +31,7 @@ interface AndroidSensor<T : DaqcValue> : Input<T> {
     val uid: String
 }
 
-class RemoteQuantityAndroidSensor<Q : Quantity<Q>>(
+class RemoteQuantityAndroidSensor<Q : Quantity<Q>> internal constructor(
     scope: CoroutineScope,
     uid: String,
     override val quantityType: KClass<Q>
@@ -40,7 +40,7 @@ class RemoteQuantityAndroidSensor<Q : Quantity<Q>>(
     override val updateRate: UpdateRate by runningAverage()
 }
 
-class RemoteBinaryStateAndroidSensor(
+class RemoteBinaryStateAndroidSensor internal constructor(
     scope: CoroutineScope,
     uid: String
 ) : FSRemoteBinaryStateInput(scope.coroutineContext, uid), AndroidSensor<BinaryState> {
