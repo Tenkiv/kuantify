@@ -135,7 +135,8 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
     override val isConnected: Boolean
         get() = webSocketSession != null
 
-    private fun runWebsocket() =
+    private suspend fun runWebsocket() {
+        val initialized = CompletableDeferred<Boolean>()
         launch {
             httpClient.ws(
                 method = HttpMethod.Get,
@@ -146,6 +147,7 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
                 webSocketSession = this
                 logger.debug { "Websocket connection opened for device: ${this@FSRemoteDevice.uid}" }
 
+                initialized.complete(true)
                 try {
                     incoming.consumeEach { frame ->
                         if (frame is Frame.Text) {
@@ -159,6 +161,8 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
                 }
             }
         }
+        initialized.await()
+    }
 
 
     override suspend fun connect() {

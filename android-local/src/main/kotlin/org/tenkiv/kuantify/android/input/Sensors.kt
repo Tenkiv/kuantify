@@ -42,7 +42,6 @@ class LocalAndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: S
 
     override fun sideRouting(routing: SideNetworkRouting) {
         super<LocalQuantityInput>.sideRouting(routing)
-        super<LocalAndroidSensor>.sideRouting(routing)
     }
 }
 
@@ -54,7 +53,6 @@ class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, ui
 
     override fun sideRouting(routing: SideNetworkRouting) {
         super<LocalQuantityInput>.sideRouting(routing)
-        super<LocalAndroidSensor>.sideRouting(routing)
     }
 }
 
@@ -73,7 +71,6 @@ class LocalAndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor, uid: S
 
     override fun sideRouting(routing: SideNetworkRouting) {
         super<LocalQuantityInput>.sideRouting(routing)
-        super<LocalAndroidSensor>.sideRouting(routing)
     }
 }
 
@@ -92,7 +89,6 @@ class LocalAndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor, ui
 
     override fun sideRouting(routing: SideNetworkRouting) {
         super<LocalQuantityInput>.sideRouting(routing)
-        super<LocalAndroidSensor>.sideRouting(routing)
     }
 }
 
@@ -111,7 +107,6 @@ class LocalAndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor, uid
 
     override fun sideRouting(routing: SideNetworkRouting) {
         super<LocalQuantityInput>.sideRouting(routing)
-        super<LocalAndroidSensor>.sideRouting(routing)
     }
 }
 
@@ -130,6 +125,5 @@ class LocalAndroidRelativeHumiditySensor(device: LocalAndroidDevice, sensor: Sen
 
     override fun sideRouting(routing: SideNetworkRouting) {
         super<LocalQuantityInput>.sideRouting(routing)
-        super<LocalAndroidSensor>.sideRouting(routing)
     }
 }
