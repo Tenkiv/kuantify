@@ -137,6 +137,7 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
 
     private suspend fun runWebsocket() {
         val initialized = CompletableDeferred<Boolean>()
+
         launch {
             httpClient.ws(
                 method = HttpMethod.Get,
@@ -161,6 +162,7 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
                 }
             }
         }
+
         initialized.await()
     }
 
@@ -174,6 +176,7 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
     override suspend fun disconnect() {
         webSocketSession?.close()
         networkCommunicator.stop()
+        webSocketSession = null
     }
 
     @Suppress("NAME_SHADOWING")
