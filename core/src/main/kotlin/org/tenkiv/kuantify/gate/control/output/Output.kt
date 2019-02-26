@@ -48,14 +48,13 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
      * for this [Output]
      */
     fun adjustOutputOrFail(
-        adjustment: (Double) -> Double,
-        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult {
+        adjustment: (Double) -> Double
+    ): SettingViability {
         val setting = valueOrNull
         return if (setting != null) {
-            setOutput(adjustment(setting.value.valueToDouble())(setting.value.unit), panicOnFailure)
+            setOutput(adjustment(setting.value.valueToDouble())(setting.value.unit))
         } else {
-            SettingResult.Failure(UninitialisedSettingException(this), panicOnFailure)
+            SettingViability.Unviable(UninitialisedSettingException(this))
         }
     }
 
@@ -64,9 +63,8 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
      * If there hasn't yet been a setting provided for this output, this function will suspend until there is one.
      */
     suspend fun adjustOutput(
-        adjustment: (Double) -> Double,
-        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult = setOutput(adjustment(getValue().value.valueToDouble())(getValue().value.unit), panicOnFailure)
+        adjustment: (Double) -> Double
+    ): SettingViability = setOutput(adjustment(getValue().value.valueToDouble())(getValue().value.unit))
 
 }
 
@@ -76,10 +74,8 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
  * @param setting The signal to set as the output.
  */
 fun <Q : Quantity<Q>> QuantityOutput<Q>.setOutput(
-    setting: ComparableQuantity<Q>,
-    panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
-) =
-    setOutput(setting.toDaqc(), panicOnFailure)
+    setting: ComparableQuantity<Q>
+) = setOutput(setting.toDaqc())
 
 /**
  * An [Output] whose type extends both [DaqcValue] and [Comparable] so it can be used in the default learning module.
@@ -98,65 +94,59 @@ interface BinaryStateOutput : RangedOutput<BinaryState> {
 interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>, QuantityOutput<Q> {
 
     fun increaseByRatioOfRange(
-        ratioIncrease: Double,
-        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult {
+        ratioIncrease: Double
+    ): SettingViability {
         val setting = valueOrNull
 
         return if (setting != null) {
             val newSetting = setting.value * ratioIncrease
             if (newSetting.toDaqc() in valueRange) {
-                setOutput(setting.value * ratioIncrease, panicOnFailure)
+                setOutput(setting.value * ratioIncrease)
             } else {
-                SettingResult.Failure(SettingOutOfRangeException(this), panicOnFailure)
+                SettingViability.Unviable(SettingOutOfRangeException(this))
             }
         } else {
-            SettingResult.Failure(UninitialisedSettingException(this), panicOnFailure)
+            SettingViability.Unviable(UninitialisedSettingException(this))
         }
     }
 
     fun decreaseByRatioOfRange(
-        ratioDecrease: Double,
-        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult = increaseByRatioOfRange(-ratioDecrease, panicOnFailure)
+        ratioDecrease: Double
+    ): SettingViability = increaseByRatioOfRange(-ratioDecrease)
 
     /**
      * Increase the setting by a percentage of the allowable range for this output.
      */
     fun increaseByPercentOfRange(
-        percentIncrease: ComparableQuantity<Dimensionless>,
-        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult = increaseByRatioOfRange(percentIncrease.toDoubleIn(PERCENT) / 100, panicOnFailure)
+        percentIncrease: ComparableQuantity<Dimensionless>
+    ): SettingViability = increaseByRatioOfRange(percentIncrease.toDoubleIn(PERCENT) / 100)
 
     /**
      * Decrease the setting by a percentage of the allowable range for this output.
      */
     fun decreaseByPercentOfRange(
-        percentDecrease: ComparableQuantity<Dimensionless>,
-        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
-    ) = decreaseByRatioOfRange(percentDecrease.toDoubleIn(PERCENT) / 100, panicOnFailure)
+        percentDecrease: ComparableQuantity<Dimensionless>
+    ) = decreaseByRatioOfRange(percentDecrease.toDoubleIn(PERCENT) / 100)
 
     fun setOutputToPercentMaximum(
-        percent: ComparableQuantity<Dimensionless>,
-        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult =
-        setOutputToRatioMaximum(percent.toDoubleIn(PERCENT) / 100, panicOnFailure)
+        percent: ComparableQuantity<Dimensionless>
+    ): SettingViability =
+        setOutputToRatioMaximum(percent.toDoubleIn(PERCENT) / 100)
 
     fun setOutputToRatioMaximum(
-        ratio: Double,
-        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult =
-        setOutput(ratioOfRange(ratio), panicOnFailure)
+        ratio: Double
+    ): SettingViability =
+        setOutput(ratioOfRange(ratio))
 
     /**
      * Sets this output to random setting within the allowable range.
      */
-    fun setOutputToRandom(panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE): SettingResult {
+    fun setOutputToRandom(): SettingViability {
         val random = Math.random()
 
         val setting = ratioOfRange(random)
 
-        return setOutput(setting, panicOnFailure)
+        return setOutput(setting)
     }
 
     private fun ratioOfRange(ratio: Double): ComparableQuantity<Q> {
@@ -172,12 +162,12 @@ class RqoAdapter<Q : Quantity<Q>> internal constructor(
     override val valueRange: ClosedRange<DaqcQuantity<Q>>
 ) : RangedQuantityOutput<Q>, QuantityOutput<Q> by output {
 
-    override fun setOutput(setting: DaqcQuantity<Q>, panicOnFailure: Boolean): SettingResult {
+    override fun setOutput(setting: DaqcQuantity<Q>): SettingViability {
         val inRange = setting in valueRange
         return if (!inRange) {
-            SettingResult.Failure(SettingOutOfRangeException(this), panicOnFailure)
+            SettingViability.Unviable(SettingOutOfRangeException(this))
         } else {
-            output.setOutput(setting, panicOnFailure)
+            output.setOutput(setting)
         }
     }
     //TODO: ToString, equals, hashcode

@@ -18,44 +18,60 @@
 
 package org.tenkiv.kuantify.gate.control.output
 
+import mu.*
+import org.tenkiv.kuantify.gate.control.*
+import org.tenkiv.kuantify.gate.control.output.SettingViability.*
+
+private val logger = KotlinLogging.logger {}
+
 /**
  * Kuantify handles ensuring delivery of commands and therefore assumes that commands were actually carried out by
- * the daqc device. So Success is not a 100% guarantee that the output was actually set to this. However, if [Success]
+ * the daqc device. So Viable is not a 100% guarantee that the output was actually set to this. However, if [Viable]
  * is returned and there is a failure to set the output in the communication process, the error will be propagated
  * through the daqcCriticalErrorChannel.
  *
- * setOutput() can still throw exceptions separately from the [SettingResult] pipeline in the event of unexpected
+ * setOutput() can still throw exceptions separately from the [SettingViability] pipeline in the event of unexpected
  * catastrophic problems in the setting process.
  */
-sealed class SettingResult {
+sealed class SettingViability {
 
-    object Success : SettingResult()
+    fun panicIfUnviable() {
+        if (this is Unviable) panic()
+    }
 
-    class Failure(val exception: SettingException, panic: Boolean) : SettingResult() {
+    object Viable : SettingViability()
+
+    class Unviable(val exception: SettingException) : SettingViability() {
 
         init {
-            if (panic) throw exception
+            logger.debug {
+                "Attempted unviable setting for ControlGate: ${exception.controlGate}. ${exception.message}"
+            }
+        }
+
+        fun panic() {
+            throw exception
         }
 
     }
 
 }
 
-open class SettingException(val output: Output<*>, override val message: String, cause: Throwable? = null) :
-    Throwable("$output: $message", cause)
+open class SettingException(val controlGate: ControlGate<*>, message: String, cause: Throwable? = null) :
+    Throwable("$controlGate: $message", cause)
 
-class UninitialisedSettingException(output: Output<*>, cause: Throwable? = null) :
-    SettingException(output, message, cause) {
+class UninitialisedSettingException(controlGate: ControlGate<*>, cause: Throwable? = null) :
+    SettingException(controlGate, message, cause) {
 
     companion object {
-        private const val message = "attempted to modify uninitialised setting"
+        private const val message = "Attempted to modify uninitialised setting."
     }
 }
 
-class SettingOutOfRangeException(output: Output<*>, cause: Throwable? = null) :
-    SettingException(output, message, cause) {
+class SettingOutOfRangeException(controlGate: ControlGate<*>, cause: Throwable? = null) :
+    SettingException(controlGate, message, cause) {
 
     companion object {
-        private const val message = "attempted setting is out of the allowable range"
+        private const val message = "Attempted setting is out of the allowable range."
     }
 }

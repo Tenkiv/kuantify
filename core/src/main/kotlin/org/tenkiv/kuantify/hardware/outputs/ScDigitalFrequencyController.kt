@@ -44,15 +44,15 @@ abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: 
 
     val avgFrequency: UpdatableQuantity<Frequency> get() = digitalOutput.avgFrequency
 
-    override fun setOutput(setting: DaqcQuantity<Q>, panicOnFailure: Boolean): SettingResult {
+    override fun setOutput(setting: DaqcQuantity<Q>, panicOnFailure: Boolean): SettingViability {
         val result = digitalOutput.sustainTransitionFrequency(convertOutput(setting), panicOnFailure)
 
-        if (result is SettingResult.Success) _broadcastChannel.offer(setting.now())
+        if (result is SettingViability.Viable) _broadcastChannel.offer(setting.now())
 
         return result
     }
 
-    //TODO: Consider changing this to return SettingResult
+    //TODO: Consider changing this to return SettingViability
     /**
      * Converts a [DaqcQuantity] to a usable [Frequency] for a digital output.
      *

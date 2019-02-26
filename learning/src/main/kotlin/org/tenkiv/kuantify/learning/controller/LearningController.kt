@@ -140,7 +140,7 @@ class LearningController<T> internal constructor(
         }
     }
 
-    override fun setOutput(setting: T, panicOnFailure: Boolean): SettingResult.Success {
+    override fun setOutput(setting: T): SettingViability.Viable {
         launch(trainingManagementDispatcher) {
             // Wait until all inputs have a value. This is hacky and sucks but rl4j makes life difficult.
             targetInput.updatable.startSampling()
@@ -162,7 +162,7 @@ class LearningController<T> internal constructor(
             }
         }
 
-        return SettingResult.Success
+        return SettingViability.Viable
     }
 
     override fun stopTransceiving() {

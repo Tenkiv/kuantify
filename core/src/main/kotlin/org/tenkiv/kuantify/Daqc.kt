@@ -20,6 +20,7 @@ package org.tenkiv.kuantify
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.hardware.device.*
@@ -28,6 +29,8 @@ import org.tenkiv.kuantify.hardware.device.*
 typealias Measurement = ValueInstant<DaqcValue>
 typealias BinaryStateMeasurement = ValueInstant<BinaryState>
 typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
+
+private val logger = KotlinLogging.logger {}
 
 private val daqcDispatcherThread: CoroutineDispatcher = newSingleThreadContext("DaqcSingleThreadDispatcher")
 
@@ -48,14 +51,12 @@ val Dispatchers.Daqc: CoroutineDispatcher get() = daqcDispatcherThread
  * The [ConflatedBroadcastChannel] which sends [DaqcCriticalError] messages notifying of potentially critical issues.
  * This channel should be monitored closely.
  */
-val daqcCriticalErrorBroadcastChannel = ConflatedBroadcastChannel<DaqcCriticalError>()
-
-open class DaqcException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)
+val daqcCriticalErrorBroadcaster = ConflatedBroadcastChannel<DaqcCriticalError>()
 
 /**
  * Class handling a set of errors which are extremely serious and represent major issues to be handled.
  */
-sealed class DaqcCriticalError : DaqcException() {
+sealed class DaqcCriticalError {
 
     /**
      * The [Device] which has thrown the error.

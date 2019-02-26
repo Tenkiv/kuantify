@@ -39,9 +39,9 @@ sealed class FSRemoteOutput<T : DaqcValue>(coroutineContext: CoroutineContext, u
     override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = _updateBroadcaster
 
-    override fun setOutput(setting: T, panicOnFailure: Boolean): SettingResult.Success {
+    override fun setOutput(setting: T): SettingViability {
         _updateBroadcaster.offer(setting.now())
-        return SettingResult.Success
+        return SettingViability.Viable
     }
 
     internal val _isTransceiving = Updatable(false)

@@ -34,7 +34,7 @@ interface DigitalOutput : DigitalChannel<DigitalDaqDevice> {
     fun setOutputState(
         state: BinaryState,
         panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult
+    ): SettingViability
 
     /**
      * Activates this [DigitalOutput] for pulse width modulation.
@@ -44,7 +44,7 @@ interface DigitalOutput : DigitalChannel<DigitalDaqDevice> {
     fun pulseWidthModulate(
         percent: ComparableQuantity<Dimensionless>,
         panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult
+    ): SettingViability
 
     /**
      * Activates this [DigitalInput] for transitioning states at [freq]
@@ -54,7 +54,7 @@ interface DigitalOutput : DigitalChannel<DigitalDaqDevice> {
     fun sustainTransitionFrequency(
         freq: ComparableQuantity<Frequency>,
         panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
-    ): SettingResult
+    ): SettingViability
 
     override fun stopTransceiving() {
         setOutputState(BinaryState.Low)
