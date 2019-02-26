@@ -135,29 +135,31 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
     override val isConnected: Boolean
         get() = webSocketSession != null
 
-    private suspend fun runWebsocket() {
-        httpClient.ws(
-            method = HttpMethod.Get,
-            host = hostIp,
-            port = RC.DEFAULT_PORT,
-            path = RC.WEBSOCKET
-        ) {
-            webSocketSession = this
-            logger.debug { "Websocket connection opened for device: ${this@FSRemoteDevice.uid}" }
+    private fun runWebsocket() =
+        launch {
+            httpClient.ws(
+                method = HttpMethod.Get,
+                host = hostIp,
+                port = RC.DEFAULT_PORT,
+                path = RC.WEBSOCKET
+            ) {
+                webSocketSession = this
+                logger.debug { "Websocket connection opened for device: ${this@FSRemoteDevice.uid}" }
 
-            try {
-                incoming.consumeEach { frame ->
-                    if (frame is Frame.Text) {
-                        receiveMessage(frame.readText())
-                        logger.trace { "Received message - ${frame.readText()} - from remote device: $uid" }
+                try {
+                    incoming.consumeEach { frame ->
+                        if (frame is Frame.Text) {
+                            receiveMessage(frame.readText())
+                            logger.trace { "Received message - ${frame.readText()} - from remote device: $uid" }
+                        }
                     }
+                } finally {
+                    // TODO: Connection closed.
+                    logger.debug { "Websocket connection closed for device: ${this@FSRemoteDevice.uid}" }
                 }
-            } finally {
-                // TODO: Connection closed.
-                logger.debug { "Websocket connection closed for device: ${this@FSRemoteDevice.uid}" }
             }
         }
-    }
+
 
     override suspend fun connect() {
         networkCommunicator.start()

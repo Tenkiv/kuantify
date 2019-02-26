@@ -22,6 +22,8 @@ import android.hardware.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.android.lib.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.physikal.core.*
 import javax.measure.quantity.*
 
@@ -32,18 +34,28 @@ import javax.measure.quantity.*
  * @param sensor The sensor to be integrated.
  */
 class LocalAndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
-    LocalAndroidSensor<DaqcQuantity<Temperature>>(device, sensor, uid) {
+    LocalAndroidSensor<DaqcQuantity<Temperature>>(device, sensor, uid), LocalQuantityInput<Temperature> {
 
     override val type: Int get() = Sensor.TYPE_AMBIENT_TEMPERATURE
 
     override fun convertData(data: FloatArray): DaqcQuantity<Temperature> = data[0].celsius.toDaqc()
+
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super<LocalQuantityInput>.sideRouting(routing)
+        super<LocalAndroidSensor>.sideRouting(routing)
+    }
 }
 
 class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
-    LocalAndroidSensor<DaqcQuantity<Frequency>>(device, sensor, uid) {
+    LocalAndroidSensor<DaqcQuantity<Frequency>>(device, sensor, uid), LocalQuantityInput<Frequency> {
     override val type: Int get() = Sensor.TYPE_HEART_RATE
 
     override fun convertData(data: FloatArray): DaqcQuantity<Frequency> = data[0].beatsPerMinute.toDaqc()
+
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super<LocalQuantityInput>.sideRouting(routing)
+        super<LocalAndroidSensor>.sideRouting(routing)
+    }
 }
 
 /**
@@ -53,11 +65,16 @@ class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, ui
  * @param sensor The sensor to be integrated.
  */
 class LocalAndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
-    LocalAndroidSensor<DaqcQuantity<Illuminance>>(device, sensor, uid) {
+    LocalAndroidSensor<DaqcQuantity<Illuminance>>(device, sensor, uid), LocalQuantityInput<Illuminance> {
 
     override val type: Int get() = Sensor.TYPE_LIGHT
 
     override fun convertData(data: FloatArray): DaqcQuantity<Illuminance> = data[0].lux.toDaqc()
+
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super<LocalQuantityInput>.sideRouting(routing)
+        super<LocalAndroidSensor>.sideRouting(routing)
+    }
 }
 
 /**
@@ -67,11 +84,16 @@ class LocalAndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor, uid: S
  * @param sensor The sensor to be integrated.
  */
 class LocalAndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
-    LocalAndroidSensor<DaqcQuantity<Length>>(device, sensor, uid) {
+    LocalAndroidSensor<DaqcQuantity<Length>>(device, sensor, uid), LocalQuantityInput<Length> {
 
     override val type: Int get() = Sensor.TYPE_PROXIMITY
 
     override fun convertData(data: FloatArray): DaqcQuantity<Length> = data[0].centi.metre.toDaqc()
+
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super<LocalQuantityInput>.sideRouting(routing)
+        super<LocalAndroidSensor>.sideRouting(routing)
+    }
 }
 
 /**
@@ -81,11 +103,16 @@ class LocalAndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor, ui
  * @param sensor The sensor to be integrated.
  */
 class LocalAndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
-    LocalAndroidSensor<DaqcQuantity<Pressure>>(device, sensor, uid) {
+    LocalAndroidSensor<DaqcQuantity<Pressure>>(device, sensor, uid), LocalQuantityInput<Pressure> {
 
     override val type: Int get() = Sensor.TYPE_PRESSURE
 
     override fun convertData(data: FloatArray): DaqcQuantity<Pressure> = data[0].hecto.pascal.toDaqc()
+
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super<LocalQuantityInput>.sideRouting(routing)
+        super<LocalAndroidSensor>.sideRouting(routing)
+    }
 }
 
 /**
@@ -95,9 +122,14 @@ class LocalAndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor, uid
  * @param sensor The sensor to be integrated.
  */
 class LocalAndroidRelativeHumiditySensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
-    LocalAndroidSensor<DaqcQuantity<Dimensionless>>(device, sensor, uid) {
+    LocalAndroidSensor<DaqcQuantity<Dimensionless>>(device, sensor, uid), LocalQuantityInput<Dimensionless> {
 
     override val type: Int get() = Sensor.TYPE_RELATIVE_HUMIDITY
 
     override fun convertData(data: FloatArray): DaqcQuantity<Dimensionless> = data[0].percent.toDaqc()
+
+    override fun sideRouting(routing: SideNetworkRouting) {
+        super<LocalQuantityInput>.sideRouting(routing)
+        super<LocalAndroidSensor>.sideRouting(routing)
+    }
 }
