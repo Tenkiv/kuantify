@@ -35,8 +35,6 @@ class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInpu
     override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
         get() = digitalInput.binaryStateBroadcaster
 
-    override val failureBroadcaster get() = digitalInput.failureBroadcaster
-
     override val isTransceiving get() = digitalInput.isTransceivingBinaryState
 
     override val updateRate get() = digitalInput.updateRate

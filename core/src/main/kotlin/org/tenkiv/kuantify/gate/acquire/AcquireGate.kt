@@ -18,18 +18,11 @@
 
 package org.tenkiv.kuantify.gate.acquire
 
-import kotlinx.coroutines.channels.*
-import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 
 interface AcquireGate<out T : DaqcData> : DaqcGate<T>, RatedTrackable<T> {
-
-    /**
-     * Exception is sent over this channel when something prevents the input from being received.
-     */
-    val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
 
     /**
      * Activates the input alerting it to begin collecting and sending data.

@@ -47,13 +47,13 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
     final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
-    private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    final override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = _failureBroadcastChannel
+    private val _updateErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
+    val updateErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        get() = _updateErrorBroadcaster
 
-    override val isTransceiving get() = analogInput.isTransceiving
+    final override val isTransceiving get() = analogInput.isTransceiving
 
-    override val updateRate get() = analogInput.updateRate
+    final override val updateRate get() = analogInput.updateRate
 
     init {
         analogInput.maxElectricPotential.set(maximumEp)
@@ -65,7 +65,7 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
 
                 when (convertedResult) {
                     is Success -> _broadcastChannel.send(convertedResult.value at measurement.instant)
-                    is Failure -> _failureBroadcastChannel.send(convertedResult.exception at measurement.instant)
+                    is Failure -> _updateErrorBroadcaster.send(convertedResult.exception at measurement.instant)
                 }
             }
         }
@@ -79,7 +79,7 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
      */
     protected abstract fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Q>>
 
-    override fun startSampling() = analogInput.startSampling()
+    final override fun startSampling() = analogInput.startSampling()
 
-    override fun stopTransceiving() = analogInput.stopTransceiving()
+    final override fun stopTransceiving() = analogInput.stopTransceiving()
 }

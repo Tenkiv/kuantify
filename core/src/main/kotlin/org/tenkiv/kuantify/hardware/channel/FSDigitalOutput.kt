@@ -28,8 +28,6 @@ import org.tenkiv.kuantify.hardware.outputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.kuantify.networking.configuration.NetworkBoundCombined
-import org.tenkiv.kuantify.networking.configuration.NetworkBoundSide
 import tec.units.indriya.*
 import javax.measure.quantity.*
 
@@ -134,10 +132,6 @@ abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkBoundSide,
     private val _transitionFrequencyBroadcaster = ConflatedBroadcastChannel<QuantityMeasurement<Frequency>>()
     override val transitionFrequencyBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Frequency>>
         get() = _transitionFrequencyBroadcaster
-
-    private val _failureBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = _failureBroadcaster
 
     private val _isTransceiving = Updatable(false)
     override val isTransceiving: InitializedTrackable<Boolean>

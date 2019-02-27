@@ -52,10 +52,6 @@ class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
     override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
-    private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = _failureBroadcastChannel
-
     override val updateRate by runningAverage()
 
     init {
@@ -90,12 +86,6 @@ class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
                         } else if (!_isTransceiving.value && transceivingStatuses.values.contains(true)) {
                             _isTransceiving.value = true
                         }
-                    }
-                }
-
-                launch(Dispatchers.Default) {
-                    failureBroadcaster.consumeEach {
-                        _failureBroadcastChannel.send(it)
                     }
                 }
             }
@@ -143,10 +133,6 @@ class BinaryThresholdSensor internal constructor(
     override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
         get() = _broadcastChannel
 
-    private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = _failureBroadcastChannel
-
     override val updateRate by runningAverage()
 
     init {
@@ -185,12 +171,6 @@ class BinaryThresholdSensor internal constructor(
                         } else if (!_isTransceiving.value && transceivingStatuses.values.contains(true)) {
                             _isTransceiving.value = true
                         }
-                    }
-                }
-
-                launch(Dispatchers.Default) {
-                    failureBroadcaster.consumeEach {
-                        _failureBroadcastChannel.send(it)
                     }
                 }
             }

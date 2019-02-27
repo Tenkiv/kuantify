@@ -33,8 +33,6 @@ class SimpleDigitalFrequencySensor internal constructor(val digitalInput: Digita
 
     override val updateBroadcaster get() = digitalInput.transitionFrequencyBroadcaster
 
-    override val failureBroadcaster get() = digitalInput.failureBroadcaster
-
     override val isTransceiving get() = digitalInput.isTransceivingFrequency
 
     override val updateRate get() = digitalInput.updateRate

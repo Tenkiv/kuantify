@@ -33,7 +33,7 @@ abstract class FSRemoteControlGate<T : DaqcData>(
     final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
     internal val stopTransceivingChannel = Channel<Unit>(Channel.CONFLATED)
-    override fun stopTransceiving() {
+    final override fun stopTransceiving() {
         stopTransceivingChannel.offer(Unit)
     }
 

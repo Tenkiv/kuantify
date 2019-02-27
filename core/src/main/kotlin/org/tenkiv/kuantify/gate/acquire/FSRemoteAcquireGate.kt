@@ -19,7 +19,6 @@
 package org.tenkiv.kuantify.gate.acquire
 
 import kotlinx.coroutines.channels.*
-import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
@@ -33,18 +32,13 @@ abstract class FSRemoteAcquireGate<T : DaqcData>(
 
     final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
-    //TODO
-    internal val _failureBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = _failureBroadcaster
-
     internal val startSamplingChannel = Channel<Ping>(Channel.CONFLATED)
-    override fun startSampling() {
+    final override fun startSampling() {
         startSamplingChannel.offer(null)
     }
 
     internal val stopTransceivingChannel = Channel<Ping>(Channel.CONFLATED)
-    override fun stopTransceiving() {
+    final override fun stopTransceiving() {
         stopTransceivingChannel.offer(null)
     }
 

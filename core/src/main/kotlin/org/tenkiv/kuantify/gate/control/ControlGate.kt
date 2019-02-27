@@ -23,10 +23,7 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.control.output.*
 
 interface ControlGate<T : DaqcData> : DaqcGate<T> {
-    /**
-     * @param panicOnFailure If true invoking setOutput will throw an exception instead of returning a
-     * [SettingViability].
-     */
+
     fun setOutput(setting: T): SettingViability
 
 }

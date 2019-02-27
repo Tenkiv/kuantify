@@ -19,7 +19,6 @@
 package org.tenkiv.kuantify.hardware.channel
 
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.hardware.outputs.*
@@ -32,8 +31,7 @@ import javax.measure.quantity.*
 interface DigitalOutput : DigitalChannel<DigitalDaqDevice> {
 
     fun setOutputState(
-        state: BinaryState,
-        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
+        state: BinaryState
     ): SettingViability
 
     /**
@@ -42,8 +40,7 @@ interface DigitalOutput : DigitalChannel<DigitalDaqDevice> {
      * @param percent The percentage of the time the output is supposed to be active.
      */
     fun pulseWidthModulate(
-        percent: ComparableQuantity<Dimensionless>,
-        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
+        percent: ComparableQuantity<Dimensionless>
     ): SettingViability
 
     /**
@@ -52,8 +49,7 @@ interface DigitalOutput : DigitalChannel<DigitalDaqDevice> {
      * @param freq The frequency of state change.
      */
     fun sustainTransitionFrequency(
-        freq: ComparableQuantity<Frequency>,
-        panicOnFailure: Boolean = ControlGate.DEFAULT_PANIC_ON_FAILURE
+        freq: ComparableQuantity<Frequency>
     ): SettingViability
 
     override fun stopTransceiving() {

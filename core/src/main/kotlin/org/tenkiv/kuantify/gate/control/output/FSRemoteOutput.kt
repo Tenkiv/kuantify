@@ -36,17 +36,17 @@ sealed class FSRemoteOutput<T : DaqcValue>(coroutineContext: CoroutineContext, u
     FSRemoteControlGate<T>(coroutineContext, uid), Output<T> {
 
     internal val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
+    final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = _updateBroadcaster
+
+    internal val _isTransceiving = Updatable(false)
+    final override val isTransceiving: InitializedTrackable<Boolean>
+        get() = _isTransceiving
 
     override fun setOutput(setting: T): SettingViability {
         _updateBroadcaster.offer(setting.now())
         return SettingViability.Viable
     }
-
-    internal val _isTransceiving = Updatable(false)
-    override val isTransceiving: InitializedTrackable<Boolean>
-        get() = _isTransceiving
 
     override fun sideRouting(routing: SideNetworkRouting) {
         super.sideRouting(routing)

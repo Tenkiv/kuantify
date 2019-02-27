@@ -59,10 +59,6 @@ abstract class LocalAndroidSensor<T : DaqcValue>(
 
     override val updateRate: UpdateRate by runningAverage()
 
-    private val _failureBroadcastChannel = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    override val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = _failureBroadcastChannel
-
     private val _accuracyBroadcastChannel = ConflatedBroadcastChannel<AndroidSensorAccuracy>()
 
     /**

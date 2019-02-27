@@ -43,8 +43,8 @@ abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput
 
     val avgFrequency: UpdatableQuantity<Frequency> get() = digitalOutput.avgFrequency
 
-    override fun setOutput(setting: DaqcQuantity<Q>, panicOnFailure: Boolean): SettingViability {
-        val result = digitalOutput.pulseWidthModulate(convertOutput(setting), panicOnFailure)
+    override fun setOutput(setting: DaqcQuantity<Q>): SettingViability {
+        val result = digitalOutput.pulseWidthModulate(convertOutput(setting))
 
         if (result is SettingViability.Viable) _broadcastChannel.offer(setting.now())
 

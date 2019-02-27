@@ -18,8 +18,6 @@
 
 package org.tenkiv.kuantify.hardware.channel
 
-import kotlinx.coroutines.channels.*
-import org.tenkiv.coral.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.hardware.device.*
 
@@ -37,7 +35,5 @@ interface DigitalChannel<D : DigitalDaqDevice> : DigitalGate, DaqcChannel<D> {
      * Gets if the transition frequency state for this channel is simulated using software.
      */
     val transitionFrequencyIsSimulated: Boolean
-
-    val failureBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
 }
 
