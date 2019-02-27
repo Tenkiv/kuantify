@@ -87,7 +87,7 @@ object RouteConfigBuilderFeature : Spek({
                 }
             }
 
-            val networkBindingPath = listOf("a", "b", "c", "d")
+            val networkBindingPath = "a/b/c/d"
 
             Then("network config should contain binding for route") {
                 assert(configWithLocalDevice.networkRouteBindingMap.contains(networkBindingPath))
@@ -108,7 +108,7 @@ object RouteConfigBuilderFeature : Spek({
                 }
             }
 
-            val networkBindingPath = listOf("a", "b", "c", "d")
+            val networkBindingPath = "a/b/c/d"
 
             Then("network config should contain binding for route") {
                 assert(configWithRemoteDevice.networkRouteBindingMap.contains(networkBindingPath))
@@ -170,7 +170,7 @@ object RouteConfigBuilderFeature : Spek({
                 }
             }
 
-            val networkBindingPath = listOf("a", "b", "c", "d")
+            val networkBindingPath = "a/b/c/d"
 
             Then("network config should contain binding for route") {
                 assert(configWithLocalDevice.networkRouteBindingMap.contains(networkBindingPath))
@@ -191,7 +191,7 @@ object RouteConfigBuilderFeature : Spek({
                 }
             }
 
-            val networkBindingPath = listOf("a", "b", "c", "d")
+            val networkBindingPath = "a/b/c/d"
 
             Then("network config should contain binding for route") {
                 assert(configWithRemoteDevice.networkRouteBindingMap.contains(networkBindingPath))

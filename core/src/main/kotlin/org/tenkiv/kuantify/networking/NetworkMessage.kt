@@ -19,6 +19,11 @@
 package org.tenkiv.kuantify.networking
 
 import kotlinx.serialization.*
+import kotlinx.serialization.json.*
 
 @Serializable
-internal data class NetworkMessage(val route: List<String>, @Optional val message: String? = null)
+internal data class NetworkMessage(val route: String, @Optional val message: String? = null) {
+
+    fun serialize() = Json.stringify(NetworkMessage.serializer(), this)
+
+}

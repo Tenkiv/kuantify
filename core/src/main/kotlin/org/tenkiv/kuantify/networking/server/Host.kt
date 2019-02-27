@@ -118,17 +118,11 @@ internal object KuantifyHost {
     @Suppress("NAME_SHADOWING")
     private suspend fun receiveMessage(clientId: String, message: String) {
         val (route, message) = Json.parse(NetworkMessage.serializer(), message)
-        when (route.first()) {
-            RC.MESSAGE_ERROR -> clientReportedError()
-            else -> hostedDevice?.receiveNetworkMessage(route, message) ?: deviceNotHosted()
-        }
+
+        hostedDevice?.receiveNetworkMessage(route, message) ?: deviceNotHosted()
     }
 
     private fun deviceNotHosted() {
-
-    }
-
-    private fun clientReportedError() {
 
     }
 

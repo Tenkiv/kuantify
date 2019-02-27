@@ -75,15 +75,16 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide {
         }
     }
 
-    internal suspend fun receiveNetworkMessage(route: Path, message: String?) {
+    internal suspend fun receiveNetworkMessage(route: String, message: String?) {
         networkCommunicator.receiveNetworkMessage(route, message)
     }
 
-    internal abstract suspend fun sendMessage(route: Path, payload: String?)
+    internal abstract suspend fun sendMessage(route: String, message: String?)
 
-    internal fun serializeMessage(route: Path, message: String?): String {
-        return Json.stringify(NetworkMessage.serializer(), NetworkMessage(route, message))
+    internal fun serializeMessage(route: String, message: String?): String {
+        return NetworkMessage(route, message).serialize()
     }
+
 }
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
@@ -108,8 +109,8 @@ abstract class LocalDevice : FSBaseDevice() {
         networkCommunicator.stop()
     }
 
-    final override suspend fun sendMessage(route: Path, payload: String?) {
-        ClientHandler.sendToAll(serializeMessage(route, payload))
+    final override suspend fun sendMessage(route: String, message: String?) {
+        ClientHandler.sendToAll(serializeMessage(route, message))
     }
 
     override fun sideRouting(routing: SideNetworkRouting) {
@@ -183,18 +184,15 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
     private suspend fun receiveMessage(message: String) {
         val (route, message) = Json.parse(NetworkMessage.serializer(), message)
 
-        when (route.first()) {
-            RC.DAQC_GATE -> networkCommunicator.receiveNetworkMessage(route, message)
-            RC.MESSAGE_ERROR -> hostReportedError()
-        }
+        networkCommunicator.receiveNetworkMessage(route, message)
     }
 
     private fun hostReportedError() {
 
     }
 
-    final override suspend fun sendMessage(route: Path, payload: String?) {
-        webSocketSession?.send(Frame.Text(serializeMessage(route, payload))) ?: TODO("Throw specific exception")
+    final override suspend fun sendMessage(route: String, message: String?) {
+        webSocketSession?.send(Frame.Text(serializeMessage(route, message))) ?: TODO("Throw specific exception")
     }
 
     override fun sideRouting(routing: SideNetworkRouting) {

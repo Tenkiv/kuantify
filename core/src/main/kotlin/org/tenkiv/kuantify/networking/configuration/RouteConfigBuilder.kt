@@ -29,6 +29,15 @@ typealias MessageReceiver = suspend (update: String) -> Unit
 
 private val logger = KotlinLogging.logger {}
 
+private fun Path.toPathString(): String {
+    var result = ""
+    forEachIndexed { index, value ->
+        val append = if (index != lastIndex) "/" else ""
+        result += "$value$append"
+    }
+    return result
+}
+
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Combined ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
@@ -38,20 +47,22 @@ annotation class CombinedRouteMarker
 
 internal class CombinedRouteConfig(private val device: FSDevice) {
 
-    val networkRouteBindingMap = HashMap<Path, NetworkRouteBinding<*>>()
+    val networkRouteBindingMap = HashMap<String, NetworkRouteBinding<*>>()
 
     val baseRoute: CombinedNetworkRouting get() = CombinedNetworkRouting(this, emptyList())
 
+    @Suppress("NAME_SHADOWING")
     fun <T> addRouteBinding(
         path: Path,
         isFullyBiDirectional: Boolean,
         build: CombinedRouteBindingBuilder<T>.() -> Unit
     ) {
-        val routeHandlerBuilder = CombinedRouteBindingBuilder<T>()
-        routeHandlerBuilder.build()
+        val path = path.toPathString()
+        val routeBindingBuilder = CombinedRouteBindingBuilder<T>()
+        routeBindingBuilder.build()
 
-        val networkUpdateChannel = if ((device is LocalDevice && routeHandlerBuilder.receiveFromNetworkOnHost) ||
-            (device is FSRemoteDevice && routeHandlerBuilder.receiveFromNetworkOnRemote)
+        val networkUpdateChannel = if ((device is LocalDevice && routeBindingBuilder.receiveFromNetworkOnHost) ||
+            (device is FSRemoteDevice && routeBindingBuilder.receiveFromNetworkOnRemote)
         ) {
             //TODO: Might be able to change this to just be a function.
             Channel<String?>(10_000)
@@ -59,12 +70,12 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
             null
         }
 
-        val receiveUpdatesOnHost: UpdateReceiver? = buildHostUpdateReceiver(routeHandlerBuilder)
+        val receiveUpdatesOnHost: UpdateReceiver? = buildHostUpdateReceiver(routeBindingBuilder)
 
-        val receiveUpdatesOnRemote: UpdateReceiver? = buildRemoteUpdateReceiver(routeHandlerBuilder)
+        val receiveUpdatesOnRemote: UpdateReceiver? = buildRemoteUpdateReceiver(routeBindingBuilder)
 
-        val currentHandler = networkRouteBindingMap[path]
-        if (currentHandler != null) {
+        val currentBinding = networkRouteBindingMap[path]
+        if (currentBinding != null) {
             logger.warn { "Overriding combined route binding for route $path." }
         }
 
@@ -72,19 +83,19 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
             is LocalDevice -> NetworkRouteBinding.Host(
                 device,
                 path,
-                routeHandlerBuilder.localUpdateChannel,
+                routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
-                routeHandlerBuilder.serializeMessage,
-                routeHandlerBuilder.sendFromHost,
+                routeBindingBuilder.serializeMessage,
+                routeBindingBuilder.sendFromHost,
                 receiveUpdatesOnHost
             )
             is FSRemoteDevice -> NetworkRouteBinding.Remote(
                 device,
                 path,
-                routeHandlerBuilder.localUpdateChannel,
+                routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
-                routeHandlerBuilder.serializeMessage,
-                routeHandlerBuilder.sendFromRemote,
+                routeBindingBuilder.serializeMessage,
+                routeBindingBuilder.sendFromRemote,
                 receiveUpdatesOnRemote,
                 isFullyBiDirectional
             )
@@ -370,26 +381,29 @@ annotation class SideRouteMarker
 
 internal class SideRouteConfig(private val device: FSBaseDevice) {
 
-    val networkRouteBindingMap = HashMap<Path, NetworkRouteBinding<*>>()
+    val networkRouteBindingMap = HashMap<String, NetworkRouteBinding<*>>()
 
     val baseRoute: SideNetworkRouting get() = SideNetworkRouting(this, emptyList())
 
+    @Suppress("NAME_SHADOWING")
     fun <T> addRouteBinding(
         path: Path,
         isFullyBiDirectional: Boolean,
         build: SideRouteBindingBuilder<T>.() -> Unit
     ) {
-        val routeHandlerBuilder = SideRouteBindingBuilder<T>()
-        routeHandlerBuilder.build()
+        val path = path.toPathString()
 
-        val networkUpdateChannel = if (routeHandlerBuilder.receive != null) {
+        val routeBindingBuilder = SideRouteBindingBuilder<T>()
+        routeBindingBuilder.build()
+
+        val networkUpdateChannel = if (routeBindingBuilder.receive != null) {
             Channel<String?>(10_000)
         } else {
             null
         }
 
-        val currentHandler = networkRouteBindingMap[path]
-        if (currentHandler != null) {
+        val currentBinding = networkRouteBindingMap[path]
+        if (currentBinding != null) {
             logger.warn { "Overriding side route binding for route $path." }
         }
 
@@ -397,20 +411,20 @@ internal class SideRouteConfig(private val device: FSBaseDevice) {
             is LocalDevice -> NetworkRouteBinding.Host(
                 device,
                 path,
-                routeHandlerBuilder.localUpdateChannel,
+                routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
-                routeHandlerBuilder.serializeMessage,
-                routeHandlerBuilder.send,
-                routeHandlerBuilder.receive
+                routeBindingBuilder.serializeMessage,
+                routeBindingBuilder.send,
+                routeBindingBuilder.receive
             )
             is FSRemoteDevice -> NetworkRouteBinding.Remote(
                 device,
                 path,
-                routeHandlerBuilder.localUpdateChannel,
+                routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
-                routeHandlerBuilder.serializeMessage,
-                routeHandlerBuilder.send,
-                routeHandlerBuilder.receive,
+                routeBindingBuilder.serializeMessage,
+                routeBindingBuilder.send,
+                routeBindingBuilder.receive,
                 isFullyBiDirectional
             )
         }

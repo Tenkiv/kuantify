@@ -25,7 +25,7 @@ typealias Path = List<String>
 
 internal class NetworkCommunicator(
     val device: FSBaseDevice,
-    private val networkRouteBindingMap: Map<Path, NetworkRouteBinding<*>>
+    private val networkRouteBindingMap: Map<String, NetworkRouteBinding<*>>
 ) {
 
     private val parentJob: Job? = device.coroutineContext[Job]
@@ -42,7 +42,7 @@ internal class NetworkCommunicator(
         job = Job(parentJob)
     }
 
-    suspend fun receiveNetworkMessage(route: Path, message: String?) {
+    suspend fun receiveNetworkMessage(route: String, message: String?) {
         networkRouteBindingMap[route]?.networkUpdateChannel?.send(message) ?: TODO("handle invalid route")
     }
 
