@@ -42,7 +42,7 @@ internal sealed class NetworkRouteBinding<T>(
         this.job = job
     }
 
-    internal class Host<T> internal constructor(
+    internal class Host<T>(
         device: FSBaseDevice,
         private val route: String,
         private val localUpdateChannel: ReceiveChannel<T>?,
@@ -75,7 +75,7 @@ internal sealed class NetworkRouteBinding<T>(
         }
     }
 
-    internal class Remote<T> internal constructor(
+    internal class Remote<T>(
         device: FSBaseDevice,
         private val route: String,
         private val localUpdateChannel: ReceiveChannel<T>?,
