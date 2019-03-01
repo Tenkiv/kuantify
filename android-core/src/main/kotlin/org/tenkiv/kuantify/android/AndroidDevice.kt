@@ -22,7 +22,7 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.fs.hardware.device.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.quantity.*
 
 interface AndroidDevice : FSDevice {
@@ -63,7 +63,7 @@ class RemoteAndroidDevice internal constructor(
     override val relativeHumiditySensors: List<RemoteQuantityAndroidSensor<Dimensionless>>
 ) : FSRemoteDevice(scope), AndroidDevice {
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
         ambientTemperatureSensors.addSideRoutingTo(routing)
         heartRateSensors.addSideRoutingTo(routing)

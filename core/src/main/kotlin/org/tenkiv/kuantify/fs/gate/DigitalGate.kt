@@ -26,6 +26,7 @@ import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
@@ -61,12 +62,12 @@ internal fun CombinedNetworkRouting.digitalGateRouting(digitalChannel: DigitalGa
     }
 }
 
-internal fun SideNetworkRouting.digitalGateIsTransceivingRemote(
+internal fun SideNetworkRouting<String>.digitalGateIsTransceivingRemote(
     updatable: Updatable<Boolean>,
     transceivingRC: String
 ) {
     bind<Boolean>(transceivingRC, isFullyBiDirectional = false) {
-        receiveMessage(NullResolutionStrategy.PANIC) {
+        receive {
             val value =
                 Json.parse(BooleanSerializer, it)
             updatable.set(value)
@@ -74,7 +75,7 @@ internal fun SideNetworkRouting.digitalGateIsTransceivingRemote(
     }
 }
 
-internal fun SideNetworkRouting.digitalGateIsTransceivingLocal(
+internal fun SideNetworkRouting<String>.digitalGateIsTransceivingLocal(
     trackable: Trackable<Boolean>,
     transceivingRC: String
 ) {

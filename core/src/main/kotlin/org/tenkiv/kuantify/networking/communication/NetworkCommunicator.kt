@@ -16,36 +16,39 @@
  *
  */
 
-package org.tenkiv.kuantify.fs.networking.device
+package org.tenkiv.kuantify.networking.communication
 
 import kotlinx.coroutines.*
-import org.tenkiv.kuantify.fs.hardware.device.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
+import org.tenkiv.kuantify.hardware.device.*
 
-typealias Path = List<String>
-
-internal class NetworkCommunicator(
-    val device: FSBaseDevice,
-    private val networkRouteBindingMap: Map<String, NetworkRouteBinding<*>>
+abstract class NetworkCommunicator<ST>(
+    device: NetworkableDevice<ST>,
+    protected val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, ST>>
 ) {
 
     private val parentJob: Job? = device.coroutineContext[Job]
 
+    protected abstract val device: NetworkableDevice<ST>
+
     @Volatile
     private var job: Job = Job(parentJob)
 
-    fun start() {
+    protected open fun startImpl() {
         networkRouteBindingMap.values.forEach { it.start(job) }
     }
 
-    fun stop() {
+    protected open fun stopImpl() {
         job.cancel()
         job = Job(parentJob)
     }
 
-    suspend fun receiveNetworkMessage(route: String, message: String?) {
+    internal suspend fun receiveMessage(route: String, message: ST) {
         networkRouteBindingMap[route]?.networkUpdateChannel?.send(message) ?: TODO("handle invalid route")
     }
+
+    protected abstract suspend fun sendMessage(route: String, message: ST)
+
+    internal suspend fun _sendMessage(route: String, message: ST) = sendMessage(route, message)
 
     override fun toString(): String =
         "NetworkCommunicator for device: ${device.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"

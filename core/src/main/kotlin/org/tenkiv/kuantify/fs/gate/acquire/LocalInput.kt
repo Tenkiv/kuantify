@@ -23,14 +23,14 @@ import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.*
 
 interface LocalInput<T : DaqcValue> : LocalAcquireGate<T>, Input<T> {
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
@@ -50,7 +50,7 @@ interface LocalInput<T : DaqcValue> : LocalAcquireGate<T>, Input<T> {
 interface LocalQuantityInput<Q : Quantity<Q>> : LocalInput<DaqcQuantity<Q>>,
     QuantityInput<Q> {
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
@@ -70,7 +70,7 @@ interface LocalQuantityInput<Q : Quantity<Q>> : LocalInput<DaqcQuantity<Q>>,
 interface LocalBinaryStateInput : LocalInput<BinaryState>,
     BinaryStateInput {
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {

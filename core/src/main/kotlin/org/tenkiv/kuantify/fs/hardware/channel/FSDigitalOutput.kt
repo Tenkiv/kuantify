@@ -30,12 +30,12 @@ import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.outputs.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.networking.configuration.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
 
 @Suppress("LeakingThis")
-abstract class LocalDigitalOutput : DigitalOutput, NetworkBoundSide,
-    NetworkBoundCombined {
+abstract class LocalDigitalOutput : DigitalOutput, NetworkBoundSide<String>, NetworkBoundCombined {
 
     abstract val uid: String
 
@@ -77,7 +77,7 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkBoundSide,
         }
     }
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         routing.addToThisPath {
             digitalGateIsTransceivingLocal(isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingLocal(isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
@@ -88,7 +88,7 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkBoundSide,
                     Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
                 }
 
-                receiveMessage(NullResolutionStrategy.PANIC) {
+                receive {
                     val setting = Json.parse(ValueInstantSerializer(DigitalValue.serializer()), it)
                     val (value, _) = setting
                     when (value) {
@@ -108,8 +108,7 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkBoundSide,
 }
 
 @Suppress("LeakingThis")
-abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkBoundSide,
-    NetworkBoundCombined {
+abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkBoundSide<String>, NetworkBoundCombined {
 
     abstract val uid: String
 
@@ -176,7 +175,7 @@ abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkBoundSide,
         }
     }
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         routing.addToThisPath {
             digitalGateIsTransceivingRemote(_isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingRemote(_isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
@@ -187,7 +186,7 @@ abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkBoundSide,
                     Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
                 }
 
-                receiveMessage(NullResolutionStrategy.PANIC) {
+                receive {
                     val setting = Json.parse(ValueInstantSerializer(DigitalValue.serializer()), it)
                     val (value, instant) = setting
                     when (value) {

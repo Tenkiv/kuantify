@@ -22,14 +22,14 @@ import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
-import org.tenkiv.kuantify.fs.networking.device.*
 import org.tenkiv.kuantify.gate.acquire.*
+import org.tenkiv.kuantify.networking.configuration.*
 import kotlin.coroutines.*
 
 abstract class FSRemoteAcquireGate<T : DaqcData>(
     final override val coroutineContext: CoroutineContext,
     val uid: String
-) : AcquireGate<T>, NetworkBoundSide {
+) : AcquireGate<T>, NetworkBoundSide<String> {
 
     final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
@@ -43,7 +43,7 @@ abstract class FSRemoteAcquireGate<T : DaqcData>(
         stopTransceivingChannel.offer(null)
     }
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         routing.addToThisPath {
 
             bind<Ping>(RC.START_SAMPLING, isFullyBiDirectional = false) {

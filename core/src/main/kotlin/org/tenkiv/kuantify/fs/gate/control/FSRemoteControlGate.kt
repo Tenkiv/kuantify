@@ -22,14 +22,14 @@ import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
-import org.tenkiv.kuantify.fs.networking.device.*
 import org.tenkiv.kuantify.gate.control.*
+import org.tenkiv.kuantify.networking.configuration.*
 import kotlin.coroutines.*
 
 abstract class FSRemoteControlGate<T : DaqcData>(
     final override val coroutineContext: CoroutineContext,
     val uid: String
-) : ControlGate<T>, NetworkBoundSide {
+) : ControlGate<T>, NetworkBoundSide<String> {
 
     final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
@@ -38,7 +38,7 @@ abstract class FSRemoteControlGate<T : DaqcData>(
         stopTransceivingChannel.offer(Unit)
     }
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
 
         routing.addToThisPath {
 

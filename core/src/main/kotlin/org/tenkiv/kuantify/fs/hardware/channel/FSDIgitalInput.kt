@@ -30,10 +30,11 @@ import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.networking.configuration.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
 
-private inline fun SideNetworkRouting.startSamplingLocal(rc: String, crossinline start: () -> Unit) {
+private inline fun SideNetworkRouting<String>.startSamplingLocal(rc: String, crossinline start: () -> Unit) {
     bind<Ping>(rc, isFullyBiDirectional = false) {
         receive {
             start()
@@ -41,7 +42,7 @@ private inline fun SideNetworkRouting.startSamplingLocal(rc: String, crossinline
     }
 }
 
-private fun SideNetworkRouting.startSamplingRemote(rc: String, channel: ReceiveChannel<Ping>) {
+private fun SideNetworkRouting<String>.startSamplingRemote(rc: String, channel: ReceiveChannel<Ping>) {
     bind<Ping>(rc, isFullyBiDirectional = false) {
         setLocalUpdateChannel(channel) withUpdateChannel {
             send()
@@ -50,8 +51,7 @@ private fun SideNetworkRouting.startSamplingRemote(rc: String, channel: ReceiveC
 }
 
 @Suppress("LeakingThis")
-abstract class LocalDigitalInput : DigitalInput, NetworkBoundSide,
-    NetworkBoundCombined {
+abstract class LocalDigitalInput : DigitalInput, NetworkBoundSide<String>, NetworkBoundCombined {
 
     abstract val uid: String
 
@@ -90,7 +90,7 @@ abstract class LocalDigitalInput : DigitalInput, NetworkBoundSide,
         }
     }
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         routing.addToThisPath {
             digitalGateIsTransceivingLocal(isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingLocal(isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
@@ -114,8 +114,7 @@ abstract class LocalDigitalInput : DigitalInput, NetworkBoundSide,
 }
 
 @Suppress("LeakingThis")
-abstract class FSRemoteDigitalInput : DigitalInput, NetworkBoundSide,
-    NetworkBoundCombined {
+abstract class FSRemoteDigitalInput : DigitalInput, NetworkBoundSide<String>, NetworkBoundCombined {
     abstract val uid: String
 
     private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalValue>>()
@@ -203,7 +202,7 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkBoundSide,
         }
     }
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         routing.addToThisPath {
             digitalGateIsTransceivingRemote(_isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingRemote(_isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
@@ -214,7 +213,7 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkBoundSide,
             startSamplingRemote(RC.START_SAMPLING_BINARY_STATE, startSamplingBinaryStateChannel)
 
             bind<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = false) {
-                receiveMessage(NullResolutionStrategy.PANIC) {
+                receive {
                     val measurement = Json.parse(ValueInstantSerializer(DigitalValue.serializer()), it)
                     val (value, instant) = measurement
                     when (value) {

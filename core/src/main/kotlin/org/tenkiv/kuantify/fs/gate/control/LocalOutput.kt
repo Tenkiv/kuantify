@@ -23,15 +23,15 @@ import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.*
 import kotlin.reflect.*
 
 interface LocalOutput<T : DaqcValue> : LocalControlGate<T>, Output<T> {
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
@@ -54,7 +54,7 @@ interface LocalQuantityOutput<Q : Quantity<Q>> : LocalOutput<DaqcQuantity<Q>>,
 
     val quantityType: KClass<Q>
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
@@ -67,7 +67,7 @@ interface LocalQuantityOutput<Q : Quantity<Q>> : LocalOutput<DaqcQuantity<Q>>,
                     send()
                 }
 
-                receiveMessage(NullResolutionStrategy.PANIC) {
+                receive {
                     val value = Json.parse(ValueInstantSerializer(ComparableQuantitySerializer), it).value
                     val setting = value.asType<Q>(quantityType.java).toDaqc()
 
@@ -78,10 +78,9 @@ interface LocalQuantityOutput<Q : Quantity<Q>> : LocalOutput<DaqcQuantity<Q>>,
     }
 }
 
-interface LocalBinaryStateOutput : LocalOutput<BinaryState>,
-    BinaryStateOutput {
+interface LocalBinaryStateOutput : LocalOutput<BinaryState>, BinaryStateOutput {
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
@@ -94,7 +93,7 @@ interface LocalBinaryStateOutput : LocalOutput<BinaryState>,
                     send()
                 }
 
-                receiveMessage(NullResolutionStrategy.PANIC) {
+                receive {
                     val setting = Json.parse(ValueInstantSerializer(BinaryState.serializer()), it).value
 
                     setOutput(setting)

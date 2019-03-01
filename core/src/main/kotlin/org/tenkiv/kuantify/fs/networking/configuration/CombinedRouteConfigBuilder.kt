@@ -21,19 +21,32 @@ package org.tenkiv.kuantify.fs.networking.configuration
 import kotlinx.coroutines.channels.*
 import mu.*
 import org.tenkiv.kuantify.fs.hardware.device.*
-import org.tenkiv.kuantify.fs.networking.device.*
+import org.tenkiv.kuantify.networking.communication.*
+import org.tenkiv.kuantify.networking.configuration.*
 
 typealias Ping = Unit?
 typealias PingReceiver = suspend () -> Unit
 
+private typealias FSMessageReceiver = UpdateReceiver<String>
+private typealias FSMessageSerializer<MT> = MessageSerializer<MT, String>
+
 private val logger = KotlinLogging.logger {}
+
+internal fun Path.toPathString(): String {
+    var result = ""
+    forEachIndexed { index, value ->
+        val append = if (index != lastIndex) "/" else ""
+        result += "$value$append"
+    }
+    return result
+}
 
 @DslMarker
 annotation class CombinedRouteMarker
 
 internal class CombinedRouteConfig(private val device: FSDevice) {
 
-    val networkRouteBindingMap = HashMap<String, NetworkRouteBinding<*>>()
+    val networkRouteBindingMap = HashMap<String, NetworkRouteBinding<*, String>>()
 
     val baseRoute: CombinedNetworkRouting get() = CombinedNetworkRouting(this, emptyList())
 
@@ -51,14 +64,14 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
             (device is FSRemoteDevice && routeBindingBuilder.receiveFromNetworkOnRemote)
         ) {
             //TODO: Might be able to change this to just be a function.
-            Channel<String?>(10_000)
+            Channel<String>(10_000)
         } else {
             null
         }
 
-        val receiveUpdatesOnHost: UpdateReceiver? = buildHostUpdateReceiver(routeBindingBuilder)
+        val receiveUpdatesOnHost: FSMessageReceiver? = buildHostUpdateReceiver(routeBindingBuilder)
 
-        val receiveUpdatesOnRemote: UpdateReceiver? = buildRemoteUpdateReceiver(routeBindingBuilder)
+        val receiveUpdatesOnRemote: FSMessageReceiver? = buildRemoteUpdateReceiver(routeBindingBuilder)
 
         val currentBinding = networkRouteBindingMap[path]
         if (currentBinding != null) {
@@ -73,7 +86,8 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
                 networkUpdateChannel,
                 routeBindingBuilder.serializeMessage,
                 routeBindingBuilder.sendFromHost,
-                receiveUpdatesOnHost
+                receiveUpdatesOnHost,
+                FSDevice.SERIALIZED_PING
             )
             is FSRemoteDevice -> NetworkRouteBinding.Remote(
                 device,
@@ -83,7 +97,8 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
                 routeBindingBuilder.serializeMessage,
                 routeBindingBuilder.sendFromRemote,
                 receiveUpdatesOnRemote,
-                isFullyBiDirectional
+                isFullyBiDirectional,
+                FSDevice.SERIALIZED_PING
             )
             else -> throw IllegalStateException(
                 "Concrete FSDevice must extend either LocalDevice or FSRemoteDevice"
@@ -91,7 +106,7 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
         }
     }
 
-    private fun <T> buildHostUpdateReceiver(routeBindingBuilder: CombinedRouteBindingBuilder<T>): UpdateReceiver? {
+    private fun <T> buildHostUpdateReceiver(routeBindingBuilder: CombinedRouteBindingBuilder<T>): FSMessageReceiver? {
         if (routeBindingBuilder.receivePingOnEither == null &&
             routeBindingBuilder.receivePingOnHost == null &&
             routeBindingBuilder.withSerializer?.receiveMessageOnEither == null &&
@@ -101,7 +116,7 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
             return null
         } else {
             return { update ->
-                if (update != null) {
+                if (update != FSDevice.SERIALIZED_PING) {
                     routeBindingBuilder.withSerializer?.receiveMessageOnEither?.invoke(update)
                     routeBindingBuilder.withSerializer?.receiveMessageOnHost?.invoke(update)
                 } else {
@@ -113,7 +128,7 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
         }
     }
 
-    private fun <T> buildRemoteUpdateReceiver(routeBindingBuilder: CombinedRouteBindingBuilder<T>): UpdateReceiver? {
+    private fun <T> buildRemoteUpdateReceiver(routeBindingBuilder: CombinedRouteBindingBuilder<T>): FSMessageReceiver? {
         if (routeBindingBuilder.receivePingOnEither == null &&
             routeBindingBuilder.receivePingOnRemote == null &&
             routeBindingBuilder.withSerializer?.receiveMessageOnEither == null &&
@@ -122,7 +137,7 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
             return null
         } else {
             return { update ->
-                if (update != null) {
+                if (update != FSDevice.SERIALIZED_PING) {
                     routeBindingBuilder.withSerializer?.receiveMessageOnEither?.invoke(update)
                     routeBindingBuilder.withSerializer?.receiveMessageOnRemote?.invoke(update)
                 } else {
@@ -172,14 +187,14 @@ class CombinedNetworkRouting internal constructor(private val config: CombinedRo
 }
 
 @CombinedRouteMarker
-class CombinedRouteBindingBuilder<T> internal constructor() {
-    internal var serializeMessage: MessageSerializer<T>? = null
+class CombinedRouteBindingBuilder<MT> internal constructor() {
+    internal var serializeMessage: FSMessageSerializer<MT>? = null
 
     internal var withSerializer: WithSerializer? = null
 
-    internal var onRemote: OnSide<T>? = null
+    internal var onRemote: OnSide<MT>? = null
 
-    internal var onHost: OnSide<T>? = null
+    internal var onHost: OnSide<MT>? = null
 
     internal var sendFromRemote: Boolean = false
 
@@ -191,7 +206,7 @@ class CombinedRouteBindingBuilder<T> internal constructor() {
 
     internal var receivePingOnHost: PingReceiver? = null
 
-    internal var localUpdateChannel: ReceiveChannel<T>? = null
+    internal var localUpdateChannel: ReceiveChannel<MT>? = null
         set(value) {
             if (field != null) {
                 logger.warn { "localUpdateChannel for route binding was overriden" }
@@ -213,12 +228,12 @@ class CombinedRouteBindingBuilder<T> internal constructor() {
                 withSerializer?.receiveMessageOnEither != null ||
                 withSerializer?.receiveMessageOnRemote != null
 
-    fun serializeMessage(messageSerializer: MessageSerializer<T>): SetSerializer<T> {
+    fun serializeMessage(messageSerializer: FSMessageSerializer<MT>): SetSerializer<MT> {
         serializeMessage = messageSerializer
         return SetSerializer(messageSerializer)
     }
 
-    fun setLocalUpdateChannel(channel: ReceiveChannel<T>): SetUpdateChannel {
+    fun setLocalUpdateChannel(channel: ReceiveChannel<MT>): SetUpdateChannel {
         localUpdateChannel = channel
         return SetUpdateChannel()
     }
@@ -242,21 +257,21 @@ class CombinedRouteBindingBuilder<T> internal constructor() {
         receivePingOnHost = pingReceiver
     }
 
-    infix fun SetSerializer<T>.withSerializer(build: WithSerializer.() -> Unit) {
+    infix fun SetSerializer<MT>.withSerializer(build: WithSerializer.() -> Unit) {
         val ws = WithSerializer()
         ws.build()
         this@CombinedRouteBindingBuilder.withSerializer = ws
     }
 
-    fun onRemote(build: OnSide<T>.() -> Unit) {
-        val onSideBuilder = OnSide<T>()
+    fun onRemote(build: OnSide<MT>.() -> Unit) {
+        val onSideBuilder = OnSide<MT>()
         onSideBuilder.build()
         onRemote = onSideBuilder
         localUpdateChannel = onSideBuilder.localUpdateChannel
     }
 
-    fun onHost(build: OnSide<T>.() -> Unit) {
-        val onSideBuilder = OnSide<T>()
+    fun onHost(build: OnSide<MT>.() -> Unit) {
+        val onSideBuilder = OnSide<MT>()
         onSideBuilder.build()
         onHost = onSideBuilder
         localUpdateChannel = onSideBuilder.localUpdateChannel
@@ -286,21 +301,21 @@ class WithSerializer internal constructor() {
 
     internal var onHost: OnSide? = null
 
-    internal var receiveMessageOnEither: MessageReceiver? = null
+    internal var receiveMessageOnEither: FSMessageReceiver? = null
 
-    internal var receiveMessageOnRemote: MessageReceiver? = null
+    internal var receiveMessageOnRemote: FSMessageReceiver? = null
 
-    internal var receiveMessageOnHost: MessageReceiver? = null
+    internal var receiveMessageOnHost: FSMessageReceiver? = null
 
-    fun receiveMessageOnEither(messageReceiver: MessageReceiver) {
+    fun receiveMessageOnEither(messageReceiver: FSMessageReceiver) {
         receiveMessageOnEither = messageReceiver
     }
 
-    fun receiveMessageOnRemote(messageReceiver: MessageReceiver) {
+    fun receiveMessageOnRemote(messageReceiver: FSMessageReceiver) {
         receiveMessageOnRemote = messageReceiver
     }
 
-    fun receiveMessageOnHost(messageReceiver: MessageReceiver) {
+    fun receiveMessageOnHost(messageReceiver: FSMessageReceiver) {
         receiveMessageOnHost = messageReceiver
     }
 
@@ -319,9 +334,9 @@ class WithSerializer internal constructor() {
     @CombinedRouteMarker
     class OnSide internal constructor() {
 
-        internal var receiveMessage: MessageReceiver? = null
+        internal var receiveMessage: FSMessageReceiver? = null
 
-        fun receiveMessag(messageReceiver: MessageReceiver) {
+        fun receiveMessag(messageReceiver: FSMessageReceiver) {
             receiveMessage = messageReceiver
         }
 
@@ -330,12 +345,12 @@ class WithSerializer internal constructor() {
 }
 
 @CombinedRouteMarker
-class SetSerializer<T> internal constructor(val serializer: MessageSerializer<T>)
+class SetSerializer<MT> internal constructor(val serializer: FSMessageSerializer<MT>)
 
 @CombinedRouteMarker
-class OnSide<T> internal constructor() {
+class OnSide<MT> internal constructor() {
 
-    internal var localUpdateChannel: ReceiveChannel<T>? = null
+    internal var localUpdateChannel: ReceiveChannel<MT>? = null
 
     internal var send: Boolean = false
 
@@ -345,7 +360,7 @@ class OnSide<T> internal constructor() {
         receivePing = pingReceiver
     }
 
-    fun setLocalUpdateChannel(channel: ReceiveChannel<T>): SetUpdateChannel {
+    fun setLocalUpdateChannel(channel: ReceiveChannel<MT>): SetUpdateChannel {
         localUpdateChannel = channel
         return SetUpdateChannel()
     }

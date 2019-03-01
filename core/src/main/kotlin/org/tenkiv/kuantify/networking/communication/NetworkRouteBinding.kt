@@ -16,20 +16,20 @@
  *
  */
 
-package org.tenkiv.kuantify.fs.networking.configuration
+package org.tenkiv.kuantify.networking.communication
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import org.tenkiv.kuantify.fs.hardware.device.*
+import org.tenkiv.kuantify.hardware.device.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
-typealias UpdateReceiver = suspend (update: String?) -> Unit
-typealias MessageSerializer<T> = (update: T) -> String
+typealias UpdateReceiver<ST> = suspend (update: ST) -> Unit
+typealias MessageSerializer<MT, ST> = (update: MT) -> ST
 
-internal sealed class NetworkRouteBinding<T>(
-    protected val device: FSBaseDevice,
-    val networkUpdateChannel: Channel<String?>?
+sealed class NetworkRouteBinding<MT, ST>(
+    protected val device: NetworkableDevice<ST>,
+    val networkUpdateChannel: Channel<ST>?
 ) : CoroutineScope {
 
     final override val coroutineContext: CoroutineContext
@@ -42,15 +42,16 @@ internal sealed class NetworkRouteBinding<T>(
         this.job = job
     }
 
-    internal class Host<T>(
-        device: FSBaseDevice,
+    class Host<MT, ST>(
+        device: NetworkableDevice<ST>,
         private val route: String,
-        private val localUpdateChannel: ReceiveChannel<T>?,
-        networkUpdateChannel: Channel<String?>?,
-        private val serializeMessage: MessageSerializer<T>?,
+        private val localUpdateChannel: ReceiveChannel<MT>?,
+        networkUpdateChannel: Channel<ST>?,
+        private val serializeMessage: MessageSerializer<MT, ST>?,
         private val sendUpdatesFromHost: Boolean,
-        private val receiveUpdateOnHost: UpdateReceiver?
-    ) : NetworkRouteBinding<T>(device, networkUpdateChannel) {
+        private val receiveUpdateOnHost: UpdateReceiver<ST>?,
+        private val serializedPing: ST
+    ) : NetworkRouteBinding<MT, ST>(device, networkUpdateChannel) {
 
         override fun start(job: Job) {
             super.start(job)
@@ -58,8 +59,8 @@ internal sealed class NetworkRouteBinding<T>(
             if (sendUpdatesFromHost) {
                 launch {
                     localUpdateChannel?.consumeEach {
-                        val payload = serializeMessage?.invoke(it)
-                        device.sendMessage(route, payload)
+                        val message = serializeMessage?.invoke(it) ?: serializedPing
+                        device.networkCommunicator._sendMessage(route, message)
                     } ?: TODO("Throw specific exception")
                 }
             }
@@ -75,16 +76,17 @@ internal sealed class NetworkRouteBinding<T>(
         }
     }
 
-    internal class Remote<T>(
-        device: FSBaseDevice,
+    class Remote<MT, ST>(
+        device: NetworkableDevice<ST>,
         private val route: String,
-        private val localUpdateChannel: ReceiveChannel<T>?,
-        networkUpdateChannel: Channel<String?>?,
-        private val serializeMessage: MessageSerializer<T>?,
+        private val localUpdateChannel: ReceiveChannel<MT>?,
+        networkUpdateChannel: Channel<ST>?,
+        private val serializeMessage: MessageSerializer<MT, ST>?,
         private val sendUpdatesFromRemote: Boolean,
-        private val receiveUpdateOnRemote: UpdateReceiver?,
-        private val isFullyBiDirectional: Boolean
-    ) : NetworkRouteBinding<T>(device, networkUpdateChannel) {
+        private val receiveUpdateOnRemote: UpdateReceiver<ST>?,
+        private val isFullyBiDirectional: Boolean,
+        private val serializedPing: ST
+    ) : NetworkRouteBinding<MT, ST>(device, networkUpdateChannel) {
 
         private val ignoreNextUpdate = AtomicBoolean(false)
 
@@ -96,8 +98,8 @@ internal sealed class NetworkRouteBinding<T>(
                     launch {
                         localUpdateChannel?.consumeEach {
                             if (!ignoreNextUpdate.get()) {
-                                val payload = serializeMessage?.invoke(it)
-                                device.sendMessage(route, payload)
+                                val message = serializeMessage?.invoke(it) ?: serializedPing
+                                device.networkCommunicator._sendMessage(route, message)
                             } else {
                                 ignoreNextUpdate.set(false)
                             }
@@ -106,8 +108,8 @@ internal sealed class NetworkRouteBinding<T>(
                 } else {
                     launch {
                         localUpdateChannel?.consumeEach {
-                            val payload = serializeMessage?.invoke(it)
-                            device.sendMessage(route, payload)
+                            val message = serializeMessage?.invoke(it) ?: serializedPing
+                            device.networkCommunicator._sendMessage(route, message)
                         } ?: TODO("Throw specific exception")
                     }
                 }

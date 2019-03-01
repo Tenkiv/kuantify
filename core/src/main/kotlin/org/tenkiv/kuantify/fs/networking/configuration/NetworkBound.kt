@@ -18,7 +18,7 @@
 
 package org.tenkiv.kuantify.fs.networking.configuration
 
-import org.tenkiv.kuantify.fs.networking.device.*
+import org.tenkiv.kuantify.networking.configuration.*
 
 interface NetworkBoundCombined {
 
@@ -34,27 +34,9 @@ interface NetworkBoundCombined {
 
 }
 
-interface NetworkBoundSide {
-
-    val basePath: Path
-
-    fun sideRouting(routing: SideNetworkRouting)
-
-    fun SideNetworkRouting.addToThisPath(build: SideNetworkRouting.() -> Unit) {
-        route(basePath) {
-            build()
-        }
-    }
-}
-
 fun Iterable<NetworkBoundCombined>.addCombinedRoutingTo(routing: CombinedNetworkRouting) {
     forEach {
         it.combinedRouting(routing)
     }
 }
 
-fun Iterable<NetworkBoundSide>.addSideRoutingTo(routing: SideNetworkRouting) {
-    forEach {
-        it.sideRouting(routing)
-    }
-}

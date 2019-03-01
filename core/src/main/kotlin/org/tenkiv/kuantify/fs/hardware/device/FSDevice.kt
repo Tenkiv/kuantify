@@ -26,19 +26,26 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.json.*
 import mu.*
+import org.tenkiv.kuantify.fs.hardware.device.FSDevice.Companion.SERIALIZED_PING
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.client.*
+import org.tenkiv.kuantify.fs.networking.communication.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
-import org.tenkiv.kuantify.fs.networking.device.*
 import org.tenkiv.kuantify.fs.networking.server.*
 import org.tenkiv.kuantify.hardware.device.*
+import org.tenkiv.kuantify.networking.communication.*
+import org.tenkiv.kuantify.networking.configuration.*
 import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
 
-interface FSDevice : Device, NetworkBoundCombined {
+interface FSDevice : NetworkableDevice<String>, NetworkBoundCombined {
     override fun combinedRouting(routing: CombinedNetworkRouting) {
 
+    }
+
+    companion object {
+        internal const val SERIALIZED_PING = ""
     }
 }
 
@@ -46,16 +53,16 @@ interface FSDevice : Device, NetworkBoundCombined {
  * [Device] where the corresponding [LocalDevice] DAQC is managed by Kuantify. Therefore, all [LocalDevice]s are
  * [FSBaseDevice]s but not all [RemoteDevice]s are.
  */
-sealed class FSBaseDevice : FSDevice, NetworkBoundSide {
+sealed class FSBaseDevice : FSDevice, NetworkBoundSide<String> {
 
     final override val basePath: Path = emptyList()
 
-    //TODO: Thread safety
-    internal val networkCommunicator: NetworkCommunicator by lazy(LazyThreadSafetyMode.NONE) {
+    internal fun buildRouteBindingMap(): Map<String, NetworkRouteBinding<*, String>> {
         val combinedNetworkConfig = CombinedRouteConfig(this)
         combinedRouting(combinedNetworkConfig.baseRoute)
 
-        val sideRouteConfig = SideRouteConfig(this)
+        val sideRouteConfig =
+            SideRouteConfig(this, SERIALIZED_PING) { it.toPathString() }
         sideRouting(sideRouteConfig.baseRoute)
 
         val resultRouteBindingMap = combinedNetworkConfig.networkRouteBindingMap
@@ -68,23 +75,17 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide {
             resultRouteBindingMap[path] = binding
         }
 
-        NetworkCommunicator(
-            this,
-            resultRouteBindingMap
-        ).also {
-            logger.debug { "Network Communicator created for device $uid:\n $it" }
-        }
+        return resultRouteBindingMap
     }
 
-    internal suspend fun receiveNetworkMessage(route: String, message: String?) {
-        networkCommunicator.receiveNetworkMessage(route, message)
+    internal suspend fun receiveNetworkMessage(route: String, message: String) {
+        networkCommunicator.receiveMessage(route, message)
     }
 
-    internal abstract suspend fun sendMessage(route: String, message: String?)
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
 
-    internal fun serializeMessage(route: String, message: String?): String {
-        return NetworkMessage(route, message).serialize()
     }
+
 
 }
 
@@ -96,6 +97,11 @@ abstract class LocalDevice : FSBaseDevice() {
 
     final override val coroutineContext: CoroutineContext
         get() = GlobalScope.coroutineContext
+
+    //TODO: Thread safety
+    final override val networkCommunicator: LocalNetworkCommunicator by lazy(LazyThreadSafetyMode.NONE) {
+        LocalNetworkCommunicator(this, buildRouteBindingMap())
+    }
 
     val isHosting: Boolean
         get() = KuantifyHost.isHosting
@@ -110,14 +116,6 @@ abstract class LocalDevice : FSBaseDevice() {
         networkCommunicator.stop()
     }
 
-    final override suspend fun sendMessage(route: String, message: String?) {
-        ClientHandler.sendToAll(serializeMessage(route, message))
-    }
-
-    override fun sideRouting(routing: SideNetworkRouting) {
-
-    }
-
     open fun getInfo(): String {
         return "null"
     }
@@ -127,10 +125,13 @@ abstract class LocalDevice : FSBaseDevice() {
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Remote Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(),
-    RemoteDevice {
+abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(), RemoteDevice<String> {
 
     final override val coroutineContext: CoroutineContext get() = scope.coroutineContext
+
+    final override val networkCommunicator: FSRemoteNetworkCommunicator by lazy(LazyThreadSafetyMode.NONE) {
+        FSRemoteNetworkCommunicator(this, buildRouteBindingMap())
+    }
 
     @Volatile
     private var webSocketSession: WebSocketSession? = null
@@ -186,19 +187,12 @@ abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(
     private suspend fun receiveMessage(message: String) {
         val (route, message) = Json.parse(NetworkMessage.serializer(), message)
 
-        networkCommunicator.receiveNetworkMessage(route, message)
+        networkCommunicator.receiveMessage(route, message)
     }
 
-    private fun hostReportedError() {
-
-    }
-
-    final override suspend fun sendMessage(route: String, message: String?) {
-        webSocketSession?.send(Frame.Text(serializeMessage(route, message))) ?: TODO("Throw specific exception")
-    }
-
-    override fun sideRouting(routing: SideNetworkRouting) {
-
+    suspend fun sendMessage(route: String, message: String) {
+        webSocketSession?.send(Frame.Text(NetworkMessage(route, message).serialize()))
+            ?: TODO("Throw specific exception")
     }
 
     companion object {

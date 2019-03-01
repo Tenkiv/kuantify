@@ -27,7 +27,7 @@ import org.tenkiv.kuantify.android.*
 import org.tenkiv.kuantify.android.input.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.hardware.device.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.*
 
 private typealias SensorConstructor<S> = (LocalAndroidDevice, Sensor, String) -> S
 
@@ -142,7 +142,7 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
     final override val uid: String =
         Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
         ambientTemperatureSensors.addSideRoutingTo(routing)
         heartRateSensors.addSideRoutingTo(routing)

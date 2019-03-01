@@ -16,52 +16,46 @@
  *
  */
 
-package org.tenkiv.kuantify.fs.networking.configuration
+package org.tenkiv.kuantify.networking.configuration
 
 import kotlinx.coroutines.channels.*
 import mu.*
 import org.tenkiv.kuantify.fs.hardware.device.*
-import org.tenkiv.kuantify.fs.networking.device.*
+import org.tenkiv.kuantify.fs.networking.configuration.*
+import org.tenkiv.kuantify.hardware.device.*
+import org.tenkiv.kuantify.networking.communication.*
 
-typealias MessageReceiver = suspend (update: String) -> Unit
+typealias Path = List<String>
 
 private val logger = KotlinLogging.logger {}
-
-internal fun Path.toPathString(): String {
-    var result = ""
-    forEachIndexed { index, value ->
-        val append = if (index != lastIndex) "/" else ""
-        result += "$value$append"
-    }
-    return result
-}
 
 @DslMarker
 annotation class SideRouteMarker
 
-internal class SideRouteConfig(private val device: FSBaseDevice) {
+internal class SideRouteConfig<ST>(
+    private val device: NetworkableDevice<ST>,
+    private val serializedPing: ST,
+    private val formatPath: (Path) -> String
+) {
 
-    val networkRouteBindingMap = HashMap<String, NetworkRouteBinding<*>>()
+    val networkRouteBindingMap = HashMap<String, NetworkRouteBinding<*, ST>>()
 
-    val baseRoute: SideNetworkRouting
-        get() = SideNetworkRouting(
-            this,
-            emptyList()
-        )
+    val baseRoute: SideNetworkRouting<ST>
+        get() = SideNetworkRouting(this, emptyList())
 
     @Suppress("NAME_SHADOWING")
-    fun <T> addRouteBinding(
+    fun <MT> addRouteBinding(
         path: Path,
         isFullyBiDirectional: Boolean,
-        build: SideRouteBindingBuilder<T>.() -> Unit
+        build: SideRouteBindingBuilder<MT, ST>.() -> Unit
     ) {
-        val path = path.toPathString()
+        val path = formatPath(path)
 
-        val routeBindingBuilder = SideRouteBindingBuilder<T>()
+        val routeBindingBuilder = SideRouteBindingBuilder<MT, ST>()
         routeBindingBuilder.build()
 
         val networkUpdateChannel = if (routeBindingBuilder.receive != null) {
-            Channel<String?>(10_000)
+            Channel<ST>(10_000)
         } else {
             null
         }
@@ -79,9 +73,10 @@ internal class SideRouteConfig(private val device: FSBaseDevice) {
                 networkUpdateChannel,
                 routeBindingBuilder.serializeMessage,
                 routeBindingBuilder.send,
-                routeBindingBuilder.receive
+                routeBindingBuilder.receive,
+                serializedPing
             )
-            is FSRemoteDevice -> NetworkRouteBinding.Remote(
+            is RemoteDevice -> NetworkRouteBinding.Remote(
                 device,
                 path,
                 routeBindingBuilder.localUpdateChannel,
@@ -89,7 +84,11 @@ internal class SideRouteConfig(private val device: FSBaseDevice) {
                 routeBindingBuilder.serializeMessage,
                 routeBindingBuilder.send,
                 routeBindingBuilder.receive,
-                isFullyBiDirectional
+                isFullyBiDirectional,
+                serializedPing
+            )
+            else -> throw IllegalStateException(
+                "Concrete Device must extend either LocalDevice or RemoteDevice"
             )
         }
     }
@@ -97,20 +96,20 @@ internal class SideRouteConfig(private val device: FSBaseDevice) {
 
 @Suppress("NAME_SHADOWING")
 @SideRouteMarker
-class SideNetworkRouting internal constructor(private val config: SideRouteConfig, private val path: Path) {
+class SideNetworkRouting<ST> internal constructor(private val config: SideRouteConfig<ST>, private val path: Path) {
 
-    fun <T> bind(
+    fun <MT> bind(
         vararg path: String,
         isFullyBiDirectional: Boolean,
-        build: SideRouteBindingBuilder<T>.() -> Unit
+        build: SideRouteBindingBuilder<MT, ST>.() -> Unit
     ) {
         bind(path.toList(), isFullyBiDirectional, build)
     }
 
-    fun <T> bind(
+    fun <MT> bind(
         path: Path,
         isFullyBiDirectional: Boolean,
-        build: SideRouteBindingBuilder<T>.() -> Unit
+        build: SideRouteBindingBuilder<MT, ST>.() -> Unit
     ) {
         val path = this.path + path
 
@@ -121,12 +120,12 @@ class SideNetworkRouting internal constructor(private val config: SideRouteConfi
         )
     }
 
-    fun route(vararg path: String, build: SideNetworkRouting.() -> Unit) {
+    fun route(vararg path: String, build: SideNetworkRouting<ST>.() -> Unit) {
         route(path.toList(), build)
     }
 
 
-    fun route(path: Path, build: SideNetworkRouting.() -> Unit) {
+    fun route(path: Path, build: SideNetworkRouting<ST>.() -> Unit) {
         val path = this.path + path
 
         SideNetworkRouting(config, path).apply(build)
@@ -134,40 +133,28 @@ class SideNetworkRouting internal constructor(private val config: SideRouteConfi
 }
 
 @SideRouteMarker
-class SideRouteBindingBuilder<T> internal constructor() {
+class SideRouteBindingBuilder<MT, ST> internal constructor() {
 
-    internal var localUpdateChannel: ReceiveChannel<T>? = null
+    internal var localUpdateChannel: ReceiveChannel<MT>? = null
 
-    internal var serializeMessage: MessageSerializer<T>? = null
+    internal var serializeMessage: MessageSerializer<MT, ST>? = null
 
     internal var send: Boolean = false
 
     @PublishedApi
-    internal var receive: UpdateReceiver? = null
+    internal var receive: UpdateReceiver<ST>? = null
 
-    fun serializeMessage(messageSerializer: MessageSerializer<T>) {
+    fun serializeMessage(messageSerializer: MessageSerializer<MT, ST>) {
         serializeMessage = messageSerializer
     }
 
-    fun setLocalUpdateChannel(channel: ReceiveChannel<T>): SetUpdateChannel {
+    fun setLocalUpdateChannel(channel: ReceiveChannel<MT>): SetUpdateChannel {
         localUpdateChannel = channel
         return SetUpdateChannel()
     }
 
-    fun receive(receiver: UpdateReceiver) {
+    fun receive(receiver: UpdateReceiver<ST>) {
         receive = receiver
-    }
-
-    inline fun receiveMessage(resolutionStrategy: NullResolutionStrategy, crossinline receiver: MessageReceiver) {
-        receive = { message ->
-            if (message == null) {
-                if (resolutionStrategy === NullResolutionStrategy.PANIC) {
-                    TODO("throw specific exception")
-                }
-            } else {
-                receiver(message)
-            }
-        }
     }
 
     infix fun SetUpdateChannel.withUpdateChannel(build: SideWithUpdateChannel.() -> Unit) {
@@ -175,10 +162,6 @@ class SideRouteBindingBuilder<T> internal constructor() {
         wuc.build()
         this@SideRouteBindingBuilder.send = wuc.send
     }
-}
-
-enum class NullResolutionStrategy {
-    PANIC, SKIP
 }
 
 @SideRouteMarker

@@ -16,35 +16,27 @@
  *
  */
 
-package org.tenkiv.kuantify.fs
+package org.tenkiv.kuantify.networking.configuration
 
-import kotlinx.serialization.json.*
-import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.fs.gate.acquire.*
-import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.lib.*
-import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.physikal.core.*
-import tec.units.indriya.*
-import javax.measure.quantity.*
-import kotlin.reflect.*
+typealias NetworkBound<ST> = NetworkBoundSide<ST>
 
-class FSConfiguredUpdateRate(private val input: FSRemoteInput<*>) {
+interface NetworkBoundSide<ST> {
 
-    private val updateRate = input.Updatable<ComparableQuantity<Frequency>>()
+    val basePath: Path
 
-    fun addToRoute(routing: SideNetworkRouting<String>) {
-        routing.bind<ComparableQuantity<Frequency>>(RC.UPDATE_RATE, isFullyBiDirectional = false) {
-            receive {
-                val value = Json.parse(
-                    ComparableQuantitySerializer,
-                    it
-                ).asType<Frequency>()
-                updateRate.set(value)
-            }
+    fun sideRouting(routing: SideNetworkRouting<ST>)
+
+    fun SideNetworkRouting<ST>.addToThisPath(build: SideNetworkRouting<ST>.() -> Unit) {
+        route(basePath) {
+            build()
         }
     }
-
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): UpdateRate.Configured =
-        UpdateRate.Configured(updateRate)
 }
+
+fun <ST> Iterable<NetworkBound<ST>>.addSideRoutingTo(routing: SideNetworkRouting<ST>) {
+    forEach {
+        it.sideRouting(routing)
+    }
+}
+
+fun <ST> Iterable<NetworkBound<ST>>.addRoutingTo(routing: SideNetworkRouting<ST>) = addSideRoutingTo(routing)

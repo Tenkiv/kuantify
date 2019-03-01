@@ -26,6 +26,8 @@ import org.spekframework.spek2.*
 import org.spekframework.spek2.style.gherkin.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
+import org.tenkiv.kuantify.networking.communication.*
+import org.tenkiv.kuantify.networking.configuration.*
 
 val logger = KotlinLogging.logger {}
 
@@ -133,17 +135,19 @@ object RouteConfigBuilderFeature : Spek({
     Feature("SideRouteConfig") {
         val configWithLocalDevice by memoized {
             SideRouteConfig(
-                localDevice
-            )
+                localDevice,
+                FSDevice.SERIALIZED_PING
+            ) { it.toPathString() }
         }
         val configWithRemoteDevice by memoized {
             SideRouteConfig(
-                remoteDevice
-            )
+                remoteDevice,
+                FSDevice.SERIALIZED_PING
+            ) { it.toPathString() }
         }
 
-        val builder by memoized { SideRouteBindingBuilder<String>() }
-        val build: SideRouteBindingBuilder<String>.() -> Unit = {
+        val builder by memoized { SideRouteBindingBuilder<String, String>() }
+        val build: SideRouteBindingBuilder<String, String>.() -> Unit = {
 
             serializeMessage {
                 it
@@ -153,7 +157,7 @@ object RouteConfigBuilderFeature : Spek({
                 send()
             }
 
-            receiveMessage(NullResolutionStrategy.PANIC) {
+            receive {
 
             }
         }

@@ -28,7 +28,7 @@ import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.gate.acquire.*
 import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.device.*
+import org.tenkiv.kuantify.networking.configuration.*
 import java.time.*
 import kotlin.coroutines.*
 

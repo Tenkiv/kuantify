@@ -23,7 +23,7 @@ import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.android.lib.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.gate.acquire.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.physikal.core.*
 import javax.measure.quantity.*
 
@@ -41,7 +41,7 @@ class LocalAndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: S
 
     override fun convertData(data: FloatArray): DaqcQuantity<Temperature> = data[0].celsius.toDaqc()
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super<LocalQuantityInput>.sideRouting(routing)
     }
 }
@@ -53,7 +53,7 @@ class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, ui
 
     override fun convertData(data: FloatArray): DaqcQuantity<Frequency> = data[0].beatsPerMinute.toDaqc()
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super<LocalQuantityInput>.sideRouting(routing)
     }
 }
@@ -72,7 +72,7 @@ class LocalAndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor, uid: S
 
     override fun convertData(data: FloatArray): DaqcQuantity<Illuminance> = data[0].lux.toDaqc()
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super<LocalQuantityInput>.sideRouting(routing)
     }
 }
@@ -91,7 +91,7 @@ class LocalAndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor, ui
 
     override fun convertData(data: FloatArray): DaqcQuantity<Length> = data[0].centi.metre.toDaqc()
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super<LocalQuantityInput>.sideRouting(routing)
     }
 }
@@ -110,7 +110,7 @@ class LocalAndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor, uid
 
     override fun convertData(data: FloatArray): DaqcQuantity<Pressure> = data[0].hecto.pascal.toDaqc()
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super<LocalQuantityInput>.sideRouting(routing)
     }
 }
@@ -129,7 +129,7 @@ class LocalAndroidRelativeHumiditySensor(device: LocalAndroidDevice, sensor: Sen
 
     override fun convertData(data: FloatArray): DaqcQuantity<Dimensionless> = data[0].percent.toDaqc()
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super<LocalQuantityInput>.sideRouting(routing)
     }
 }

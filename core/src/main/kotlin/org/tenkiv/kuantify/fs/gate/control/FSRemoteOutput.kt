@@ -25,9 +25,9 @@ import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.*
 import kotlin.coroutines.*
 import kotlin.reflect.*
@@ -48,12 +48,12 @@ sealed class FSRemoteOutput<T : DaqcValue>(coroutineContext: CoroutineContext, u
         return SettingViability.Viable
     }
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
             bind<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
-                receiveMessage(NullResolutionStrategy.PANIC) {
+                receive {
                     val value = Json.parse(BooleanSerializer, it)
                     _isTransceiving.value = value
                 }
@@ -68,7 +68,7 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(coroutineContext: Corouti
 
     abstract val quantityType: KClass<Q>
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
@@ -81,7 +81,7 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(coroutineContext: Corouti
                     send()
                 }
 
-                receiveMessage(NullResolutionStrategy.PANIC) {
+                receive {
                     val (value, instant) = Json.parse(ValueInstantSerializer(ComparableQuantitySerializer), it)
                     val setting = value.asType<Q>(quantityType.java).toDaqc()
 
@@ -96,7 +96,7 @@ abstract class FSRemoteBinaryStateOutput(coroutineContext: CoroutineContext, uid
     FSRemoteOutput<BinaryState>(coroutineContext, uid),
     BinaryStateOutput {
 
-    override fun sideRouting(routing: SideNetworkRouting) {
+    override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         //TODO: This means the time associated with the update will be the time of the update on the local device if
@@ -112,7 +112,7 @@ abstract class FSRemoteBinaryStateOutput(coroutineContext: CoroutineContext, uid
                     send()
                 }
 
-                receiveMessage(NullResolutionStrategy.PANIC) {
+                receive {
                     val settingInstant = Json.parse(ValueInstantSerializer(BinaryState.serializer()), it)
 
                     _updateBroadcaster.send(settingInstant)

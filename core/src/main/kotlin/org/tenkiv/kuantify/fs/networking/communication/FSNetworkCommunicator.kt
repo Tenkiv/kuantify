@@ -16,35 +16,39 @@
  *
  */
 
-package org.tenkiv.kuantify.fs
+package org.tenkiv.kuantify.fs.networking.communication
 
-import kotlinx.serialization.json.*
-import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.fs.gate.acquire.*
+import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.lib.*
-import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.physikal.core.*
-import tec.units.indriya.*
-import javax.measure.quantity.*
-import kotlin.reflect.*
+import org.tenkiv.kuantify.fs.networking.server.*
+import org.tenkiv.kuantify.networking.communication.*
 
-class FSConfiguredUpdateRate(private val input: FSRemoteInput<*>) {
+class LocalNetworkCommunicator internal constructor(
+    override val device: LocalDevice,
+    networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>>
+) : NetworkCommunicator<String>(device, networkRouteBindingMap) {
 
-    private val updateRate = input.Updatable<ComparableQuantity<Frequency>>()
-
-    fun addToRoute(routing: SideNetworkRouting<String>) {
-        routing.bind<ComparableQuantity<Frequency>>(RC.UPDATE_RATE, isFullyBiDirectional = false) {
-            receive {
-                val value = Json.parse(
-                    ComparableQuantitySerializer,
-                    it
-                ).asType<Frequency>()
-                updateRate.set(value)
-            }
-        }
+    override suspend fun sendMessage(route: String, message: String) {
+        ClientHandler.sendToAll(NetworkMessage(route, message).serialize())
     }
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): UpdateRate.Configured =
-        UpdateRate.Configured(updateRate)
+    internal fun start() = startImpl()
+
+    internal fun stop() = stopImpl()
+
+}
+
+class FSRemoteNetworkCommunicator internal constructor(
+    override val device: FSRemoteDevice,
+    networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>>
+) : NetworkCommunicator<String>(device, networkRouteBindingMap) {
+
+    override suspend fun sendMessage(route: String, message: String) {
+        device.sendMessage(route, message)
+    }
+
+    internal fun start() = startImpl()
+
+    internal fun stop() = stopImpl()
+
 }
