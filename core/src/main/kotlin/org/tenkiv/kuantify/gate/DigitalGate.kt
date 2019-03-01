@@ -22,14 +22,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.*
-import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.lib.*
-import org.tenkiv.kuantify.networking.*
-import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.physikal.core.*
-import tec.units.indriya.*
 import javax.measure.quantity.*
 
 interface DigitalGate : DaqcGate<DigitalValue> {
@@ -105,58 +99,6 @@ inline fun DigitalGate.onAnyTransceivingChange(
                         isTransceivingFrequency.value ||
                         isTransceivingFrequency.value
             )
-        }
-    }
-}
-
-internal fun CombinedNetworkRouting.digitalGateRouting(digitalChannel: DigitalGate) {
-
-    bind<ComparableQuantity<Frequency>>(RC.AVG_FREQUENCY, isFullyBiDirectional = true) {
-        serializeMessage {
-            Json.stringify(ComparableQuantitySerializer, it)
-        } withSerializer {
-            receiveMessageOnEither {
-                val setting = Json.parse(ComparableQuantitySerializer, it).asType<Frequency>().toDaqc()
-                digitalChannel.avgFrequency.set(setting)
-            }
-        }
-
-        setLocalUpdateChannel(digitalChannel.avgFrequency.updateBroadcaster.openSubscription()) withUpdateChannel {
-            sendFromRemote()
-            sendFromHost()
-        }
-    }
-
-    bind<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
-        receivePingOnEither {
-            digitalChannel.stopTransceiving()
-        }
-    }
-}
-
-internal fun SideNetworkRouting.digitalGateIsTransceivingRemote(
-    updatable: Updatable<Boolean>,
-    transceivingRC: String
-) {
-    bind<Boolean>(transceivingRC, isFullyBiDirectional = false) {
-        receiveMessage(NullResolutionStrategy.PANIC) {
-            val value = Json.parse(BooleanSerializer, it)
-            updatable.set(value)
-        }
-    }
-}
-
-internal fun SideNetworkRouting.digitalGateIsTransceivingLocal(
-    trackable: Trackable<Boolean>,
-    transceivingRC: String
-) {
-    bind<Boolean>(transceivingRC, isFullyBiDirectional = false) {
-        serializeMessage {
-            Json.stringify(BooleanSerializer, it)
-        }
-
-        setLocalUpdateChannel(trackable.updateBroadcaster.openSubscription()) withUpdateChannel {
-            send()
         }
     }
 }

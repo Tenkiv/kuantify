@@ -21,8 +21,8 @@ package org.tenkiv.kuantify.android
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
-import org.tenkiv.kuantify.hardware.device.*
-import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.fs.hardware.device.*
+import org.tenkiv.kuantify.fs.networking.configuration.*
 import javax.measure.quantity.*
 
 interface AndroidDevice : FSDevice {

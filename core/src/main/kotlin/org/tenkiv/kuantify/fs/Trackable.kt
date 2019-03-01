@@ -16,45 +16,35 @@
  *
  */
 
-package org.tenkiv.kuantify.android
+package org.tenkiv.kuantify.fs
 
-import kotlinx.coroutines.*
+import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.gate.acquire.*
-import org.tenkiv.kuantify.gate.acquire.input.*
-import javax.measure.*
+import org.tenkiv.kuantify.fs.networking.*
+import org.tenkiv.kuantify.fs.networking.configuration.*
+import org.tenkiv.kuantify.lib.*
+import org.tenkiv.physikal.core.*
+import tec.units.indriya.*
+import javax.measure.quantity.*
 import kotlin.reflect.*
 
-typealias QuantityAndroidSensor<Q> = AndroidSensor<DaqcQuantity<Q>>
+class FSConfiguredUpdateRate(private val input: FSRemoteInput<*>) {
 
-interface AndroidSensor<T : DaqcValue> : Input<T> {
-    val uid: String
-}
+    private val updateRate = input.Updatable<ComparableQuantity<Frequency>>()
 
-class RemoteQuantityAndroidSensor<Q : Quantity<Q>> internal constructor(
-    scope: CoroutineScope,
-    uid: String,
-    override val quantityType: KClass<Q>
-) : FSRemoteQuantityInput<Q>(scope.coroutineContext, uid), QuantityAndroidSensor<Q> {
+    fun addToRoute(routing: SideNetworkRouting) {
+        routing.bind<ComparableQuantity<Frequency>>(RC.UPDATE_RATE, isFullyBiDirectional = false) {
+            receiveMessage(NullResolutionStrategy.PANIC) {
+                val value = Json.parse(
+                    ComparableQuantitySerializer,
+                    it
+                ).asType<Frequency>()
+                updateRate.set(value)
+            }
+        }
+    }
 
-    override val updateRate: UpdateRate by runningAverage()
-}
-
-class RemoteBinaryStateAndroidSensor internal constructor(
-    scope: CoroutineScope,
-    uid: String
-) : FSRemoteBinaryStateInput(scope.coroutineContext, uid), AndroidSensor<BinaryState> {
-
-    override val updateRate: UpdateRate by runningAverage()
-
-}
-
-object AndroidSensorTypeId {
-    const val AMBIENT_TEMPERATURE = "AT"
-    const val HEART_RATE = "HR"
-    const val LIGHT = "LI"
-    const val PROXIMITY = "PX"
-    const val PRESSURE = "PS"
-    const val RELATIVE_HUMIDITY = "HU"
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): UpdateRate.Configured =
+        UpdateRate.Configured(updateRate)
 }

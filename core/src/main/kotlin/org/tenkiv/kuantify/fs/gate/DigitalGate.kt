@@ -1,0 +1,90 @@
+/*
+ * Copyright 2019 Tenkiv, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
+
+package org.tenkiv.kuantify.fs.gate
+
+import kotlinx.serialization.internal.*
+import kotlinx.serialization.json.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.fs.networking.*
+import org.tenkiv.kuantify.fs.networking.configuration.*
+import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.lib.*
+import org.tenkiv.physikal.core.*
+import tec.units.indriya.*
+import javax.measure.quantity.*
+
+internal fun CombinedNetworkRouting.digitalGateRouting(digitalChannel: DigitalGate) {
+
+    bind<ComparableQuantity<Frequency>>(RC.AVG_FREQUENCY, isFullyBiDirectional = true) {
+        serializeMessage {
+            Json.stringify(
+                ComparableQuantitySerializer,
+                it
+            )
+        } withSerializer {
+            receiveMessageOnEither {
+                val setting = Json.parse(
+                    ComparableQuantitySerializer,
+                    it
+                ).asType<Frequency>().toDaqc()
+                digitalChannel.avgFrequency.set(setting)
+            }
+        }
+
+        setLocalUpdateChannel(digitalChannel.avgFrequency.updateBroadcaster.openSubscription()) withUpdateChannel {
+            sendFromRemote()
+            sendFromHost()
+        }
+    }
+
+    bind<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
+        receivePingOnEither {
+            digitalChannel.stopTransceiving()
+        }
+    }
+}
+
+internal fun SideNetworkRouting.digitalGateIsTransceivingRemote(
+    updatable: Updatable<Boolean>,
+    transceivingRC: String
+) {
+    bind<Boolean>(transceivingRC, isFullyBiDirectional = false) {
+        receiveMessage(NullResolutionStrategy.PANIC) {
+            val value =
+                Json.parse(BooleanSerializer, it)
+            updatable.set(value)
+        }
+    }
+}
+
+internal fun SideNetworkRouting.digitalGateIsTransceivingLocal(
+    trackable: Trackable<Boolean>,
+    transceivingRC: String
+) {
+    bind<Boolean>(transceivingRC, isFullyBiDirectional = false) {
+        serializeMessage {
+            Json.stringify(BooleanSerializer, it)
+        }
+
+        setLocalUpdateChannel(trackable.updateBroadcaster.openSubscription()) withUpdateChannel {
+            send()
+        }
+    }
+}

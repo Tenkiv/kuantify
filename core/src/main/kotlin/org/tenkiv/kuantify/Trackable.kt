@@ -20,12 +20,7 @@ package org.tenkiv.kuantify
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
-import org.tenkiv.kuantify.gate.acquire.input.*
-import org.tenkiv.kuantify.lib.*
-import org.tenkiv.kuantify.networking.*
-import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
 import java.time.*
@@ -129,23 +124,6 @@ class AverageUpdateRateDelegate internal constructor(trackable: RatedTrackable<*
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>): UpdateRate.RunningAverage =
         UpdateRate.RunningAverage(updatable)
-}
-
-class FSConfiguredUpdateRate(private val input: FSRemoteInput<*>) {
-
-    private val updateRate = input.Updatable<ComparableQuantity<Frequency>>()
-
-    fun addToRoute(routing: SideNetworkRouting) {
-        routing.bind<ComparableQuantity<Frequency>>(RC.UPDATE_RATE, isFullyBiDirectional = false) {
-            receiveMessage(NullResolutionStrategy.PANIC) {
-                val value = Json.parse(ComparableQuantitySerializer, it).asType<Frequency>()
-                updateRate.set(value)
-            }
-        }
-    }
-
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): UpdateRate.Configured =
-        UpdateRate.Configured(updateRate)
 }
 
 private class CombinedTrackable<out T>(scope: CoroutineScope, trackables: Array<out Trackable<T>>) :

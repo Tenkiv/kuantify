@@ -16,45 +16,37 @@
  *
  */
 
-package org.tenkiv.kuantify.android
+package org.tenkiv.kuantify.fs.gate.control
 
-import kotlinx.coroutines.*
-import org.tenkiv.kuantify.*
+import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.fs.gate.acquire.*
-import org.tenkiv.kuantify.gate.acquire.input.*
-import javax.measure.*
-import kotlin.reflect.*
+import org.tenkiv.kuantify.fs.networking.*
+import org.tenkiv.kuantify.fs.networking.configuration.*
+import org.tenkiv.kuantify.fs.networking.device.*
+import org.tenkiv.kuantify.gate.control.*
+import kotlin.coroutines.*
 
-typealias QuantityAndroidSensor<Q> = AndroidSensor<DaqcQuantity<Q>>
-
-interface AndroidSensor<T : DaqcValue> : Input<T> {
+abstract class FSRemoteControlGate<T : DaqcData>(
+    final override val coroutineContext: CoroutineContext,
     val uid: String
-}
+) : ControlGate<T>, NetworkBoundSide {
 
-class RemoteQuantityAndroidSensor<Q : Quantity<Q>> internal constructor(
-    scope: CoroutineScope,
-    uid: String,
-    override val quantityType: KClass<Q>
-) : FSRemoteQuantityInput<Q>(scope.coroutineContext, uid), QuantityAndroidSensor<Q> {
+    final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
-    override val updateRate: UpdateRate by runningAverage()
-}
+    internal val stopTransceivingChannel = Channel<Unit>(Channel.CONFLATED)
+    final override fun stopTransceiving() {
+        stopTransceivingChannel.offer(Unit)
+    }
 
-class RemoteBinaryStateAndroidSensor internal constructor(
-    scope: CoroutineScope,
-    uid: String
-) : FSRemoteBinaryStateInput(scope.coroutineContext, uid), AndroidSensor<BinaryState> {
+    override fun sideRouting(routing: SideNetworkRouting) {
 
-    override val updateRate: UpdateRate by runningAverage()
+        routing.addToThisPath {
 
-}
-
-object AndroidSensorTypeId {
-    const val AMBIENT_TEMPERATURE = "AT"
-    const val HEART_RATE = "HR"
-    const val LIGHT = "LI"
-    const val PROXIMITY = "PX"
-    const val PRESSURE = "PS"
-    const val RELATIVE_HUMIDITY = "HU"
+            bind<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
+                setLocalUpdateChannel(stopTransceivingChannel) withUpdateChannel {
+                    send()
+                }
+            }
+        }
+    }
 }

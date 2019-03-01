@@ -16,34 +16,14 @@
  *
  */
 
-package org.tenkiv.kuantify.android.host
+package org.tenkiv.kuantify.fs.networking
 
-import android.app.*
-import android.os.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
-import mu.*
-import org.tenkiv.kuantify.android.device.*
-import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.server.*
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
 
-class MainActivity : Activity() {
+@Serializable
+internal data class NetworkMessage(val route: String, @Optional val message: String? = null) {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-//        setContentView(R.layout.activity_main)
-//        val textView = findViewById<TextView>(R.id.textView)
+    fun serialize() = Json.stringify(NetworkMessage.serializer(), this)
 
-        val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) {
-            kuantifyHost()
-        }
-        server.start()
-
-        val device = LocalAndroidDevice.get(this)
-        device.startHosting()
-
-        logger.trace { "This is logging of - kotlin-logging" }
-    }
-
-    companion object : KLogging()
 }

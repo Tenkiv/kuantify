@@ -16,34 +16,11 @@
  *
  */
 
-package org.tenkiv.kuantify.android.host
+package org.tenkiv.kuantify.fs.networking.client
 
-import android.app.*
-import android.os.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
-import mu.*
-import org.tenkiv.kuantify.android.device.*
-import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.server.*
+import io.ktor.client.*
+import io.ktor.client.features.websocket.*
 
-class MainActivity : Activity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-//        setContentView(R.layout.activity_main)
-//        val textView = findViewById<TextView>(R.id.textView)
-
-        val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) {
-            kuantifyHost()
-        }
-        server.start()
-
-        val device = LocalAndroidDevice.get(this)
-        device.startHosting()
-
-        logger.trace { "This is logging of - kotlin-logging" }
-    }
-
-    companion object : KLogging()
+internal val httpClient = HttpClient {
+    install(WebSockets)
 }

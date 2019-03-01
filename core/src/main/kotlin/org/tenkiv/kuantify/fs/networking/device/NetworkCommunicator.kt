@@ -16,34 +16,37 @@
  *
  */
 
-package org.tenkiv.kuantify.android.host
+package org.tenkiv.kuantify.fs.networking.device
 
-import android.app.*
-import android.os.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
-import mu.*
-import org.tenkiv.kuantify.android.device.*
-import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.server.*
+import kotlinx.coroutines.*
+import org.tenkiv.kuantify.fs.hardware.device.*
+import org.tenkiv.kuantify.fs.networking.configuration.*
 
-class MainActivity : Activity() {
+typealias Path = List<String>
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-//        setContentView(R.layout.activity_main)
-//        val textView = findViewById<TextView>(R.id.textView)
+internal class NetworkCommunicator(
+    val device: FSBaseDevice,
+    private val networkRouteBindingMap: Map<String, NetworkRouteBinding<*>>
+) {
 
-        val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) {
-            kuantifyHost()
-        }
-        server.start()
+    private val parentJob: Job? = device.coroutineContext[Job]
 
-        val device = LocalAndroidDevice.get(this)
-        device.startHosting()
+    @Volatile
+    private var job: Job = Job(parentJob)
 
-        logger.trace { "This is logging of - kotlin-logging" }
+    fun start() {
+        networkRouteBindingMap.values.forEach { it.start(job) }
     }
 
-    companion object : KLogging()
+    fun stop() {
+        job.cancel()
+        job = Job(parentJob)
+    }
+
+    suspend fun receiveNetworkMessage(route: String, message: String?) {
+        networkRouteBindingMap[route]?.networkUpdateChannel?.send(message) ?: TODO("handle invalid route")
+    }
+
+    override fun toString(): String =
+        "NetworkCommunicator for device: ${device.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
 }

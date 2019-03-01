@@ -26,8 +26,8 @@ import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.android.*
 import org.tenkiv.kuantify.android.input.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.hardware.device.*
-import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.fs.hardware.device.*
+import org.tenkiv.kuantify.fs.networking.configuration.*
 
 private typealias SensorConstructor<S> = (LocalAndroidDevice, Sensor, String) -> S
 

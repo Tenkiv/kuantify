@@ -22,8 +22,8 @@ import android.hardware.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.android.lib.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.gate.acquire.input.*
-import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.fs.gate.acquire.*
+import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.physikal.core.*
 import javax.measure.quantity.*
 
@@ -34,7 +34,8 @@ import javax.measure.quantity.*
  * @param sensor The sensor to be integrated.
  */
 class LocalAndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
-    LocalAndroidSensor<DaqcQuantity<Temperature>>(device, sensor, uid), LocalQuantityInput<Temperature> {
+    LocalAndroidSensor<DaqcQuantity<Temperature>>(device, sensor, uid),
+    LocalQuantityInput<Temperature> {
 
     override val type: Int get() = Sensor.TYPE_AMBIENT_TEMPERATURE
 
@@ -46,7 +47,8 @@ class LocalAndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: S
 }
 
 class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
-    LocalAndroidSensor<DaqcQuantity<Frequency>>(device, sensor, uid), LocalQuantityInput<Frequency> {
+    LocalAndroidSensor<DaqcQuantity<Frequency>>(device, sensor, uid),
+    LocalQuantityInput<Frequency> {
     override val type: Int get() = Sensor.TYPE_HEART_RATE
 
     override fun convertData(data: FloatArray): DaqcQuantity<Frequency> = data[0].beatsPerMinute.toDaqc()
@@ -63,7 +65,8 @@ class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, ui
  * @param sensor The sensor to be integrated.
  */
 class LocalAndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
-    LocalAndroidSensor<DaqcQuantity<Illuminance>>(device, sensor, uid), LocalQuantityInput<Illuminance> {
+    LocalAndroidSensor<DaqcQuantity<Illuminance>>(device, sensor, uid),
+    LocalQuantityInput<Illuminance> {
 
     override val type: Int get() = Sensor.TYPE_LIGHT
 
@@ -81,7 +84,8 @@ class LocalAndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor, uid: S
  * @param sensor The sensor to be integrated.
  */
 class LocalAndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
-    LocalAndroidSensor<DaqcQuantity<Length>>(device, sensor, uid), LocalQuantityInput<Length> {
+    LocalAndroidSensor<DaqcQuantity<Length>>(device, sensor, uid),
+    LocalQuantityInput<Length> {
 
     override val type: Int get() = Sensor.TYPE_PROXIMITY
 
@@ -99,7 +103,8 @@ class LocalAndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor, ui
  * @param sensor The sensor to be integrated.
  */
 class LocalAndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
-    LocalAndroidSensor<DaqcQuantity<Pressure>>(device, sensor, uid), LocalQuantityInput<Pressure> {
+    LocalAndroidSensor<DaqcQuantity<Pressure>>(device, sensor, uid),
+    LocalQuantityInput<Pressure> {
 
     override val type: Int get() = Sensor.TYPE_PRESSURE
 
@@ -117,7 +122,8 @@ class LocalAndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor, uid
  * @param sensor The sensor to be integrated.
  */
 class LocalAndroidRelativeHumiditySensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
-    LocalAndroidSensor<DaqcQuantity<Dimensionless>>(device, sensor, uid), LocalQuantityInput<Dimensionless> {
+    LocalAndroidSensor<DaqcQuantity<Dimensionless>>(device, sensor, uid),
+    LocalQuantityInput<Dimensionless> {
 
     override val type: Int get() = Sensor.TYPE_RELATIVE_HUMIDITY
 

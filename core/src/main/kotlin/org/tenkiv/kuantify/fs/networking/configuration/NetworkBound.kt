@@ -16,34 +16,45 @@
  *
  */
 
-package org.tenkiv.kuantify.android.host
+package org.tenkiv.kuantify.fs.networking.configuration
 
-import android.app.*
-import android.os.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
-import mu.*
-import org.tenkiv.kuantify.android.device.*
-import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.server.*
+import org.tenkiv.kuantify.fs.networking.device.*
 
-class MainActivity : Activity() {
+interface NetworkBoundCombined {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-//        setContentView(R.layout.activity_main)
-//        val textView = findViewById<TextView>(R.id.textView)
+    val basePath: Path
 
-        val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) {
-            kuantifyHost()
+    fun combinedRouting(routing: CombinedNetworkRouting)
+
+    fun CombinedNetworkRouting.addToThisPath(build: CombinedNetworkRouting.() -> Unit) {
+        route(basePath) {
+            build()
         }
-        server.start()
-
-        val device = LocalAndroidDevice.get(this)
-        device.startHosting()
-
-        logger.trace { "This is logging of - kotlin-logging" }
     }
 
-    companion object : KLogging()
+}
+
+interface NetworkBoundSide {
+
+    val basePath: Path
+
+    fun sideRouting(routing: SideNetworkRouting)
+
+    fun SideNetworkRouting.addToThisPath(build: SideNetworkRouting.() -> Unit) {
+        route(basePath) {
+            build()
+        }
+    }
+}
+
+fun Iterable<NetworkBoundCombined>.addCombinedRoutingTo(routing: CombinedNetworkRouting) {
+    forEach {
+        it.combinedRouting(routing)
+    }
+}
+
+fun Iterable<NetworkBoundSide>.addSideRoutingTo(routing: SideNetworkRouting) {
+    forEach {
+        it.sideRouting(routing)
+    }
 }
