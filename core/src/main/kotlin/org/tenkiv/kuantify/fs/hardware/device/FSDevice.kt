@@ -24,9 +24,10 @@ import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import mu.*
-import org.tenkiv.kuantify.fs.hardware.device.FSDevice.Companion.SERIALIZED_PING
+import org.tenkiv.kuantify.fs.hardware.device.FSDevice.Companion.serializedPing
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.client.*
 import org.tenkiv.kuantify.fs.networking.communication.*
@@ -45,7 +46,7 @@ interface FSDevice : NetworkableDevice<String>, NetworkBoundCombined {
     }
 
     companion object {
-        internal const val SERIALIZED_PING = ""
+        internal val serializedPing = Json.stringify(UnitSerializer, Unit)
     }
 }
 
@@ -62,7 +63,7 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide<String> {
         combinedRouting(combinedNetworkConfig.baseRoute)
 
         val sideRouteConfig =
-            SideRouteConfig(this, SERIALIZED_PING) { it.toPathString() }
+            SideRouteConfig(this, serializedPing) { it.toPathString() }
         sideRouting(sideRouteConfig.baseRoute)
 
         val resultRouteBindingMap = combinedNetworkConfig.networkRouteBindingMap

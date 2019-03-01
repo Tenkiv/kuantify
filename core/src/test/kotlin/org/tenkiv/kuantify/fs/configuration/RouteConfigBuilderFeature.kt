@@ -136,13 +136,13 @@ object RouteConfigBuilderFeature : Spek({
         val configWithLocalDevice by memoized {
             SideRouteConfig(
                 localDevice,
-                FSDevice.SERIALIZED_PING
+                FSDevice.serializedPing
             ) { it.toPathString() }
         }
         val configWithRemoteDevice by memoized {
             SideRouteConfig(
                 remoteDevice,
-                FSDevice.SERIALIZED_PING
+                FSDevice.serializedPing
             ) { it.toPathString() }
         }
 

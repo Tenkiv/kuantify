@@ -165,22 +165,22 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkBoundSide<String>, Ne
 
     private val startSamplingTransitionFrequencyChannel = Channel<Ping>(Channel.CONFLATED)
     override fun startSamplingTransitionFrequency() {
-        startSamplingTransitionFrequencyChannel.offer(null)
+        startSamplingTransitionFrequencyChannel.offer(Ping)
     }
 
     private val startSamplingPwmChannel = Channel<Ping>(Channel.CONFLATED)
     override fun startSamplingPwm() {
-        startSamplingPwmChannel.offer(null)
+        startSamplingPwmChannel.offer(Ping)
     }
 
     private val startSamplingBinaryStateChannel = Channel<Ping>(Channel.CONFLATED)
     override fun startSamplingBinaryState() {
-        startSamplingBinaryStateChannel.offer(null)
+        startSamplingBinaryStateChannel.offer(Ping)
     }
 
     private val stopTransceivingChannel = Channel<Ping>(Channel.CONFLATED)
     override fun stopTransceiving() {
-        stopTransceivingChannel.offer(null)
+        stopTransceivingChannel.offer(Ping)
     }
 
     override fun asBinaryStateSensor(): BinaryStateInput = thisAsBinaryStateSensor

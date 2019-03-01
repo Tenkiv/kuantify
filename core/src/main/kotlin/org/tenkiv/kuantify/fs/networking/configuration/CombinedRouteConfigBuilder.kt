@@ -24,7 +24,7 @@ import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
 
-typealias Ping = Unit?
+typealias Ping = Unit
 typealias PingReceiver = suspend () -> Unit
 
 private typealias FSMessageReceiver = UpdateReceiver<String>
@@ -87,7 +87,7 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
                 routeBindingBuilder.serializeMessage,
                 routeBindingBuilder.sendFromHost,
                 receiveUpdatesOnHost,
-                FSDevice.SERIALIZED_PING
+                FSDevice.serializedPing
             )
             is FSRemoteDevice -> NetworkRouteBinding.Remote(
                 device,
@@ -98,7 +98,7 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
                 routeBindingBuilder.sendFromRemote,
                 receiveUpdatesOnRemote,
                 isFullyBiDirectional,
-                FSDevice.SERIALIZED_PING
+                FSDevice.serializedPing
             )
             else -> throw IllegalStateException(
                 "Concrete FSDevice must extend either LocalDevice or FSRemoteDevice"
@@ -116,7 +116,7 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
             return null
         } else {
             return { update ->
-                if (update != FSDevice.SERIALIZED_PING) {
+                if (update != FSDevice.serializedPing) {
                     routeBindingBuilder.withSerializer?.receiveMessageOnEither?.invoke(update)
                     routeBindingBuilder.withSerializer?.receiveMessageOnHost?.invoke(update)
                 } else {
@@ -137,7 +137,7 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
             return null
         } else {
             return { update ->
-                if (update != FSDevice.SERIALIZED_PING) {
+                if (update != FSDevice.serializedPing) {
                     routeBindingBuilder.withSerializer?.receiveMessageOnEither?.invoke(update)
                     routeBindingBuilder.withSerializer?.receiveMessageOnRemote?.invoke(update)
                 } else {

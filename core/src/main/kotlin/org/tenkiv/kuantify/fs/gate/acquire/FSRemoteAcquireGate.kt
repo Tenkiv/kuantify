@@ -35,12 +35,12 @@ abstract class FSRemoteAcquireGate<T : DaqcData>(
 
     internal val startSamplingChannel = Channel<Ping>(Channel.CONFLATED)
     final override fun startSampling() {
-        startSamplingChannel.offer(null)
+        startSamplingChannel.offer(Ping)
     }
 
     internal val stopTransceivingChannel = Channel<Ping>(Channel.CONFLATED)
     final override fun stopTransceiving() {
-        stopTransceivingChannel.offer(null)
+        stopTransceivingChannel.offer(Ping)
     }
 
     override fun sideRouting(routing: SideNetworkRouting<String>) {
