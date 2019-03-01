@@ -31,7 +31,7 @@ private typealias FSMessageSerializer<MT> = MessageSerializer<MT, String>
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Path.toPathString(): String {
+public fun Path.toPathString(): String {
     var result = ""
     forEachIndexed { index, value ->
         val append = if (index != lastIndex) "/" else ""
