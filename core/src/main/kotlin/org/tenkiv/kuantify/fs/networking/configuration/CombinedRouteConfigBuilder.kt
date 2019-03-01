@@ -24,7 +24,6 @@ import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
 
-typealias Ping = Unit
 typealias PingReceiver = suspend () -> Unit
 
 private typealias FSMessageReceiver = UpdateReceiver<String>

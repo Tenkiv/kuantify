@@ -20,7 +20,6 @@ package org.tenkiv.kuantify.fs.gate.control
 
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.networking.configuration.*
 

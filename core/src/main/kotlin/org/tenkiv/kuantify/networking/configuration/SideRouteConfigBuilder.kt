@@ -26,6 +26,7 @@ import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.communication.*
 
 typealias Path = List<String>
+typealias Ping = Unit
 
 private val logger = KotlinLogging.logger {}
 
