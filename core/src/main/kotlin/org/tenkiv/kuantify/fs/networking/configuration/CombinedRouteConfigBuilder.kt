@@ -21,6 +21,7 @@ package org.tenkiv.kuantify.fs.networking.configuration
 import kotlinx.coroutines.channels.*
 import mu.*
 import org.tenkiv.kuantify.fs.hardware.device.*
+import org.tenkiv.kuantify.fs.networking.communication.*
 import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
 
@@ -31,10 +32,10 @@ private typealias FSMessageSerializer<MT> = MessageSerializer<MT, String>
 
 private val logger = KotlinLogging.logger {}
 
-public fun Path.toPathString(): String {
+public fun formatPathStandard(path: Path): String {
     var result = ""
-    forEachIndexed { index, value ->
-        val append = if (index != lastIndex) "/" else ""
+    path.forEachIndexed { index, value ->
+        val append = if (index != path.lastIndex) "/" else ""
         result += "$value$append"
     }
     return result
@@ -43,7 +44,7 @@ public fun Path.toPathString(): String {
 @DslMarker
 annotation class CombinedRouteMarker
 
-internal class CombinedRouteConfig(private val device: FSDevice) {
+internal class CombinedRouteConfig(private val device: FSBaseDevice) {
 
     val networkRouteBindingMap = HashMap<String, NetworkRouteBinding<*, String>>()
 
@@ -55,7 +56,7 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
         isFullyBiDirectional: Boolean,
         build: CombinedRouteBindingBuilder<T>.() -> Unit
     ) {
-        val path = path.toPathString()
+        val path = formatPathStandard(path)
         val routeBindingBuilder = CombinedRouteBindingBuilder<T>()
         routeBindingBuilder.build()
 
@@ -78,8 +79,8 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
         }
 
         networkRouteBindingMap[path] = when (device) {
-            is LocalDevice -> NetworkRouteBinding.Host(
-                device,
+            is LocalDevice -> LocalDeviceRouteBinding(
+                device.networkCommunicator,
                 path,
                 routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
@@ -88,19 +89,16 @@ internal class CombinedRouteConfig(private val device: FSDevice) {
                 receiveUpdatesOnHost,
                 FSDevice.serializedPing
             )
-            is FSRemoteDevice -> NetworkRouteBinding.Remote(
-                device,
+            is FSRemoteDevice -> RemoteDeviceRouteBinding(
+                device.networkCommunicator,
                 path,
                 routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
                 routeBindingBuilder.serializeMessage,
                 routeBindingBuilder.sendFromRemote,
                 receiveUpdatesOnRemote,
-                isFullyBiDirectional,
-                FSDevice.serializedPing
-            )
-            else -> throw IllegalStateException(
-                "Concrete FSDevice must extend either LocalDevice or FSRemoteDevice"
+                FSDevice.serializedPing,
+                isFullyBiDirectional
             )
         }
     }

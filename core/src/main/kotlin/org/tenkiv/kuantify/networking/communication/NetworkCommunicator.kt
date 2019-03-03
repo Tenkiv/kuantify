@@ -19,27 +19,31 @@
 package org.tenkiv.kuantify.networking.communication
 
 import kotlinx.coroutines.*
+import mu.*
 import org.tenkiv.kuantify.hardware.device.*
+import kotlin.coroutines.*
+
+private val logger = KotlinLogging.logger {}
 
 abstract class NetworkCommunicator<ST>(
-    device: NetworkableDevice<ST>,
+    final override val coroutineContext: CoroutineContext,
     protected val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, ST>>
-) {
+) : CoroutineScope {
 
-    private val parentJob: Job? = device.coroutineContext[Job]
-
-    protected abstract val device: NetworkableDevice<ST>
+    private val parentJob: Job? get() = coroutineContext[Job]
 
     @Volatile
-    private var job: Job = Job(parentJob)
+    private var bindingJob: Job = Job(parentJob)
 
-    protected open fun startImpl() {
-        networkRouteBindingMap.values.forEach { it.start(job) }
+    public abstract val device: NetworkableDevice<ST>
+
+    protected fun startBindings() {
+        networkRouteBindingMap.values.forEach { it.start(bindingJob) }
     }
 
-    protected open fun stopImpl() {
-        job.cancel()
-        job = Job(parentJob)
+    protected fun stopBindings() {
+        bindingJob.cancel()
+        bindingJob = Job(parentJob)
     }
 
     internal suspend fun receiveMessage(route: String, message: ST) {
@@ -49,6 +53,10 @@ abstract class NetworkCommunicator<ST>(
     protected abstract suspend fun sendMessage(route: String, message: ST)
 
     internal suspend fun _sendMessage(route: String, message: ST) = sendMessage(route, message)
+
+    private fun newBindingJob() {
+        bindingJob = Job(parentJob)
+    }
 
     override fun toString(): String =
         "NetworkCommunicator for device: ${device.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"

@@ -21,6 +21,7 @@ package org.tenkiv.kuantify.networking.configuration
 import kotlinx.coroutines.channels.*
 import mu.*
 import org.tenkiv.kuantify.fs.hardware.device.*
+import org.tenkiv.kuantify.fs.networking.communication.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.communication.*
@@ -33,7 +34,7 @@ private val logger = KotlinLogging.logger {}
 @DslMarker
 annotation class SideRouteMarker
 
-internal class SideRouteConfig<ST>(
+class SideRouteConfig<ST>(
     private val device: NetworkableDevice<ST>,
     private val serializedPing: ST,
     private val formatPath: (Path) -> String
@@ -44,7 +45,7 @@ internal class SideRouteConfig<ST>(
     val baseRoute: SideNetworkRouting<ST>
         get() = SideNetworkRouting(this, emptyList())
 
-    @Suppress("NAME_SHADOWING")
+    @Suppress("NAME_SHADOWING", "UNCHECKED_CAST")
     fun <MT> addRouteBinding(
         path: Path,
         isFullyBiDirectional: Boolean,
@@ -67,8 +68,19 @@ internal class SideRouteConfig<ST>(
         }
 
         networkRouteBindingMap[path] = when (device) {
-            is LocalDevice -> NetworkRouteBinding.Host(
-                device,
+            is RemoteDevice -> RemoteDeviceRouteBinding(
+                device.networkCommunicator,
+                path,
+                routeBindingBuilder.localUpdateChannel,
+                networkUpdateChannel,
+                routeBindingBuilder.serializeMessage,
+                routeBindingBuilder.send,
+                routeBindingBuilder.receive,
+                serializedPing,
+                isFullyBiDirectional
+            )
+            is LocalDevice -> LocalDeviceRouteBinding(
+                device.networkCommunicator as NetworkCommunicator<ST>, // Kotlin compiler should be able to infer type
                 path,
                 routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
@@ -77,20 +89,7 @@ internal class SideRouteConfig<ST>(
                 routeBindingBuilder.receive,
                 serializedPing
             )
-            is RemoteDevice -> NetworkRouteBinding.Remote(
-                device,
-                path,
-                routeBindingBuilder.localUpdateChannel,
-                networkUpdateChannel,
-                routeBindingBuilder.serializeMessage,
-                routeBindingBuilder.send,
-                routeBindingBuilder.receive,
-                isFullyBiDirectional,
-                serializedPing
-            )
-            else -> throw IllegalStateException(
-                "Concrete Device must extend either LocalDevice or RemoteDevice"
-            )
+            else -> throw IllegalStateException("Concrete Device must extend either LocalDevice or RemoteDevice")
         }
     }
 }

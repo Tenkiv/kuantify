@@ -18,12 +18,8 @@
 
 package org.tenkiv.kuantify.fs.hardware.device
 
-import io.ktor.client.features.websocket.*
 import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import mu.*
@@ -63,7 +59,7 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide<String> {
         combinedRouting(combinedNetworkConfig.baseRoute)
 
         val sideRouteConfig =
-            SideRouteConfig(this, serializedPing) { it.toPathString() }
+            SideRouteConfig(this, serializedPing, ::formatPathStandard)
         sideRouting(sideRouteConfig.baseRoute)
 
         val resultRouteBindingMap = combinedNetworkConfig.networkRouteBindingMap
@@ -126,74 +122,23 @@ abstract class LocalDevice : FSBaseDevice() {
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Remote Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class FSRemoteDevice(private val scope: CoroutineScope) : FSBaseDevice(), RemoteDevice<String> {
-
-    final override val coroutineContext: CoroutineContext get() = scope.coroutineContext
+abstract class FSRemoteDevice(final override val coroutineContext: CoroutineContext) : FSBaseDevice(),
+    RemoteDevice<String> {
 
     final override val networkCommunicator: FSRemoteNetworkCommunicator by lazy(LazyThreadSafetyMode.NONE) {
         FSRemoteNetworkCommunicator(this, buildRouteBindingMap())
     }
 
-    @Volatile
-    private var webSocketSession: WebSocketSession? = null
-
     override val isConnected: Boolean
-        get() = webSocketSession != null
-
-    private suspend fun runWebsocket() {
-        val initialized = CompletableDeferred<Boolean>()
-
-        launch {
-            httpClient.ws(
-                method = HttpMethod.Get,
-                host = hostIp,
-                port = RC.DEFAULT_PORT,
-                path = RC.WEBSOCKET
-            ) {
-                webSocketSession = this
-                logger.debug { "Websocket connection opened for device: ${this@FSRemoteDevice.uid}" }
-
-                initialized.complete(true)
-                try {
-                    incoming.consumeEach { frame ->
-                        if (frame is Frame.Text) {
-                            receiveMessage(frame.readText())
-                            logger.trace { "Received message - ${frame.readText()} - from remote device: $uid" }
-                        }
-                    }
-                } finally {
-                    // TODO: Connection closed.
-                    logger.debug { "Websocket connection closed for device: ${this@FSRemoteDevice.uid}" }
-                }
-            }
-        }
-
-        initialized.await()
-    }
+        get() = networkCommunicator.isConnected
 
 
     override suspend fun connect() {
-        networkCommunicator.start()
-        logger.debug { "Network communicator started for device: ${this.uid}, now running websocket" }
-        runWebsocket()
+        networkCommunicator.startConnection()
     }
 
     override suspend fun disconnect() {
-        webSocketSession?.close()
-        networkCommunicator.stop()
-        webSocketSession = null
-    }
-
-    @Suppress("NAME_SHADOWING")
-    private suspend fun receiveMessage(message: String) {
-        val (route, message) = Json.parse(NetworkMessage.serializer(), message)
-
-        networkCommunicator.receiveMessage(route, message)
-    }
-
-    suspend fun sendMessage(route: String, message: String) {
-        webSocketSession?.send(Frame.Text(NetworkMessage(route, message).serialize()))
-            ?: TODO("Throw specific exception")
+        networkCommunicator.stopConnection()
     }
 
     companion object {

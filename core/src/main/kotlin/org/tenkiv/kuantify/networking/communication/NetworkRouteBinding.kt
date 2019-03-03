@@ -24,116 +24,106 @@ import org.tenkiv.kuantify.hardware.device.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
+typealias RouteBindingConstructor<MT, ST> = (
+    communicator: NetworkCommunicator<ST>,
+    route: String,
+    localUpdateChannel: ReceiveChannel<MT>?,
+    networkUpdateChannel: Channel<ST>?,
+    serializeMessage: MessageSerializer<MT, ST>?,
+    sendsUpdates: Boolean,
+    receiveUpdates: UpdateReceiver<ST>?,
+    serializedPing: ST,
+    isFullyBiDirectional: Boolean
+) -> NetworkRouteBinding<MT, ST>
+
 typealias UpdateReceiver<ST> = suspend (update: ST) -> Unit
 typealias MessageSerializer<MT, ST> = (update: MT) -> ST
 
-sealed class NetworkRouteBinding<MT, ST>(
-    protected val device: NetworkableDevice<ST>,
+abstract class NetworkRouteBinding<MT, ST>(
+    protected val communicator: NetworkCommunicator<ST>,
     val networkUpdateChannel: Channel<ST>?
 ) : CoroutineScope {
 
     final override val coroutineContext: CoroutineContext
-        get() = device.coroutineContext + job
+        get() = communicator.coroutineContext
 
-    @Volatile
-    protected var job = Job(device.coroutineContext[Job])
+    abstract fun start(bindingJob: Job)
 
-    open fun start(job: Job) {
-        this.job = job
+    companion object {
+
+        internal fun throwIllegalStateSend(route: String, device: NetworkableDevice<*>): Nothing {
+            throw IllegalStateException(
+                "Network binding for route: $route on device${device.uid}" +
+                        " is configured to send but has no local update channel."
+            )
+        }
+
+        internal fun throwIllegalStateReceive(route: String, device: NetworkableDevice<*>): Nothing {
+            throw IllegalStateException(
+                "Network binding for route: $route on device${device.uid}" +
+                        " is configured to receive but has no network update channel."
+            )
+        }
+
     }
 
-    class Host<MT, ST>(
-        device: NetworkableDevice<ST>,
-        private val route: String,
-        private val localUpdateChannel: ReceiveChannel<MT>?,
-        networkUpdateChannel: Channel<ST>?,
-        private val serializeMessage: MessageSerializer<MT, ST>?,
-        private val sendUpdatesFromHost: Boolean,
-        private val receiveUpdateOnHost: UpdateReceiver<ST>?,
-        private val serializedPing: ST
-    ) : NetworkRouteBinding<MT, ST>(device, networkUpdateChannel) {
+}
 
-        override fun start(job: Job) {
-            super.start(job)
-            // Send
-            if (sendUpdatesFromHost) {
-                launch {
+class RemoteDeviceRouteBinding<MT, ST>(
+    communicator: NetworkCommunicator<ST>,
+    private val route: String,
+    private val localUpdateChannel: ReceiveChannel<MT>?,
+    networkUpdateChannel: Channel<ST>?,
+    private val serializeMessage: MessageSerializer<MT, ST>?,
+    private val sendUpdatesFromRemote: Boolean,
+    private val receiveUpdateOnRemote: UpdateReceiver<ST>?,
+    private val serializedPing: ST,
+    private val isFullyBiDirectional: Boolean
+) : NetworkRouteBinding<MT, ST>(communicator, networkUpdateChannel) {
+
+    private val ignoreNextUpdate = AtomicBoolean(false)
+
+    override fun start(bindingJob: Job) {
+        // Send
+        if (sendUpdatesFromRemote) {
+            if (isFullyBiDirectional) {
+                launch(bindingJob) {
+                    localUpdateChannel?.consumeEach {
+                        if (!ignoreNextUpdate.get()) {
+                            val message = serializeMessage?.invoke(it) ?: serializedPing
+                            communicator._sendMessage(route, message)
+                        } else {
+                            ignoreNextUpdate.set(false)
+                        }
+                    } ?: throwIllegalStateSend(route, communicator.device)
+                }
+            } else {
+                launch(bindingJob) {
                     localUpdateChannel?.consumeEach {
                         val message = serializeMessage?.invoke(it) ?: serializedPing
-                        device.networkCommunicator._sendMessage(route, message)
-                    } ?: TODO("Throw specific exception")
+                        communicator._sendMessage(route, message)
+                    } ?: throwIllegalStateSend(route, communicator.device)
                 }
             }
+        }
 
-            // Receive
-            if (receiveUpdateOnHost != null) {
-                launch {
+        // Receive
+        if (receiveUpdateOnRemote != null) {
+            if (isFullyBiDirectional) {
+                launch(bindingJob) {
                     networkUpdateChannel?.consumeEach {
-                        receiveUpdateOnHost.invoke(it)
-                    } ?: TODO("Throw specific exception")
+                        ignoreNextUpdate.set(true)
+                        receiveUpdateOnRemote.invoke(it)
+                    } ?: throwIllegalStateReceive(route, communicator.device)
+                }
+            } else {
+                launch(bindingJob) {
+                    networkUpdateChannel?.consumeEach {
+                        receiveUpdateOnRemote.invoke(it)
+                    } ?: throwIllegalStateReceive(route, communicator.device)
                 }
             }
         }
-    }
-
-    class Remote<MT, ST>(
-        device: NetworkableDevice<ST>,
-        private val route: String,
-        private val localUpdateChannel: ReceiveChannel<MT>?,
-        networkUpdateChannel: Channel<ST>?,
-        private val serializeMessage: MessageSerializer<MT, ST>?,
-        private val sendUpdatesFromRemote: Boolean,
-        private val receiveUpdateOnRemote: UpdateReceiver<ST>?,
-        private val isFullyBiDirectional: Boolean,
-        private val serializedPing: ST
-    ) : NetworkRouteBinding<MT, ST>(device, networkUpdateChannel) {
-
-        private val ignoreNextUpdate = AtomicBoolean(false)
-
-        override fun start(job: Job) {
-            super.start(job)
-            // Send
-            if (sendUpdatesFromRemote) {
-                if (isFullyBiDirectional) {
-                    launch {
-                        localUpdateChannel?.consumeEach {
-                            if (!ignoreNextUpdate.get()) {
-                                val message = serializeMessage?.invoke(it) ?: serializedPing
-                                device.networkCommunicator._sendMessage(route, message)
-                            } else {
-                                ignoreNextUpdate.set(false)
-                            }
-                        } ?: TODO("Throw specific exception")
-                    }
-                } else {
-                    launch {
-                        localUpdateChannel?.consumeEach {
-                            val message = serializeMessage?.invoke(it) ?: serializedPing
-                            device.networkCommunicator._sendMessage(route, message)
-                        } ?: TODO("Throw specific exception")
-                    }
-                }
-            }
-
-            // Receive
-            if (receiveUpdateOnRemote != null) {
-                if (isFullyBiDirectional) {
-                    launch {
-                        networkUpdateChannel?.consumeEach {
-                            ignoreNextUpdate.set(true)
-                            receiveUpdateOnRemote.invoke(it)
-                        } ?: TODO("Throw specific exception")
-                    }
-                } else {
-                    launch {
-                        networkUpdateChannel?.consumeEach {
-                            receiveUpdateOnRemote.invoke(it)
-                        } ?: TODO("Throw specific exception")
-                    }
-                }
-            }
-        }
-
     }
 
 }

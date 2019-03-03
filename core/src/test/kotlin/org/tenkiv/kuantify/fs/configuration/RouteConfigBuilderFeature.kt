@@ -25,6 +25,7 @@ import mu.*
 import org.spekframework.spek2.*
 import org.spekframework.spek2.style.gherkin.*
 import org.tenkiv.kuantify.fs.hardware.device.*
+import org.tenkiv.kuantify.fs.networking.communication.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
@@ -104,7 +105,7 @@ object RouteConfigBuilderFeature : Spek({
             }
 
             Then("route binding should be of type host") {
-                assert(configWithLocalDevice.networkRouteBindingMap[networkBindingPath] is NetworkRouteBinding.Host)
+                assert(configWithLocalDevice.networkRouteBindingMap[networkBindingPath] is LocalDeviceRouteBinding)
             }
 
         }
@@ -125,7 +126,7 @@ object RouteConfigBuilderFeature : Spek({
             }
 
             Then("route binding should be of type remote") {
-                assert(configWithRemoteDevice.networkRouteBindingMap[networkBindingPath] is NetworkRouteBinding.Remote)
+                assert(configWithRemoteDevice.networkRouteBindingMap[networkBindingPath] is RemoteDeviceRouteBinding)
             }
 
         }
@@ -137,13 +138,13 @@ object RouteConfigBuilderFeature : Spek({
             SideRouteConfig(
                 localDevice,
                 FSDevice.serializedPing
-            ) { it.toPathString() }
+            ) { formatPathStandard(it) }
         }
         val configWithRemoteDevice by memoized {
             SideRouteConfig(
                 remoteDevice,
                 FSDevice.serializedPing
-            ) { it.toPathString() }
+            ) { formatPathStandard(it) }
         }
 
         val builder by memoized { SideRouteBindingBuilder<String, String>() }
@@ -197,7 +198,7 @@ object RouteConfigBuilderFeature : Spek({
             }
 
             Then("route binding should be of type host") {
-                assert(configWithLocalDevice.networkRouteBindingMap[networkBindingPath] is NetworkRouteBinding.Host)
+                assert(configWithLocalDevice.networkRouteBindingMap[networkBindingPath] is LocalDeviceRouteBinding)
             }
 
         }
@@ -218,7 +219,7 @@ object RouteConfigBuilderFeature : Spek({
             }
 
             Then("route binding should be of type remote") {
-                assert(configWithRemoteDevice.networkRouteBindingMap[networkBindingPath] is NetworkRouteBinding.Remote)
+                assert(configWithRemoteDevice.networkRouteBindingMap[networkBindingPath] is RemoteDeviceRouteBinding)
             }
 
         }
