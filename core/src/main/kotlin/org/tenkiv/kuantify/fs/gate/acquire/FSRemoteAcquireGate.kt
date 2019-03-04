@@ -45,13 +45,13 @@ abstract class FSRemoteAcquireGate<T : DaqcData>(
     override fun sideRouting(routing: SideNetworkRouting<String>) {
         routing.addToThisPath {
 
-            bind<Ping>(RC.START_SAMPLING, isFullyBiDirectional = false) {
+            bind<Ping>(RC.START_SAMPLING) {
                 setLocalUpdateChannel(startSamplingChannel) withUpdateChannel {
                     send()
                 }
             }
 
-            bind<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
+            bind<Ping>(RC.STOP_TRANSCEIVING) {
                 setLocalUpdateChannel(stopTransceivingChannel) withUpdateChannel {
                     send()
                 }

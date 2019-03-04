@@ -35,9 +35,11 @@ val logger = KotlinLogging.logger {}
 object RouteConfigBuilderFeature : Spek({
     val localDevice = mockkClass(LocalDevice::class)
     every { localDevice.coroutineContext } returns GlobalScope.coroutineContext
+    every { localDevice.networkCommunicator } returns mockkClass(LocalNetworkCommunicator::class)
 
     val remoteDevice = mockkClass(FSRemoteDevice::class)
     every { remoteDevice.coroutineContext } returns GlobalScope.coroutineContext
+    every { remoteDevice.networkCommunicator } returns mockkClass(FSRemoteNetworkCommunicator::class)
 
     Feature("CombinedRouteConfig") {
         val configWithLocalDevice by memoized {
@@ -94,7 +96,7 @@ object RouteConfigBuilderFeature : Spek({
 
             When("adding binding to config") {
                 configWithLocalDevice.baseRoute.route("a", "b", "c") {
-                    bind("d", isFullyBiDirectional = true, build = build)
+                    bind("d", build = build)
                 }
             }
 
@@ -104,8 +106,8 @@ object RouteConfigBuilderFeature : Spek({
                 assert(configWithLocalDevice.networkRouteBindingMap.contains(networkBindingPath))
             }
 
-            Then("route binding should be of type host") {
-                assert(configWithLocalDevice.networkRouteBindingMap[networkBindingPath] is LocalDeviceRouteBinding)
+            Then("route binding should be of type standard") {
+                assert(configWithLocalDevice.networkRouteBindingMap[networkBindingPath] is StandardRouteBinding)
             }
 
         }
@@ -115,7 +117,7 @@ object RouteConfigBuilderFeature : Spek({
 
             When("adding binding to config") {
                 configWithRemoteDevice.baseRoute.route("a", "b", "c") {
-                    bind("d", isFullyBiDirectional = true, build = build)
+                    bind("d", build = build)
                 }
             }
 
@@ -125,8 +127,11 @@ object RouteConfigBuilderFeature : Spek({
                 assert(configWithRemoteDevice.networkRouteBindingMap.contains(networkBindingPath))
             }
 
-            Then("route binding should be of type remote") {
-                assert(configWithRemoteDevice.networkRouteBindingMap[networkBindingPath] is RemoteDeviceRouteBinding)
+            Then("route binding should be of type recursion preventing") {
+                assert(
+                    configWithRemoteDevice.networkRouteBindingMap[networkBindingPath]
+                            is RecursionPreventingRouteBinding
+                )
             }
 
         }
@@ -136,15 +141,18 @@ object RouteConfigBuilderFeature : Spek({
     Feature("SideRouteConfig") {
         val configWithLocalDevice by memoized {
             SideRouteConfig(
-                localDevice,
-                FSDevice.serializedPing
-            ) { formatPathStandard(it) }
+                networkCommunicator = localDevice.networkCommunicator,
+                serializedPing = FSDevice.serializedPing,
+                formatPath = ::formatPathStandard
+            )
         }
         val configWithRemoteDevice by memoized {
             SideRouteConfig(
-                remoteDevice,
-                FSDevice.serializedPing
-            ) { formatPathStandard(it) }
+                networkCommunicator = localDevice.networkCommunicator,
+                preventRecursiveMessages = true,
+                serializedPing = FSDevice.serializedPing,
+                formatPath = ::formatPathStandard
+            )
         }
 
         val builder by memoized { SideRouteBindingBuilder<String, String>() }
@@ -187,7 +195,7 @@ object RouteConfigBuilderFeature : Spek({
 
             When("adding binding to config") {
                 configWithLocalDevice.baseRoute.route("a", "b", "c") {
-                    bind("d", isFullyBiDirectional = true, build = build)
+                    bind("d", build = build)
                 }
             }
 
@@ -197,8 +205,8 @@ object RouteConfigBuilderFeature : Spek({
                 assert(configWithLocalDevice.networkRouteBindingMap.contains(networkBindingPath))
             }
 
-            Then("route binding should be of type host") {
-                assert(configWithLocalDevice.networkRouteBindingMap[networkBindingPath] is LocalDeviceRouteBinding)
+            Then("route binding should be of type standard") {
+                assert(configWithLocalDevice.networkRouteBindingMap[networkBindingPath] is StandardRouteBinding)
             }
 
         }
@@ -208,7 +216,7 @@ object RouteConfigBuilderFeature : Spek({
 
             When("adding binding to config") {
                 configWithRemoteDevice.baseRoute.route("a", "b", "c") {
-                    bind("d", isFullyBiDirectional = true, build = build)
+                    bind("d", build = build)
                 }
             }
 
@@ -218,8 +226,11 @@ object RouteConfigBuilderFeature : Spek({
                 assert(configWithRemoteDevice.networkRouteBindingMap.contains(networkBindingPath))
             }
 
-            Then("route binding should be of type remote") {
-                assert(configWithRemoteDevice.networkRouteBindingMap[networkBindingPath] is RemoteDeviceRouteBinding)
+            Then("route binding should be of type recursion preventing") {
+                assert(
+                    configWithRemoteDevice.networkRouteBindingMap[networkBindingPath]
+                            is RecursionPreventingRouteBinding
+                )
             }
 
         }

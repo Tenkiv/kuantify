@@ -20,10 +20,7 @@ package org.tenkiv.kuantify.networking.configuration
 
 import kotlinx.coroutines.channels.*
 import mu.*
-import org.tenkiv.kuantify.fs.hardware.device.*
-import org.tenkiv.kuantify.fs.networking.communication.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
-import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.communication.*
 
 typealias Path = List<String>
@@ -35,7 +32,8 @@ private val logger = KotlinLogging.logger {}
 annotation class SideRouteMarker
 
 class SideRouteConfig<ST>(
-    private val device: NetworkableDevice<ST>,
+    private val networkCommunicator: NetworkCommunicator<ST>,
+    private val preventRecursiveMessages: Boolean = false,
     private val serializedPing: ST,
     private val formatPath: (Path) -> String
 ) {
@@ -45,10 +43,9 @@ class SideRouteConfig<ST>(
     val baseRoute: SideNetworkRouting<ST>
         get() = SideNetworkRouting(this, emptyList())
 
-    @Suppress("NAME_SHADOWING", "UNCHECKED_CAST")
+    @Suppress("NAME_SHADOWING")
     fun <MT> addRouteBinding(
         path: Path,
-        isFullyBiDirectional: Boolean,
         build: SideRouteBindingBuilder<MT, ST>.() -> Unit
     ) {
         val path = formatPath(path)
@@ -67,20 +64,9 @@ class SideRouteConfig<ST>(
             logger.warn { "Overriding side route binding for route $path." }
         }
 
-        networkRouteBindingMap[path] = when (device) {
-            is RemoteDevice -> RemoteDeviceRouteBinding(
-                device.networkCommunicator,
-                path,
-                routeBindingBuilder.localUpdateChannel,
-                networkUpdateChannel,
-                routeBindingBuilder.serializeMessage,
-                routeBindingBuilder.send,
-                routeBindingBuilder.receive,
-                serializedPing,
-                isFullyBiDirectional
-            )
-            is LocalDevice -> LocalDeviceRouteBinding(
-                device.networkCommunicator as NetworkCommunicator<ST>, // Kotlin compiler should be able to infer type
+        networkRouteBindingMap[path] = if (routeBindingBuilder.isFullyBiDirectional && preventRecursiveMessages) {
+            RecursionPreventingRouteBinding(
+                networkCommunicator,
                 path,
                 routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
@@ -89,9 +75,23 @@ class SideRouteConfig<ST>(
                 routeBindingBuilder.receive,
                 serializedPing
             )
-            else -> throw IllegalStateException("Concrete Device must extend either LocalDevice or RemoteDevice")
+        } else {
+            StandardRouteBinding(
+                networkCommunicator,
+                path,
+                routeBindingBuilder.localUpdateChannel,
+                networkUpdateChannel,
+                routeBindingBuilder.serializeMessage,
+                routeBindingBuilder.send,
+                routeBindingBuilder.receive,
+                serializedPing
+            )
         }
     }
+
+
+    private val SideRouteBindingBuilder<*, *>.isFullyBiDirectional
+        get() = send && localUpdateChannel != null && receive != null
 }
 
 @Suppress("NAME_SHADOWING")
@@ -100,22 +100,19 @@ class SideNetworkRouting<ST> internal constructor(private val config: SideRouteC
 
     fun <MT> bind(
         vararg path: String,
-        isFullyBiDirectional: Boolean,
         build: SideRouteBindingBuilder<MT, ST>.() -> Unit
     ) {
-        bind(path.toList(), isFullyBiDirectional, build)
+        bind(path.toList(), build)
     }
 
     fun <MT> bind(
         path: Path,
-        isFullyBiDirectional: Boolean,
         build: SideRouteBindingBuilder<MT, ST>.() -> Unit
     ) {
         val path = this.path + path
 
         config.addRouteBinding(
             path,
-            isFullyBiDirectional = isFullyBiDirectional,
             build = build
         )
     }

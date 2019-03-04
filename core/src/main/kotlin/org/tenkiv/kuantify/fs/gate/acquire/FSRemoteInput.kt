@@ -48,7 +48,7 @@ sealed class FSRemoteInput<T : DaqcValue>(coroutineContext: CoroutineContext, ui
         super.sideRouting(routing)
 
         routing.addToThisPath {
-            bind<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
+            bind<Boolean>(RC.IS_TRANSCEIVING) {
                 receive {
                     val value = Json.parse(BooleanSerializer, it)
                     _isTransceiving.value = value
@@ -74,7 +74,7 @@ abstract class FSRemoteQuantityInput<Q : Quantity<Q>>(coroutineContext: Coroutin
         super.sideRouting(routing)
 
         routing.addToThisPath {
-            bind<QuantityMeasurement<Q>>(RC.VALUE, isFullyBiDirectional = false) {
+            bind<QuantityMeasurement<Q>>(RC.VALUE) {
                 receive {
                     val measurement = Json.parse(ValueInstantSerializer(ComparableQuantitySerializer), it)
                     unsafeUpdate(measurement)
@@ -93,7 +93,7 @@ abstract class FSRemoteBinaryStateInput(coroutineContext: CoroutineContext, uid:
         super.sideRouting(routing)
 
         routing.addToThisPath {
-            bind<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = false) {
+            bind<BinaryStateMeasurement>(RC.VALUE) {
                 receive {
                     val measurement = Json.parse(ValueInstantSerializer(BinaryState.serializer()), it)
                     _updateBroadcaster.offer(measurement)

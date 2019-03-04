@@ -21,7 +21,6 @@ package org.tenkiv.kuantify.fs.networking.configuration
 import kotlinx.coroutines.channels.*
 import mu.*
 import org.tenkiv.kuantify.fs.hardware.device.*
-import org.tenkiv.kuantify.fs.networking.communication.*
 import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
 
@@ -53,7 +52,6 @@ internal class CombinedRouteConfig(private val device: FSBaseDevice) {
     @Suppress("NAME_SHADOWING")
     fun <T> addRouteBinding(
         path: Path,
-        isFullyBiDirectional: Boolean,
         build: CombinedRouteBindingBuilder<T>.() -> Unit
     ) {
         val path = formatPathStandard(path)
@@ -73,23 +71,19 @@ internal class CombinedRouteConfig(private val device: FSBaseDevice) {
 
         val receiveUpdatesOnRemote: FSMessageReceiver? = buildRemoteUpdateReceiver(routeBindingBuilder)
 
+        val isFullyBiDirectional =
+            receiveUpdatesOnHost != null &&
+                    receiveUpdatesOnRemote != null &&
+                    routeBindingBuilder.sendFromRemote &&
+                    routeBindingBuilder.sendFromHost
+
         val currentBinding = networkRouteBindingMap[path]
         if (currentBinding != null) {
             logger.warn { "Overriding combined route binding for route $path." }
         }
 
-        networkRouteBindingMap[path] = when (device) {
-            is LocalDevice -> LocalDeviceRouteBinding(
-                device.networkCommunicator,
-                path,
-                routeBindingBuilder.localUpdateChannel,
-                networkUpdateChannel,
-                routeBindingBuilder.serializeMessage,
-                routeBindingBuilder.sendFromHost,
-                receiveUpdatesOnHost,
-                FSDevice.serializedPing
-            )
-            is FSRemoteDevice -> RemoteDeviceRouteBinding(
+        networkRouteBindingMap[path] = if (device is FSRemoteDevice && isFullyBiDirectional) {
+            RecursionPreventingRouteBinding(
                 device.networkCommunicator,
                 path,
                 routeBindingBuilder.localUpdateChannel,
@@ -97,8 +91,18 @@ internal class CombinedRouteConfig(private val device: FSBaseDevice) {
                 routeBindingBuilder.serializeMessage,
                 routeBindingBuilder.sendFromRemote,
                 receiveUpdatesOnRemote,
-                FSDevice.serializedPing,
-                isFullyBiDirectional
+                FSDevice.serializedPing
+            )
+        } else {
+            StandardRouteBinding(
+                device.networkCommunicator,
+                path,
+                routeBindingBuilder.localUpdateChannel,
+                networkUpdateChannel,
+                routeBindingBuilder.serializeMessage,
+                routeBindingBuilder.sendFromRemote,
+                receiveUpdatesOnRemote,
+                FSDevice.serializedPing
             )
         }
     }
@@ -152,22 +156,19 @@ class CombinedNetworkRouting internal constructor(private val config: CombinedRo
 
     fun <T> bind(
         vararg path: String,
-        isFullyBiDirectional: Boolean,
         build: CombinedRouteBindingBuilder<T>.() -> Unit
     ) {
-        bind(path.toList(), isFullyBiDirectional, build)
+        bind(path.toList(), build)
     }
 
     fun <T> bind(
         path: Path,
-        isFullyBiDirectional: Boolean,
         build: CombinedRouteBindingBuilder<T>.() -> Unit
     ) {
         val path = this.path + path
 
         config.addRouteBinding(
             path,
-            isFullyBiDirectional,
             build
         )
     }

@@ -33,7 +33,7 @@ import javax.measure.quantity.*
 
 internal fun CombinedNetworkRouting.digitalGateRouting(digitalChannel: DigitalGate) {
 
-    bind<ComparableQuantity<Frequency>>(RC.AVG_FREQUENCY, isFullyBiDirectional = true) {
+    bind<ComparableQuantity<Frequency>>(RC.AVG_FREQUENCY) {
         serializeMessage {
             Json.stringify(
                 ComparableQuantitySerializer,
@@ -55,7 +55,7 @@ internal fun CombinedNetworkRouting.digitalGateRouting(digitalChannel: DigitalGa
         }
     }
 
-    bind<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
+    bind<Ping>(RC.STOP_TRANSCEIVING) {
         receivePingOnEither {
             digitalChannel.stopTransceiving()
         }
@@ -66,7 +66,7 @@ internal fun SideNetworkRouting<String>.digitalGateIsTransceivingRemote(
     updatable: Updatable<Boolean>,
     transceivingRC: String
 ) {
-    bind<Boolean>(transceivingRC, isFullyBiDirectional = false) {
+    bind<Boolean>(transceivingRC) {
         receive {
             val value =
                 Json.parse(BooleanSerializer, it)
@@ -79,7 +79,7 @@ internal fun SideNetworkRouting<String>.digitalGateIsTransceivingLocal(
     trackable: Trackable<Boolean>,
     transceivingRC: String
 ) {
-    bind<Boolean>(transceivingRC, isFullyBiDirectional = false) {
+    bind<Boolean>(transceivingRC) {
         serializeMessage {
             Json.stringify(BooleanSerializer, it)
         }

@@ -34,7 +34,7 @@ interface LocalInput<T : DaqcValue> : LocalAcquireGate<T>, Input<T> {
         super.sideRouting(routing)
 
         routing.addToThisPath {
-            bind<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
+            bind<Boolean>(RC.IS_TRANSCEIVING) {
                 serializeMessage {
                     Json.stringify(BooleanSerializer, it)
                 }
@@ -54,7 +54,7 @@ interface LocalQuantityInput<Q : Quantity<Q>> : LocalInput<DaqcQuantity<Q>>,
         super.sideRouting(routing)
 
         routing.addToThisPath {
-            bind<QuantityMeasurement<Q>>(RC.VALUE, isFullyBiDirectional = false) {
+            bind<QuantityMeasurement<Q>>(RC.VALUE) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(ComparableQuantitySerializer), it)
                 }
@@ -74,7 +74,7 @@ interface LocalBinaryStateInput : LocalInput<BinaryState>,
         super.sideRouting(routing)
 
         routing.addToThisPath {
-            bind<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = false) {
+            bind<BinaryStateMeasurement>(RC.VALUE) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(BinaryState.serializer()), it)
                 }

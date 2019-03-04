@@ -35,7 +35,7 @@ import tec.units.indriya.*
 import javax.measure.quantity.*
 
 private inline fun SideNetworkRouting<String>.startSamplingLocal(rc: String, crossinline start: () -> Unit) {
-    bind<Ping>(rc, isFullyBiDirectional = false) {
+    bind<Ping>(rc) {
         receive {
             start()
         }
@@ -43,7 +43,7 @@ private inline fun SideNetworkRouting<String>.startSamplingLocal(rc: String, cro
 }
 
 private fun SideNetworkRouting<String>.startSamplingRemote(rc: String, channel: ReceiveChannel<Ping>) {
-    bind<Ping>(rc, isFullyBiDirectional = false) {
+    bind<Ping>(rc) {
         setLocalUpdateChannel(channel) withUpdateChannel {
             send()
         }
@@ -100,7 +100,7 @@ abstract class LocalDigitalInput : DigitalInput, NetworkBoundSide<String>, Netwo
             startSamplingLocal(RC.START_SAMPLING_PWM, ::startSamplingPwm)
             startSamplingLocal(RC.START_SAMPLING_TRANSITION_FREQUENCY, ::startSamplingTransitionFrequency)
 
-            bind<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = false) {
+            bind<ValueInstant<DigitalValue>>(RC.VALUE) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
                 }
@@ -212,7 +212,7 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkBoundSide<String>, Ne
             startSamplingRemote(RC.START_SAMPLING_PWM, startSamplingPwmChannel)
             startSamplingRemote(RC.START_SAMPLING_BINARY_STATE, startSamplingBinaryStateChannel)
 
-            bind<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = false) {
+            bind<ValueInstant<DigitalValue>>(RC.VALUE) {
                 receive {
                     val measurement = Json.parse(ValueInstantSerializer(DigitalValue.serializer()), it)
                     val (value, instant) = measurement

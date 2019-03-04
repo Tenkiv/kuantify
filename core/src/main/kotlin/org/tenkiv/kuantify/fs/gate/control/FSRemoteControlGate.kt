@@ -41,7 +41,7 @@ abstract class FSRemoteControlGate<T : DaqcData>(
 
         routing.addToThisPath {
 
-            bind<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
+            bind<Ping>(RC.STOP_TRANSCEIVING) {
                 setLocalUpdateChannel(stopTransceivingChannel) withUpdateChannel {
                     send()
                 }

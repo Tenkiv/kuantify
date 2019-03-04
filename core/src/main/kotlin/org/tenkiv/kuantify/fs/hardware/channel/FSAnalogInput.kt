@@ -35,7 +35,7 @@ import javax.measure.quantity.*
 
 internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: AnalogInput) {
 
-    bind<Boolean>(RC.BUFFER, isFullyBiDirectional = true) {
+    bind<Boolean>(RC.BUFFER) {
         serializeMessage {
             Json.stringify(BooleanSerializer, it)
         } withSerializer {
@@ -51,7 +51,7 @@ internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: Anal
         }
     }
 
-    bind<ComparableQuantity<ElectricPotential>>(RC.MAX_ACCEPTABLE_ERROR, isFullyBiDirectional = true) {
+    bind<ComparableQuantity<ElectricPotential>>(RC.MAX_ACCEPTABLE_ERROR) {
         serializeMessage {
             Json.stringify(ComparableQuantitySerializer, it)
         } withSerializer {
@@ -67,7 +67,7 @@ internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: Anal
         }
     }
 
-    bind<ComparableQuantity<ElectricPotential>>(RC.MAX_ELECTRIC_POTENTIAL, isFullyBiDirectional = true) {
+    bind<ComparableQuantity<ElectricPotential>>(RC.MAX_ELECTRIC_POTENTIAL) {
         serializeMessage {
             Json.stringify(ComparableQuantitySerializer, it)
         } withSerializer {

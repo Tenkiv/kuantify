@@ -83,7 +83,7 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkBoundSide<String>, Net
             digitalGateIsTransceivingLocal(isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
             digitalGateIsTransceivingLocal(isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
 
-            bind<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = true) {
+            bind<ValueInstant<DigitalValue>>(RC.VALUE) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
                 }
@@ -181,7 +181,7 @@ abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkBoundSide<String>, 
             digitalGateIsTransceivingRemote(_isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
             digitalGateIsTransceivingRemote(_isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
 
-            bind<ValueInstant<DigitalValue>>(RC.VALUE, isFullyBiDirectional = true) {
+            bind<ValueInstant<DigitalValue>>(RC.VALUE) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
                 }

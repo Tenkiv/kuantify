@@ -52,7 +52,7 @@ sealed class FSRemoteOutput<T : DaqcValue>(coroutineContext: CoroutineContext, u
         super.sideRouting(routing)
 
         routing.addToThisPath {
-            bind<Boolean>(RC.IS_TRANSCEIVING, isFullyBiDirectional = false) {
+            bind<Boolean>(RC.IS_TRANSCEIVING) {
                 receive {
                     val value = Json.parse(BooleanSerializer, it)
                     _isTransceiving.value = value
@@ -72,7 +72,7 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(coroutineContext: Corouti
         super.sideRouting(routing)
 
         routing.addToThisPath {
-            bind<QuantityMeasurement<Q>>(RC.VALUE, isFullyBiDirectional = true) {
+            bind<QuantityMeasurement<Q>>(RC.VALUE) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(ComparableQuantitySerializer), it)
                 }
@@ -103,7 +103,7 @@ abstract class FSRemoteBinaryStateOutput(coroutineContext: CoroutineContext, uid
         //  the command came from another remote but if it comes from this one it will be the time at which it was sent
         //  inconsistency is bad.
         routing.addToThisPath {
-            bind<BinaryStateMeasurement>(RC.VALUE, isFullyBiDirectional = true) {
+            bind<BinaryStateMeasurement>(RC.VALUE) {
                 serializeMessage {
                     Json.stringify(ValueInstantSerializer(BinaryState.serializer()), it)
                 }

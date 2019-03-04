@@ -29,13 +29,13 @@ interface LocalAcquireGate<T : DaqcData> : AcquireGate<T>, NetworkBoundSide<Stri
     override fun sideRouting(routing: SideNetworkRouting<String>) {
 
         routing.addToThisPath {
-            bind<Ping>(RC.START_SAMPLING, isFullyBiDirectional = false) {
+            bind<Ping>(RC.START_SAMPLING) {
                 receive {
                     startSampling()
                 }
             }
 
-            bind<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
+            bind<Ping>(RC.STOP_TRANSCEIVING) {
                 receive {
                     stopTransceiving()
                 }

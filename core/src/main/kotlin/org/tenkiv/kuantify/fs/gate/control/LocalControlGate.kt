@@ -29,7 +29,7 @@ interface LocalControlGate<T : DaqcData> : ControlGate<T>, NetworkBoundSide<Stri
     override fun sideRouting(routing: SideNetworkRouting<String>) {
 
         routing.addToThisPath {
-            bind<Ping>(RC.STOP_TRANSCEIVING, isFullyBiDirectional = false) {
+            bind<Ping>(RC.STOP_TRANSCEIVING) {
                 receive {
                     stopTransceiving()
                 }
