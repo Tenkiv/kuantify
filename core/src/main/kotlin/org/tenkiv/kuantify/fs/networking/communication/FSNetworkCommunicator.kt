@@ -34,9 +34,9 @@ import org.tenkiv.kuantify.networking.communication.*
 private val logger = KotlinLogging.logger {}
 
 class LocalNetworkCommunicator internal constructor(
-    override val device: LocalDevice,
+    val networkable: LocalDevice,
     networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>>
-) : NetworkCommunicator<String>(device.coroutineContext, networkRouteBindingMap) {
+) : NetworkCommunicator<String>(networkable.coroutineContext, networkRouteBindingMap) {
 
     override suspend fun sendMessage(route: String, message: String) {
         ClientHandler.sendToAll(NetworkMessage(route, message).serialize())
@@ -50,12 +50,15 @@ class LocalNetworkCommunicator internal constructor(
         stopBindings()
     }
 
+    override fun toString(): String =
+        "NetworkCommunicator for device: ${networkable.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
+
 }
 
 class FSRemoteNetworkCommunicator internal constructor(
-    override val device: FSRemoteDevice,
+    val networkable: FSRemoteDevice,
     networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>>
-) : NetworkCommunicator<String>(device.coroutineContext, networkRouteBindingMap) {
+) : NetworkCommunicator<String>(networkable.coroutineContext, networkRouteBindingMap) {
 
     @Volatile
     private var webSocketSession: WebSocketSession? = null
@@ -69,12 +72,12 @@ class FSRemoteNetworkCommunicator internal constructor(
         launch {
             httpClient.ws(
                 method = HttpMethod.Get,
-                host = device.hostIp,
+                host = networkable.hostIp,
                 port = RC.DEFAULT_PORT,
                 path = RC.WEBSOCKET
             ) {
                 webSocketSession = this
-                logger.debug { "Websocket connection opened for device: ${device.uid}" }
+                logger.debug { "Websocket connection opened for device: ${networkable.uid}" }
 
                 initialized.complete(true)
                 try {
@@ -82,13 +85,13 @@ class FSRemoteNetworkCommunicator internal constructor(
                         if (frame is Frame.Text) {
                             receiveRawMessage(frame.readText())
                             logger.trace {
-                                "Received message - ${frame.readText()} - from remote device: ${device.uid}"
+                                "Received message - ${frame.readText()} - from remote device: ${networkable.uid}"
                             }
                         }
                     }
                 } finally {
                     // TODO: Connection closed.
-                    logger.debug { "Websocket connection closed for device: ${device.uid}" }
+                    logger.debug { "Websocket connection closed for device: ${networkable.uid}" }
                 }
             }
         }
@@ -111,7 +114,7 @@ class FSRemoteNetworkCommunicator internal constructor(
     internal suspend fun startConnection() {
         startBindings()
         startWebsocket()
-        logger.debug { "Network communicator started for device: ${device.uid}." }
+        logger.debug { "Network communicator started for device: ${networkable.uid}." }
     }
 
     internal suspend fun stopConnection() {
@@ -119,5 +122,8 @@ class FSRemoteNetworkCommunicator internal constructor(
         stopBindings()
         webSocketSession = null
     }
+
+    override fun toString(): String =
+        "NetworkCommunicator for device: ${networkable.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
 
 }

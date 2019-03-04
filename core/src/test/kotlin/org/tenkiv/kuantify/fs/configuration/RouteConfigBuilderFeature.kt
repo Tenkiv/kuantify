@@ -141,14 +141,14 @@ object RouteConfigBuilderFeature : Spek({
     Feature("SideRouteConfig") {
         val configWithLocalDevice by memoized {
             SideRouteConfig(
-                networkCommunicator = localDevice.networkCommunicator,
+                device = localDevice,
                 serializedPing = FSDevice.serializedPing,
                 formatPath = ::formatPathStandard
             )
         }
         val configWithRemoteDevice by memoized {
             SideRouteConfig(
-                networkCommunicator = localDevice.networkCommunicator,
+                device = remoteDevice,
                 preventRecursiveMessages = true,
                 serializedPing = FSDevice.serializedPing,
                 formatPath = ::formatPathStandard

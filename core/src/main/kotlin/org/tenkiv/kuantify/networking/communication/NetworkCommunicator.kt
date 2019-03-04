@@ -20,7 +20,6 @@ package org.tenkiv.kuantify.networking.communication
 
 import kotlinx.coroutines.*
 import mu.*
-import org.tenkiv.kuantify.hardware.device.*
 import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
@@ -34,8 +33,6 @@ abstract class NetworkCommunicator<ST>(
 
     @Volatile
     private var bindingJob: Job = Job(parentJob)
-
-    public abstract val device: NetworkableDevice<ST>
 
     protected fun startBindings() {
         networkRouteBindingMap.values.forEach { it.start(bindingJob) }
@@ -57,7 +54,4 @@ abstract class NetworkCommunicator<ST>(
     private fun newBindingJob() {
         bindingJob = Job(parentJob)
     }
-
-    override fun toString(): String =
-        "NetworkCommunicator for device: ${device.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
 }

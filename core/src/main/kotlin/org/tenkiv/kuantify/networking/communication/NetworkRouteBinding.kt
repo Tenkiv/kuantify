@@ -28,12 +28,14 @@ typealias UpdateReceiver<ST> = suspend (update: ST) -> Unit
 typealias MessageSerializer<MT, ST> = (update: MT) -> ST
 
 abstract class NetworkRouteBinding<MT, ST>(
-    protected val communicator: NetworkCommunicator<ST>,
+    protected val device: NetworkableDevice<ST>,
     val networkUpdateChannel: Channel<ST>?
 ) : CoroutineScope {
 
     final override val coroutineContext: CoroutineContext
-        get() = communicator.coroutineContext
+        get() = device.coroutineContext
+
+    protected val networkCommunicator: NetworkCommunicator<ST> get() = device.networkCommunicator
 
     abstract fun start(bindingJob: Job)
 
@@ -58,7 +60,7 @@ abstract class NetworkRouteBinding<MT, ST>(
 }
 
 class RecursionPreventingRouteBinding<MT, ST>(
-    communicator: NetworkCommunicator<ST>,
+    device: NetworkableDevice<ST>,
     private val route: String,
     private val localUpdateChannel: ReceiveChannel<MT>?,
     networkUpdateChannel: Channel<ST>?,
@@ -66,7 +68,7 @@ class RecursionPreventingRouteBinding<MT, ST>(
     private val sendUpdates: Boolean,
     private val receiveUpdate: UpdateReceiver<ST>?,
     private val serializedPing: ST
-) : NetworkRouteBinding<MT, ST>(communicator, networkUpdateChannel) {
+) : NetworkRouteBinding<MT, ST>(device, networkUpdateChannel) {
 
     private val ignoreNextUpdate = AtomicBoolean(false)
 
@@ -77,11 +79,11 @@ class RecursionPreventingRouteBinding<MT, ST>(
                 localUpdateChannel?.consumeEach {
                     if (!ignoreNextUpdate.get()) {
                         val message = serializeMessage?.invoke(it) ?: serializedPing
-                        communicator._sendMessage(route, message)
+                        networkCommunicator._sendMessage(route, message)
                     } else {
                         ignoreNextUpdate.set(false)
                     }
-                } ?: throwIllegalStateSend(route, communicator.device)
+                } ?: throwIllegalStateSend(route, device)
             }
         }
 
@@ -91,7 +93,7 @@ class RecursionPreventingRouteBinding<MT, ST>(
                 networkUpdateChannel?.consumeEach {
                     ignoreNextUpdate.set(true)
                     receiveUpdate.invoke(it)
-                } ?: throwIllegalStateReceive(route, communicator.device)
+                } ?: throwIllegalStateReceive(route, device)
             }
         }
     }
@@ -99,7 +101,7 @@ class RecursionPreventingRouteBinding<MT, ST>(
 }
 
 class StandardRouteBinding<MT, ST>(
-    communicator: NetworkCommunicator<ST>,
+    device: NetworkableDevice<ST>,
     private val route: String,
     private val localUpdateChannel: ReceiveChannel<MT>?,
     networkUpdateChannel: Channel<ST>?,
@@ -107,7 +109,7 @@ class StandardRouteBinding<MT, ST>(
     private val sendUpdates: Boolean,
     private val receiveUpdate: UpdateReceiver<ST>?,
     private val serializedPing: ST
-) : NetworkRouteBinding<MT, ST>(communicator, networkUpdateChannel) {
+) : NetworkRouteBinding<MT, ST>(device, networkUpdateChannel) {
 
     override fun start(bindingJob: Job) {
         // Send
@@ -115,11 +117,8 @@ class StandardRouteBinding<MT, ST>(
             launch(bindingJob) {
                 localUpdateChannel?.consumeEach {
                     val message = serializeMessage?.invoke(it) ?: serializedPing
-                    communicator._sendMessage(route, message)
-                } ?: throwIllegalStateSend(
-                    route,
-                    communicator.device
-                )
+                    networkCommunicator._sendMessage(route, message)
+                } ?: throwIllegalStateSend(route, device)
             }
         }
 
@@ -128,10 +127,7 @@ class StandardRouteBinding<MT, ST>(
             launch(bindingJob) {
                 networkUpdateChannel?.consumeEach {
                     receiveUpdate.invoke(it)
-                } ?: throwIllegalStateReceive(
-                    route,
-                    communicator.device
-                )
+                } ?: throwIllegalStateReceive(route, device)
             }
         }
     }

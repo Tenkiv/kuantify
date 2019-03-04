@@ -84,7 +84,7 @@ internal class CombinedRouteConfig(private val device: FSBaseDevice) {
 
         networkRouteBindingMap[path] = if (device is FSRemoteDevice && isFullyBiDirectional) {
             RecursionPreventingRouteBinding(
-                device.networkCommunicator,
+                device,
                 path,
                 routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
@@ -95,7 +95,7 @@ internal class CombinedRouteConfig(private val device: FSBaseDevice) {
             )
         } else {
             StandardRouteBinding(
-                device.networkCommunicator,
+                device,
                 path,
                 routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
