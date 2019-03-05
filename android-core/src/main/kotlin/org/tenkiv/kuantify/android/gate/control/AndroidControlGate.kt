@@ -16,45 +16,30 @@
  *
  */
 
-package org.tenkiv.kuantify.android
+package org.tenkiv.kuantify.android.gate.control
 
 import kotlinx.coroutines.*
-import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.android.gate.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.fs.gate.acquire.*
-import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.fs.gate.control.*
+import org.tenkiv.kuantify.gate.control.*
+import org.tenkiv.kuantify.gate.control.output.*
 import javax.measure.*
 import kotlin.reflect.*
 
-typealias QuantityAndroidSensor<Q> = AndroidSensor<DaqcQuantity<Q>>
+typealias AndroidQuantityOutput<Q> = AndroidOutput<DaqcQuantity<Q>>
 
-interface AndroidSensor<T : DaqcValue> : Input<T> {
-    val uid: String
-}
+interface AndroidControlGate<T : DaqcData> : AndroidDaqcGate<T>, ControlGate<T>
 
-class RemoteQuantityAndroidSensor<Q : Quantity<Q>> internal constructor(
+interface AndroidOutput<T : DaqcValue> : AndroidDaqcGate<T>, Output<T>
+
+class AndroidRemoteQuantityOutput<Q : Quantity<Q>>(
     scope: CoroutineScope,
     uid: String,
     override val quantityType: KClass<Q>
-) : FSRemoteQuantityInput<Q>(scope.coroutineContext, uid), QuantityAndroidSensor<Q> {
+) : FSRemoteQuantityOutput<Q>(scope.coroutineContext, uid), AndroidQuantityOutput<Q>
 
-    override val updateRate: UpdateRate by runningAverage()
-}
-
-class RemoteBinaryStateAndroidSensor internal constructor(
+class AndroidRemoteBinaryStateOutput(
     scope: CoroutineScope,
     uid: String
-) : FSRemoteBinaryStateInput(scope.coroutineContext, uid), AndroidSensor<BinaryState> {
-
-    override val updateRate: UpdateRate by runningAverage()
-
-}
-
-object AndroidSensorTypeId {
-    const val AMBIENT_TEMPERATURE = "AT"
-    const val HEART_RATE = "HR"
-    const val LIGHT = "LI"
-    const val PROXIMITY = "PX"
-    const val PRESSURE = "PS"
-    const val RELATIVE_HUMIDITY = "HU"
-}
+) : FSRemoteBinaryStateOutput(scope.coroutineContext, uid), AndroidOutput<BinaryState>

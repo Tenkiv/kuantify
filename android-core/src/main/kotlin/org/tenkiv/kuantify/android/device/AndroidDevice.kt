@@ -16,28 +16,29 @@
  *
  */
 
-package org.tenkiv.kuantify.android
+package org.tenkiv.kuantify.android.device
 
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
+import org.tenkiv.kuantify.android.gate.acquire.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.quantity.*
 
 interface AndroidDevice : FSDevice {
 
-    val ambientTemperatureSensors: List<QuantityAndroidSensor<Temperature>>
+    val ambientTemperatureSensors: List<AndroidQuantityInput<Temperature>>
 
-    val heartRateSensors: List<QuantityAndroidSensor<Frequency>>
+    val heartRateSensors: List<AndroidQuantityInput<Frequency>>
 
-    val lightSensors: List<QuantityAndroidSensor<Illuminance>>
+    val lightSensors: List<AndroidQuantityInput<Illuminance>>
 
-    val proximitySensors: List<QuantityAndroidSensor<Length>>
+    val proximitySensors: List<AndroidQuantityInput<Length>>
 
-    val pressureSensors: List<QuantityAndroidSensor<Pressure>>
+    val pressureSensors: List<AndroidQuantityInput<Pressure>>
 
-    val relativeHumiditySensors: List<QuantityAndroidSensor<Dimensionless>>
+    val relativeHumiditySensors: List<AndroidQuantityInput<Dimensionless>>
 
     @Serializable
     data class Info(
@@ -55,13 +56,14 @@ class RemoteAndroidDevice internal constructor(
     scope: CoroutineScope,
     override val hostIp: String,
     override val uid: String,
-    override val ambientTemperatureSensors: List<RemoteQuantityAndroidSensor<Temperature>>,
-    override val heartRateSensors: List<RemoteQuantityAndroidSensor<Frequency>>,
-    override val lightSensors: List<RemoteQuantityAndroidSensor<Illuminance>>,
-    override val pressureSensors: List<RemoteQuantityAndroidSensor<Pressure>>,
-    override val proximitySensors: List<RemoteQuantityAndroidSensor<Length>>,
-    override val relativeHumiditySensors: List<RemoteQuantityAndroidSensor<Dimensionless>>
-) : FSRemoteDevice(scope.coroutineContext), AndroidDevice {
+    override val ambientTemperatureSensors: List<AndroidRemoteQuantityInput<Temperature>>,
+    override val heartRateSensors: List<AndroidRemoteQuantityInput<Frequency>>,
+    override val lightSensors: List<AndroidRemoteQuantityInput<Illuminance>>,
+    override val pressureSensors: List<AndroidRemoteQuantityInput<Pressure>>,
+    override val proximitySensors: List<AndroidRemoteQuantityInput<Length>>,
+    override val relativeHumiditySensors: List<AndroidRemoteQuantityInput<Dimensionless>>
+) : FSRemoteDevice(scope.coroutineContext),
+    AndroidDevice {
 
     override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
@@ -78,54 +80,54 @@ class RemoteAndroidDevice internal constructor(
 suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDevice {
     val info = Json.parse(AndroidDevice.Info.serializer(), FSRemoteDevice.getInfo(hostIp))
 
-    val ambientTemperatureSensors = ArrayList<RemoteQuantityAndroidSensor<Temperature>>()
+    val ambientTemperatureSensors = ArrayList<AndroidRemoteQuantityInput<Temperature>>()
     for (i in 0 until info.numAmbientTemperatureSensors) {
-        ambientTemperatureSensors += RemoteQuantityAndroidSensor(
+        ambientTemperatureSensors += AndroidRemoteQuantityInput(
             this,
             "${AndroidSensorTypeId.AMBIENT_TEMPERATURE}$i",
             Temperature::class
         )
     }
 
-    val heartRateSensors = ArrayList<RemoteQuantityAndroidSensor<Frequency>>()
+    val heartRateSensors = ArrayList<AndroidRemoteQuantityInput<Frequency>>()
     for (i in 0 until info.numHeartRateSensors) {
-        heartRateSensors += RemoteQuantityAndroidSensor(
+        heartRateSensors += AndroidRemoteQuantityInput(
             this,
             "${AndroidSensorTypeId.HEART_RATE}$i",
             Frequency::class
         )
     }
 
-    val lightSensors = ArrayList<RemoteQuantityAndroidSensor<Illuminance>>()
+    val lightSensors = ArrayList<AndroidRemoteQuantityInput<Illuminance>>()
     for (i in 0 until info.numLightSensors) {
-        lightSensors += RemoteQuantityAndroidSensor(
+        lightSensors += AndroidRemoteQuantityInput(
             this,
             "${AndroidSensorTypeId.LIGHT}$i",
             Illuminance::class
         )
     }
 
-    val pressureSensors = ArrayList<RemoteQuantityAndroidSensor<Pressure>>()
+    val pressureSensors = ArrayList<AndroidRemoteQuantityInput<Pressure>>()
     for (i in 0 until info.numPressureSensors) {
-        pressureSensors += RemoteQuantityAndroidSensor(
+        pressureSensors += AndroidRemoteQuantityInput(
             this,
             "${AndroidSensorTypeId.PRESSURE}$i",
             Pressure::class
         )
     }
 
-    val proximitySensors = ArrayList<RemoteQuantityAndroidSensor<Length>>()
+    val proximitySensors = ArrayList<AndroidRemoteQuantityInput<Length>>()
     for (i in 0 until info.numProximitySensors) {
-        proximitySensors += RemoteQuantityAndroidSensor(
+        proximitySensors += AndroidRemoteQuantityInput(
             this,
             "${AndroidSensorTypeId.PROXIMITY}$i",
             Length::class
         )
     }
 
-    val relativeHumiditySensors = ArrayList<RemoteQuantityAndroidSensor<Dimensionless>>()
+    val relativeHumiditySensors = ArrayList<AndroidRemoteQuantityInput<Dimensionless>>()
     for (i in 0 until info.numRelativeHumiditySensors) {
-        relativeHumiditySensors += RemoteQuantityAndroidSensor(
+        relativeHumiditySensors += AndroidRemoteQuantityInput(
             this,
             "${AndroidSensorTypeId.RELATIVE_HUMIDITY}$i",
             Dimensionless::class

@@ -16,6 +16,9 @@
  *
  */
 
-package org.tenkiv.kuantify.android.output
+package org.tenkiv.kuantify.android.gate.control
 
-//STUB
+class AndroidFlashController {
+
+
+}

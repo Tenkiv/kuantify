@@ -16,7 +16,7 @@
  *
  */
 
-package org.tenkiv.kuantify.android.input
+package org.tenkiv.kuantify.android.gate.acquire
 
 import android.hardware.*
 import org.tenkiv.kuantify.android.device.*
@@ -49,6 +49,7 @@ class LocalAndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: S
 class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Frequency>>(device, sensor, uid),
     LocalQuantityInput<Frequency> {
+
     override val type: Int get() = Sensor.TYPE_HEART_RATE
 
     override fun convertData(data: FloatArray): DaqcQuantity<Frequency> = data[0].beatsPerMinute.toDaqc()

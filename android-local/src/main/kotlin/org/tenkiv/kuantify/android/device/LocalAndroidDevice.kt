@@ -23,23 +23,19 @@ import android.content.*
 import android.hardware.*
 import android.provider.*
 import kotlinx.serialization.json.*
-import org.tenkiv.kuantify.android.*
-import org.tenkiv.kuantify.android.input.*
+import org.tenkiv.kuantify.android.gate.acquire.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.networking.configuration.*
 
 private typealias SensorConstructor<S> = (LocalAndroidDevice, Sensor, String) -> S
 
-open class LocalAndroidDevice internal constructor(context: Context) : LocalDevice(),
-    AndroidDevice {
+open class LocalAndroidDevice internal constructor(context: Context) : LocalDevice(), AndroidDevice {
 
     internal val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
-        ?: throw ClassCastException(
-            "Android has somehow returned the wrong system service; this is not our problem."
-        )
+        ?: throw ClassCastException("Android returned the wrong system service; this is an Android system problem.")
 
-    override val ambientTemperatureSensors: List<LocalAndroidAmbientTemperatureSensor> =
+    final override val ambientTemperatureSensors: List<LocalAndroidAmbientTemperatureSensor> =
         getSensors(
             Sensor.TYPE_AMBIENT_TEMPERATURE,
             AndroidSensorTypeId.AMBIENT_TEMPERATURE
@@ -47,7 +43,7 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
             LocalAndroidAmbientTemperatureSensor(device, sensor, id)
         }
 
-    override val heartRateSensors: List<LocalAndroidHeartRateSensor> =
+    final override val heartRateSensors: List<LocalAndroidHeartRateSensor> =
         getSensors(
             Sensor.TYPE_HEART_RATE,
             AndroidSensorTypeId.HEART_RATE
@@ -55,7 +51,7 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
             LocalAndroidHeartRateSensor(device, sensor, id)
         }
 
-    override val lightSensors: List<LocalAndroidLightSensor> =
+    final override val lightSensors: List<LocalAndroidLightSensor> =
         getSensors(
             Sensor.TYPE_LIGHT,
             AndroidSensorTypeId.LIGHT
@@ -63,7 +59,7 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
             LocalAndroidLightSensor(device, sensor, id)
         }
 
-    override val proximitySensors: List<LocalAndroidProximitySensor> =
+    final override val proximitySensors: List<LocalAndroidProximitySensor> =
         getSensors(
             Sensor.TYPE_PROXIMITY,
             AndroidSensorTypeId.PROXIMITY
@@ -71,7 +67,7 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
             LocalAndroidProximitySensor(device, sensor, id)
         }
 
-    override val pressureSensors: List<LocalAndroidPressureSensor> =
+    final override val pressureSensors: List<LocalAndroidPressureSensor> =
         getSensors(
             Sensor.TYPE_PRESSURE,
             AndroidSensorTypeId.PRESSURE
@@ -79,13 +75,12 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
             LocalAndroidPressureSensor(device, sensor, id)
         }
 
-    override val relativeHumiditySensors: List<LocalAndroidRelativeHumiditySensor> =
-        sensorManager.getDynamicSensorList(Sensor.TYPE_RELATIVE_HUMIDITY).mapIndexed { index, value ->
-            LocalAndroidRelativeHumiditySensor(
-                this,
-                value,
-                "${AndroidSensorTypeId.RELATIVE_HUMIDITY}$index"
-            )
+    final override val relativeHumiditySensors: List<LocalAndroidRelativeHumiditySensor> =
+        getSensors(
+            Sensor.TYPE_RELATIVE_HUMIDITY,
+            AndroidSensorTypeId.RELATIVE_HUMIDITY
+        ) { device, sensor, id ->
+            LocalAndroidRelativeHumiditySensor(device, sensor, id)
         }
 
     private inline fun <T : DaqcValue, S : LocalAndroidSensor<T>> getSensors(
@@ -170,7 +165,7 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
 /**
  * Exceptions thrown by [LocalAndroidSensor]s when a fatal error occurs.
  */
-sealed class AndroidSensorException(error: String) : Exception(error)
+open class AndroidSensorException(error: String) : Exception(error)
 
 /**
  * Class which is thrown when a sensor is improperly initialized.

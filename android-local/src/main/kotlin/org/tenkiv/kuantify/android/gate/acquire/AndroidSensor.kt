@@ -16,14 +16,12 @@
  *
  */
 
-package org.tenkiv.kuantify.android.input
+package org.tenkiv.kuantify.android.gate.acquire
 
 import android.hardware.*
-import android.hardware.SensorManager.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.android.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.gate.acquire.*
@@ -35,12 +33,11 @@ import kotlin.coroutines.*
 /**
  * Class which defines the basic aspects of any Android Sensor.
  */
-@Suppress("LeakingThis")
 abstract class LocalAndroidSensor<T : DaqcValue>(
     val device: LocalAndroidDevice,
     val sensor: Sensor,
-    override val uid: String
-) : AndroidSensor<T>, LocalInput<T> {
+    final override val uid: String
+) : AndroidInput<T>, LocalInput<T> {
 
     private val manager: SensorManager get() = device.sensorManager
 
@@ -49,42 +46,38 @@ abstract class LocalAndroidSensor<T : DaqcValue>(
      */
     abstract val type: Int
 
-    override val basePath: Path = listOf(RC.DAQC_GATE, uid)
+    final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
-    override val coroutineContext: CoroutineContext get() = device.coroutineContext
+    final override val coroutineContext: CoroutineContext get() = device.coroutineContext
 
     private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
     final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = _updateBroadcaster
 
-    override val updateRate: UpdateRate by runningAverage()
-
-    private val _accuracyBroadcastChannel = ConflatedBroadcastChannel<AndroidSensorAccuracy>()
-
-    /**
-     * Channel which broadcasts the current accuracy of the sensor.
-     */
-    val accuracyBroadcastChannel: ConflatedBroadcastChannel<out AndroidSensorAccuracy>
-        get() = _accuracyBroadcastChannel
+    final override val updateRate: UpdateRate by runningAverage()
 
     protected val _isTransceiving = Updatable(false)
     override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
     private val sensorListener = object : SensorEventListener {
+
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
-            _accuracyBroadcastChannel.offer(AndroidSensorAccuracy.getAccuracy(accuracy))
+
         }
 
         override fun onSensorChanged(event: SensorEvent) {
             _updateBroadcaster.offer(convertData(event.values).at(Instant.ofEpochSecond(event.timestamp)))
         }
+
     }
 
     init {
         //This is done as there is only one Android sensor class making compile time safety impossible.
-        if (sensor.type != type)
+        @Suppress("LeakingThis")
+        if (sensor.type != type) {
             throw AndroidSensorInitializationException("Sensor supplied was of the incorrect type.")
+        }
     }
 
     override fun startSampling() {
@@ -104,44 +97,4 @@ abstract class LocalAndroidSensor<T : DaqcValue>(
      * @return The data in the form of a [DaqcValue].
      */
     abstract fun convertData(data: FloatArray): T
-}
-
-/**
- * Enum class wrapper for Android sensor accuracy constants.
- */
-enum class AndroidSensorAccuracy(val flag: Int) {
-    /**
-     * Highly accurate samples
-     */
-    HIGH_ACCURACY(SENSOR_STATUS_ACCURACY_HIGH),
-    /**
-     * Moderately accurate samples
-     */
-    MEDIUM_ACCURACY(SENSOR_STATUS_ACCURACY_MEDIUM),
-    /**
-     * Low accuracy samples.
-     */
-    LOW_ACCURACY(SENSOR_STATUS_ACCURACY_LOW),
-    /**
-     * Extremely unreliable readings.
-     */
-    UNRELIABLE(SENSOR_STATUS_UNRELIABLE),
-    /**
-     * No contact with the sensor.
-     */
-    NO_CONTACT(SENSOR_STATUS_NO_CONTACT),
-    /**
-     * An invalid value.
-     */
-    INVALID(Int.MIN_VALUE);
-
-    companion object {
-        /**
-         * Function which returns the [AndroidSensorAccuracy] given an Android constant value.
-         *
-         * @param flag The Android constant flag.
-         * @return An [AndroidSensorAccuracy] reading. Returns [AndroidSensorAccuracy.INVALID] if value was not found.
-         */
-        fun getAccuracy(flag: Int): AndroidSensorAccuracy = values().firstOrNull { it.flag == flag } ?: INVALID
-    }
 }
