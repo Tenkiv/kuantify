@@ -52,6 +52,7 @@ internal class CombinedRouteConfig(private val device: FSBaseDevice) {
     @Suppress("NAME_SHADOWING")
     fun <T> addRouteBinding(
         path: Path,
+        recursiveSynchronizer: Boolean,
         build: CombinedRouteBindingBuilder<T>.() -> Unit
     ) {
         val path = formatPathStandard(path)
@@ -67,44 +68,47 @@ internal class CombinedRouteConfig(private val device: FSBaseDevice) {
             null
         }
 
-        val receiveUpdatesOnHost: FSMessageReceiver? = buildHostUpdateReceiver(routeBindingBuilder)
-
-        val receiveUpdatesOnRemote: FSMessageReceiver? = buildRemoteUpdateReceiver(routeBindingBuilder)
-
-        val isFullyBiDirectional =
-            receiveUpdatesOnHost != null &&
-                    receiveUpdatesOnRemote != null &&
-                    routeBindingBuilder.sendFromRemote &&
-                    routeBindingBuilder.sendFromHost
-
         val currentBinding = networkRouteBindingMap[path]
         if (currentBinding != null) {
             logger.warn { "Overriding combined route binding for route $path." }
         }
 
-        networkRouteBindingMap[path] = if (device is FSRemoteDevice && isFullyBiDirectional) {
-            RecursionPreventingRouteBinding(
+        networkRouteBindingMap[path] = when (device) {
+            is LocalDevice -> StandardRouteBinding(
                 device,
                 path,
                 routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
                 routeBindingBuilder.serializeMessage,
-                routeBindingBuilder.sendFromRemote,
-                receiveUpdatesOnRemote,
+                routeBindingBuilder.sendFromHost,
+                buildHostUpdateReceiver(routeBindingBuilder),
                 FSDevice.serializedPing
             )
-        } else {
-            StandardRouteBinding(
-                device,
-                path,
-                routeBindingBuilder.localUpdateChannel,
-                networkUpdateChannel,
-                routeBindingBuilder.serializeMessage,
-                routeBindingBuilder.sendFromRemote,
-                receiveUpdatesOnRemote,
-                FSDevice.serializedPing
-            )
+            is FSRemoteDevice -> if (recursiveSynchronizer) {
+                RecursionPreventingRouteBinding(
+                    device,
+                    path,
+                    routeBindingBuilder.localUpdateChannel,
+                    networkUpdateChannel,
+                    routeBindingBuilder.serializeMessage,
+                    routeBindingBuilder.sendFromRemote,
+                    buildRemoteUpdateReceiver(routeBindingBuilder),
+                    FSDevice.serializedPing
+                )
+            } else {
+                StandardRouteBinding(
+                    device,
+                    path,
+                    routeBindingBuilder.localUpdateChannel,
+                    networkUpdateChannel,
+                    routeBindingBuilder.serializeMessage,
+                    routeBindingBuilder.sendFromRemote,
+                    buildRemoteUpdateReceiver(routeBindingBuilder),
+                    FSDevice.serializedPing
+                )
+            }
         }
+
     }
 
     private fun <T> buildHostUpdateReceiver(routeBindingBuilder: CombinedRouteBindingBuilder<T>): FSMessageReceiver? {
@@ -156,19 +160,22 @@ class CombinedNetworkRouting internal constructor(private val config: CombinedRo
 
     fun <T> bind(
         vararg path: String,
+        recursiveSynchronizer: Boolean = false,
         build: CombinedRouteBindingBuilder<T>.() -> Unit
     ) {
-        bind(path.toList(), build)
+        bind(path.toList(), recursiveSynchronizer, build)
     }
 
     fun <T> bind(
         path: Path,
+        recursiveSynchronizer: Boolean = false,
         build: CombinedRouteBindingBuilder<T>.() -> Unit
     ) {
         val path = this.path + path
 
         config.addRouteBinding(
             path,
+            recursiveSynchronizer,
             build
         )
     }

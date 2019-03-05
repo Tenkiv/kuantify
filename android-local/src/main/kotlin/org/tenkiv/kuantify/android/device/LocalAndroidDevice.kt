@@ -21,6 +21,7 @@ package org.tenkiv.kuantify.android.device
 import android.annotation.*
 import android.content.*
 import android.hardware.*
+import android.hardware.camera2.*
 import android.provider.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.android.gate.acquire.*
@@ -33,7 +34,10 @@ private typealias SensorConstructor<S> = (LocalAndroidDevice, Sensor, String) ->
 open class LocalAndroidDevice internal constructor(context: Context) : LocalDevice(), AndroidDevice {
 
     internal val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
-        ?: throw ClassCastException("Android returned the wrong system service; this is an Android system problem.")
+        ?: wrongSystemService()
+
+    internal val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager
+        ?: wrongSystemService()
 
     final override val ambientTemperatureSensors: List<LocalAndroidAmbientTemperatureSensor> =
         getSensors(
@@ -157,6 +161,10 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
                 device = newDevice
                 newDevice
             }
+        }
+
+        private fun wrongSystemService(): Nothing {
+            throw ClassCastException("Android returned the wrong system service; this is an Android system problem.")
         }
     }
 

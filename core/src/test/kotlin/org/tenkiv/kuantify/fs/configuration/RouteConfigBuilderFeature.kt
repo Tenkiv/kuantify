@@ -96,7 +96,7 @@ object RouteConfigBuilderFeature : Spek({
 
             When("adding binding to config") {
                 configWithLocalDevice.baseRoute.route("a", "b", "c") {
-                    bind("d", build = build)
+                    bind("d", recursiveSynchronizer = false, build = build)
                 }
             }
 
@@ -115,9 +115,9 @@ object RouteConfigBuilderFeature : Spek({
         Scenario("adding route binding to remote device config") {
             builder.build()
 
-            When("adding binding to config") {
+            When("adding recursive synchronizer to config") {
                 configWithRemoteDevice.baseRoute.route("a", "b", "c") {
-                    bind("d", build = build)
+                    bind("d", recursiveSynchronizer = true, build = build)
                 }
             }
 
@@ -149,7 +149,6 @@ object RouteConfigBuilderFeature : Spek({
         val configWithRemoteDevice by memoized {
             SideRouteConfig(
                 device = remoteDevice,
-                preventRecursiveMessages = true,
                 serializedPing = FSDevice.serializedPing,
                 formatPath = ::formatPathStandard
             )
@@ -214,9 +213,9 @@ object RouteConfigBuilderFeature : Spek({
         Scenario("adding route binding to remote device config") {
             builder.build()
 
-            When("adding binding to config") {
+            When("adding recursive synchronizer to config") {
                 configWithRemoteDevice.baseRoute.route("a", "b", "c") {
-                    bind("d", build = build)
+                    bind("d", recursiveSynchronizer = true, build = build)
                 }
             }
 

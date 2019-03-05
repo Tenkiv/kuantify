@@ -68,7 +68,7 @@ interface LocalQuantityOutput<Q : Quantity<Q>> : LocalOutput<DaqcQuantity<Q>>,
                 }
 
                 receive {
-                    val value = Json.parse(ValueInstantSerializer(ComparableQuantitySerializer), it).value
+                    val value = Json.parse(ComparableQuantitySerializer, it)
                     val setting = value.asType<Q>(quantityType.java).toDaqc()
 
                     setOutput(setting)
@@ -94,7 +94,7 @@ interface LocalBinaryStateOutput : LocalOutput<BinaryState>, BinaryStateOutput {
                 }
 
                 receive {
-                    val setting = Json.parse(ValueInstantSerializer(BinaryState.serializer()), it).value
+                    val setting = Json.parse(BinaryState.serializer(), it)
 
                     setOutput(setting)
                 }

@@ -34,7 +34,6 @@ annotation class SideRouteMarker
 
 class SideRouteConfig<ST>(
     private val device: NetworkableDevice<ST>,
-    private val preventRecursiveMessages: Boolean = false,
     private val serializedPing: ST,
     private val formatPath: (Path) -> String
 ) {
@@ -47,6 +46,7 @@ class SideRouteConfig<ST>(
     @Suppress("NAME_SHADOWING")
     fun <MT> addRouteBinding(
         path: Path,
+        recursiveSynchronizer: Boolean,
         build: SideRouteBindingBuilder<MT, ST>.() -> Unit
     ) {
         val path = formatPath(path)
@@ -65,7 +65,7 @@ class SideRouteConfig<ST>(
             logger.warn { "Overriding side route binding for route $path." }
         }
 
-        networkRouteBindingMap[path] = if (routeBindingBuilder.isFullyBiDirectional && preventRecursiveMessages) {
+        networkRouteBindingMap[path] = if (recursiveSynchronizer) {
             RecursionPreventingRouteBinding(
                 device,
                 path,
@@ -90,9 +90,6 @@ class SideRouteConfig<ST>(
         }
     }
 
-
-    private val SideRouteBindingBuilder<*, *>.isFullyBiDirectional
-        get() = send && localUpdateChannel != null && receive != null
 }
 
 @Suppress("NAME_SHADOWING")
@@ -101,19 +98,22 @@ class SideNetworkRouting<ST> internal constructor(private val config: SideRouteC
 
     fun <MT> bind(
         vararg path: String,
+        recursiveSynchronizer: Boolean = false,
         build: SideRouteBindingBuilder<MT, ST>.() -> Unit
     ) {
-        bind(path.toList(), build)
+        bind(path.toList(), recursiveSynchronizer, build)
     }
 
     fun <MT> bind(
         path: Path,
+        recursiveSynchronizer: Boolean = false,
         build: SideRouteBindingBuilder<MT, ST>.() -> Unit
     ) {
         val path = this.path + path
 
         config.addRouteBinding(
             path,
+            recursiveSynchronizer,
             build = build
         )
     }

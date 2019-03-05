@@ -29,6 +29,7 @@ import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.configuration.*
+import tec.units.indriya.*
 import javax.measure.*
 import kotlin.coroutines.*
 import kotlin.reflect.*
@@ -40,12 +41,14 @@ sealed class FSRemoteOutput<T : DaqcValue>(coroutineContext: CoroutineContext, u
     final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = _updateBroadcaster
 
+    internal val settingChannel = Channel<T>(Channel.CONFLATED)
+
     internal val _isTransceiving = Updatable(false)
     final override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
     override fun setOutput(setting: T): SettingViability {
-        _updateBroadcaster.offer(setting.now())
+        settingChannel.offer(setting)
         return SettingViability.Viable
     }
 
@@ -64,8 +67,7 @@ sealed class FSRemoteOutput<T : DaqcValue>(coroutineContext: CoroutineContext, u
 }
 
 abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(coroutineContext: CoroutineContext, uid: String) :
-    FSRemoteOutput<DaqcQuantity<Q>>(coroutineContext, uid),
-    QuantityOutput<Q> {
+    FSRemoteOutput<DaqcQuantity<Q>>(coroutineContext, uid), QuantityOutput<Q> {
 
     abstract val quantityType: KClass<Q>
 
@@ -73,12 +75,12 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(coroutineContext: Corouti
         super.sideRouting(routing)
 
         routing.addToThisPath {
-            bind<QuantityMeasurement<Q>>(RC.VALUE) {
+            bind<ComparableQuantity<Q>>(RC.VALUE) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(ComparableQuantitySerializer), it)
+                    Json.stringify(ComparableQuantitySerializer, it)
                 }
 
-                setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
+                setLocalUpdateChannel(settingChannel) withUpdateChannel {
                     send()
                 }
 
@@ -94,22 +96,18 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(coroutineContext: Corouti
 }
 
 abstract class FSRemoteBinaryStateOutput(coroutineContext: CoroutineContext, uid: String) :
-    FSRemoteOutput<BinaryState>(coroutineContext, uid),
-    BinaryStateOutput {
+    FSRemoteOutput<BinaryState>(coroutineContext, uid), BinaryStateOutput {
 
     override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
-        //TODO: This means the time associated with the update will be the time of the update on the local device if
-        //  the command came from another remote but if it comes from this one it will be the time at which it was sent
-        //  inconsistency is bad.
         routing.addToThisPath {
-            bind<BinaryStateMeasurement>(RC.VALUE) {
+            bind<BinaryState>(RC.VALUE) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(BinaryState.serializer()), it)
+                    Json.stringify(BinaryState.serializer(), it)
                 }
 
-                setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
+                setLocalUpdateChannel(settingChannel) withUpdateChannel {
                     send()
                 }
 

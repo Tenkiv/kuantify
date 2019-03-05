@@ -20,6 +20,8 @@ package org.tenkiv.kuantify.networking.communication
 
 import kotlinx.coroutines.*
 import mu.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.hardware.device.*
 import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
@@ -30,6 +32,8 @@ abstract class NetworkCommunicator<ST>(
 ) : CoroutineScope {
 
     private val parentJob: Job? get() = coroutineContext[Job]
+
+    abstract val device: NetworkableDevice<ST>
 
     @Volatile
     private var bindingJob: Job = Job(parentJob)
@@ -56,6 +60,16 @@ abstract class NetworkCommunicator<ST>(
     }
 
     private fun unboundRouteMessage(route: String, message: ST) {
-        logger.debug { "Received message - $message - for unbound route: $route." }
+        criticalDaqcErrorBroadcaster.offer(
+            CriticalDaqcError.FailedMajorCommand(
+                device,
+                "Route not defined for received message."
+            )
+        )
+        logger.error { "Received message - $message - for unbound route: $route." }
     }
+
+    override fun toString(): String =
+        "NetworkCommunicator for device: ${device.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
+
 }

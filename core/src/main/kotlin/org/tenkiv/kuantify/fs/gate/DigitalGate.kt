@@ -33,7 +33,7 @@ import javax.measure.quantity.*
 
 internal fun CombinedNetworkRouting.digitalGateRouting(digitalChannel: DigitalGate) {
 
-    bind<ComparableQuantity<Frequency>>(RC.AVG_FREQUENCY) {
+    bind<ComparableQuantity<Frequency>>(RC.AVG_FREQUENCY, recursiveSynchronizer = true) {
         serializeMessage {
             Json.stringify(
                 ComparableQuantitySerializer,
@@ -55,7 +55,7 @@ internal fun CombinedNetworkRouting.digitalGateRouting(digitalChannel: DigitalGa
         }
     }
 
-    bind<Ping>(RC.STOP_TRANSCEIVING) {
+    bind<Ping>(RC.STOP_TRANSCEIVING, recursiveSynchronizer = false) {
         receivePingOnEither {
             digitalChannel.stopTransceiving()
         }

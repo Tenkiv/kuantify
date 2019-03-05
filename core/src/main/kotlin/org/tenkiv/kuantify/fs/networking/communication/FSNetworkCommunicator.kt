@@ -35,7 +35,7 @@ import org.tenkiv.kuantify.networking.communication.*
 private val logger = KotlinLogging.logger {}
 
 class LocalNetworkCommunicator internal constructor(
-    val device: LocalDevice,
+    override val device: LocalDevice,
     networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>>
 ) : NetworkCommunicator<String>(device.coroutineContext, networkRouteBindingMap) {
 
@@ -51,13 +51,10 @@ class LocalNetworkCommunicator internal constructor(
         stopBindings()
     }
 
-    override fun toString(): String =
-        "NetworkCommunicator for device: ${device.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
-
 }
 
 class FSRemoteNetworkCommunicator internal constructor(
-    val device: FSRemoteDevice,
+    override val device: FSRemoteDevice,
     networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>>
 ) : NetworkCommunicator<String>(device.coroutineContext, networkRouteBindingMap) {
 

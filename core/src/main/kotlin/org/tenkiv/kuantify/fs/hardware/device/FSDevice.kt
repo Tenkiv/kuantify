@@ -60,7 +60,6 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide<String> {
 
         val sideRouteConfig = SideRouteConfig(
             device = this,
-            preventRecursiveMessages = this is FSRemoteDevice,
             serializedPing = serializedPing,
             formatPath = ::formatPathStandard
         )
