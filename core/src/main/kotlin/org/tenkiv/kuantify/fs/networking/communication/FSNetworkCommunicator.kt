@@ -23,6 +23,7 @@ import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.io.*
 import kotlinx.serialization.json.*
 import mu.*
 import org.tenkiv.kuantify.fs.hardware.device.*
@@ -34,9 +35,9 @@ import org.tenkiv.kuantify.networking.communication.*
 private val logger = KotlinLogging.logger {}
 
 class LocalNetworkCommunicator internal constructor(
-    val networkable: LocalDevice,
+    val device: LocalDevice,
     networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>>
-) : NetworkCommunicator<String>(networkable.coroutineContext, networkRouteBindingMap) {
+) : NetworkCommunicator<String>(device.coroutineContext, networkRouteBindingMap) {
 
     override suspend fun sendMessage(route: String, message: String) {
         ClientHandler.sendToAll(NetworkMessage(route, message).serialize())
@@ -51,14 +52,14 @@ class LocalNetworkCommunicator internal constructor(
     }
 
     override fun toString(): String =
-        "NetworkCommunicator for device: ${networkable.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
+        "NetworkCommunicator for device: ${device.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
 
 }
 
 class FSRemoteNetworkCommunicator internal constructor(
-    val networkable: FSRemoteDevice,
+    val device: FSRemoteDevice,
     networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>>
-) : NetworkCommunicator<String>(networkable.coroutineContext, networkRouteBindingMap) {
+) : NetworkCommunicator<String>(device.coroutineContext, networkRouteBindingMap) {
 
     @Volatile
     private var webSocketSession: WebSocketSession? = null
@@ -72,12 +73,12 @@ class FSRemoteNetworkCommunicator internal constructor(
         launch {
             httpClient.ws(
                 method = HttpMethod.Get,
-                host = networkable.hostIp,
+                host = device.hostIp,
                 port = RC.DEFAULT_PORT,
                 path = RC.WEBSOCKET
             ) {
                 webSocketSession = this
-                logger.debug { "Websocket connection opened for device: ${networkable.uid}" }
+                logger.debug { "Websocket connection opened for device: ${device.uid}" }
 
                 initialized.complete(true)
                 try {
@@ -85,13 +86,13 @@ class FSRemoteNetworkCommunicator internal constructor(
                         if (frame is Frame.Text) {
                             receiveRawMessage(frame.readText())
                             logger.trace {
-                                "Received message - ${frame.readText()} - from remote device: ${networkable.uid}"
+                                "Received message - ${frame.readText()} - from remote device: ${device.uid}"
                             }
                         }
                     }
                 } finally {
-                    // TODO: Connection closed.
-                    logger.debug { "Websocket connection closed for device: ${networkable.uid}" }
+                    connectionStopped()
+                    logger.debug { "Websocket connection closed for device: ${device.uid}" }
                 }
             }
         }
@@ -101,7 +102,7 @@ class FSRemoteNetworkCommunicator internal constructor(
 
     override suspend fun sendMessage(route: String, message: String) {
         webSocketSession?.send(Frame.Text(NetworkMessage(route, message).serialize()))
-            ?: TODO("Throw specific exception")
+            ?: attemptMessageWithoutConnection(route, message)
     }
 
     @Suppress("NAME_SHADOWING")
@@ -114,16 +115,24 @@ class FSRemoteNetworkCommunicator internal constructor(
     internal suspend fun startConnection() {
         startBindings()
         startWebsocket()
-        logger.debug { "Network communicator started for device: ${networkable.uid}." }
     }
 
     internal suspend fun stopConnection() {
         webSocketSession?.close()
+    }
+
+    private fun connectionStopped() {
         stopBindings()
         webSocketSession = null
     }
 
+    private fun attemptMessageWithoutConnection(route: String, message: String): Nothing {
+        throw IOException(
+            "Attempted to send message -$message- on route $route to device $device but there is no active connection."
+        )
+    }
+
     override fun toString(): String =
-        "NetworkCommunicator for device: ${networkable.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
+        "NetworkCommunicator for device: ${device.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
 
 }

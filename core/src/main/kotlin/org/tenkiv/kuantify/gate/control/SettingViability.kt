@@ -16,11 +16,10 @@
  *
  */
 
-package org.tenkiv.kuantify.gate.control.output
+package org.tenkiv.kuantify.gate.control
 
 import mu.*
-import org.tenkiv.kuantify.gate.control.*
-import org.tenkiv.kuantify.gate.control.output.SettingViability.*
+import org.tenkiv.kuantify.gate.control.SettingViability.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -61,7 +60,10 @@ open class SettingException(val controlGate: ControlGate<*>, message: String, ca
     Throwable("$controlGate: $message", cause)
 
 class UninitialisedSettingException(controlGate: ControlGate<*>, cause: Throwable? = null) :
-    SettingException(controlGate, message, cause) {
+    SettingException(
+        controlGate,
+        message, cause
+    ) {
 
     companion object {
         private const val message = "Attempted to modify uninitialised setting."
@@ -69,7 +71,10 @@ class UninitialisedSettingException(controlGate: ControlGate<*>, cause: Throwabl
 }
 
 class SettingOutOfRangeException(controlGate: ControlGate<*>, cause: Throwable? = null) :
-    SettingException(controlGate, message, cause) {
+    SettingException(
+        controlGate,
+        message, cause
+    ) {
 
     companion object {
         private const val message = "Attempted setting is out of the allowable range."

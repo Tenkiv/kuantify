@@ -20,7 +20,6 @@ package org.tenkiv.kuantify.gate.control
 
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
-import org.tenkiv.kuantify.gate.control.output.*
 
 interface ControlGate<T : DaqcData> : DaqcGate<T> {
 

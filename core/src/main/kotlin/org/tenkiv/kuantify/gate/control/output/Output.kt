@@ -54,7 +54,11 @@ interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
         return if (setting != null) {
             setOutput(adjustment(setting.value.valueToDouble())(setting.value.unit))
         } else {
-            SettingViability.Unviable(UninitialisedSettingException(this))
+            SettingViability.Unviable(
+                UninitialisedSettingException(
+                    this
+                )
+            )
         }
     }
 
@@ -103,10 +107,18 @@ interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>,
             if (newSetting.toDaqc() in valueRange) {
                 setOutput(setting.value * ratioIncrease)
             } else {
-                SettingViability.Unviable(SettingOutOfRangeException(this))
+                SettingViability.Unviable(
+                    SettingOutOfRangeException(
+                        this
+                    )
+                )
             }
         } else {
-            SettingViability.Unviable(UninitialisedSettingException(this))
+            SettingViability.Unviable(
+                UninitialisedSettingException(
+                    this
+                )
+            )
         }
     }
 
@@ -165,7 +177,11 @@ class RqoAdapter<Q : Quantity<Q>> internal constructor(
     override fun setOutput(setting: DaqcQuantity<Q>): SettingViability {
         val inRange = setting in valueRange
         return if (!inRange) {
-            SettingViability.Unviable(SettingOutOfRangeException(this))
+            SettingViability.Unviable(
+                SettingOutOfRangeException(
+                    this
+                )
+            )
         } else {
             output.setOutput(setting)
         }

@@ -122,11 +122,11 @@ internal object KuantifyHost {
     private suspend fun receiveMessage(clientId: String, message: String) {
         val (route, message) = Json.parse(NetworkMessage.serializer(), message)
 
-        hostedDevice?.receiveNetworkMessage(route, message) ?: deviceNotHosted()
+        hostedDevice?.receiveNetworkMessage(route, message) ?: deviceNotHosted(clientId, message)
     }
 
-    private fun deviceNotHosted() {
-
+    private fun deviceNotHosted(clientId: String, message: String) {
+        logger.debug { "Received message - $message - from client: $clientId but there is no device being hosted." }
     }
 
 }

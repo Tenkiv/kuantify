@@ -44,7 +44,7 @@ abstract class NetworkCommunicator<ST>(
     }
 
     internal suspend fun receiveMessage(route: String, message: ST) {
-        networkRouteBindingMap[route]?.networkUpdateChannel?.send(message) ?: TODO("handle invalid route")
+        networkRouteBindingMap[route]?.networkUpdateChannel?.send(message) ?: unboundRouteMessage(route, message)
     }
 
     protected abstract suspend fun sendMessage(route: String, message: ST)
@@ -53,5 +53,9 @@ abstract class NetworkCommunicator<ST>(
 
     private fun newBindingJob() {
         bindingJob = Job(parentJob)
+    }
+
+    private fun unboundRouteMessage(route: String, message: ST) {
+        logger.debug { "Received message - $message - for unbound route: $route." }
     }
 }
