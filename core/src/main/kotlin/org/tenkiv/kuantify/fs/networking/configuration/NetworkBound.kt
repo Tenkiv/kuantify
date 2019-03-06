@@ -20,6 +20,8 @@ package org.tenkiv.kuantify.fs.networking.configuration
 
 import org.tenkiv.kuantify.networking.configuration.*
 
+typealias CombinedRouting = (CombinedNetworkRouting) -> Unit
+
 interface NetworkBoundCombined {
 
     val basePath: Path

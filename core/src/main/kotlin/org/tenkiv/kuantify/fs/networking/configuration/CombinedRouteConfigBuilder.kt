@@ -43,11 +43,13 @@ public fun formatPathStandard(path: Path): String {
 @DslMarker
 annotation class CombinedRouteMarker
 
-internal class CombinedRouteConfig(private val device: FSBaseDevice) {
+internal class CombinedRouteConfig(private val networkCommunicator: NetworkCommunicator<String>) {
 
     val networkRouteBindingMap = HashMap<String, NetworkRouteBinding<*, String>>()
 
     val baseRoute: CombinedNetworkRouting get() = CombinedNetworkRouting(this, emptyList())
+
+    private val device get() = networkCommunicator.device
 
     @Suppress("NAME_SHADOWING")
     fun <T> addRouteBinding(
@@ -75,7 +77,7 @@ internal class CombinedRouteConfig(private val device: FSBaseDevice) {
 
         networkRouteBindingMap[path] = when (device) {
             is LocalDevice -> StandardRouteBinding(
-                device,
+                networkCommunicator,
                 path,
                 routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
@@ -86,7 +88,7 @@ internal class CombinedRouteConfig(private val device: FSBaseDevice) {
             )
             is FSRemoteDevice -> if (recursiveSynchronizer) {
                 RecursionPreventingRouteBinding(
-                    device,
+                    networkCommunicator,
                     path,
                     routeBindingBuilder.localUpdateChannel,
                     networkUpdateChannel,
@@ -97,7 +99,7 @@ internal class CombinedRouteConfig(private val device: FSBaseDevice) {
                 )
             } else {
                 StandardRouteBinding(
-                    device,
+                    networkCommunicator,
                     path,
                     routeBindingBuilder.localUpdateChannel,
                     networkUpdateChannel,
@@ -107,6 +109,9 @@ internal class CombinedRouteConfig(private val device: FSBaseDevice) {
                     FSDevice.serializedPing
                 )
             }
+            else -> throw IllegalStateException(
+                "Device in CombinedRouteConfig must be either LocalDevice or FSRemoteDevice"
+            )
         }
 
     }

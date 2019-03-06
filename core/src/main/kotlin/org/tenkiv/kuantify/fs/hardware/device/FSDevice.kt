@@ -20,23 +20,22 @@ package org.tenkiv.kuantify.fs.hardware.device
 
 import io.ktor.client.request.*
 import kotlinx.coroutines.*
+import kotlinx.io.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import mu.*
-import org.tenkiv.kuantify.fs.hardware.device.FSDevice.Companion.serializedPing
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.client.*
 import org.tenkiv.kuantify.fs.networking.communication.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.fs.networking.server.*
 import org.tenkiv.kuantify.hardware.device.*
-import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
 import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
 
-interface FSDevice : NetworkableDevice<String>, NetworkBoundCombined {
+interface FSDevice : Device, NetworkBoundCombined {
     override fun combinedRouting(routing: CombinedNetworkRouting) {
 
     }
@@ -54,38 +53,9 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide<String> {
 
     final override val basePath: Path = emptyList()
 
-    internal fun buildRouteBindingMap(): Map<String, NetworkRouteBinding<*, String>> {
-        val combinedNetworkConfig = CombinedRouteConfig(this)
-        combinedRouting(combinedNetworkConfig.baseRoute)
-
-        val sideRouteConfig = SideRouteConfig(
-            device = this,
-            serializedPing = serializedPing,
-            formatPath = ::formatPathStandard
-        )
-        sideRouting(sideRouteConfig.baseRoute)
-
-        val resultRouteBindingMap = combinedNetworkConfig.networkRouteBindingMap
-
-        sideRouteConfig.networkRouteBindingMap.forEach { path, binding ->
-            val currentBinding = resultRouteBindingMap[path]
-            if (currentBinding != null) {
-                logger.warn { "Overriding combined route binding for route $path with side specific binding." }
-            }
-            resultRouteBindingMap[path] = binding
-        }
-
-        return resultRouteBindingMap
-    }
-
-    internal suspend fun receiveNetworkMessage(route: String, message: String) {
-        networkCommunicator.receiveMessage(route, message)
-    }
-
     override fun sideRouting(routing: SideNetworkRouting<String>) {
 
     }
-
 
 }
 
@@ -98,22 +68,28 @@ abstract class LocalDevice : FSBaseDevice() {
     final override val coroutineContext: CoroutineContext
         get() = GlobalScope.coroutineContext
 
-    //TODO: Thread safety
-    final override val networkCommunicator: LocalNetworkCommunicator by lazy(LazyThreadSafetyMode.NONE) {
-        LocalNetworkCommunicator(this, buildRouteBindingMap())
-    }
+    @Volatile
+    private var networkCommunicator: LocalNetworkCommunicator? = null
 
     val isHosting: Boolean
-        get() = KuantifyHost.isHosting
+        get() = KuantifyHost.isHosting && networkCommunicator?.isActive == true
 
     fun startHosting() {
-        networkCommunicator.start()
-        KuantifyHost.startHosting(this)
+        if (!isHosting) {
+            networkCommunicator = LocalNetworkCommunicator(this).apply { init() }
+            KuantifyHost.startHosting(this)
+        }
     }
 
     suspend fun stopHosting() {
         KuantifyHost.stopHosting()
-        networkCommunicator.stop()
+        networkCommunicator?.cancel()
+        networkCommunicator = null
+    }
+
+    internal suspend fun receiveNetworkMessage(route: String, message: String) {
+        networkCommunicator?.receiveMessage(route, message)
+            ?: throw IOException("Attempted to receive message without communicator.")
     }
 
     open fun getInfo(): String {
@@ -126,22 +102,23 @@ abstract class LocalDevice : FSBaseDevice() {
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
 abstract class FSRemoteDevice(final override val coroutineContext: CoroutineContext) : FSBaseDevice(),
-    RemoteDevice<String> {
+    RemoteDevice {
 
-    final override val networkCommunicator: FSRemoteNetworkCommunicator by lazy(LazyThreadSafetyMode.NONE) {
-        FSRemoteNetworkCommunicator(this, buildRouteBindingMap())
-    }
+    @Volatile
+    private var networkCommunicator: FSRemoteNetworkCommunicator? = null
 
     override val isConnected: Boolean
-        get() = networkCommunicator.isConnected
-
+        get() = networkCommunicator?.isActive == true
 
     override suspend fun connect() {
-        networkCommunicator.startConnection()
+        if (!isConnected) {
+            networkCommunicator = FSRemoteNetworkCommunicator(this).apply { init() }
+        }
     }
 
     override suspend fun disconnect() {
-        networkCommunicator.stopConnection()
+        networkCommunicator?.cancel()
+        networkCommunicator = null
     }
 
     companion object {

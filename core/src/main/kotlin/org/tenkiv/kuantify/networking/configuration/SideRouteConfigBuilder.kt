@@ -21,7 +21,6 @@ package org.tenkiv.kuantify.networking.configuration
 import kotlinx.coroutines.channels.*
 import mu.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
-import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.communication.*
 
 typealias Path = List<String>
@@ -33,7 +32,7 @@ private val logger = KotlinLogging.logger {}
 annotation class SideRouteMarker
 
 class SideRouteConfig<ST>(
-    private val device: NetworkableDevice<ST>,
+    private val networkCommunicator: NetworkCommunicator<ST>,
     private val serializedPing: ST,
     private val formatPath: (Path) -> String
 ) {
@@ -67,7 +66,7 @@ class SideRouteConfig<ST>(
 
         networkRouteBindingMap[path] = if (recursiveSynchronizer) {
             RecursionPreventingRouteBinding(
-                device,
+                networkCommunicator,
                 path,
                 routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,
@@ -78,7 +77,7 @@ class SideRouteConfig<ST>(
             )
         } else {
             StandardRouteBinding(
-                device,
+                networkCommunicator,
                 path,
                 routeBindingBuilder.localUpdateChannel,
                 networkUpdateChannel,

@@ -19,7 +19,6 @@
 package org.tenkiv.kuantify.hardware.device
 
 import kotlinx.coroutines.*
-import org.tenkiv.kuantify.networking.communication.*
 
 /**
  * The interface defining the basic aspects of all devices.
@@ -27,11 +26,5 @@ import org.tenkiv.kuantify.networking.communication.*
 interface Device : CoroutineScope {
 
     val uid: String
-
-}
-
-interface NetworkableDevice<ST> : Device {
-
-    val networkCommunicator: NetworkCommunicator<ST>
 
 }

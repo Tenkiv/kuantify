@@ -22,29 +22,36 @@ import kotlinx.coroutines.*
 import mu.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.hardware.device.*
+import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
 
 abstract class NetworkCommunicator<ST>(
-    final override val coroutineContext: CoroutineContext,
-    protected val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, ST>>
+    device: Device
 ) : CoroutineScope {
 
-    private val parentJob: Job? get() = coroutineContext[Job]
+    protected val job = Job(device.coroutineContext[Job])
 
-    abstract val device: NetworkableDevice<ST>
+    final override val coroutineContext: CoroutineContext = device.coroutineContext + job
 
-    @Volatile
-    private var bindingJob: Job = Job(parentJob)
+    private val bindingsInitialized = AtomicBoolean(false)
 
-    protected fun startBindings() {
-        networkRouteBindingMap.values.forEach { it.start(bindingJob) }
+    protected abstract val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, ST>>
+
+    public abstract val device: Device
+
+    protected fun initBindings() {
+        if (!bindingsInitialized.get()) {
+            networkRouteBindingMap.values.forEach { it.start() }
+            bindingsInitialized.set(true)
+        } else {
+            logger.debug { "Attempted to initialize - $this - multiple times." }
+        }
     }
 
-    protected fun stopBindings() {
-        bindingJob.cancel()
-        bindingJob = Job(parentJob)
+    protected fun cancelCoroutines() {
+        job.cancel()
     }
 
     internal suspend fun receiveMessage(route: String, message: ST) {
@@ -54,10 +61,6 @@ abstract class NetworkCommunicator<ST>(
     protected abstract suspend fun sendMessage(route: String, message: ST)
 
     internal suspend fun _sendMessage(route: String, message: ST) = sendMessage(route, message)
-
-    private fun newBindingJob() {
-        bindingJob = Job(parentJob)
-    }
 
     private fun unboundRouteMessage(route: String, message: ST) {
         criticalDaqcErrorBroadcaster.offer(

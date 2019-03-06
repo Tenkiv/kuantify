@@ -19,6 +19,8 @@
 package org.tenkiv.kuantify.networking.configuration
 
 typealias NetworkBound<ST> = NetworkBoundSide<ST>
+typealias SideRouting<ST> = (SideNetworkRouting<ST>) -> Unit
+typealias Routing<ST> = SideRouting<ST>
 
 interface NetworkBoundSide<ST> {
 

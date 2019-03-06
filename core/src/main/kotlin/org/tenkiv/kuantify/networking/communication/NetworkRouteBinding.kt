@@ -28,27 +28,25 @@ typealias UpdateReceiver<ST> = suspend (update: ST) -> Unit
 typealias MessageSerializer<MT, ST> = (update: MT) -> ST
 
 abstract class NetworkRouteBinding<MT, ST>(
-    protected val device: NetworkableDevice<ST>,
+    protected val networkCommunicator: NetworkCommunicator<ST>,
     val networkUpdateChannel: Channel<ST>?
 ) : CoroutineScope {
 
     final override val coroutineContext: CoroutineContext
-        get() = device.coroutineContext
+        get() = networkCommunicator.coroutineContext
 
-    protected val networkCommunicator: NetworkCommunicator<ST> get() = device.networkCommunicator
-
-    abstract fun start(bindingJob: Job)
+    abstract fun start()
 
     companion object {
 
-        internal fun throwIllegalStateSend(route: String, device: NetworkableDevice<*>): Nothing {
+        internal fun throwIllegalStateSend(route: String, device: Device): Nothing {
             throw IllegalStateException(
                 "Network binding for route: $route on device${device.uid}" +
                         " is configured to send but has no local update channel."
             )
         }
 
-        internal fun throwIllegalStateReceive(route: String, device: NetworkableDevice<*>): Nothing {
+        internal fun throwIllegalStateReceive(route: String, device: Device): Nothing {
             throw IllegalStateException(
                 "Network binding for route: $route on device${device.uid}" +
                         " is configured to receive but has no network update channel."
@@ -60,7 +58,7 @@ abstract class NetworkRouteBinding<MT, ST>(
 }
 
 class RecursionPreventingRouteBinding<MT, ST>(
-    device: NetworkableDevice<ST>,
+    networkCommunicator: NetworkCommunicator<ST>,
     private val route: String,
     private val localUpdateChannel: ReceiveChannel<MT>?,
     networkUpdateChannel: Channel<ST>?,
@@ -68,14 +66,14 @@ class RecursionPreventingRouteBinding<MT, ST>(
     private val sendUpdates: Boolean,
     private val receiveUpdate: UpdateReceiver<ST>?,
     private val serializedPing: ST
-) : NetworkRouteBinding<MT, ST>(device, networkUpdateChannel) {
+) : NetworkRouteBinding<MT, ST>(networkCommunicator, networkUpdateChannel) {
 
     private val ignoreNextUpdate = AtomicBoolean(false)
 
-    override fun start(bindingJob: Job) {
+    override fun start() {
         // Send
         if (sendUpdates) {
-            launch(bindingJob) {
+            launch {
                 localUpdateChannel?.consumeEach {
                     if (!ignoreNextUpdate.get()) {
                         val message = serializeMessage?.invoke(it) ?: serializedPing
@@ -83,17 +81,17 @@ class RecursionPreventingRouteBinding<MT, ST>(
                     } else {
                         ignoreNextUpdate.set(false)
                     }
-                } ?: throwIllegalStateSend(route, device)
+                } ?: throwIllegalStateSend(route, networkCommunicator.device)
             }
         }
 
         // Receive
         if (receiveUpdate != null) {
-            launch(bindingJob) {
+            launch {
                 networkUpdateChannel?.consumeEach {
                     ignoreNextUpdate.set(true)
                     receiveUpdate.invoke(it)
-                } ?: throwIllegalStateReceive(route, device)
+                } ?: throwIllegalStateReceive(route, networkCommunicator.device)
             }
         }
     }
@@ -101,7 +99,7 @@ class RecursionPreventingRouteBinding<MT, ST>(
 }
 
 class StandardRouteBinding<MT, ST>(
-    device: NetworkableDevice<ST>,
+    networkCommunicator: NetworkCommunicator<ST>,
     private val route: String,
     private val localUpdateChannel: ReceiveChannel<MT>?,
     networkUpdateChannel: Channel<ST>?,
@@ -109,25 +107,25 @@ class StandardRouteBinding<MT, ST>(
     private val sendUpdates: Boolean,
     private val receiveUpdate: UpdateReceiver<ST>?,
     private val serializedPing: ST
-) : NetworkRouteBinding<MT, ST>(device, networkUpdateChannel) {
+) : NetworkRouteBinding<MT, ST>(networkCommunicator, networkUpdateChannel) {
 
-    override fun start(bindingJob: Job) {
+    override fun start() {
         // Send
         if (sendUpdates) {
-            launch(bindingJob) {
+            launch {
                 localUpdateChannel?.consumeEach {
                     val message = serializeMessage?.invoke(it) ?: serializedPing
                     networkCommunicator._sendMessage(route, message)
-                } ?: throwIllegalStateSend(route, device)
+                } ?: throwIllegalStateSend(route, networkCommunicator.device)
             }
         }
 
         // Receive
         if (receiveUpdate != null) {
-            launch(bindingJob) {
+            launch {
                 networkUpdateChannel?.consumeEach {
                     receiveUpdate.invoke(it)
-                } ?: throwIllegalStateReceive(route, device)
+                } ?: throwIllegalStateReceive(route, networkCommunicator.device)
             }
         }
     }

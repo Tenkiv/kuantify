@@ -22,7 +22,7 @@ package org.tenkiv.kuantify.hardware.device
  * Interface defining the basic features of a device that can be connected to. This is in most cases a device located
  * across a network or serial connection.
  */
-interface RemoteDevice<ST> : NetworkableDevice<ST> {
+interface RemoteDevice : Device {
 
     val hostIp: String
 

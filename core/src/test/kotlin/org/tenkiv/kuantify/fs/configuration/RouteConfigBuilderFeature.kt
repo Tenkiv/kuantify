@@ -35,21 +35,25 @@ val logger = KotlinLogging.logger {}
 object RouteConfigBuilderFeature : Spek({
     val localDevice = mockkClass(LocalDevice::class)
     every { localDevice.coroutineContext } returns GlobalScope.coroutineContext
-    every { localDevice.networkCommunicator } returns mockkClass(LocalNetworkCommunicator::class)
+
+    val localNetworkCommunicator = mockkClass(LocalNetworkCommunicator::class)
+    every { localNetworkCommunicator.device } returns localDevice
 
     val remoteDevice = mockkClass(FSRemoteDevice::class)
     every { remoteDevice.coroutineContext } returns GlobalScope.coroutineContext
-    every { remoteDevice.networkCommunicator } returns mockkClass(FSRemoteNetworkCommunicator::class)
+
+    val remoteNetworkCommunicator = mockkClass(FSRemoteNetworkCommunicator::class)
+    every { remoteNetworkCommunicator.device } returns remoteDevice
 
     Feature("CombinedRouteConfig") {
         val configWithLocalDevice by memoized {
             CombinedRouteConfig(
-                localDevice
+                localNetworkCommunicator
             )
         }
         val configWithRemoteDevice by memoized {
             CombinedRouteConfig(
-                remoteDevice
+                remoteNetworkCommunicator
             )
         }
 
@@ -141,14 +145,14 @@ object RouteConfigBuilderFeature : Spek({
     Feature("SideRouteConfig") {
         val configWithLocalDevice by memoized {
             SideRouteConfig(
-                device = localDevice,
+                networkCommunicator = localNetworkCommunicator,
                 serializedPing = FSDevice.serializedPing,
                 formatPath = ::formatPathStandard
             )
         }
         val configWithRemoteDevice by memoized {
             SideRouteConfig(
-                device = remoteDevice,
+                networkCommunicator = remoteNetworkCommunicator,
                 serializedPing = FSDevice.serializedPing,
                 formatPath = ::formatPathStandard
             )

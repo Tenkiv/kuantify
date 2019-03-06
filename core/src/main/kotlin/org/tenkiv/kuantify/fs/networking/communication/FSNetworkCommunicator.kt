@@ -29,40 +29,68 @@ import mu.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.client.*
+import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.fs.networking.server.*
 import org.tenkiv.kuantify.networking.communication.*
+import org.tenkiv.kuantify.networking.configuration.*
 
 private val logger = KotlinLogging.logger {}
 
+private fun NetworkCommunicator<String>.buildFSRouteBindingMap(
+    device: FSBaseDevice
+): Map<String, NetworkRouteBinding<*, String>> {
+    val combinedNetworkConfig = CombinedRouteConfig(this)
+    device.combinedRouting(combinedNetworkConfig.baseRoute)
+
+    val sideRouteConfig = SideRouteConfig(
+        networkCommunicator = this,
+        serializedPing = FSDevice.serializedPing,
+        formatPath = ::formatPathStandard
+    )
+    device.sideRouting(sideRouteConfig.baseRoute)
+
+    val resultRouteBindingMap = combinedNetworkConfig.networkRouteBindingMap
+
+    sideRouteConfig.networkRouteBindingMap.forEach { path, binding ->
+        val currentBinding = resultRouteBindingMap[path]
+        if (currentBinding != null) {
+            logger.warn { "Overriding combined route binding for route $path with side specific binding." }
+        }
+        resultRouteBindingMap[path] = binding
+    }
+
+    return resultRouteBindingMap
+}
+
 class LocalNetworkCommunicator internal constructor(
-    override val device: LocalDevice,
-    networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>>
-) : NetworkCommunicator<String>(device.coroutineContext, networkRouteBindingMap) {
+    override val device: LocalDevice
+) : NetworkCommunicator<String>(device) {
+
+    override val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>> = buildFSRouteBindingMap(device)
 
     override suspend fun sendMessage(route: String, message: String) {
         ClientHandler.sendToAll(NetworkMessage(route, message).serialize())
     }
 
-    internal fun start() {
-        startBindings()
+    internal fun init() {
+        initBindings()
     }
 
-    internal fun stop() {
-        stopBindings()
+    //TODO: May want to terminate all connections.
+    internal fun cancel() {
+        cancelCoroutines()
     }
 
 }
 
 class FSRemoteNetworkCommunicator internal constructor(
-    override val device: FSRemoteDevice,
-    networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>>
-) : NetworkCommunicator<String>(device.coroutineContext, networkRouteBindingMap) {
+    override val device: FSRemoteDevice
+) : NetworkCommunicator<String>(device) {
+
+    override val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>> = buildFSRouteBindingMap(device)
 
     @Volatile
     private var webSocketSession: WebSocketSession? = null
-
-    internal val isConnected: Boolean
-        get() = webSocketSession != null
 
     private suspend fun startWebsocket() {
         val initialized = CompletableDeferred<Boolean>()
@@ -109,17 +137,17 @@ class FSRemoteNetworkCommunicator internal constructor(
         receiveMessage(route, message)
     }
 
-    internal suspend fun startConnection() {
-        startBindings()
+    internal suspend fun init() {
+        initBindings()
         startWebsocket()
     }
 
-    internal suspend fun stopConnection() {
+    internal suspend fun cancel() {
         webSocketSession?.close()
     }
 
     private fun connectionStopped() {
-        stopBindings()
+        cancelCoroutines()
         webSocketSession = null
     }
 
