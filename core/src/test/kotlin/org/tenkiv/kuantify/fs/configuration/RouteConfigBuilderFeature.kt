@@ -42,7 +42,7 @@ object RouteConfigBuilderFeature : Spek({
     val remoteDevice = mockkClass(FSRemoteDevice::class)
     every { remoteDevice.coroutineContext } returns GlobalScope.coroutineContext
 
-    val remoteNetworkCommunicator = mockkClass(FSRemoteNetworkCommunicator::class)
+    val remoteNetworkCommunicator = mockkClass(FSRemoteWebsocketCommunicator::class)
     every { remoteNetworkCommunicator.device } returns remoteDevice
 
     Feature("CombinedRouteConfig") {

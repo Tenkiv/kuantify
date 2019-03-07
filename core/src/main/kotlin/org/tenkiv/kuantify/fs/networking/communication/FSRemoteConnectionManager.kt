@@ -83,11 +83,21 @@ class LocalNetworkCommunicator internal constructor(
 
 }
 
-class FSRemoteNetworkCommunicator internal constructor(
-    override val device: FSRemoteDevice
-) : NetworkCommunicator<String>(device) {
+abstract class FSRemoteNetworkCommunictor(final override val device: FSRemoteDevice) :
+    NetworkCommunicator<String>(device) {
 
-    override val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>> = buildFSRouteBindingMap(device)
+    final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>> =
+        buildFSRouteBindingMap(device)
+
+    internal abstract suspend fun init()
+
+    internal abstract suspend fun cancel()
+
+}
+
+class FSRemoteWebsocketCommunicator internal constructor(
+    device: FSRemoteDevice
+) : FSRemoteNetworkCommunictor(device) {
 
     @Volatile
     private var webSocketSession: WebSocketSession? = null
@@ -137,12 +147,12 @@ class FSRemoteNetworkCommunicator internal constructor(
         receiveMessage(route, message)
     }
 
-    internal suspend fun init() {
+    internal override suspend fun init() {
         initBindings()
         startWebsocket()
     }
 
-    internal suspend fun cancel() {
+    internal override suspend fun cancel() {
         webSocketSession?.close()
     }
 
@@ -157,7 +167,18 @@ class FSRemoteNetworkCommunicator internal constructor(
         )
     }
 
-    override fun toString(): String =
-        "NetworkCommunicator for device: ${device.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
+}
+
+class FSRemoteNoConnectionCommunicator(device: FSRemoteDevice) : FSRemoteNetworkCommunictor(device) {
+
+    override suspend fun init() {
+        initBindings()
+    }
+
+    override suspend fun cancel() {
+        job.cancel()
+    }
+
+    override suspend fun sendMessage(route: String, message: String) = noConnectionSendError(route, message)
 
 }

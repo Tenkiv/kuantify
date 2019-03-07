@@ -76,3 +76,11 @@ abstract class NetworkCommunicator<ST>(
         "NetworkCommunicator for device: ${device.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
 
 }
+
+suspend fun <ST> NetworkCommunicator<ST>.noConnectionSendError(route: String, message: ST) {
+    val errorMsg = "Attempted to send message -$message- on route" +
+            " $route to device $device but there is no active connection."
+
+    criticalDaqcErrorBroadcaster.send(CriticalDaqcError.FailedMajorCommand(device, errorMsg))
+    logger.error { errorMsg }
+}

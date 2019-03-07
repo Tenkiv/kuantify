@@ -24,6 +24,7 @@ import kotlinx.io.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import mu.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.client.*
 import org.tenkiv.kuantify.fs.networking.communication.*
@@ -101,24 +102,35 @@ abstract class LocalDevice : FSBaseDevice() {
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Remote Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class FSRemoteDevice(final override val coroutineContext: CoroutineContext) : FSBaseDevice(),
-    RemoteDevice {
+abstract class FSRemoteDevice protected constructor(final override val coroutineContext: CoroutineContext) :
+    FSBaseDevice(), RemoteDevice {
 
+    //TODO: Try to think of a more clean solution than lateinit
     @Volatile
-    private var networkCommunicator: FSRemoteNetworkCommunicator? = null
+    private lateinit var networkCommunicator: FSRemoteNetworkCommunictor
 
-    override val isConnected: Boolean
-        get() = networkCommunicator?.isActive == true
+    private val _isConnected = Updatable(false)
+    override val isConnected: InitializedTrackable<Boolean> get() = _isConnected
 
     override suspend fun connect() {
-        if (!isConnected) {
-            networkCommunicator = FSRemoteNetworkCommunicator(this).apply { init() }
+        if (!isConnected.value) {
+            networkCommunicator = FSRemoteWebsocketCommunicator(this).apply { init() }
+            _isConnected.value = true
         }
     }
 
     override suspend fun disconnect() {
-        networkCommunicator?.cancel()
-        networkCommunicator = null
+        onDisconnect()
+    }
+
+    private suspend fun onDisconnect() {
+        _isConnected.value = false
+        networkCommunicator.cancel()
+        networkCommunicator = FSRemoteNoConnectionCommunicator(this).apply { init() }
+    }
+
+    protected suspend fun init(connect: Boolean = false) {
+        if (connect) connect() else networkCommunicator = FSRemoteNoConnectionCommunicator(this).apply { init() }
     }
 
     companion object {

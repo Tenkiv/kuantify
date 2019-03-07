@@ -18,6 +18,8 @@
 
 package org.tenkiv.kuantify.hardware.device
 
+import org.tenkiv.kuantify.*
+
 /**
  * Interface defining the basic features of a device that can be connected to. This is in most cases a device located
  * across a network or serial connection.
@@ -28,11 +30,8 @@ interface RemoteDevice : Device {
 
     /**
      * Value representing if the Device is connected.
-     *
-     * Implementing backing  field must be atomic or otherwise provide safety for
-     * reads from multiple threads.
      */
-    val isConnected: Boolean
+    val isConnected: InitializedTrackable<Boolean>
 
     suspend fun connect()
 
