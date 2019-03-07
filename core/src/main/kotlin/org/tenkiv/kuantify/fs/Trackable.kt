@@ -27,11 +27,18 @@ import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
+import kotlin.properties.*
 import kotlin.reflect.*
 
-class FSConfiguredUpdateRate(private val input: FSRemoteInput<*>) {
+fun FSRemoteAcquireGate<*>.configuredUpdateRateDelegate(): FSRemoteConfiguredUpdateRateDelegate =
+    FSRemoteConfiguredUpdateRateDelegate(this)
 
-    private val updateRate = input.Updatable<ComparableQuantity<Frequency>>()
+class FSRemoteConfiguredUpdateRateDelegate internal constructor(acquireGate: FSRemoteAcquireGate<*>) :
+    ReadOnlyProperty<FSRemoteAcquireGate<*>, UpdateRate.Configured> {
+
+    private val updatable = acquireGate.Updatable<ComparableQuantity<Frequency>>()
+
+    private val updateRate = UpdateRate.Configured(updatable)
 
     fun addToRoute(routing: SideNetworkRouting<String>) {
         routing.bind<ComparableQuantity<Frequency>>(RC.UPDATE_RATE) {
@@ -40,11 +47,12 @@ class FSConfiguredUpdateRate(private val input: FSRemoteInput<*>) {
                     ComparableQuantitySerializer,
                     it
                 ).asType<Frequency>()
-                updateRate.set(value)
+                updatable.set(value)
             }
         }
     }
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): UpdateRate.Configured =
-        UpdateRate.Configured(updateRate)
+    override fun getValue(thisRef: FSRemoteAcquireGate<*>, property: KProperty<*>): UpdateRate.Configured =
+        updateRate
+
 }

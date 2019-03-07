@@ -89,8 +89,6 @@ abstract class FSRemoteNetworkCommunictor(final override val device: FSRemoteDev
     final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>> =
         buildFSRouteBindingMap(device)
 
-    internal abstract suspend fun init()
-
     internal abstract suspend fun cancel()
 
 }
@@ -147,7 +145,7 @@ class FSRemoteWebsocketCommunicator internal constructor(
         receiveMessage(route, message)
     }
 
-    internal override suspend fun init() {
+    internal suspend fun init() {
         initBindings()
         startWebsocket()
     }
@@ -171,7 +169,7 @@ class FSRemoteWebsocketCommunicator internal constructor(
 
 class FSRemoteNoConnectionCommunicator(device: FSRemoteDevice) : FSRemoteNetworkCommunictor(device) {
 
-    override suspend fun init() {
+    init {
         initBindings()
     }
 

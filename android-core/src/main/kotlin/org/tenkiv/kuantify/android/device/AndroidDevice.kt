@@ -23,6 +23,7 @@ import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.android.gate.acquire.*
 import org.tenkiv.kuantify.fs.hardware.device.*
+import org.tenkiv.kuantify.fs.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.quantity.*
 
@@ -64,6 +65,8 @@ class RemoteAndroidDevice internal constructor(
     override val relativeHumiditySensors: List<AndroidRemoteQuantityInput<Dimensionless>>
 ) : FSRemoteDevice(scope.coroutineContext),
     AndroidDevice {
+
+    protected override var networkCommunicator: FSRemoteNetworkCommunictor by networkCommunicator()
 
     override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)

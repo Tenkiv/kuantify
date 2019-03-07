@@ -26,6 +26,7 @@ import tec.units.indriya.*
 import java.time.*
 import javax.measure.quantity.*
 import kotlin.coroutines.*
+import kotlin.properties.*
 import kotlin.reflect.*
 
 typealias TrackableQuantity<Q> = Trackable<ComparableQuantity<Q>>
@@ -90,7 +91,10 @@ sealed class UpdateRate(rate: TrackableQuantity<Frequency>) : TrackableQuantity<
 fun RatedTrackable<*>.runningAverage(avgPeriod: Duration = 1.minutesSpan): AverageUpdateRateDelegate =
     AverageUpdateRateDelegate(this, avgPeriod)
 
-class AverageUpdateRateDelegate internal constructor(trackable: RatedTrackable<*>, private val avgPeriod: Duration) {
+class AverageUpdateRateDelegate internal constructor(
+    trackable: RatedTrackable<*>,
+    private val avgPeriod: Duration
+) : ReadOnlyProperty<RatedTrackable<*>, UpdateRate.RunningAverage> {
     private val updatable = trackable.Updatable(0.hertz)
 
     init {
@@ -122,7 +126,7 @@ class AverageUpdateRateDelegate internal constructor(trackable: RatedTrackable<*
         }
     }
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): UpdateRate.RunningAverage =
+    override fun getValue(thisRef: RatedTrackable<*>, property: KProperty<*>): UpdateRate.RunningAverage =
         UpdateRate.RunningAverage(updatable)
 }
 

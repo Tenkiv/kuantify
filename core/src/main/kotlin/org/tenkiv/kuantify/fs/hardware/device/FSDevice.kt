@@ -33,6 +33,8 @@ import org.tenkiv.kuantify.fs.networking.server.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.configuration.*
 import kotlin.coroutines.*
+import kotlin.properties.*
+import kotlin.reflect.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -105,9 +107,7 @@ abstract class LocalDevice : FSBaseDevice() {
 abstract class FSRemoteDevice protected constructor(final override val coroutineContext: CoroutineContext) :
     FSBaseDevice(), RemoteDevice {
 
-    //TODO: Try to think of a more clean solution than lateinit
-    @Volatile
-    private lateinit var networkCommunicator: FSRemoteNetworkCommunictor
+    protected abstract var networkCommunicator: FSRemoteNetworkCommunictor
 
     private val _isConnected = Updatable(false)
     override val isConnected: InitializedTrackable<Boolean> get() = _isConnected
@@ -123,15 +123,14 @@ abstract class FSRemoteDevice protected constructor(final override val coroutine
         onDisconnect()
     }
 
+    //TODO
     private suspend fun onDisconnect() {
         _isConnected.value = false
         networkCommunicator.cancel()
-        networkCommunicator = FSRemoteNoConnectionCommunicator(this).apply { init() }
+        networkCommunicator = FSRemoteNoConnectionCommunicator(this)
     }
 
-    protected suspend fun init(connect: Boolean = false) {
-        if (connect) connect() else networkCommunicator = FSRemoteNoConnectionCommunicator(this).apply { init() }
-    }
+    protected fun networkCommunicator(): FSRemoteCommunicatorDelegate = FSRemoteCommunicatorDelegate(this)
 
     companion object {
         suspend fun getInfo(hostIp: String): String =
@@ -139,4 +138,20 @@ abstract class FSRemoteDevice protected constructor(final override val coroutine
                 logger.trace { "Got info for device at IP address $hostIp" }
             }
     }
+}
+
+class FSRemoteCommunicatorDelegate internal constructor(device: FSRemoteDevice) :
+    ReadWriteProperty<FSRemoteDevice, FSRemoteNetworkCommunictor> {
+
+    @Volatile
+    private var networkCommunicator: FSRemoteNetworkCommunictor = FSRemoteNoConnectionCommunicator(device)
+
+    override fun getValue(thisRef: FSRemoteDevice, property: KProperty<*>): FSRemoteNetworkCommunictor {
+        return networkCommunicator
+    }
+
+    override fun setValue(thisRef: FSRemoteDevice, property: KProperty<*>, value: FSRemoteNetworkCommunictor) {
+        networkCommunicator = value
+    }
+
 }
