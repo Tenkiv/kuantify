@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
 class AndroidTorchController(val device: LocalAndroidDevice, override val uid: String, val cameraId: String) :
-    AndroidOutput<BinaryState>, LocalOutput<BinaryState> {
+    AndroidOutput<BinaryState>, LocalBinaryStateOutput {
 
     override val coroutineContext: CoroutineContext
         get() = device.coroutineContext

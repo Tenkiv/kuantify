@@ -134,11 +134,11 @@ abstract class FSRemoteDevice protected constructor(final override val coroutine
     }
 
     private suspend fun onDisconnect() {
-        _isConnected.value = false
         networkCommunicator.cancel()
     }
 
     private fun onCommunicatorCanceled() {
+        _isConnected.value = false
         networkCommunicator = FSRemoteNoConnectionCommunicator(this)
     }
 
