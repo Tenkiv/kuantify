@@ -44,6 +44,7 @@ object RouteConfigBuilderFeature : Spek({
 
     val remoteNetworkCommunicator = mockkClass(FSRemoteWebsocketCommunicator::class)
     every { remoteNetworkCommunicator.device } returns remoteDevice
+    every { remoteNetworkCommunicator.communicationMode } returns CommunicationMode.NON_EXCLUSIVE
 
     Feature("CombinedRouteConfig") {
         val configWithLocalDevice by memoized {
