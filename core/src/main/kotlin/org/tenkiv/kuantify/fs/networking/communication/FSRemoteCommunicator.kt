@@ -84,7 +84,7 @@ class LocalNetworkCommunicator internal constructor(
 }
 
 abstract class FSRemoteNetworkCommunictor(final override val device: FSRemoteDevice) :
-    NetworkCommunicator<String>(device) {
+    RemoteNetworkCommunicator<String>(device) {
 
     final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>> =
         buildFSRouteBindingMap(device)
@@ -94,11 +94,15 @@ abstract class FSRemoteNetworkCommunictor(final override val device: FSRemoteDev
 }
 
 class FSRemoteWebsocketCommunicator internal constructor(
-    device: FSRemoteDevice
+    device: FSRemoteDevice,
+    private val onCanceled: () -> Unit
 ) : FSRemoteNetworkCommunictor(device) {
 
     @Volatile
     private var webSocketSession: WebSocketSession? = null
+
+    override val communicationMode: CommunicationMode
+        get() = CommunicationMode.NON_EXCLUSIVE
 
     private suspend fun startWebsocket() {
         val initialized = CompletableDeferred<Boolean>()
@@ -156,6 +160,7 @@ class FSRemoteWebsocketCommunicator internal constructor(
 
     private fun connectionStopped() {
         cancelCoroutines()
+        onCanceled()
         webSocketSession = null
     }
 
@@ -172,6 +177,9 @@ class FSRemoteNoConnectionCommunicator(device: FSRemoteDevice) : FSRemoteNetwork
     init {
         initBindings()
     }
+
+    override val communicationMode: CommunicationMode
+        get() = CommunicationMode.NO_CONNECTION
 
     override suspend fun cancel() {
         job.cancel()

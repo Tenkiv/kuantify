@@ -51,6 +51,9 @@ internal class CombinedRouteConfig(private val networkCommunicator: NetworkCommu
 
     private val device get() = networkCommunicator.device
 
+    private val remoteConnectionCommunicator: Boolean =
+        (networkCommunicator as? RemoteNetworkCommunicator)?.communicationMode != CommunicationMode.NO_CONNECTION
+
     @Suppress("NAME_SHADOWING")
     fun <T> addRouteBinding(
         path: Path,
@@ -75,43 +78,32 @@ internal class CombinedRouteConfig(private val networkCommunicator: NetworkCommu
             logger.warn { "Overriding combined route binding for route $path." }
         }
 
-        networkRouteBindingMap[path] = when (device) {
-            is LocalDevice -> StandardRouteBinding(
-                networkCommunicator,
-                path,
-                routeBindingBuilder.localUpdateChannel,
-                networkUpdateChannel,
-                routeBindingBuilder.serializeMessage,
-                routeBindingBuilder.sendFromHost,
-                buildHostUpdateReceiver(routeBindingBuilder),
-                FSDevice.serializedPing
-            )
-            is FSRemoteDevice -> if (recursiveSynchronizer) {
-                RecursionPreventingRouteBinding(
-                    networkCommunicator,
-                    path,
-                    routeBindingBuilder.localUpdateChannel,
-                    networkUpdateChannel,
-                    routeBindingBuilder.serializeMessage,
-                    routeBindingBuilder.sendFromRemote,
-                    buildRemoteUpdateReceiver(routeBindingBuilder),
-                    FSDevice.serializedPing
-                )
-            } else {
-                StandardRouteBinding(
-                    networkCommunicator,
-                    path,
-                    routeBindingBuilder.localUpdateChannel,
-                    networkUpdateChannel,
-                    routeBindingBuilder.serializeMessage,
-                    routeBindingBuilder.sendFromRemote,
-                    buildRemoteUpdateReceiver(routeBindingBuilder),
-                    FSDevice.serializedPing
-                )
-            }
-            else -> throw IllegalStateException(
-                "Device in CombinedRouteConfig must be either LocalDevice or FSRemoteDevice"
-            )
+        fun standardRouteBinding() = StandardRouteBinding(
+            networkCommunicator,
+            path,
+            routeBindingBuilder.localUpdateChannel,
+            networkUpdateChannel,
+            routeBindingBuilder.serializeMessage,
+            routeBindingBuilder.sendFromHost,
+            buildHostUpdateReceiver(routeBindingBuilder),
+            FSDevice.serializedPing
+        )
+
+        fun recursionPreventingRouteBinding() = RecursionPreventingRouteBinding(
+            networkCommunicator,
+            path,
+            routeBindingBuilder.localUpdateChannel,
+            networkUpdateChannel,
+            routeBindingBuilder.serializeMessage,
+            routeBindingBuilder.sendFromRemote,
+            buildRemoteUpdateReceiver(routeBindingBuilder),
+            FSDevice.serializedPing
+        )
+
+        networkRouteBindingMap[path] = if (remoteConnectionCommunicator && recursiveSynchronizer) {
+            recursionPreventingRouteBinding()
+        } else {
+            standardRouteBinding()
         }
 
     }

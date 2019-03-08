@@ -107,6 +107,9 @@ abstract class LocalDevice : FSBaseDevice() {
 abstract class FSRemoteDevice protected constructor(final override val coroutineContext: CoroutineContext) :
     FSBaseDevice(), RemoteDevice {
 
+    /**
+     * Implementation should delegate using networkCommunicator function.
+     */
     protected abstract var networkCommunicator: FSRemoteNetworkCommunictor
 
     private val _isConnected = Updatable(false)
@@ -114,7 +117,10 @@ abstract class FSRemoteDevice protected constructor(final override val coroutine
 
     override suspend fun connect() {
         if (!isConnected.value) {
-            networkCommunicator = FSRemoteWebsocketCommunicator(this).apply { init() }
+            networkCommunicator = FSRemoteWebsocketCommunicator(
+                this,
+                this::onCommunicatorCanceled
+            ).apply { init() }
             _isConnected.value = true
         }
     }
@@ -123,10 +129,12 @@ abstract class FSRemoteDevice protected constructor(final override val coroutine
         onDisconnect()
     }
 
-    //TODO
     private suspend fun onDisconnect() {
         _isConnected.value = false
         networkCommunicator.cancel()
+    }
+
+    private fun onCommunicatorCanceled() {
         networkCommunicator = FSRemoteNoConnectionCommunicator(this)
     }
 

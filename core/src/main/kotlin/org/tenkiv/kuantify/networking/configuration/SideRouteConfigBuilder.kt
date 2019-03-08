@@ -42,10 +42,13 @@ class SideRouteConfig<ST>(
     val baseRoute: SideNetworkRouting<ST>
         get() = SideNetworkRouting(this, emptyList())
 
+    private val remoteConnectionCommunicator: Boolean =
+        (networkCommunicator as? RemoteNetworkCommunicator)?.communicationMode != CommunicationMode.NO_CONNECTION
+
     @Suppress("NAME_SHADOWING")
     fun <MT> addRouteBinding(
         path: Path,
-        recursiveSynchronizer: Boolean,
+        recursiveSynchronizer: Boolean, //TODO: Rename this
         build: SideRouteBindingBuilder<MT, ST>.() -> Unit
     ) {
         val path = formatPath(path)
@@ -64,28 +67,32 @@ class SideRouteConfig<ST>(
             logger.warn { "Overriding side route binding for route $path." }
         }
 
-        networkRouteBindingMap[path] = if (recursiveSynchronizer) {
-            RecursionPreventingRouteBinding(
-                networkCommunicator,
-                path,
-                routeBindingBuilder.localUpdateChannel,
-                networkUpdateChannel,
-                routeBindingBuilder.serializeMessage,
-                routeBindingBuilder.send,
-                routeBindingBuilder.receive,
-                serializedPing
-            )
+        fun standardRouteBinding() = StandardRouteBinding(
+            networkCommunicator,
+            path,
+            routeBindingBuilder.localUpdateChannel,
+            networkUpdateChannel,
+            routeBindingBuilder.serializeMessage,
+            routeBindingBuilder.send,
+            routeBindingBuilder.receive,
+            serializedPing
+        )
+
+        fun recursionPreventingRouteBinding() = RecursionPreventingRouteBinding(
+            networkCommunicator,
+            path,
+            routeBindingBuilder.localUpdateChannel,
+            networkUpdateChannel,
+            routeBindingBuilder.serializeMessage,
+            routeBindingBuilder.send,
+            routeBindingBuilder.receive,
+            serializedPing
+        )
+
+        networkRouteBindingMap[path] = if (remoteConnectionCommunicator && recursiveSynchronizer) {
+            recursionPreventingRouteBinding()
         } else {
-            StandardRouteBinding(
-                networkCommunicator,
-                path,
-                routeBindingBuilder.localUpdateChannel,
-                networkUpdateChannel,
-                routeBindingBuilder.serializeMessage,
-                routeBindingBuilder.send,
-                routeBindingBuilder.receive,
-                serializedPing
-            )
+            standardRouteBinding()
         }
     }
 
