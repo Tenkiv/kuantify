@@ -116,11 +116,15 @@ abstract class FSRemoteDevice protected constructor(final override val coroutine
     override val isConnected: InitializedTrackable<Boolean> get() = _isConnected
 
     override suspend fun connect() {
-        if (!isConnected.value) {
+        val noConnectionCommunicator = networkCommunicator
+        if (!isConnected.value && noConnectionCommunicator is FSRemoteNoConnectionCommunicator) {
             networkCommunicator = FSRemoteWebsocketCommunicator(
                 this,
                 this::onCommunicatorCanceled
-            ).apply { init() }
+            ).apply {
+                init()
+                noConnectionCommunicator.immediateCancel()
+            }
             _isConnected.value = true
         }
     }
