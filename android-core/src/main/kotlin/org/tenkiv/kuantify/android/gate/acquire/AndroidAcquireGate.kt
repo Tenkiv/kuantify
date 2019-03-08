@@ -51,12 +51,3 @@ class AndroidRemoteBinaryStateInput internal constructor(
     override val updateRate: UpdateRate by runningAverage()
 
 }
-
-object AndroidSensorTypeId {
-    const val AMBIENT_TEMPERATURE = "AT"
-    const val HEART_RATE = "HR"
-    const val LIGHT = "LI"
-    const val PROXIMITY = "PX"
-    const val PRESSURE = "PS"
-    const val RELATIVE_HUMIDITY = "HU"
-}

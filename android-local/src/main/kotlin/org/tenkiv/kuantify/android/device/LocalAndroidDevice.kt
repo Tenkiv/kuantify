@@ -24,7 +24,9 @@ import android.hardware.*
 import android.hardware.camera2.*
 import android.provider.*
 import kotlinx.serialization.json.*
+import org.tenkiv.kuantify.android.gate.*
 import org.tenkiv.kuantify.android.gate.acquire.*
+import org.tenkiv.kuantify.android.gate.control.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.networking.configuration.*
@@ -42,7 +44,7 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
     final override val ambientTemperatureSensors: List<LocalAndroidAmbientTemperatureSensor> =
         getSensors(
             Sensor.TYPE_AMBIENT_TEMPERATURE,
-            AndroidSensorTypeId.AMBIENT_TEMPERATURE
+            AndroidGateTypeId.AMBIENT_TEMPERATURE
         ) { device, sensor, id ->
             LocalAndroidAmbientTemperatureSensor(device, sensor, id)
         }
@@ -50,7 +52,7 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
     final override val heartRateSensors: List<LocalAndroidHeartRateSensor> =
         getSensors(
             Sensor.TYPE_HEART_RATE,
-            AndroidSensorTypeId.HEART_RATE
+            AndroidGateTypeId.HEART_RATE
         ) { device, sensor, id ->
             LocalAndroidHeartRateSensor(device, sensor, id)
         }
@@ -58,7 +60,7 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
     final override val lightSensors: List<LocalAndroidLightSensor> =
         getSensors(
             Sensor.TYPE_LIGHT,
-            AndroidSensorTypeId.LIGHT
+            AndroidGateTypeId.LIGHT
         ) { device, sensor, id ->
             LocalAndroidLightSensor(device, sensor, id)
         }
@@ -66,7 +68,7 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
     final override val proximitySensors: List<LocalAndroidProximitySensor> =
         getSensors(
             Sensor.TYPE_PROXIMITY,
-            AndroidSensorTypeId.PROXIMITY
+            AndroidGateTypeId.PROXIMITY
         ) { device, sensor, id ->
             LocalAndroidProximitySensor(device, sensor, id)
         }
@@ -74,7 +76,7 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
     final override val pressureSensors: List<LocalAndroidPressureSensor> =
         getSensors(
             Sensor.TYPE_PRESSURE,
-            AndroidSensorTypeId.PRESSURE
+            AndroidGateTypeId.PRESSURE
         ) { device, sensor, id ->
             LocalAndroidPressureSensor(device, sensor, id)
         }
@@ -82,10 +84,12 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
     final override val relativeHumiditySensors: List<LocalAndroidRelativeHumiditySensor> =
         getSensors(
             Sensor.TYPE_RELATIVE_HUMIDITY,
-            AndroidSensorTypeId.RELATIVE_HUMIDITY
+            AndroidGateTypeId.RELATIVE_HUMIDITY
         ) { device, sensor, id ->
             LocalAndroidRelativeHumiditySensor(device, sensor, id)
         }
+
+    final override val torchControllers: List<AndroidTorchController> = buildTorchControllers()
 
     private inline fun <T : DaqcValue, S : LocalAndroidSensor<T>> getSensors(
         sensorType: Int,
@@ -116,6 +120,20 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
         return result
     }
 
+    private fun buildTorchControllers(): List<AndroidTorchController> {
+        val result = ArrayList<AndroidTorchController>()
+
+        cameraManager.cameraIdList.forEachIndexed { i, cameraId ->
+            val hasFlash = cameraManager.getCameraCharacteristics(cameraId)[CameraCharacteristics.FLASH_INFO_AVAILABLE]
+
+            if (hasFlash == true) {
+                result += AndroidTorchController(this, "${AndroidGateTypeId.TORCH}$i", cameraId)
+            }
+        }
+
+        return result
+    }
+
     override fun getInfo(): String {
         val info = AndroidDevice.Info(
             deviceId = uid,
@@ -124,7 +142,8 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
             numLightSensors = lightSensors.size,
             numProximitySensors = proximitySensors.size,
             numPressureSensors = pressureSensors.size,
-            numRelativeHumiditySensors = relativeHumiditySensors.size
+            numRelativeHumiditySensors = relativeHumiditySensors.size,
+            numTorchControllers = torchControllers.size
         )
 
         return Json.stringify(AndroidDevice.Info.serializer(), info)

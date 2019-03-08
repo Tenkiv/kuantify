@@ -71,6 +71,7 @@ class AndroidTorchController(val device: LocalAndroidDevice, override val uid: S
     }
 
     override fun stopTransceiving() {
+        setOutput(BinaryState.Low)
         device.cameraManager.unregisterTorchCallback(torchCallback)
         _isTransceiving.value = false
     }

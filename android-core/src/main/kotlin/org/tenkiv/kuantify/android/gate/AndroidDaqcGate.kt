@@ -26,3 +26,13 @@ interface AndroidDaqcGate<T : DaqcData> : DaqcGate<T> {
     val uid: String
 
 }
+
+object AndroidGateTypeId {
+    const val AMBIENT_TEMPERATURE = "AT"
+    const val HEART_RATE = "HR"
+    const val LIGHT = "LI"
+    const val PROXIMITY = "PX"
+    const val PRESSURE = "PS"
+    const val RELATIVE_HUMIDITY = "HU"
+    const val TORCH = "TO"
+}

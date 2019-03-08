@@ -21,7 +21,10 @@ package org.tenkiv.kuantify.android.device
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
+import org.tenkiv.kuantify.android.gate.*
 import org.tenkiv.kuantify.android.gate.acquire.*
+import org.tenkiv.kuantify.android.gate.control.*
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
@@ -41,6 +44,8 @@ interface AndroidDevice : FSDevice {
 
     val relativeHumiditySensors: List<AndroidQuantityInput<Dimensionless>>
 
+    val torchControllers: List<AndroidOutput<BinaryState>>
+
     @Serializable
     data class Info(
         val deviceId: String,
@@ -49,7 +54,8 @@ interface AndroidDevice : FSDevice {
         val numLightSensors: Int,
         val numProximitySensors: Int,
         val numPressureSensors: Int,
-        val numRelativeHumiditySensors: Int
+        val numRelativeHumiditySensors: Int,
+        val numTorchControllers: Int
     )
 }
 
@@ -62,7 +68,8 @@ class RemoteAndroidDevice internal constructor(
     override val lightSensors: List<AndroidRemoteQuantityInput<Illuminance>>,
     override val pressureSensors: List<AndroidRemoteQuantityInput<Pressure>>,
     override val proximitySensors: List<AndroidRemoteQuantityInput<Length>>,
-    override val relativeHumiditySensors: List<AndroidRemoteQuantityInput<Dimensionless>>
+    override val relativeHumiditySensors: List<AndroidRemoteQuantityInput<Dimensionless>>,
+    override val torchControllers: List<AndroidRemoteBinaryStateOutput>
 ) : FSRemoteDevice(scope.coroutineContext),
     AndroidDevice {
 
@@ -87,7 +94,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     for (i in 0 until info.numAmbientTemperatureSensors) {
         ambientTemperatureSensors += AndroidRemoteQuantityInput(
             this,
-            "${AndroidSensorTypeId.AMBIENT_TEMPERATURE}$i",
+            "${AndroidGateTypeId.AMBIENT_TEMPERATURE}$i",
             Temperature::class
         )
     }
@@ -96,7 +103,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     for (i in 0 until info.numHeartRateSensors) {
         heartRateSensors += AndroidRemoteQuantityInput(
             this,
-            "${AndroidSensorTypeId.HEART_RATE}$i",
+            "${AndroidGateTypeId.HEART_RATE}$i",
             Frequency::class
         )
     }
@@ -105,7 +112,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     for (i in 0 until info.numLightSensors) {
         lightSensors += AndroidRemoteQuantityInput(
             this,
-            "${AndroidSensorTypeId.LIGHT}$i",
+            "${AndroidGateTypeId.LIGHT}$i",
             Illuminance::class
         )
     }
@@ -114,7 +121,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     for (i in 0 until info.numPressureSensors) {
         pressureSensors += AndroidRemoteQuantityInput(
             this,
-            "${AndroidSensorTypeId.PRESSURE}$i",
+            "${AndroidGateTypeId.PRESSURE}$i",
             Pressure::class
         )
     }
@@ -123,7 +130,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     for (i in 0 until info.numProximitySensors) {
         proximitySensors += AndroidRemoteQuantityInput(
             this,
-            "${AndroidSensorTypeId.PROXIMITY}$i",
+            "${AndroidGateTypeId.PROXIMITY}$i",
             Length::class
         )
     }
@@ -132,10 +139,19 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
     for (i in 0 until info.numRelativeHumiditySensors) {
         relativeHumiditySensors += AndroidRemoteQuantityInput(
             this,
-            "${AndroidSensorTypeId.RELATIVE_HUMIDITY}$i",
+            "${AndroidGateTypeId.RELATIVE_HUMIDITY}$i",
             Dimensionless::class
         )
     }
+
+    val torchControllers = ArrayList<AndroidRemoteBinaryStateOutput>()
+    for (i in 0 until info.numTorchControllers) {
+        torchControllers += AndroidRemoteBinaryStateOutput(
+            this,
+            "${AndroidGateTypeId.TORCH}$i"
+        )
+    }
+
 
     return RemoteAndroidDevice(
         this,
@@ -146,6 +162,7 @@ suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDev
         lightSensors,
         pressureSensors,
         proximitySensors,
-        relativeHumiditySensors
+        relativeHumiditySensors,
+        torchControllers
     )
 }
