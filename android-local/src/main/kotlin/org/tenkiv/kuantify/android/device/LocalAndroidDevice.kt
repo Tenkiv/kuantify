@@ -168,6 +168,7 @@ open class LocalAndroidDevice internal constructor(context: Context) : LocalDevi
         pressureSensors.addSideRoutingTo(routing)
         proximitySensors.addSideRoutingTo(routing)
         relativeHumiditySensors.addSideRoutingTo(routing)
+        torchControllers.addRoutingTo(routing)
     }
 
     companion object {
