@@ -83,6 +83,7 @@ class RemoteAndroidDevice internal constructor(
         pressureSensors.addSideRoutingTo(routing)
         proximitySensors.addSideRoutingTo(routing)
         relativeHumiditySensors.addSideRoutingTo(routing)
+        torchControllers.addSideRoutingTo(routing)
     }
 }
 
