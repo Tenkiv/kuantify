@@ -23,6 +23,7 @@ import android.content.*
 import android.hardware.*
 import android.hardware.camera2.*
 import android.provider.*
+import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.android.gate.*
 import org.tenkiv.kuantify.android.gate.acquire.*
@@ -33,7 +34,8 @@ import org.tenkiv.kuantify.networking.configuration.*
 
 private typealias SensorConstructor<S> = (LocalAndroidDevice, Sensor, String) -> S
 
-open class LocalAndroidDevice internal constructor(context: Context) : LocalDevice(), AndroidDevice {
+open class LocalAndroidDevice internal constructor(context: Context) :
+    LocalDevice(GlobalScope.coroutineContext + Dispatchers.Main), AndroidDevice {
 
     internal val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         ?: wrongSystemService()

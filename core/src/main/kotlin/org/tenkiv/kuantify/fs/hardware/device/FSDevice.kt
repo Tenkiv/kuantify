@@ -52,7 +52,7 @@ interface FSDevice : Device, NetworkBoundCombined {
  * [Device] where the corresponding [LocalDevice] DAQC is managed by Kuantify. Therefore, all [LocalDevice]s are
  * [FSBaseDevice]s but not all [RemoteDevice]s are.
  */
-sealed class FSBaseDevice : FSDevice, NetworkBoundSide<String> {
+sealed class FSBaseDevice(final override val coroutineContext: CoroutineContext) : FSDevice, NetworkBoundSide<String> {
 
     final override val basePath: Path = emptyList()
 
@@ -66,10 +66,7 @@ sealed class FSBaseDevice : FSDevice, NetworkBoundSide<String> {
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Local Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class LocalDevice : FSBaseDevice() {
-
-    final override val coroutineContext: CoroutineContext
-        get() = GlobalScope.coroutineContext
+abstract class LocalDevice(coroutineContext: CoroutineContext) : FSBaseDevice(coroutineContext) {
 
     @Volatile
     private var networkCommunicator: LocalNetworkCommunicator? = null
@@ -104,8 +101,8 @@ abstract class LocalDevice : FSBaseDevice() {
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Remote Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class FSRemoteDevice protected constructor(final override val coroutineContext: CoroutineContext) :
-    FSBaseDevice(), RemoteDevice {
+abstract class FSRemoteDevice protected constructor(coroutineContext: CoroutineContext) :
+    FSBaseDevice(coroutineContext), RemoteDevice {
 
     /**
      * Implementation should delegate using networkCommunicator function.
