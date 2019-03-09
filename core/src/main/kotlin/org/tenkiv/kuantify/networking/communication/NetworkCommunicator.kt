@@ -45,6 +45,7 @@ abstract class NetworkCommunicator<ST>(
         if (!bindingsInitialized.get()) {
             networkRouteBindingMap.values.forEach { it.start() }
             bindingsInitialized.set(true)
+            logger.trace { "Initialized bindings for NetworkCommunicator: $this" }
         } else {
             logger.debug { "Attempted to initialize - $this - multiple times." }
         }
@@ -81,7 +82,8 @@ abstract class NetworkCommunicator<ST>(
     }
 
     override fun toString(): String =
-        "NetworkCommunicator for device: ${device.uid}. \nHandled network routes: ${networkRouteBindingMap.keys}"
+        """"NetworkCommunicator for device: ${device.uid}.
+            |RouteBindings: ${networkRouteBindingMap.values}""".trimMargin()
 
 }
 

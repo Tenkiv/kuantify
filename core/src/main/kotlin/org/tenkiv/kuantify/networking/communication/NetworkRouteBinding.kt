@@ -20,12 +20,15 @@ package org.tenkiv.kuantify.networking.communication
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import mu.*
 import org.tenkiv.kuantify.hardware.device.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
 typealias UpdateReceiver<ST> = suspend (update: ST) -> Unit
 typealias MessageSerializer<MT, ST> = (update: MT) -> ST
+
+private val logger = KotlinLogging.logger {}
 
 abstract class NetworkRouteBinding<MT, ST>(
     protected val networkCommunicator: NetworkCommunicator<ST>,
@@ -96,6 +99,9 @@ class RecursionPreventingRouteBinding<MT, ST>(
         }
     }
 
+    override fun toString(): String = """
+        RecursionPreventingNetworkCommunicator(route=$route, serializedPing=$serializedPing)
+    """.trimIndent()
 }
 
 class StandardRouteBinding<MT, ST>(
@@ -129,5 +135,9 @@ class StandardRouteBinding<MT, ST>(
             }
         }
     }
+
+    override fun toString(): String = """
+        StandardRouteBinding(route=$route, serializedPing=$serializedPing)
+    """.trimIndent()
 
 }
