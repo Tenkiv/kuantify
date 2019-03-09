@@ -66,7 +66,9 @@ sealed class FSBaseDevice(final override val coroutineContext: CoroutineContext)
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Local Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class LocalDevice(coroutineContext: CoroutineContext) : FSBaseDevice(coroutineContext) {
+abstract class LocalDevice(
+    coroutineContext: CoroutineContext = GlobalScope.coroutineContext
+) : FSBaseDevice(coroutineContext) {
 
     @Volatile
     private var networkCommunicator: LocalNetworkCommunicator? = null
