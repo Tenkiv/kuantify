@@ -39,7 +39,7 @@ class MainActivity : Activity() {
         }
         server.start()
 
-        val device = LocalAndroidDevice.get(this)
+        val device = LocalAndroidDevice.get(applicationContext)
         device.startHosting()
 
         logger.trace { "This is logging of - kotlin-logging" }
