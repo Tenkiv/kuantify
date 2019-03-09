@@ -138,8 +138,9 @@ class FSRemoteWebsocketCommunicator internal constructor(
     }
 
     override suspend fun sendMessage(route: String, message: String) {
-        webSocketSession?.send(Frame.Text(NetworkMessage(route, message).serialize()))
-            ?: attemptMessageWithoutConnection(route, message)
+        webSocketSession?.send(Frame.Text(NetworkMessage(route, message).serialize()))?.also {
+            logger.trace { " Sent message - $message - to remote device: ${device.uid} " }
+        } ?: attemptMessageWithoutConnection(route, message)
     }
 
     @Suppress("NAME_SHADOWING")
