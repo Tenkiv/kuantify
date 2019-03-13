@@ -160,7 +160,7 @@ open class LocalAndroidDevice internal constructor(context: Context) :
      */
     @SuppressLint("HardwareIds")
     final override val uid: String =
-        Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+        "android-${Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)}"
 
     override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)

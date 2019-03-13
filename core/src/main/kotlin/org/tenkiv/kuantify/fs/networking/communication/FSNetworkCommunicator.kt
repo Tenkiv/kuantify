@@ -129,7 +129,7 @@ class FSRemoteWebsocketCommunicator internal constructor(
                     }
                 } finally {
                     connectionStopped()
-                    logger.debug { "Websocket connection closed for device: ${device.uid}" }
+                    logger.debug { "Websocket connection closed for device: ${device.uid}, reason: $closeReason" }
                 }
             }
         }
@@ -139,7 +139,7 @@ class FSRemoteWebsocketCommunicator internal constructor(
 
     override suspend fun sendMessage(route: String, message: String) {
         webSocketSession?.send(Frame.Text(NetworkMessage(route, message).serialize()))?.also {
-            logger.trace { " Sent on route: $route, message - $message - to remote device: ${device.uid} " }
+            logger.trace { "Sent on route: $route, message - $message - to remote device: ${device.uid}" }
         } ?: attemptMessageWithoutConnection(route, message)
     }
 

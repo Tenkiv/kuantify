@@ -122,8 +122,8 @@ abstract class FSRemoteDevice protected constructor(coroutineContext: CoroutineC
                 this::onCommunicatorCanceled
             ).apply {
                 init()
-                noConnectionCommunicator.immediateCancel()
             }
+            noConnectionCommunicator.immediateCancel()
             _isConnected.value = true
         }
     }
