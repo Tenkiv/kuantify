@@ -67,7 +67,7 @@ internal class CombinedRouteConfig(private val networkCommunicator: NetworkCommu
         val networkUpdateChannel = if ((device is LocalDevice && routeBindingBuilder.receiveFromNetworkOnHost) ||
             (device is FSRemoteDevice && routeBindingBuilder.receiveFromNetworkOnRemote)
         ) {
-            Channel<String>(Channel.CONFLATED)
+            Channel<String>(Channel.UNLIMITED)
         } else {
             null
         }

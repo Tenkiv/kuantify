@@ -21,6 +21,7 @@ package org.tenkiv.kuantify.fs.gate.control
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
+import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
@@ -34,6 +35,8 @@ import javax.measure.*
 import kotlin.coroutines.*
 import kotlin.reflect.*
 
+private val logger = KotlinLogging.logger {}
+
 sealed class FSRemoteOutput<T : DaqcValue>(coroutineContext: CoroutineContext, uid: String) :
     FSRemoteControlGate<T>(coroutineContext, uid), Output<T> {
 
@@ -41,7 +44,7 @@ sealed class FSRemoteOutput<T : DaqcValue>(coroutineContext: CoroutineContext, u
     final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = _updateBroadcaster
 
-    internal val settingChannel = Channel<T>(Channel.CONFLATED)
+    internal val settingChannel = Channel<T>(Channel.UNLIMITED)
 
     internal val _isTransceiving = Updatable(false)
     final override val isTransceiving: InitializedTrackable<Boolean>

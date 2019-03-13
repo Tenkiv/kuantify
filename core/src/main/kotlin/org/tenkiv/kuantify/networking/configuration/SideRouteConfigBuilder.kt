@@ -57,7 +57,7 @@ class SideRouteConfig<ST>(
         routeBindingBuilder.build()
 
         val networkUpdateChannel = if (routeBindingBuilder.receive != null) {
-            Channel<ST>(Channel.CONFLATED)
+            Channel<ST>(Channel.UNLIMITED)
         } else {
             null
         }

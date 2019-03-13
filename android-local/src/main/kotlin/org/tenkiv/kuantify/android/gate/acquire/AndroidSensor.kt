@@ -67,7 +67,7 @@ abstract class LocalAndroidSensor<T : DaqcValue>(
         }
 
         override fun onSensorChanged(event: SensorEvent) {
-            _updateBroadcaster.offer(convertData(event.values).at(Instant.ofEpochSecond(event.timestamp)))
+            _updateBroadcaster.offer(convertData(event.values) at Instant.ofEpochSecond(event.timestamp))
         }
 
     }
