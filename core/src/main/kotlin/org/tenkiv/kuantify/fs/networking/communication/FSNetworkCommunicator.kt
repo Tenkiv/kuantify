@@ -129,7 +129,9 @@ class FSRemoteWebsocketCommunicator internal constructor(
                     }
                 } finally {
                     connectionStopped()
-                    logger.debug { "Websocket connection closed for device: ${device.uid}, reason: $closeReason" }
+                    logger.debug(
+                        "Websocket connection closed for device: ${device.uid}, reason: ${closeReason.await()}"
+                    )
                 }
             }
         }
