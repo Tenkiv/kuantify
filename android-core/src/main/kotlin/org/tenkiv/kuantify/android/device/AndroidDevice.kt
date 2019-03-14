@@ -70,8 +70,7 @@ class RemoteAndroidDevice internal constructor(
     override val proximitySensors: List<AndroidRemoteQuantityInput<Length>>,
     override val relativeHumiditySensors: List<AndroidRemoteQuantityInput<Dimensionless>>,
     override val torchControllers: List<AndroidRemoteBinaryStateOutput>
-) : FSRemoteDevice(scope.coroutineContext),
-    AndroidDevice {
+) : FSRemoteDevice(scope.coroutineContext), AndroidDevice {
 
     protected override var networkCommunicator: FSRemoteNetworkCommunictor by networkCommunicator()
 
@@ -84,6 +83,10 @@ class RemoteAndroidDevice internal constructor(
         proximitySensors.addSideRoutingTo(routing)
         relativeHumiditySensors.addSideRoutingTo(routing)
         torchControllers.addSideRoutingTo(routing)
+    }
+
+    override fun toString(): String {
+        return "RemoteAndroidDevice(uid=$uid, hostIp=$hostIp, job=${coroutineContext[Job]})"
     }
 }
 
