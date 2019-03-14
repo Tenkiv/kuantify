@@ -52,7 +52,9 @@ abstract class NetworkCommunicator<ST>(
     }
 
     protected fun cancelCoroutines() {
-        job.cancel()
+        //DEBUG
+        //job.cancel()
+        job.cancelChildren()
     }
 
     internal suspend fun receiveMessage(route: String, message: ST) {
