@@ -83,7 +83,8 @@ abstract class NetworkCommunicator<ST>(
 
     override fun toString(): String =
         """"NetworkCommunicator for device: ${device.uid}.
-            |RouteBindings: ${networkRouteBindingMap.values}""".trimMargin()
+            |RouteBindings: ${networkRouteBindingMap.values}
+            |job=$job""".trimMargin()
 
 }
 
