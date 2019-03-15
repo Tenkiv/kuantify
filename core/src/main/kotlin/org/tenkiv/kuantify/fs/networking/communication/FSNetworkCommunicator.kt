@@ -93,7 +93,7 @@ abstract class FSRemoteNetworkCommunictor(final override val device: FSRemoteDev
 
 }
 
-class FSRemoteWebsocketCommunicator internal constructor(
+class FSRemoteWebsocketCommunicator(
     device: FSRemoteDevice,
     private val onCanceled: () -> Unit
 ) : FSRemoteNetworkCommunictor(device) {
@@ -152,7 +152,7 @@ class FSRemoteWebsocketCommunicator internal constructor(
         receiveMessage(route, message)
     }
 
-    internal suspend fun init() {
+    suspend fun init() {
         initBindings()
         startWebsocket()
     }

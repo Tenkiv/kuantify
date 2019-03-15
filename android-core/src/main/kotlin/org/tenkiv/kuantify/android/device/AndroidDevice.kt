@@ -72,7 +72,9 @@ class RemoteAndroidDevice internal constructor(
     override val torchControllers: List<AndroidRemoteBinaryStateOutput>
 ) : FSRemoteDevice(scope.coroutineContext), AndroidDevice {
 
-    protected override var networkCommunicator: FSRemoteNetworkCommunictor by networkCommunicator()
+    //protected override var networkCommunicator: FSRemoteNetworkCommunictor by networkCommunicator()
+    protected override var networkCommunicator: FSRemoteNetworkCommunictor =
+        FSRemoteWebsocketCommunicator(this, {})
 
     override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
@@ -83,6 +85,10 @@ class RemoteAndroidDevice internal constructor(
         proximitySensors.addSideRoutingTo(routing)
         relativeHumiditySensors.addSideRoutingTo(routing)
         torchControllers.addSideRoutingTo(routing)
+    }
+
+    override suspend fun connect() {
+        (networkCommunicator as FSRemoteWebsocketCommunicator).init()
     }
 
     override fun toString(): String {
