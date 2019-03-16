@@ -19,12 +19,14 @@
 package org.tenkiv.kuantify.fs.gate.control
 
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.control.*
+import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.networking.configuration.*
 
-interface LocalControlGate<T : DaqcData> : ControlGate<T>, NetworkBoundSide<String> {
-    val uid: String
+interface LocalControlGate<T : DaqcData, out D : LocalDevice> : ControlGate<T>, DeviceGate<T, D>,
+    NetworkBoundSide<String> {
 
     override fun sideRouting(routing: SideNetworkRouting<String>) {
 

@@ -25,6 +25,6 @@ interface DigitalDaqDevice : Device {
     /**
      * List of all [DigitalInput]s that this device has.
      */
-    val digitalInputMap: Map<String, DigitalInput>
+    val digitalInputMap: Map<String, DigitalInput<*>>
 
 }

@@ -23,13 +23,16 @@ import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.gate.*
+import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
+import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
@@ -51,9 +54,8 @@ private fun SideNetworkRouting<String>.startSamplingRemote(rc: String, channel: 
 }
 
 @Suppress("LeakingThis")
-abstract class LocalDigitalInput : DigitalInput, NetworkBoundSide<String>, NetworkBoundCombined {
-
-    abstract val uid: String
+abstract class LocalDigitalInput<out D> : DigitalInput<D>, NetworkBoundSide<String>, NetworkBoundCombined
+        where D : LocalDevice, D : DigitalDaqDevice {
 
     private val thisAsBinaryStateSensor = SimpleBinaryStateSensor(this)
 
@@ -114,8 +116,8 @@ abstract class LocalDigitalInput : DigitalInput, NetworkBoundSide<String>, Netwo
 }
 
 @Suppress("LeakingThis")
-abstract class FSRemoteDigitalInput : DigitalInput, NetworkBoundSide<String>, NetworkBoundCombined {
-    abstract val uid: String
+abstract class FSRemoteDigitalInput<out D> : DigitalInput<D>, NetworkBoundSide<String>, NetworkBoundCombined
+        where D : DigitalDaqDevice, D : FSRemoteDevice {
 
     private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalValue>>()
     override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalValue>>
@@ -161,7 +163,7 @@ abstract class FSRemoteDigitalInput : DigitalInput, NetworkBoundSide<String>, Ne
         }
     }
 
-    override val avgFrequency: UpdatableQuantity<Frequency> = Updatable()
+    override val avgFrequency: UpdatableQuantity<Frequency> = device.RemoteUpdatable()
 
     private val startSamplingTransitionFrequencyChannel = Channel<Ping>(Channel.CONFLATED)
     override fun startSamplingTransitionFrequency() {

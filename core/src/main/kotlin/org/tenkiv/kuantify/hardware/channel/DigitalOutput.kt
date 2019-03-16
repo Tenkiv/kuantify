@@ -29,7 +29,7 @@ import javax.measure.quantity.*
 /**
  * Class defining the basic features of an output which sends binary signals.
  */
-interface DigitalOutput : DigitalChannel<DigitalDaqDevice> {
+interface DigitalOutput<out D : DigitalOutputDevice> : DigitalChannel<D> {
 
     fun setOutputState(
         state: BinaryState

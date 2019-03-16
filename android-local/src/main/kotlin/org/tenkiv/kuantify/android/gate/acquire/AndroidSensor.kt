@@ -34,10 +34,10 @@ import kotlin.coroutines.*
  * Class which defines the basic aspects of any Android Sensor.
  */
 abstract class LocalAndroidSensor<T : DaqcValue>(
-    val device: LocalAndroidDevice,
+    final override val device: LocalAndroidDevice,
     val sensor: Sensor,
     final override val uid: String
-) : AndroidInput<T>, LocalInput<T> {
+) : AndroidInput<T>, LocalInput<T, LocalAndroidDevice> {
 
     private val manager: SensorManager get() = device.sensorManager
 

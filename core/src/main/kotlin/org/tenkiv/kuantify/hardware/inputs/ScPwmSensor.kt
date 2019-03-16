@@ -35,7 +35,7 @@ import javax.measure.quantity.*
  *
  * @param digitalInput The digital input
  */
-abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput) : QuantityInput<Q> {
+abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput<*>) : QuantityInput<Q> {
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
     final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>

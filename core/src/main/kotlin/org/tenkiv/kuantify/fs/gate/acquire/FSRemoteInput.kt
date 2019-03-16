@@ -33,7 +33,7 @@ import tec.units.indriya.*
 import javax.measure.*
 import kotlin.reflect.*
 
-sealed class FSRemoteInput<T : DaqcValue, D : FSRemoteDevice>(device: D, uid: String) :
+sealed class FSRemoteInput<T : DaqcValue, out D : FSRemoteDevice>(device: D, uid: String) :
     FSRemoteAcquireGate<T, D>(device, uid), Input<T> {
 
     internal val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
@@ -59,7 +59,7 @@ sealed class FSRemoteInput<T : DaqcValue, D : FSRemoteDevice>(device: D, uid: St
     }
 }
 
-abstract class FSRemoteQuantityInput<Q : Quantity<Q>, D : FSRemoteDevice>(
+abstract class FSRemoteQuantityInput<Q : Quantity<Q>, out D : FSRemoteDevice>(
     device: D,
     uid: String
 ) : FSRemoteInput<DaqcQuantity<Q>, D>(device, uid), QuantityInput<Q> {
@@ -88,7 +88,7 @@ abstract class FSRemoteQuantityInput<Q : Quantity<Q>, D : FSRemoteDevice>(
 
 }
 
-abstract class FSRemoteBinaryStateInput<D : FSRemoteDevice>(device: D, uid: String) :
+abstract class FSRemoteBinaryStateInput<out D : FSRemoteDevice>(device: D, uid: String) :
     FSRemoteInput<BinaryState, D>(device, uid), BinaryStateInput {
 
     override fun sideRouting(routing: SideNetworkRouting<String>) {

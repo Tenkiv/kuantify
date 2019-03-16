@@ -174,24 +174,3 @@ class FSRemoteWebsocketCommunicator(
     }
 
 }
-
-class FSRemoteNoConnectionCommunicator(device: FSRemoteDevice) : FSRemoteNetworkCommunictor(device) {
-
-    init {
-        initBindings()
-    }
-
-    public override val communicationMode: CommunicationMode
-        get() = CommunicationMode.NO_CONNECTION
-
-    internal override suspend fun cancel() {
-        immediateCancel()
-    }
-
-    internal fun immediateCancel() {
-        job.cancel()
-    }
-
-    protected override suspend fun sendMessage(route: String, message: String) = noConnectionSendError(route, message)
-
-}

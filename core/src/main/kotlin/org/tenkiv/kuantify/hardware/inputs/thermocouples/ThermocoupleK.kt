@@ -37,7 +37,7 @@ import kotlin.math.*
  */
 class ThermocoupleK internal constructor(
     scope: CoroutineScope,
-    channel: AnalogInput,
+    channel: AnalogInput<*>,
     acceptableError: ComparableQuantity<Temperature> = 1.celsius
 ) : ScAnalogSensor<Temperature>(
     channel,
@@ -133,6 +133,6 @@ class ThermocoupleK internal constructor(
 }
 
 fun CoroutineScope.ThermocoupleK(
-    channel: AnalogInput,
+    channel: AnalogInput<*>,
     acceptableError: ComparableQuantity<Temperature> = 1.celsius
 ) = ThermocoupleK(this, channel, acceptableError)

@@ -25,6 +25,6 @@ interface DigitalOutputDevice : Device {
     /**
      * List of all [DigitalOutput]s that this device has.
      */
-    val digitalOutputMap: Map<String, DigitalOutput>
+    val digitalOutputMap: Map<String, DigitalOutput<*>>
 
 }

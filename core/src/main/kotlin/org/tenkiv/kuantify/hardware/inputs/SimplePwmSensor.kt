@@ -28,7 +28,7 @@ import javax.measure.quantity.*
  *
  * @param digitalInput The [DigitalInput] that is being read from.
  */
-class SimplePwmSensor internal constructor(val digitalInput: DigitalInput) :
+class SimplePwmSensor internal constructor(val digitalInput: DigitalInput<*>) :
     QuantityInput<Dimensionless>, CoroutineScope by digitalInput {
 
     override val updateBroadcaster get() = digitalInput.pwmBroadcaster

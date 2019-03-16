@@ -35,7 +35,7 @@ import javax.measure.quantity.*
  */
 class LocalAndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Temperature>>(device, sensor, uid),
-    LocalQuantityInput<Temperature> {
+    LocalQuantityInput<Temperature, LocalAndroidDevice> {
 
     override val type: Int get() = Sensor.TYPE_AMBIENT_TEMPERATURE
 
@@ -48,7 +48,7 @@ class LocalAndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: S
 
 class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Frequency>>(device, sensor, uid),
-    LocalQuantityInput<Frequency> {
+    LocalQuantityInput<Frequency, LocalAndroidDevice> {
 
     override val type: Int get() = Sensor.TYPE_HEART_RATE
 
@@ -67,7 +67,7 @@ class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, ui
  */
 class LocalAndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Illuminance>>(device, sensor, uid),
-    LocalQuantityInput<Illuminance> {
+    LocalQuantityInput<Illuminance, LocalAndroidDevice> {
 
     override val type: Int get() = Sensor.TYPE_LIGHT
 
@@ -86,7 +86,7 @@ class LocalAndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor, uid: S
  */
 class LocalAndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Length>>(device, sensor, uid),
-    LocalQuantityInput<Length> {
+    LocalQuantityInput<Length, LocalAndroidDevice> {
 
     override val type: Int get() = Sensor.TYPE_PROXIMITY
 
@@ -105,7 +105,7 @@ class LocalAndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor, ui
  */
 class LocalAndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Pressure>>(device, sensor, uid),
-    LocalQuantityInput<Pressure> {
+    LocalQuantityInput<Pressure, LocalAndroidDevice> {
 
     override val type: Int get() = Sensor.TYPE_PRESSURE
 
@@ -124,7 +124,7 @@ class LocalAndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor, uid
  */
 class LocalAndroidRelativeHumiditySensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Dimensionless>>(device, sensor, uid),
-    LocalQuantityInput<Dimensionless> {
+    LocalQuantityInput<Dimensionless, LocalAndroidDevice> {
 
     override val type: Int get() = Sensor.TYPE_RELATIVE_HUMIDITY
 

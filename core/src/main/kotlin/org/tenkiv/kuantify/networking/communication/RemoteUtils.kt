@@ -18,9 +18,11 @@
 
 package org.tenkiv.kuantify.networking.communication
 
+import kotlinx.coroutines.channels.*
 import mu.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.hardware.device.*
+import kotlin.coroutines.*
 
 @PublishedApi
 internal inline fun remoteDeviceCommand(device: RemoteDevice, logger: KLogger, op: () -> Unit) =
@@ -40,44 +42,44 @@ internal inline fun remoteDeviceCommand(device: RemoteDevice, logger: KLogger, o
         false
     }
 
-//public fun <T> RemoteDevice.RemoteUpdatable(): Updatable<T> = RemoteUpdatable(device = this)
-//
-//public fun <T> RemoteDevice.RemoteUpdatable(initialValue: T): InitializedUpdatable<T> =
-//    InitializedRemoteUpdatable(this, initialValue)
-//
-//private class RemoteUpdatable<T>(private val device: RemoteDevice) : Updatable<T> {
-//
-//    override val coroutineContext: CoroutineContext get() = device.coroutineContext
-//
-//    private val _updateBroadcaster = ConflatedBroadcastChannel<T>()
-//    override val updateBroadcaster: ConflatedBroadcastChannel<out T> get() = _updateBroadcaster
-//
-//    override fun set(value: T) {
-//        remoteDeviceCommand(device, logger) {
-//            _updateBroadcaster.offer(value)
-//        }
-//    }
-//
-//    companion object : KLogging()
-//}
-//
-//private class InitializedRemoteUpdatable<T>(private val device: RemoteDevice, initialValue: T) :
-//    InitializedUpdatable<T> {
-//
-//    override val coroutineContext: CoroutineContext get() = device.coroutineContext
-//
-//    private val _updateBroadcaster = ConflatedBroadcastChannel(initialValue)
-//    override val updateBroadcaster: ConflatedBroadcastChannel<out T> get() = _updateBroadcaster
-//
-//    override var value: T
-//        get() = updateBroadcaster.value
-//        set(value) = set(value)
-//
-//    override fun set(value: T) {
-//        remoteDeviceCommand(device, logger) {
-//            _updateBroadcaster.offer(value)
-//        }
-//    }
-//
-//    companion object : KLogging()
-//}
+public fun <T> RemoteDevice.RemoteUpdatable(): Updatable<T> = RemoteUpdatable(device = this)
+
+public fun <T> RemoteDevice.RemoteUpdatable(initialValue: T): InitializedUpdatable<T> =
+    InitializedRemoteUpdatable(this, initialValue)
+
+private class RemoteUpdatable<T>(private val device: RemoteDevice) : Updatable<T> {
+
+    override val coroutineContext: CoroutineContext get() = device.coroutineContext
+
+    private val _updateBroadcaster = ConflatedBroadcastChannel<T>()
+    override val updateBroadcaster: ConflatedBroadcastChannel<out T> get() = _updateBroadcaster
+
+    override fun set(value: T) {
+        remoteDeviceCommand(device, logger) {
+            _updateBroadcaster.offer(value)
+        }
+    }
+
+    companion object : KLogging()
+}
+
+private class InitializedRemoteUpdatable<T>(private val device: RemoteDevice, initialValue: T) :
+    InitializedUpdatable<T> {
+
+    override val coroutineContext: CoroutineContext get() = device.coroutineContext
+
+    private val _updateBroadcaster = ConflatedBroadcastChannel(initialValue)
+    override val updateBroadcaster: ConflatedBroadcastChannel<out T> get() = _updateBroadcaster
+
+    override var value: T
+        get() = updateBroadcaster.value
+        set(value) = set(value)
+
+    override fun set(value: T) {
+        remoteDeviceCommand(device, logger) {
+            _updateBroadcaster.offer(value)
+        }
+    }
+
+    companion object : KLogging()
+}

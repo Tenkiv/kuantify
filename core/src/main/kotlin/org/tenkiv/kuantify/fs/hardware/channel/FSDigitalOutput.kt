@@ -23,11 +23,13 @@ import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.gate.*
+import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.channel.*
+import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.hardware.outputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.configuration.*
@@ -35,9 +37,8 @@ import tec.units.indriya.*
 import javax.measure.quantity.*
 
 @Suppress("LeakingThis")
-abstract class LocalDigitalOutput : DigitalOutput, NetworkBoundSide<String>, NetworkBoundCombined {
-
-    abstract val uid: String
+abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide<String>, NetworkBoundCombined
+        where D : LocalDevice, D : DigitalOutputDevice {
 
     private val thisAsBinaryStateController = SimpleBinaryStateController(this)
 
@@ -108,9 +109,8 @@ abstract class LocalDigitalOutput : DigitalOutput, NetworkBoundSide<String>, Net
 }
 
 @Suppress("LeakingThis")
-abstract class FSRemoteDigitalOutput : DigitalOutput, NetworkBoundSide<String>, NetworkBoundCombined {
-
-    abstract val uid: String
+abstract class FSRemoteDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide<String>, NetworkBoundCombined
+        where D : DigitalOutputDevice, D : FSRemoteDevice {
 
     private val thisAsBinaryStateController = SimpleBinaryStateController(this)
 

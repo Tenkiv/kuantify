@@ -33,7 +33,7 @@ import javax.measure.quantity.*
  *
  * @param digitalOutput The digital output
  */
-abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput) :
+abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput<*>) :
     QuantityOutput<Q> {
 
     override val isTransceiving get() = digitalOutput.isTransceivingPwm

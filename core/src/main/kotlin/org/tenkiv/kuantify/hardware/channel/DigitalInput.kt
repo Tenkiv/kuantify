@@ -30,7 +30,7 @@ import javax.measure.quantity.*
 /**
  * Class defining the basic features of an input which reads binary signals.
  */
-interface DigitalInput : DigitalChannel<DigitalDaqDevice>, RatedTrackable<DigitalValue> {
+interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, RatedTrackable<DigitalValue> {
 
     /**
      * Activates this channel to gather data for transition frequency averaged over a certain period of time.

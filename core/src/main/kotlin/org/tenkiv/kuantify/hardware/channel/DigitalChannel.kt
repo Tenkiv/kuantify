@@ -24,7 +24,7 @@ import org.tenkiv.kuantify.hardware.device.*
 /**
  * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
  */
-interface DigitalChannel<D : DigitalDaqDevice> : DigitalGate, DaqcChannel<D> {
+interface DigitalChannel<out D : Device> : DigitalGate, DeviceGate<DigitalValue, D> {
 
     /**
      * Gets if the pulse width modulation state for this channel is simulated using software.

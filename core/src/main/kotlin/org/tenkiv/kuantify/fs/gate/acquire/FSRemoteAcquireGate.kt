@@ -27,9 +27,9 @@ import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.networking.configuration.*
 import kotlin.coroutines.*
 
-abstract class FSRemoteAcquireGate<T : DaqcData, D : FSRemoteDevice>(
+abstract class FSRemoteAcquireGate<T : DaqcData, out D : FSRemoteDevice>(
     final override val device: D,
-    val uid: String
+    final override val uid: String
 ) : AcquireGate<T>, DeviceGate<T, D>, NetworkBoundSide<String> {
 
     final override val coroutineContext: CoroutineContext

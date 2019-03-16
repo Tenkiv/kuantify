@@ -32,7 +32,7 @@ import org.tenkiv.physikal.core.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
 
-internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: AnalogInput) {
+internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: AnalogInput<*>) {
 
     bind<Boolean>(RC.BUFFER, recursiveSynchronizer = true) {
         serializeMessage {
@@ -83,8 +83,8 @@ internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: Anal
     }
 }
 
-interface LocalAnalogInput : AnalogInput, LocalQuantityInput<ElectricPotential>,
-    NetworkBoundCombined {
+interface LocalAnalogInput<out D> : AnalogInput<D>, LocalQuantityInput<ElectricPotential, D>,
+    NetworkBoundCombined where D : LocalDevice, D : AnalogDaqDevice {
 
     override fun combinedRouting(routing: CombinedNetworkRouting) {
         routing.addToThisPath {
@@ -94,9 +94,9 @@ interface LocalAnalogInput : AnalogInput, LocalQuantityInput<ElectricPotential>,
 
 }
 
-abstract class FSRemoteAnalogInput<D>(device: D, uid: String) :
+abstract class FSRemoteAnalogInput<out D>(device: D, uid: String) :
     FSRemoteQuantityInput<ElectricPotential, D>(device, uid),
-    AnalogInput,
+    AnalogInput<D>,
     NetworkBoundCombined where D : AnalogDaqDevice, D : FSRemoteDevice {
 
     override fun combinedRouting(routing: CombinedNetworkRouting) {

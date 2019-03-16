@@ -29,7 +29,7 @@ import org.tenkiv.kuantify.hardware.channel.*
  *
  * @param digitalInput The [DigitalInput] that is being read from.
  */
-class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInput) :
+class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInput<*>) :
     BinaryStateInput, CoroutineScope by digitalInput {
 
     override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>

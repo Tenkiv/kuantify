@@ -26,7 +26,8 @@ import javax.measure.quantity.*
 /**
  * Class defining the basic features of an input which reads analog signals.
  */
-interface AnalogInput : QuantityInput<ElectricPotential>, DaqcChannel<AnalogDaqDevice> {
+interface AnalogInput<out D : AnalogDaqDevice> :
+    QuantityInput<ElectricPotential>, QuantityDeviceGate<ElectricPotential, D> {
 
     /**
      * Denotes if the analog input's buffer is activated.

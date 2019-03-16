@@ -38,7 +38,7 @@ import javax.measure.quantity.*
  * @param acceptableError The maximum acceptable error for the sensor in [ElectricPotential].
  */
 abstract class ScAnalogSensor<Q : Quantity<Q>>(
-    val analogInput: AnalogInput,
+    val analogInput: AnalogInput<*>,
     maximumEp: ComparableQuantity<ElectricPotential>,
     acceptableError: ComparableQuantity<ElectricPotential>
 ) : QuantityInput<Q> {

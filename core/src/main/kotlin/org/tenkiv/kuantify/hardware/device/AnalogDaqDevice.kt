@@ -38,6 +38,6 @@ interface AnalogDaqDevice : Device {
     /**
      * List of all [AnalogInput]s that this device has.
      */
-    val analogInputMap: Map<String, AnalogInput>
+    val analogInputMap: Map<String, AnalogInput<*>>
 
 }

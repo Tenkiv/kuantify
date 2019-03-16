@@ -29,7 +29,7 @@ import kotlin.coroutines.*
 
 abstract class FSRemoteControlGate<T : DaqcData, D : FSRemoteDevice>(
     final override val device: D,
-    val uid: String
+    final override val uid: String
 ) : ControlGate<T>, DeviceGate<T, D>, NetworkBoundSide<String> {
 
     final override val coroutineContext: CoroutineContext
