@@ -31,8 +31,8 @@ import org.tenkiv.kuantify.networking.configuration.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
-class AndroidTorchController(val device: LocalAndroidDevice, override val uid: String, val cameraId: String) :
-    AndroidOutput<BinaryState>, LocalBinaryStateOutput {
+class AndroidTorchController(override val device: LocalAndroidDevice, override val uid: String, val cameraId: String) :
+    AndroidOutput<BinaryState>, LocalBinaryStateOutput<LocalAndroidDevice> {
 
     override val coroutineContext: CoroutineContext
         get() = device.coroutineContext

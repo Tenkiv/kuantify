@@ -28,7 +28,7 @@ import javax.measure.quantity.*
  *
  * @param digitalInput The [DigitalInput] that is being read from.
  */
-class SimpleDigitalFrequencySensor internal constructor(val digitalInput: DigitalInput) :
+class SimpleDigitalFrequencySensor internal constructor(val digitalInput: DigitalInput<*>) :
     QuantityInput<Frequency>, CoroutineScope by digitalInput {
 
     override val updateBroadcaster get() = digitalInput.transitionFrequencyBroadcaster

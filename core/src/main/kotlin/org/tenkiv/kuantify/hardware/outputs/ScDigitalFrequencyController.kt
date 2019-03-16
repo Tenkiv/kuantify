@@ -33,7 +33,7 @@ import javax.measure.quantity.*
  *
  * @param digitalOutput The digital output
  */
-abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput) :
+abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput<*>) :
     QuantityOutput<Q> {
 
     override val isTransceiving get() = digitalOutput.isTransceivingFrequency

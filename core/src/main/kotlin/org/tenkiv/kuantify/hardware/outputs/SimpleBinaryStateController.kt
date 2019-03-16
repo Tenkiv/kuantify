@@ -31,7 +31,7 @@ import org.tenkiv.kuantify.hardware.channel.*
  *
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
-class SimpleBinaryStateController internal constructor(val digitalOutput: DigitalOutput) :
+class SimpleBinaryStateController internal constructor(val digitalOutput: DigitalOutput<*>) :
     BinaryStateOutput, CoroutineScope by digitalOutput {
 
     override val isTransceiving: InitializedTrackable<Boolean> = digitalOutput.isTransceiving
