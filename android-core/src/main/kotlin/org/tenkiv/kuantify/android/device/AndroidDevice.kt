@@ -26,7 +26,6 @@ import org.tenkiv.kuantify.android.gate.acquire.*
 import org.tenkiv.kuantify.android.gate.control.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.hardware.device.*
-import org.tenkiv.kuantify.fs.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.quantity.*
 
@@ -158,10 +157,6 @@ class RemoteAndroidDevice internal constructor(
         proximitySensors.addSideRoutingTo(routing)
         relativeHumiditySensors.addSideRoutingTo(routing)
         torchControllers.addSideRoutingTo(routing)
-    }
-
-    override suspend fun connect() {
-        (networkCommunicator as FSRemoteWebsocketCommunicator).init()
     }
 
     override fun toString(): String {
