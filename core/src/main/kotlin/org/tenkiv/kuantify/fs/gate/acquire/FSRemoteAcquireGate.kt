@@ -20,26 +20,35 @@ package org.tenkiv.kuantify.fs.gate.acquire
 
 import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.acquire.*
+import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.networking.configuration.*
 import kotlin.coroutines.*
 
-abstract class FSRemoteAcquireGate<T : DaqcData>(
-    final override val coroutineContext: CoroutineContext,
+abstract class FSRemoteAcquireGate<T : DaqcData, D : FSRemoteDevice>(
+    final override val device: D,
     val uid: String
-) : AcquireGate<T>, NetworkBoundSide<String> {
+) : AcquireGate<T>, DeviceGate<T, D>, NetworkBoundSide<String> {
+
+    final override val coroutineContext: CoroutineContext
+        get() = device.coroutineContext
 
     final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
     internal val startSamplingChannel = Channel<Ping>(Channel.CONFLATED)
     final override fun startSampling() {
-        startSamplingChannel.offer(Ping)
+        command {
+            startSamplingChannel.offer(Ping)
+        }
     }
 
     internal val stopTransceivingChannel = Channel<Ping>(Channel.CONFLATED)
     final override fun stopTransceiving() {
-        stopTransceivingChannel.offer(Ping)
+        command {
+            stopTransceivingChannel.offer(Ping)
+        }
     }
 
     override fun sideRouting(routing: SideNetworkRouting<String>) {

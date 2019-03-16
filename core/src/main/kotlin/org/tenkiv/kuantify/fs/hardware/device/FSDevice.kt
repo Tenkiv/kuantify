@@ -33,8 +33,6 @@ import org.tenkiv.kuantify.fs.networking.server.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.configuration.*
 import kotlin.coroutines.*
-import kotlin.properties.*
-import kotlin.reflect.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -106,24 +104,20 @@ abstract class LocalDevice(
 abstract class FSRemoteDevice protected constructor(coroutineContext: CoroutineContext) :
     FSBaseDevice(coroutineContext), RemoteDevice {
 
-    /**
-     * Implementation should delegate using networkCommunicator function.
-     */
-    protected abstract var networkCommunicator: FSRemoteNetworkCommunictor
+    @Volatile
+    protected var networkCommunicator: FSRemoteNetworkCommunictor? = null
 
     private val _isConnected = Updatable(false)
     override val isConnected: InitializedTrackable<Boolean> get() = _isConnected
 
     override suspend fun connect() {
-        val noConnectionCommunicator = networkCommunicator
-        if (!isConnected.value && noConnectionCommunicator is FSRemoteNoConnectionCommunicator) {
+        if (!isConnected.value) {
             networkCommunicator = FSRemoteWebsocketCommunicator(
                 this,
                 this::onCommunicatorCanceled
             ).apply {
                 init()
             }
-            noConnectionCommunicator.immediateCancel()
             _isConnected.value = true
         }
     }
@@ -133,15 +127,13 @@ abstract class FSRemoteDevice protected constructor(coroutineContext: CoroutineC
     }
 
     private suspend fun onDisconnect() {
-        networkCommunicator.cancel()
+        networkCommunicator?.cancel()
     }
 
     private fun onCommunicatorCanceled() {
         _isConnected.value = false
-        networkCommunicator = FSRemoteNoConnectionCommunicator(this)
+        networkCommunicator = null
     }
-
-    protected fun networkCommunicator(): FSRemoteCommunicatorDelegate = FSRemoteCommunicatorDelegate(this)
 
     companion object {
         suspend fun getInfo(hostIp: String): String =
@@ -149,20 +141,4 @@ abstract class FSRemoteDevice protected constructor(coroutineContext: CoroutineC
                 logger.trace { "Got info for device at IP address $hostIp" }
             }
     }
-}
-
-class FSRemoteCommunicatorDelegate internal constructor(device: FSRemoteDevice) :
-    ReadWriteProperty<FSRemoteDevice, FSRemoteNetworkCommunictor> {
-
-    @Volatile
-    private var networkCommunicator: FSRemoteNetworkCommunictor = FSRemoteNoConnectionCommunicator(device)
-
-    override fun getValue(thisRef: FSRemoteDevice, property: KProperty<*>): FSRemoteNetworkCommunictor {
-        return networkCommunicator
-    }
-
-    override fun setValue(thisRef: FSRemoteDevice, property: KProperty<*>, value: FSRemoteNetworkCommunictor) {
-        networkCommunicator = value
-    }
-
 }

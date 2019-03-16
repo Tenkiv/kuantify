@@ -18,7 +18,7 @@
 
 package org.tenkiv.kuantify.android.gate.control
 
-import kotlinx.coroutines.*
+import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.android.gate.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.gate.control.*
@@ -34,12 +34,12 @@ interface AndroidControlGate<T : DaqcData> : AndroidDaqcGate<T>, ControlGate<T>
 interface AndroidOutput<T : DaqcValue> : AndroidDaqcGate<T>, Output<T>
 
 class AndroidRemoteQuantityOutput<Q : Quantity<Q>>(
-    scope: CoroutineScope,
+    device: RemoteAndroidDevice,
     uid: String,
     override val quantityType: KClass<Q>
-) : FSRemoteQuantityOutput<Q>(scope.coroutineContext, uid), AndroidQuantityOutput<Q>
+) : FSRemoteQuantityOutput<Q, RemoteAndroidDevice>(device, uid), AndroidQuantityOutput<Q>
 
 class AndroidRemoteBinaryStateOutput(
-    scope: CoroutineScope,
+    device: RemoteAndroidDevice,
     uid: String
-) : FSRemoteBinaryStateOutput(scope.coroutineContext, uid), AndroidOutput<BinaryState>
+) : FSRemoteBinaryStateOutput<RemoteAndroidDevice>(device, uid), AndroidOutput<BinaryState>

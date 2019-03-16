@@ -16,38 +16,24 @@
  *
  */
 
-package org.tenkiv.kuantify.android.gate.acquire
+package org.tenkiv.kuantify.hardware.channel
 
-import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.android.device.*
-import org.tenkiv.kuantify.android.gate.*
+import mu.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.fs.gate.acquire.*
-import org.tenkiv.kuantify.gate.acquire.*
-import org.tenkiv.kuantify.gate.acquire.input.*
-import javax.measure.*
-import kotlin.reflect.*
+import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.hardware.device.*
+import org.tenkiv.kuantify.networking.communication.*
 
-typealias AndroidQuantityInput<Q> = AndroidInput<DaqcQuantity<Q>>
+interface DeviceGate<T : DaqcData, out D : Device> : DaqcGate<T> {
 
-interface AndroidAcquireGate<T : DaqcData> : AndroidDaqcGate<T>, AcquireGate<T>
+    val device: D
 
-interface AndroidInput<T : DaqcValue> : AndroidAcquireGate<T>, Input<T>
-
-class AndroidRemoteQuantityInput<Q : Quantity<Q>> internal constructor(
-    device: RemoteAndroidDevice,
-    uid: String,
-    override val quantityType: KClass<Q>
-) : FSRemoteQuantityInput<Q, RemoteAndroidDevice>(device, uid), AndroidQuantityInput<Q> {
-
-    override val updateRate: UpdateRate by runningAverage()
-}
-
-class AndroidRemoteBinaryStateInput internal constructor(
-    device: RemoteAndroidDevice,
-    uid: String
-) : FSRemoteBinaryStateInput<RemoteAndroidDevice>(device, uid), AndroidInput<BinaryState> {
-
-    override val updateRate: UpdateRate by runningAverage()
+    companion object : KLogging()
 
 }
+
+/**
+ * @return [true] if the gate is connected and the command can be carried out, [false] if not.
+ */
+public inline fun <D : RemoteDevice> DeviceGate<*, D>.command(op: () -> Unit): Boolean =
+    remoteDeviceCommand(this.device, DeviceGate.logger, op)

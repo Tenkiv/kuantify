@@ -31,7 +31,9 @@ typealias InitializedUpdatableQuantity<Q> = InitializedUpdatable<ComparableQuant
  */
 interface Updatable<T> : Trackable<T> {
 
-    override val updateBroadcaster: ConflatedBroadcastChannel<T>
+    override val updateBroadcaster: ConflatedBroadcastChannel<out T>
+
+    fun set(value: T)
 
 }
 
@@ -41,27 +43,32 @@ interface InitializedUpdatable<T> : Updatable<T>, InitializedTrackable<T> {
 
 }
 
-fun <T> Updatable<T>.set(value: T) {
-    updateBroadcaster.offer(value)
-}
-
 private class SimpleUpdatable<T>(scope: CoroutineScope) : Updatable<T> {
 
     override val coroutineContext: CoroutineContext = scope.coroutineContext
 
-    override val updateBroadcaster: ConflatedBroadcastChannel<T> = ConflatedBroadcastChannel()
+    private val _updateBroadcaster = ConflatedBroadcastChannel<T>()
+    override val updateBroadcaster: ConflatedBroadcastChannel<out T> get() = _updateBroadcaster
 
+    override fun set(value: T) {
+        _updateBroadcaster.offer(value)
+    }
 }
 
 private class SimpleInitializedUpdatable<T>(scope: CoroutineScope, initialValue: T) : InitializedUpdatable<T> {
 
     override val coroutineContext: CoroutineContext = scope.coroutineContext
 
-    override val updateBroadcaster: ConflatedBroadcastChannel<T> = ConflatedBroadcastChannel(initialValue)
+    private val _updateBroadcaster = ConflatedBroadcastChannel(initialValue)
+    override val updateBroadcaster: ConflatedBroadcastChannel<out T> get() = _updateBroadcaster
 
     override var value: T
         get() = updateBroadcaster.value
         set(value) = set(value)
+
+    override fun set(value: T) {
+        _updateBroadcaster.offer(value)
+    }
 }
 
 fun <T> CoroutineScope.Updatable(): Updatable<T> = SimpleUpdatable(this)

@@ -20,7 +20,6 @@ package org.tenkiv.kuantify.fs.hardware.channel
 
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.gate.acquire.*
 import org.tenkiv.kuantify.fs.hardware.device.*
@@ -95,8 +94,8 @@ interface LocalAnalogInput : AnalogInput, LocalQuantityInput<ElectricPotential>,
 
 }
 
-abstract class FSRemoteAnalogInput<D>(override val device: D, uid: String) :
-    FSRemoteQuantityInput<ElectricPotential>(device.coroutineContext, uid),
+abstract class FSRemoteAnalogInput<D>(device: D, uid: String) :
+    FSRemoteQuantityInput<ElectricPotential, D>(device, uid),
     AnalogInput,
     NetworkBoundCombined where D : AnalogDaqDevice, D : FSRemoteDevice {
 

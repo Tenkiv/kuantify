@@ -25,20 +25,21 @@ import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
+import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.configuration.*
 import tec.units.indriya.*
 import javax.measure.*
-import kotlin.coroutines.*
 import kotlin.reflect.*
 
 private val logger = KotlinLogging.logger {}
 
-sealed class FSRemoteOutput<T : DaqcValue>(coroutineContext: CoroutineContext, uid: String) :
-    FSRemoteControlGate<T>(coroutineContext, uid), Output<T> {
+sealed class FSRemoteOutput<T : DaqcValue, D : FSRemoteDevice>(device: D, uid: String) :
+    FSRemoteControlGate<T, D>(device, uid), Output<T> {
 
     internal val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
     final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
@@ -51,8 +52,8 @@ sealed class FSRemoteOutput<T : DaqcValue>(coroutineContext: CoroutineContext, u
         get() = _isTransceiving
 
     override fun setOutput(setting: T): SettingViability {
-        settingChannel.offer(setting)
-        return SettingViability.Viable
+        val connected = command { settingChannel.offer(setting) }
+        return if (connected) SettingViability.Viable else SettingViability.Unviable(ConnectionException(this))
     }
 
     override fun sideRouting(routing: SideNetworkRouting<String>) {
@@ -69,8 +70,10 @@ sealed class FSRemoteOutput<T : DaqcValue>(coroutineContext: CoroutineContext, u
     }
 }
 
-abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(coroutineContext: CoroutineContext, uid: String) :
-    FSRemoteOutput<DaqcQuantity<Q>>(coroutineContext, uid), QuantityOutput<Q> {
+abstract class FSRemoteQuantityOutput<Q : Quantity<Q>, D : FSRemoteDevice>(
+    device: D,
+    uid: String
+) : FSRemoteOutput<DaqcQuantity<Q>, D>(device, uid), QuantityOutput<Q> {
 
     abstract val quantityType: KClass<Q>
 
@@ -98,8 +101,8 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>>(coroutineContext: Corouti
     }
 }
 
-abstract class FSRemoteBinaryStateOutput(coroutineContext: CoroutineContext, uid: String) :
-    FSRemoteOutput<BinaryState>(coroutineContext, uid), BinaryStateOutput {
+abstract class FSRemoteBinaryStateOutput<D : FSRemoteDevice>(device: D, uid: String) :
+    FSRemoteOutput<BinaryState, D>(device, uid), BinaryStateOutput {
 
     override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)

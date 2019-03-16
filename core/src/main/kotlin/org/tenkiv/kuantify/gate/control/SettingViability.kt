@@ -80,3 +80,14 @@ class SettingOutOfRangeException(controlGate: ControlGate<*>, cause: Throwable? 
         private const val message = "Attempted setting is out of the allowable range."
     }
 }
+
+class ConnectionException(controlGate: ControlGate<*>, cause: Throwable? = null) :
+    SettingException(
+        controlGate,
+        message, cause
+    ) {
+
+    companion object {
+        private const val message = "There is no connection to the device to which this control gate belongs."
+    }
+}

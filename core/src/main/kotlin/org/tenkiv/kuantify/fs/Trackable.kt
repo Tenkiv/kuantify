@@ -30,11 +30,11 @@ import javax.measure.quantity.*
 import kotlin.properties.*
 import kotlin.reflect.*
 
-fun FSRemoteAcquireGate<*>.configuredUpdateRateDelegate(): FSRemoteConfiguredUpdateRateDelegate =
+fun FSRemoteAcquireGate<*, *>.configuredUpdateRateDelegate(): FSRemoteConfiguredUpdateRateDelegate =
     FSRemoteConfiguredUpdateRateDelegate(this)
 
-class FSRemoteConfiguredUpdateRateDelegate internal constructor(acquireGate: FSRemoteAcquireGate<*>) :
-    ReadOnlyProperty<FSRemoteAcquireGate<*>, UpdateRate.Configured> {
+class FSRemoteConfiguredUpdateRateDelegate internal constructor(acquireGate: FSRemoteAcquireGate<*, *>) :
+    ReadOnlyProperty<FSRemoteAcquireGate<*, *>, UpdateRate.Configured> {
 
     private val updatable = acquireGate.Updatable<ComparableQuantity<Frequency>>()
 
@@ -52,7 +52,7 @@ class FSRemoteConfiguredUpdateRateDelegate internal constructor(acquireGate: FSR
         }
     }
 
-    override fun getValue(thisRef: FSRemoteAcquireGate<*>, property: KProperty<*>): UpdateRate.Configured =
+    override fun getValue(thisRef: FSRemoteAcquireGate<*, *>, property: KProperty<*>): UpdateRate.Configured =
         updateRate
 
 }

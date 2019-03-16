@@ -62,19 +62,92 @@ interface AndroidDevice : FSDevice {
 class RemoteAndroidDevice internal constructor(
     scope: CoroutineScope,
     override val hostIp: String,
-    override val uid: String,
-    override val ambientTemperatureSensors: List<AndroidRemoteQuantityInput<Temperature>>,
-    override val heartRateSensors: List<AndroidRemoteQuantityInput<Frequency>>,
-    override val lightSensors: List<AndroidRemoteQuantityInput<Illuminance>>,
-    override val pressureSensors: List<AndroidRemoteQuantityInput<Pressure>>,
-    override val proximitySensors: List<AndroidRemoteQuantityInput<Length>>,
-    override val relativeHumiditySensors: List<AndroidRemoteQuantityInput<Dimensionless>>,
-    override val torchControllers: List<AndroidRemoteBinaryStateOutput>
+    info: AndroidDevice.Info
 ) : FSRemoteDevice(scope.coroutineContext), AndroidDevice {
 
-    //protected override var networkCommunicator: FSRemoteNetworkCommunictor by networkCommunicator()
-    protected override var networkCommunicator: FSRemoteNetworkCommunictor =
-        FSRemoteWebsocketCommunicator(this, {})
+    override val uid: String = info.deviceId
+
+    override val ambientTemperatureSensors: List<AndroidRemoteQuantityInput<Temperature>> = run {
+        val ambientTemperatureSensors = ArrayList<AndroidRemoteQuantityInput<Temperature>>()
+        for (i in 0 until info.numAmbientTemperatureSensors) {
+            ambientTemperatureSensors += AndroidRemoteQuantityInput(
+                this,
+                "${AndroidGateTypeId.AMBIENT_TEMPERATURE}$i",
+                Temperature::class
+            )
+        }
+        ambientTemperatureSensors
+    }
+
+    override val heartRateSensors: List<AndroidRemoteQuantityInput<Frequency>> = run {
+        val heartRateSensors = ArrayList<AndroidRemoteQuantityInput<Frequency>>()
+        for (i in 0 until info.numHeartRateSensors) {
+            heartRateSensors += AndroidRemoteQuantityInput(
+                this,
+                "${AndroidGateTypeId.HEART_RATE}$i",
+                Frequency::class
+            )
+        }
+        heartRateSensors
+    }
+
+    override val lightSensors: List<AndroidRemoteQuantityInput<Illuminance>> = run {
+        val lightSensors = ArrayList<AndroidRemoteQuantityInput<Illuminance>>()
+        for (i in 0 until info.numLightSensors) {
+            lightSensors += AndroidRemoteQuantityInput(
+                this,
+                "${AndroidGateTypeId.LIGHT}$i",
+                Illuminance::class
+            )
+        }
+        lightSensors
+    }
+
+    override val pressureSensors: List<AndroidRemoteQuantityInput<Pressure>> = run {
+        val pressureSensors = ArrayList<AndroidRemoteQuantityInput<Pressure>>()
+        for (i in 0 until info.numPressureSensors) {
+            pressureSensors += AndroidRemoteQuantityInput(
+                this,
+                "${AndroidGateTypeId.PRESSURE}$i",
+                Pressure::class
+            )
+        }
+        pressureSensors
+    }
+
+    override val proximitySensors: List<AndroidRemoteQuantityInput<Length>> = run {
+        val proximitySensors = ArrayList<AndroidRemoteQuantityInput<Length>>()
+        for (i in 0 until info.numProximitySensors) {
+            proximitySensors += AndroidRemoteQuantityInput(
+                this,
+                "${AndroidGateTypeId.PROXIMITY}$i",
+                Length::class
+            )
+        }
+        proximitySensors
+    }
+    override val relativeHumiditySensors: List<AndroidRemoteQuantityInput<Dimensionless>> = run {
+        val relativeHumiditySensors = ArrayList<AndroidRemoteQuantityInput<Dimensionless>>()
+        for (i in 0 until info.numRelativeHumiditySensors) {
+            relativeHumiditySensors += AndroidRemoteQuantityInput(
+                this,
+                "${AndroidGateTypeId.RELATIVE_HUMIDITY}$i",
+                Dimensionless::class
+            )
+        }
+        relativeHumiditySensors
+    }
+
+    override val torchControllers: List<AndroidRemoteBinaryStateOutput> = run {
+        val torchControllers = ArrayList<AndroidRemoteBinaryStateOutput>()
+        for (i in 0 until info.numTorchControllers) {
+            torchControllers += AndroidRemoteBinaryStateOutput(
+                this,
+                "${AndroidGateTypeId.TORCH}$i"
+            )
+        }
+        torchControllers
+    }
 
     override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
@@ -100,79 +173,10 @@ class RemoteAndroidDevice internal constructor(
 suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDevice {
     val info = Json.parse(AndroidDevice.Info.serializer(), FSRemoteDevice.getInfo(hostIp))
 
-    val ambientTemperatureSensors = ArrayList<AndroidRemoteQuantityInput<Temperature>>()
-    for (i in 0 until info.numAmbientTemperatureSensors) {
-        ambientTemperatureSensors += AndroidRemoteQuantityInput(
-            this,
-            "${AndroidGateTypeId.AMBIENT_TEMPERATURE}$i",
-            Temperature::class
-        )
-    }
-
-    val heartRateSensors = ArrayList<AndroidRemoteQuantityInput<Frequency>>()
-    for (i in 0 until info.numHeartRateSensors) {
-        heartRateSensors += AndroidRemoteQuantityInput(
-            this,
-            "${AndroidGateTypeId.HEART_RATE}$i",
-            Frequency::class
-        )
-    }
-
-    val lightSensors = ArrayList<AndroidRemoteQuantityInput<Illuminance>>()
-    for (i in 0 until info.numLightSensors) {
-        lightSensors += AndroidRemoteQuantityInput(
-            this,
-            "${AndroidGateTypeId.LIGHT}$i",
-            Illuminance::class
-        )
-    }
-
-    val pressureSensors = ArrayList<AndroidRemoteQuantityInput<Pressure>>()
-    for (i in 0 until info.numPressureSensors) {
-        pressureSensors += AndroidRemoteQuantityInput(
-            this,
-            "${AndroidGateTypeId.PRESSURE}$i",
-            Pressure::class
-        )
-    }
-
-    val proximitySensors = ArrayList<AndroidRemoteQuantityInput<Length>>()
-    for (i in 0 until info.numProximitySensors) {
-        proximitySensors += AndroidRemoteQuantityInput(
-            this,
-            "${AndroidGateTypeId.PROXIMITY}$i",
-            Length::class
-        )
-    }
-
-    val relativeHumiditySensors = ArrayList<AndroidRemoteQuantityInput<Dimensionless>>()
-    for (i in 0 until info.numRelativeHumiditySensors) {
-        relativeHumiditySensors += AndroidRemoteQuantityInput(
-            this,
-            "${AndroidGateTypeId.RELATIVE_HUMIDITY}$i",
-            Dimensionless::class
-        )
-    }
-
-    val torchControllers = ArrayList<AndroidRemoteBinaryStateOutput>()
-    for (i in 0 until info.numTorchControllers) {
-        torchControllers += AndroidRemoteBinaryStateOutput(
-            this,
-            "${AndroidGateTypeId.TORCH}$i"
-        )
-    }
-
 
     return RemoteAndroidDevice(
         this,
         hostIp,
-        info.deviceId,
-        ambientTemperatureSensors,
-        heartRateSensors,
-        lightSensors,
-        pressureSensors,
-        proximitySensors,
-        relativeHumiditySensors,
-        torchControllers
+        info
     )
 }
