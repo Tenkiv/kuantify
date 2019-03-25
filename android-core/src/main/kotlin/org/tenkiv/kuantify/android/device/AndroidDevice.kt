@@ -29,24 +29,24 @@ import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.quantity.*
 
-interface AndroidDevice : FSDevice {
+public interface AndroidDevice : FSDevice {
 
-    val ambientTemperatureSensors: List<AndroidQuantityInput<Temperature>>
+    public val ambientTemperatureSensors: List<AndroidQuantityInput<Temperature>>
 
-    val heartRateSensors: List<AndroidQuantityInput<Frequency>>
+    public val heartRateSensors: List<AndroidQuantityInput<Frequency>>
 
-    val lightSensors: List<AndroidQuantityInput<Illuminance>>
+    public val lightSensors: List<AndroidQuantityInput<Illuminance>>
 
-    val proximitySensors: List<AndroidQuantityInput<Length>>
+    public val proximitySensors: List<AndroidQuantityInput<Length>>
 
-    val pressureSensors: List<AndroidQuantityInput<Pressure>>
+    public val pressureSensors: List<AndroidQuantityInput<Pressure>>
 
-    val relativeHumiditySensors: List<AndroidQuantityInput<Dimensionless>>
+    public val relativeHumiditySensors: List<AndroidQuantityInput<Dimensionless>>
 
-    val torchControllers: List<AndroidOutput<BinaryState>>
+    public val torchControllers: List<AndroidOutput<BinaryState>>
 
     @Serializable
-    data class Info(
+    public data class Info(
         val deviceId: String,
         val numAmbientTemperatureSensors: Int,
         val numHeartRateSensors: Int,
@@ -58,15 +58,15 @@ interface AndroidDevice : FSDevice {
     )
 }
 
-class RemoteAndroidDevice internal constructor(
+public class RemoteAndroidDevice internal constructor(
     scope: CoroutineScope,
-    override val hostIp: String,
+    public override val hostIp: String,
     info: AndroidDevice.Info
 ) : FSRemoteDevice(scope.coroutineContext), AndroidDevice {
 
-    override val uid: String = info.deviceId
+    public override val uid: String = info.deviceId
 
-    override val ambientTemperatureSensors: List<AndroidRemoteQuantityInput<Temperature>> = run {
+    public override val ambientTemperatureSensors: List<AndroidRemoteQuantityInput<Temperature>> = run {
         val ambientTemperatureSensors = ArrayList<AndroidRemoteQuantityInput<Temperature>>()
         for (i in 0 until info.numAmbientTemperatureSensors) {
             ambientTemperatureSensors += AndroidRemoteQuantityInput(
@@ -78,7 +78,7 @@ class RemoteAndroidDevice internal constructor(
         ambientTemperatureSensors
     }
 
-    override val heartRateSensors: List<AndroidRemoteQuantityInput<Frequency>> = run {
+    public override val heartRateSensors: List<AndroidRemoteQuantityInput<Frequency>> = run {
         val heartRateSensors = ArrayList<AndroidRemoteQuantityInput<Frequency>>()
         for (i in 0 until info.numHeartRateSensors) {
             heartRateSensors += AndroidRemoteQuantityInput(
@@ -90,7 +90,7 @@ class RemoteAndroidDevice internal constructor(
         heartRateSensors
     }
 
-    override val lightSensors: List<AndroidRemoteQuantityInput<Illuminance>> = run {
+    public override val lightSensors: List<AndroidRemoteQuantityInput<Illuminance>> = run {
         val lightSensors = ArrayList<AndroidRemoteQuantityInput<Illuminance>>()
         for (i in 0 until info.numLightSensors) {
             lightSensors += AndroidRemoteQuantityInput(
@@ -102,7 +102,7 @@ class RemoteAndroidDevice internal constructor(
         lightSensors
     }
 
-    override val pressureSensors: List<AndroidRemoteQuantityInput<Pressure>> = run {
+    public override val pressureSensors: List<AndroidRemoteQuantityInput<Pressure>> = run {
         val pressureSensors = ArrayList<AndroidRemoteQuantityInput<Pressure>>()
         for (i in 0 until info.numPressureSensors) {
             pressureSensors += AndroidRemoteQuantityInput(
@@ -114,7 +114,7 @@ class RemoteAndroidDevice internal constructor(
         pressureSensors
     }
 
-    override val proximitySensors: List<AndroidRemoteQuantityInput<Length>> = run {
+    public override val proximitySensors: List<AndroidRemoteQuantityInput<Length>> = run {
         val proximitySensors = ArrayList<AndroidRemoteQuantityInput<Length>>()
         for (i in 0 until info.numProximitySensors) {
             proximitySensors += AndroidRemoteQuantityInput(
@@ -125,7 +125,7 @@ class RemoteAndroidDevice internal constructor(
         }
         proximitySensors
     }
-    override val relativeHumiditySensors: List<AndroidRemoteQuantityInput<Dimensionless>> = run {
+    public override val relativeHumiditySensors: List<AndroidRemoteQuantityInput<Dimensionless>> = run {
         val relativeHumiditySensors = ArrayList<AndroidRemoteQuantityInput<Dimensionless>>()
         for (i in 0 until info.numRelativeHumiditySensors) {
             relativeHumiditySensors += AndroidRemoteQuantityInput(
@@ -137,7 +137,7 @@ class RemoteAndroidDevice internal constructor(
         relativeHumiditySensors
     }
 
-    override val torchControllers: List<AndroidRemoteBinaryStateOutput> = run {
+    public override val torchControllers: List<AndroidRemoteBinaryStateOutput> = run {
         val torchControllers = ArrayList<AndroidRemoteBinaryStateOutput>()
         for (i in 0 until info.numTorchControllers) {
             torchControllers += AndroidRemoteBinaryStateOutput(
@@ -148,7 +148,7 @@ class RemoteAndroidDevice internal constructor(
         torchControllers
     }
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
         ambientTemperatureSensors.addSideRoutingTo(routing)
         heartRateSensors.addSideRoutingTo(routing)
@@ -159,13 +159,13 @@ class RemoteAndroidDevice internal constructor(
         torchControllers.addSideRoutingTo(routing)
     }
 
-    override fun toString(): String {
+    public override fun toString(): String {
         return "RemoteAndroidDevice(uid=$uid, hostIp=$hostIp, job=${coroutineContext[Job]})"
     }
 }
 
 //TODO: Error handling
-suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDevice {
+public suspend fun CoroutineScope.RemoteAndroidDeivce(hostIp: String): RemoteAndroidDevice {
     val info = Json.parse(AndroidDevice.Info.serializer(), FSRemoteDevice.getInfo(hostIp))
 
 

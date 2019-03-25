@@ -27,13 +27,13 @@ import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
 
-abstract class NetworkCommunicator<ST>(
+public abstract class NetworkCommunicator<ST>(
     device: Device
 ) : CoroutineScope {
 
     protected val job = Job(device.coroutineContext[Job])
 
-    final override val coroutineContext: CoroutineContext = device.coroutineContext + job
+    public final override val coroutineContext: CoroutineContext = device.coroutineContext + job
 
     private val bindingsInitialized = AtomicBoolean(false)
 
@@ -73,20 +73,20 @@ abstract class NetworkCommunicator<ST>(
         logger.error { "Received message - $message - for unbound route: $route." }
     }
 
-    override fun toString(): String =
+    public override fun toString(): String =
         """"NetworkCommunicator for device: ${device.uid}.
             |RouteBindings: ${networkRouteBindingMap.values}
             |job=$job""".trimMargin()
 
 }
 
-abstract class RemoteNetworkCommunicator<ST>(device: Device) : NetworkCommunicator<ST>(device) {
+public abstract class RemoteNetworkCommunicator<ST>(device: Device) : NetworkCommunicator<ST>(device) {
 
     public abstract val communicationMode: CommunicationMode
 
 }
 
-enum class CommunicationMode {
+public enum class CommunicationMode {
     NO_CONNECTION,
     /**
      * Means other devices can also be connected to the host.

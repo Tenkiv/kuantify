@@ -22,11 +22,11 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 
-interface AcquireGate<out T : DaqcData> : DaqcGate<T>, RatedTrackable<T> {
+public interface AcquireGate<out T : DaqcData> : DaqcGate<T>, RatedTrackable<T> {
 
     /**
      * Activates the input alerting it to begin collecting and sending data.
      */
-    fun startSampling()
+    public fun startSampling()
 
 }

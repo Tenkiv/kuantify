@@ -36,12 +36,12 @@ import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
 
-interface FSDevice : Device, NetworkBoundCombined {
-    override fun combinedRouting(routing: CombinedNetworkRouting) {
+public interface FSDevice : Device, NetworkBoundCombined {
+    public override fun combinedRouting(routing: CombinedNetworkRouting) {
 
     }
 
-    companion object {
+    public companion object {
         internal val serializedPing = Json.stringify(UnitSerializer, Unit)
     }
 }
@@ -50,11 +50,12 @@ interface FSDevice : Device, NetworkBoundCombined {
  * [Device] where the corresponding [LocalDevice] DAQC is managed by Kuantify. Therefore, all [LocalDevice]s are
  * [FSBaseDevice]s but not all [RemoteDevice]s are.
  */
-sealed class FSBaseDevice(final override val coroutineContext: CoroutineContext) : FSDevice, NetworkBoundSide<String> {
+public sealed class FSBaseDevice(final override val coroutineContext: CoroutineContext) : FSDevice,
+    NetworkBoundSide<String> {
 
-    final override val basePath: Path = emptyList()
+    public final override val basePath: Path = emptyList()
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
 
     }
 
@@ -64,24 +65,24 @@ sealed class FSBaseDevice(final override val coroutineContext: CoroutineContext)
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Local Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
-abstract class LocalDevice(
+public abstract class LocalDevice(
     coroutineContext: CoroutineContext = GlobalScope.coroutineContext
 ) : FSBaseDevice(coroutineContext) {
 
     @Volatile
     private var networkCommunicator: LocalNetworkCommunicator? = null
 
-    val isHosting: Boolean
+    public val isHosting: Boolean
         get() = KuantifyHost.isHosting && networkCommunicator?.isActive == true
 
-    fun startHosting() {
+    public fun startHosting() {
         if (!isHosting) {
             networkCommunicator = LocalNetworkCommunicator(this).apply { init() }
             KuantifyHost.startHosting(this)
         }
     }
 
-    suspend fun stopHosting() {
+    public suspend fun stopHosting() {
         KuantifyHost.stopHosting()
         networkCommunicator?.cancel()
         networkCommunicator = null
@@ -92,7 +93,7 @@ abstract class LocalDevice(
             ?: throw IOException("Attempted to receive message without communicator.")
     }
 
-    open fun getInfo(): String {
+    public open fun getInfo(): String {
         return "null"
     }
 }
@@ -108,9 +109,9 @@ abstract class FSRemoteDevice protected constructor(coroutineContext: CoroutineC
     protected var networkCommunicator: FSRemoteNetworkCommunictor? = null
 
     private val _isConnected = Updatable(false)
-    override val isConnected: InitializedTrackable<Boolean> get() = _isConnected
+    public override val isConnected: InitializedTrackable<Boolean> get() = _isConnected
 
-    override suspend fun connect() {
+    public final override suspend fun connect() {
         if (!isConnected.value) {
             networkCommunicator = FSRemoteWebsocketCommunicator(
                 this,
@@ -122,7 +123,7 @@ abstract class FSRemoteDevice protected constructor(coroutineContext: CoroutineC
         }
     }
 
-    override suspend fun disconnect() {
+    public final override suspend fun disconnect() {
         onDisconnect()
     }
 

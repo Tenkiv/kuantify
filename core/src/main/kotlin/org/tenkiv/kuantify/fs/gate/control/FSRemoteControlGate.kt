@@ -27,24 +27,24 @@ import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.networking.configuration.*
 import kotlin.coroutines.*
 
-abstract class FSRemoteControlGate<T : DaqcData, D : FSRemoteDevice>(
-    final override val device: D,
-    final override val uid: String
+public abstract class FSRemoteControlGate<T : DaqcData, D : FSRemoteDevice>(
+    public final override val device: D,
+    public final override val uid: String
 ) : ControlGate<T>, DeviceGate<T, D>, NetworkBoundSide<String> {
 
-    final override val coroutineContext: CoroutineContext
+    public final override val coroutineContext: CoroutineContext
         get() = device.coroutineContext
 
-    final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
+    public final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
     internal val stopTransceivingChannel = Channel<Unit>(Channel.CONFLATED)
-    final override fun stopTransceiving() {
+    public final override fun stopTransceiving() {
         command {
             stopTransceivingChannel.offer(Unit)
         }
     }
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
 
         routing.addToThisPath {
 

@@ -32,15 +32,15 @@ private val logger = KotlinLogging.logger {}
  * setOutput() can still throw exceptions separately from the [SettingViability] pipeline in the event of unexpected
  * catastrophic problems in the setting process.
  */
-sealed class SettingViability {
+public sealed class SettingViability {
 
-    fun panicIfUnviable() {
+    public fun panicIfUnviable() {
         if (this is Unviable) panic()
     }
 
-    object Viable : SettingViability()
+    public object Viable : SettingViability()
 
-    class Unviable(val exception: SettingException) : SettingViability() {
+    public class Unviable(val exception: SettingException) : SettingViability() {
 
         init {
             logger.debug {
@@ -48,7 +48,7 @@ sealed class SettingViability {
             }
         }
 
-        fun panic() {
+        public fun panic() {
             throw exception
         }
 
@@ -56,38 +56,29 @@ sealed class SettingViability {
 
 }
 
-open class SettingException(val controlGate: ControlGate<*>, message: String, cause: Throwable? = null) :
+public open class SettingException(val controlGate: ControlGate<*>, message: String, cause: Throwable? = null) :
     Throwable("$controlGate: $message", cause)
 
-class UninitialisedSettingException(controlGate: ControlGate<*>, cause: Throwable? = null) :
-    SettingException(
-        controlGate,
-        message, cause
-    ) {
+public class UninitialisedSettingException(controlGate: ControlGate<*>, cause: Throwable? = null) :
+    SettingException(controlGate, message, cause) {
 
-    companion object {
+    public companion object {
         private const val message = "Attempted to modify uninitialised setting."
     }
 }
 
-class SettingOutOfRangeException(controlGate: ControlGate<*>, cause: Throwable? = null) :
-    SettingException(
-        controlGate,
-        message, cause
-    ) {
+public class SettingOutOfRangeException(controlGate: ControlGate<*>, cause: Throwable? = null) :
+    SettingException(controlGate, message, cause) {
 
-    companion object {
+    public companion object {
         private const val message = "Attempted setting is out of the allowable range."
     }
 }
 
-class ConnectionException(controlGate: ControlGate<*>, cause: Throwable? = null) :
-    SettingException(
-        controlGate,
-        message, cause
-    ) {
+public class ConnectionException(controlGate: ControlGate<*>, cause: Throwable? = null) :
+    SettingException(controlGate, message, cause) {
 
-    companion object {
+    public companion object {
         private const val message = "There is no connection to the device to which this control gate belongs."
     }
 }

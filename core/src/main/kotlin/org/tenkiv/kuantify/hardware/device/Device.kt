@@ -23,8 +23,8 @@ import kotlinx.coroutines.*
 /**
  * The interface defining the basic aspects of all devices.
  */
-interface Device : CoroutineScope {
+public interface Device : CoroutineScope {
 
-    val uid: String
+    public val uid: String
 
 }

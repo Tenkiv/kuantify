@@ -30,26 +30,26 @@ import javax.measure.quantity.*
 /**
  * Class defining the basic features of an input which reads binary signals.
  */
-interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, RatedTrackable<DigitalValue> {
+public interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, RatedTrackable<DigitalValue> {
 
     /**
      * Activates this channel to gather data for transition frequency averaged over a certain period of time.
      *
      * @param avgFrequency The period of time to average the transition frequency.
      */
-    fun startSamplingTransitionFrequency()
+    public fun startSamplingTransitionFrequency()
 
     /**
      * Activates this channel to gather data for PWM averaged over a certain period of time.
      *
      * @param avgFrequency The period of time to average the PWM frequency.
      */
-    fun startSamplingPwm()
+    public fun startSamplingPwm()
 
     /**
      * Activates the channel to receive data about the current state of the [DigitalInput]
      */
-    fun startSamplingBinaryState()
+    public fun startSamplingBinaryState()
 
     /**
      * Creates a [SimpleBinaryStateSensor] with the input being this channel.
@@ -57,7 +57,7 @@ interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, RatedTrack
      * @param inverted If the channel has inverted values, ie Low == [BinaryState.High]. Default is false.
      * @return A [SimpleBinaryStateSensor] with the input as this channel.
      */
-    fun asBinaryStateSensor(): BinaryStateInput
+    public fun asBinaryStateSensor(): BinaryStateInput
 
     /**
      * Creates a [SimpleDigitalFrequencySensor] with the input being this channel.
@@ -65,7 +65,7 @@ interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, RatedTrack
      * @param avgFrequency The average period of time over which to average.
      * @return A [SimpleDigitalFrequencySensor] with the input as this channel.
      */
-    fun asTransitionFrequencySensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Frequency>
+    public fun asTransitionFrequencySensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Frequency>
 
     /**
      * Creates a [SimplePwmSensor] with the input being this channel.
@@ -73,5 +73,5 @@ interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, RatedTrack
      * @param avgFrequency The average period of time over which to average.
      * @return A [SimplePwmSensor] with the input as this channel.
      */
-    fun asPwmSensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Dimensionless>
+    public fun asPwmSensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Dimensionless>
 }

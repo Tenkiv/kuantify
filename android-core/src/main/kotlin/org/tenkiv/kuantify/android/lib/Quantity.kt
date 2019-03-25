@@ -25,11 +25,11 @@ import tec.units.indriya.unit.*
 import tec.units.indriya.unit.Units.*
 import javax.measure.quantity.*
 
-val BEATS_PER_MINUTE: AlternateUnit<Frequency> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+public val BEATS_PER_MINUTE: AlternateUnit<Frequency> by lazy(LazyThreadSafetyMode.PUBLICATION) {
     val unit = AlternateUnit<Frequency>(HERTZ * 60.0, "bpm")
     SimpleUnitFormat.getInstance().label(unit, "bpm")
     unit
 }
 
-val Number.beatsPerMinute: ComparableQuantity<Frequency>
+public val Number.beatsPerMinute: ComparableQuantity<Frequency>
     get() = this(BEATS_PER_MINUTE)

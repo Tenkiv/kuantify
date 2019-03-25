@@ -26,9 +26,9 @@ import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.hardware.device.*
 
 
-typealias Measurement = ValueInstant<DaqcValue>
-typealias BinaryStateMeasurement = ValueInstant<BinaryState>
-typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
+public typealias Measurement = ValueInstant<DaqcValue>
+public typealias BinaryStateMeasurement = ValueInstant<BinaryState>
+public typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
 
 private val logger = KotlinLogging.logger {}
 
@@ -45,59 +45,60 @@ private val daqcDispatcherThread: CoroutineDispatcher = newSingleThreadContext("
  * @see <a href="https://github.com/Kotlin/kotlinx.coroutines/blob/master/coroutines-guide.md#thread-confinement-coarse-
  * grained">Thread confinement coarse-grained</a>
  */
-val Dispatchers.Daqc: CoroutineDispatcher get() = daqcDispatcherThread
+public val Dispatchers.Daqc: CoroutineDispatcher get() = daqcDispatcherThread
 
 /**
  * The [ConflatedBroadcastChannel] which sends [CriticalDaqcError] messages notifying of potentially critical issues.
  * This channel should be monitored closely.
  */
-val criticalDaqcErrorBroadcaster = ConflatedBroadcastChannel<CriticalDaqcError>()
+public val criticalDaqcErrorBroadcaster: ConflatedBroadcastChannel<CriticalDaqcError> =
+    ConflatedBroadcastChannel<CriticalDaqcError>()
 
 /**
  * Class handling a set of errors which are extremely serious and represent major issues to be handled.
  */
-sealed class CriticalDaqcError {
+public sealed class CriticalDaqcError {
 
     /**
      * The [Device] which has thrown the error.
      */
-    abstract val device: Device
+    public abstract val device: Device
 
-    abstract val message: String?
+    public abstract val message: String?
 
     /**
      * Error where a command issued to the board was not able to be executed.
      */
-    data class FailedMajorCommand(
-        override val device: Device,
-        override val message: String? = null
+    public data class FailedMajorCommand(
+        public override val device: Device,
+        public override val message: String? = null
     ) : CriticalDaqcError()
 
     /**
      * Error representing a serious lapse in the connection to a board, but not terminal.
      */
-    data class PartialDisconnection(
-        override val device: Device,
-        override val message: String? = null,
-        val cause: Throwable? = null
+    public data class PartialDisconnection(
+        public override val device: Device,
+        public override val message: String? = null,
+        public val cause: Throwable? = null
     ) : CriticalDaqcError()
 
     /**
      * Error representing a fatal termination of the connection to the [Device].
      */
-    data class TerminalConnectionDisruption(
-        override val device: Device,
-        override val message: String? = null,
-        val cause: Throwable? = null
+    public data class TerminalConnectionDisruption(
+        public override val device: Device,
+        public override val message: String? = null,
+        public val cause: Throwable? = null
     ) : CriticalDaqcError()
 
     /**
      * Error where a board which was told to restart, reboot, or restore was not recovered or failed in the reboot
      * process.
      */
-    data class FailedToReinitialize(
-        override val device: Device,
-        override val message: String? = null,
-        val cause: Throwable? = null
+    public data class FailedToReinitialize(
+        public override val device: Device,
+        public override val message: String? = null,
+        public val cause: Throwable? = null
     ) : CriticalDaqcError()
 }

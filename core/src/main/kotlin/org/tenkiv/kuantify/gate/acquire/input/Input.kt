@@ -23,25 +23,25 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.*
 import javax.measure.*
 
-typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
+public typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
 
 /**
  * Interface defining classes which act as inputs and measure or gather data.
  *
  * @param T The type of data given by this Input.
  */
-interface Input<out T : DaqcValue> : AcquireGate<T>, IOStrand<T>
+public interface Input<out T : DaqcValue> : AcquireGate<T>, IOStrand<T>
 
 /**
  * An Input whose type is both a [DaqcValue] and [Comparable] allowing it to be used in the default learning module
  * classes
  */
-interface RangedInput<T> : Input<T>, RangedIOStrand<T> where T : DaqcValue, T : Comparable<T>
+public interface RangedInput<T> : Input<T>, RangedIOStrand<T> where T : DaqcValue, T : Comparable<T>
 
 /**
  * A [RangedInput] which supports the [BinaryState] type.
  */
-interface BinaryStateInput : RangedInput<BinaryState> {
+public interface BinaryStateInput : RangedInput<BinaryState> {
 
     override val valueRange get() = BinaryState.range
 
@@ -49,12 +49,17 @@ interface BinaryStateInput : RangedInput<BinaryState> {
 
 // Kotlin compiler is getting confused about generics star projections if RangedInput (or a typealias) is used directly
 // TODO: look into changing this to a typealias if generics compiler issue is fixed.
-interface RangedQuantityInput<Q : Quantity<Q>> : RangedInput<DaqcQuantity<Q>>
+public interface RangedQuantityInput<Q : Quantity<Q>> : RangedInput<DaqcQuantity<Q>>
 
-class RangedQuantityInputBox<Q : Quantity<Q>>(
-    input: QuantityInput<Q>,
+public class RangedQuantityInputBox<Q : Quantity<Q>>(
+    private val input: QuantityInput<Q>,
     override val valueRange: ClosedRange<DaqcQuantity<Q>>
-) : RangedQuantityInput<Q>, QuantityInput<Q> by input
+) : RangedQuantityInput<Q>, QuantityInput<Q> by input {
 
-fun <Q : Quantity<Q>> QuantityInput<Q>.toNewRangedInput(valueRange: ClosedRange<DaqcQuantity<Q>>) =
+    override val daqcDataSize: Int
+        get() = input.daqcDataSize
+
+}
+
+public fun <Q : Quantity<Q>> QuantityInput<Q>.toNewRangedInput(valueRange: ClosedRange<DaqcQuantity<Q>>) =
     RangedQuantityInputBox(this, valueRange)

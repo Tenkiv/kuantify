@@ -24,16 +24,16 @@ import org.tenkiv.kuantify.hardware.device.*
 /**
  * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
  */
-interface DigitalChannel<out D : Device> : DigitalGate, DeviceGate<DigitalValue, D> {
+public interface DigitalChannel<out D : Device> : DigitalGate, DeviceGate<DigitalValue, D> {
 
     /**
      * Gets if the pulse width modulation state for this channel is simulated using software.
      */
-    val pwmIsSimulated: Boolean
+    public val pwmIsSimulated: Boolean
 
     /**
      * Gets if the transition frequency state for this channel is simulated using software.
      */
-    val transitionFrequencyIsSimulated: Boolean
+    public val transitionFrequencyIsSimulated: Boolean
 }
 

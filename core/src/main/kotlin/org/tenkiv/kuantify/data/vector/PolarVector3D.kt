@@ -29,23 +29,23 @@ import kotlin.math.*
 /**
  * A [PolarVector3D] is a vector described in terms of two perpendicular polar planes with the same center point.
  */
-class PolarVector3D<Q : Quantity<Q>>(
+public class PolarVector3D<Q : Quantity<Q>>(
     magnitude: ComparableQuantity<Q>,
     azimuth: ComparableQuantity<Angle>,
     incline: ComparableQuantity<Angle>,
-    val azimuthAxisLabel: String,
-    val inclineAxisLabel: String,
-    val azimuthPositiveDirection: CircularDirection,
-    val inclinePositiveDirection: CircularDirection
+    public val azimuthAxisLabel: String,
+    public val inclineAxisLabel: String,
+    public val azimuthPositiveDirection: CircularDirection,
+    public val inclinePositiveDirection: CircularDirection
 ) : DaqcData {
-    val magnitude = magnitude.toDaqc()
+    public val magnitude = magnitude.toDaqc()
 
-    val azimuth = azimuth.toDaqc()
-    val incline = incline.toDaqc()
+    public val azimuth = azimuth.toDaqc()
+    public val incline = incline.toDaqc()
 
-    override val size get() = 3
+    public override val size get() = 3
 
-    override fun toDaqcValues() = listOf(magnitude, incline, azimuth)
+    public override fun toDaqcValues() = listOf(magnitude, incline, azimuth)
 
     private fun toComponentDoubles(): Triple<Double, Double, Double> {
         val magnitude = magnitude.valueToDouble()
@@ -62,14 +62,14 @@ class PolarVector3D<Q : Quantity<Q>>(
         return Triple(xComponent, yComponent, zComponent)
     }
 
-    fun toComponents(): Components<Q> {
+    public fun toComponents(): Components<Q> {
         val components = toComponentDoubles()
         val unit = magnitude.unit
 
         return Components(components.first(unit), components.second(unit), components.third(unit))
     }
 
-    operator fun times(scalar: Double): PolarVector3D<Q> = PolarVector3D(
+    public operator fun times(scalar: Double): PolarVector3D<Q> = PolarVector3D(
         magnitude * scalar,
         azimuth,
         incline,
@@ -79,7 +79,7 @@ class PolarVector3D<Q : Quantity<Q>>(
         inclinePositiveDirection
     )
 
-    operator fun unaryPlus() = PolarVector3D<Q>(
+    public operator fun unaryPlus(): PolarVector3D<Q> = PolarVector3D<Q>(
         +magnitude,
         azimuth,
         incline,
@@ -89,7 +89,7 @@ class PolarVector3D<Q : Quantity<Q>>(
         inclinePositiveDirection
     )
 
-    operator fun unaryMinus() = PolarVector3D<Q>(
+    public operator fun unaryMinus(): PolarVector3D<Q> = PolarVector3D<Q>(
         -magnitude,
         azimuth,
         incline,
@@ -99,7 +99,7 @@ class PolarVector3D<Q : Quantity<Q>>(
         inclinePositiveDirection
     )
 
-    operator fun plus(other: PolarVector3D<Q>): PolarVector3D<Q> {
+    public operator fun plus(other: PolarVector3D<Q>): PolarVector3D<Q> {
         val (thisX, thisY, thisZ) = toComponents()
         val (otherX, otherY, otherZ) = other.toComponents()
 
@@ -118,7 +118,7 @@ class PolarVector3D<Q : Quantity<Q>>(
         )
     }
 
-    operator fun minus(other: PolarVector3D<Q>): PolarVector3D<Q> {
+    public operator fun minus(other: PolarVector3D<Q>): PolarVector3D<Q> {
         val (thisX, thisY, thisZ) = toComponents()
         val (otherX, otherY, otherZ) = other.toComponents()
 
@@ -137,7 +137,7 @@ class PolarVector3D<Q : Quantity<Q>>(
         )
     }
 
-    inline infix fun <reified RQ : Quantity<RQ>> dot(other: PolarVector3D<*>): ComparableQuantity<RQ> {
+    public inline infix fun <reified RQ : Quantity<RQ>> dot(other: PolarVector3D<*>): ComparableQuantity<RQ> {
         val thisAzimuth = azimuth toDoubleIn RADIAN
         val otherAzimuth = other.azimuth toDoubleIn RADIAN
         val thisIncline = incline toDoubleIn RADIAN
@@ -148,7 +148,7 @@ class PolarVector3D<Q : Quantity<Q>>(
                         cos(thisAzimuth) * cos(otherAzimuth))
     }
 
-    inline infix fun <reified RQ : Quantity<RQ>> cross(other: PolarVector3D<*>): PolarVector3D<RQ> {
+    public inline infix fun <reified RQ : Quantity<RQ>> cross(other: PolarVector3D<*>): PolarVector3D<RQ> {
         val (thisX, thisY, thisZ) = toComponents()
         val (otherX, otherY, otherZ) = other.toComponents()
 
@@ -167,13 +167,13 @@ class PolarVector3D<Q : Quantity<Q>>(
         )
     }
 
-    data class Components<Q : Quantity<Q>>(
+    public data class Components<Q : Quantity<Q>>(
         val x: ComparableQuantity<Q>,
         val y: ComparableQuantity<Q>,
         val z: ComparableQuantity<Q>
     )
 
-    companion object {
+    public companion object {
 
         private fun <Q : Quantity<Q>> fromComponentDoubles(
             xComponent: Double,
@@ -200,7 +200,7 @@ class PolarVector3D<Q : Quantity<Q>>(
             )
         }
 
-        fun <Q : Quantity<Q>> fromComponents(
+        public fun <Q : Quantity<Q>> fromComponents(
             xComponent: ComparableQuantity<Q>,
             yComponent: ComparableQuantity<Q>,
             zComponent: ComparableQuantity<Q>,

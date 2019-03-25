@@ -29,9 +29,9 @@ import javax.measure.quantity.*
 /**
  * Class defining the basic features of an output which sends binary signals.
  */
-interface DigitalOutput<out D : DigitalOutputDevice> : DigitalChannel<D> {
+public interface DigitalOutput<out D : DigitalOutputDevice> : DigitalChannel<D> {
 
-    fun setOutputState(
+    public fun setOutputState(
         state: BinaryState
     ): SettingViability
 
@@ -40,7 +40,7 @@ interface DigitalOutput<out D : DigitalOutputDevice> : DigitalChannel<D> {
      *
      * @param percent The percentage of the time the output is supposed to be active.
      */
-    fun pulseWidthModulate(
+    public fun pulseWidthModulate(
         percent: ComparableQuantity<Dimensionless>
     ): SettingViability
 
@@ -49,11 +49,11 @@ interface DigitalOutput<out D : DigitalOutputDevice> : DigitalChannel<D> {
      *
      * @param freq The frequency of state change.
      */
-    fun sustainTransitionFrequency(
+    public fun sustainTransitionFrequency(
         freq: ComparableQuantity<Frequency>
     ): SettingViability
 
-    override fun stopTransceiving() {
+    public override fun stopTransceiving() {
         setOutputState(BinaryState.Low)
     }
 
@@ -63,19 +63,19 @@ interface DigitalOutput<out D : DigitalOutputDevice> : DigitalChannel<D> {
      * @param inverted Denotes if [BinaryState.ON] is Low as well as the inverse. By default false.
      * @return A [SimpleBinaryStateController] with this [DigitalOutput] as the controlled output.
      */
-    fun asBinaryStateController(): BinaryStateOutput
+    public fun asBinaryStateController(): BinaryStateOutput
 
     /**
      * Ease of use function to create a [SimplePwmController] from this [DigitalOutput].
      *
      * @return A [SimplePwmController] with this [DigitalOutput] as the controlled output.
      */
-    fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Dimensionless>
+    public fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Dimensionless>
 
     /**
      * Ease of use function to create a [SimpleFrequencyController] from this [DigitalOutput].
      *
      * @return A [SimpleFrequencyController] with this [DigitalOutput] as the controlled output.
      */
-    fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Frequency>
+    public fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Frequency>
 }

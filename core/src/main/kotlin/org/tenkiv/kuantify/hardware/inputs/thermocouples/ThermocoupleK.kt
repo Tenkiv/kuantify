@@ -35,7 +35,7 @@ import kotlin.math.*
 /**
  * A common sensor which measures [Temperature] from [ElectricPotential].
  */
-class ThermocoupleK internal constructor(
+public class ThermocoupleK internal constructor(
     scope: CoroutineScope,
     channel: AnalogInput<*>,
     acceptableError: ComparableQuantity<Temperature> = 1.celsius
@@ -46,14 +46,14 @@ class ThermocoupleK internal constructor(
 ) {
     private val job = Job(scope.coroutineContext[Job])
 
-    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
+    public override val coroutineContext: CoroutineContext = scope.coroutineContext + job
 
     private val noTempRefValueMsg =
         "The temperature reference for device:\n" +
                 " ${analogInput.device} \n" +
                 "has not yet measured a temperature, thermocouples from this device cannot function until it does."
 
-    override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Temperature>> {
+    protected override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Temperature>> {
         val mv = ep toDoubleIn MILLI(VOLT)
         val temperatureReferenceValue =
             analogInput.device.temperatureReference.updateBroadcaster.valueOrNull?.value
@@ -99,9 +99,11 @@ class ThermocoupleK internal constructor(
 
     }
 
-    fun cancel() = job.cancel()
+    public fun cancel() {
+        job.cancel()
+    }
 
-    companion object {
+    public companion object {
         private const val low1 = 25.173462
         private const val low2 = -1.1662878
         private const val low3 = -1.0833638
@@ -132,7 +134,7 @@ class ThermocoupleK internal constructor(
 
 }
 
-fun CoroutineScope.ThermocoupleK(
+public fun CoroutineScope.ThermocoupleK(
     channel: AnalogInput<*>,
     acceptableError: ComparableQuantity<Temperature> = 1.celsius
 ) = ThermocoupleK(this, channel, acceptableError)

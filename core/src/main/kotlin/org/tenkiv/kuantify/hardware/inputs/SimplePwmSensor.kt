@@ -19,6 +19,8 @@
 package org.tenkiv.kuantify.hardware.inputs
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
 import javax.measure.quantity.*
@@ -31,14 +33,21 @@ import javax.measure.quantity.*
 class SimplePwmSensor internal constructor(val digitalInput: DigitalInput<*>) :
     QuantityInput<Dimensionless>, CoroutineScope by digitalInput {
 
-    override val updateBroadcaster get() = digitalInput.pwmBroadcaster
+    override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Dimensionless>>
+        get() = digitalInput.pwmBroadcaster
 
-    override val isTransceiving get() = digitalInput.isTransceivingPwm
+    override val isTransceiving: InitializedTrackable<Boolean>
+        get() = digitalInput.isTransceivingPwm
 
-    override val updateRate get() = digitalInput.updateRate
+    override val updateRate: UpdateRate
+        get() = digitalInput.updateRate
 
-    override fun startSampling() = digitalInput.startSamplingPwm()
+    override fun startSampling() {
+        digitalInput.startSamplingPwm()
+    }
 
-    override fun stopTransceiving() = digitalInput.stopTransceiving()
+    override fun stopTransceiving() {
+        digitalInput.stopTransceiving()
+    }
 
 }

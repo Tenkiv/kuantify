@@ -26,13 +26,13 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import javax.measure.quantity.*
 
-interface DigitalGate : DaqcGate<DigitalValue> {
+public interface DigitalGate : DaqcGate<DigitalValue> {
     /**
      * The frequency with which pwm and transition frequency input and output will be averaged.
      * e.g. you want an output to be [BinaryState.High] 60% of the time. This will set if it's high 60% of the time
      * after 2 seconds, 1 second, 0.5 seconds, etc.
      */
-    val avgFrequency: UpdatableQuantity<Frequency>
+    public val avgFrequency: UpdatableQuantity<Frequency>
 
     /**
      * Gets if the channel is active for binary state.
@@ -40,7 +40,7 @@ interface DigitalGate : DaqcGate<DigitalValue> {
      * Implementing backing  field must be atomic or otherwise provide safety for
      * reads from multiple threads.
      */
-    val isTransceivingBinaryState: InitializedTrackable<Boolean>
+    public val isTransceivingBinaryState: InitializedTrackable<Boolean>
 
     /**
      * Gets if the channel is active for pulse width modulation.
@@ -48,7 +48,7 @@ interface DigitalGate : DaqcGate<DigitalValue> {
      * Implementing backing  field must be atomic or otherwise provide safety for
      * reads from multiple threads.
      */
-    val isTransceivingPwm: InitializedTrackable<Boolean>
+    public val isTransceivingPwm: InitializedTrackable<Boolean>
 
     /**
      * Gets if the channel is active for state transitions.
@@ -56,22 +56,22 @@ interface DigitalGate : DaqcGate<DigitalValue> {
      * Implementing backing  field must be atomic or otherwise provide safety for
      * reads from multiple threads.
      */
-    val isTransceivingFrequency: InitializedTrackable<Boolean>
+    public val isTransceivingFrequency: InitializedTrackable<Boolean>
 
-    val binaryStateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+    public val binaryStateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
 
     /**
      * [ConflatedBroadcastChannel] for receiving pulse width modulation data.
      */
-    val pwmBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Dimensionless>>
+    public val pwmBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Dimensionless>>
 
     /**
      * [ConflatedBroadcastChannel] for receiving transition frequency data.
      */
-    val transitionFrequencyBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Frequency>>
+    public val transitionFrequencyBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Frequency>>
 }
 
-inline fun DigitalGate.onAnyTransceivingChange(
+public inline fun DigitalGate.onAnyTransceivingChange(
     crossinline block: (anyTransceiving: Boolean) -> Unit
 ) {
     launch {
@@ -104,12 +104,12 @@ inline fun DigitalGate.onAnyTransceivingChange(
 }
 
 @Serializable
-sealed class DigitalValue : DaqcData {
+public sealed class DigitalValue : DaqcData {
 
     override val size: Int
         get() = 1
 
-    data class BinaryState(val state: org.tenkiv.kuantify.data.BinaryState) : DigitalValue() {
+    public data class BinaryState(val state: org.tenkiv.kuantify.data.BinaryState) : DigitalValue() {
 
         override fun toDaqcValues(): List<DaqcValue> = listOf(state)
 
@@ -118,7 +118,7 @@ sealed class DigitalValue : DaqcData {
         }
     }
 
-    data class Frequency(val frequency: DaqcQuantity<javax.measure.quantity.Frequency>) : DigitalValue() {
+    public data class Frequency(val frequency: DaqcQuantity<javax.measure.quantity.Frequency>) : DigitalValue() {
 
         override fun toDaqcValues(): List<DaqcValue> = listOf(frequency)
 
@@ -127,7 +127,7 @@ sealed class DigitalValue : DaqcData {
         }
     }
 
-    data class Percentage(val percent: DaqcQuantity<Dimensionless>) : DigitalValue() {
+    public data class Percentage(val percent: DaqcQuantity<Dimensionless>) : DigitalValue() {
 
         override fun toDaqcValues(): List<DaqcValue> = listOf(percent)
 
@@ -138,15 +138,15 @@ sealed class DigitalValue : DaqcData {
 
     //TODO: Redo this horrific abomination of a serialization hack
     @Serializer(forClass = DigitalValue::class)
-    companion object {
-        override val descriptor: SerialDescriptor = object : SerialClassDescImpl("DigitalGateValue") {
+    public companion object {
+        public override val descriptor: SerialDescriptor = object : SerialClassDescImpl("DigitalGateValue") {
             init {
                 addElement("type")
                 addElement("value")
             }
         }
 
-        override fun deserialize(decoder: Decoder): DigitalValue {
+        public override fun deserialize(decoder: Decoder): DigitalValue {
             val inp: CompositeDecoder = decoder.beginStructure(descriptor)
             var type: Byte = -1
             lateinit var value: String
@@ -167,7 +167,7 @@ sealed class DigitalValue : DaqcData {
             }
         }
 
-        override fun serialize(encoder: Encoder, obj: DigitalValue) {
+        public override fun serialize(encoder: Encoder, obj: DigitalValue) {
             val compositeOutput: CompositeEncoder = encoder.beginStructure(descriptor)
 
             val type = when (obj) {

@@ -18,13 +18,6 @@
 
 package org.tenkiv.kuantify.lib
 
-/*
- * Copyright 2016-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
- *
- * The NIO module of coroutines was excluded from the coroutines 1.0 release and as suggested by Roman Elizarov to be
- * inserted into projects that require it. See: https://github.com/Kotlin/kotlinx.coroutines/issues/601
- */
-
 import kotlinx.coroutines.*
 import java.net.*
 import java.nio.*
@@ -39,7 +32,7 @@ import kotlin.coroutines.*
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
  */
-suspend fun AsynchronousFileChannel.aLock() = suspendCancellableCoroutine<FileLock> { cont ->
+public suspend fun AsynchronousFileChannel.aLock() = suspendCancellableCoroutine<FileLock> { cont ->
     lock(cont, asyncIOHandler())
     closeOnCancel(cont)
 }
@@ -50,7 +43,7 @@ suspend fun AsynchronousFileChannel.aLock() = suspendCancellableCoroutine<FileLo
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
  */
-suspend fun AsynchronousFileChannel.aLock(
+public suspend fun AsynchronousFileChannel.aLock(
     position: Long,
     size: Long,
     shared: Boolean
@@ -65,7 +58,7 @@ suspend fun AsynchronousFileChannel.aLock(
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
  */
-suspend fun AsynchronousFileChannel.aRead(
+public suspend fun AsynchronousFileChannel.aRead(
     buf: ByteBuffer,
     position: Long
 ) = suspendCancellableCoroutine<Int> { cont ->
@@ -79,7 +72,7 @@ suspend fun AsynchronousFileChannel.aRead(
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
  */
-suspend fun AsynchronousFileChannel.aWrite(
+public suspend fun AsynchronousFileChannel.aWrite(
     buf: ByteBuffer,
     position: Long
 ) = suspendCancellableCoroutine<Int> { cont ->
@@ -93,10 +86,11 @@ suspend fun AsynchronousFileChannel.aWrite(
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
  */
-suspend fun AsynchronousServerSocketChannel.aAccept() = suspendCancellableCoroutine<AsynchronousSocketChannel> { cont ->
-    accept(cont, asyncIOHandler())
-    closeOnCancel(cont)
-}
+public suspend fun AsynchronousServerSocketChannel.aAccept() =
+    suspendCancellableCoroutine<AsynchronousSocketChannel> { cont ->
+        accept(cont, asyncIOHandler())
+        closeOnCancel(cont)
+    }
 
 /**
  * Performs [AsynchronousSocketChannel.connect] without blocking a thread and resumes when asynchronous operation completes.
@@ -104,7 +98,7 @@ suspend fun AsynchronousServerSocketChannel.aAccept() = suspendCancellableCorout
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
  */
-suspend fun AsynchronousSocketChannel.aConnect(
+public suspend fun AsynchronousSocketChannel.aConnect(
     socketAddress: SocketAddress
 ) = suspendCancellableCoroutine<Unit> { cont ->
     connect(socketAddress, cont, AsyncVoidIOHandler)
@@ -117,7 +111,7 @@ suspend fun AsynchronousSocketChannel.aConnect(
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
  */
-suspend fun AsynchronousSocketChannel.aRead(
+public suspend fun AsynchronousSocketChannel.aRead(
     buf: ByteBuffer,
     timeout: Long = 0L,
     timeUnit: TimeUnit = TimeUnit.MILLISECONDS
@@ -132,7 +126,7 @@ suspend fun AsynchronousSocketChannel.aRead(
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
  */
-suspend fun AsynchronousSocketChannel.aWrite(
+public suspend fun AsynchronousSocketChannel.aWrite(
     buf: ByteBuffer,
     timeout: Long = 0L,
     timeUnit: TimeUnit = TimeUnit.MILLISECONDS

@@ -28,9 +28,9 @@ import javax.measure.quantity.*
  *
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
-class SimplePwmController internal constructor(digitalOutput: DigitalOutput<*>) :
+public class SimplePwmController internal constructor(digitalOutput: DigitalOutput<*>) :
     ScPwmController<Dimensionless>(digitalOutput), CoroutineScope by digitalOutput {
 
-    override fun convertOutput(setting: DaqcQuantity<Dimensionless>) = setting
+    public override fun convertOutput(setting: DaqcQuantity<Dimensionless>) = setting
 
 }

@@ -24,15 +24,15 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.communication.*
 
-typealias QuantityDeviceGate<Q, D> = DeviceGate<DaqcQuantity<Q>, D>
+public typealias QuantityDeviceGate<Q, D> = DeviceGate<DaqcQuantity<Q>, D>
 
-interface DeviceGate<T : DaqcData, out D : Device> : DaqcGate<T> {
+public interface DeviceGate<T : DaqcData, out D : Device> : DaqcGate<T> {
 
-    val device: D
+    public val device: D
 
-    val uid: String
+    public val uid: String
 
-    companion object : KLogging()
+    public companion object : KLogging()
 
 }
 

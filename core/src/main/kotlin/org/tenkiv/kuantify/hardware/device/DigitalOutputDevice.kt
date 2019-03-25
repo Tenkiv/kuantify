@@ -20,11 +20,11 @@ package org.tenkiv.kuantify.hardware.device
 
 import org.tenkiv.kuantify.hardware.channel.*
 
-interface DigitalOutputDevice : Device {
+public interface DigitalOutputDevice : Device {
 
     /**
      * List of all [DigitalOutput]s that this device has.
      */
-    val digitalOutputMap: Map<String, DigitalOutput<*>>
+    public val digitalOutputMap: Map<String, DigitalOutput<*>>
 
 }

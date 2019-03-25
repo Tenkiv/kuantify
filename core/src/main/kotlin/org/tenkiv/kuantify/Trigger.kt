@@ -26,7 +26,7 @@ import org.tenkiv.kuantify.lib.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
-fun <T> CoroutineScope.Trigger(
+public fun <T> CoroutineScope.Trigger(
     triggerOnSimultaneousValues: Boolean = false,
     maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
     vararg triggerConditions: TriggerCondition<T>,
@@ -39,7 +39,7 @@ fun <T> CoroutineScope.Trigger(
     triggerFunction = triggerFunction
 )
 
-fun <T> CoroutineScope.Trigger(
+public fun <T> CoroutineScope.Trigger(
     vararg triggerConditions: TriggerCondition<T>,
     triggerFunction: () -> Unit
 ): Trigger<T> = Trigger(
@@ -50,7 +50,7 @@ fun <T> CoroutineScope.Trigger(
     triggerFunction = triggerFunction
 )
 
-fun <T> CoroutineScope.Trigger(
+public fun <T> CoroutineScope.Trigger(
     maxTriggerCount: MaxTriggerCount,
     vararg triggerConditions: TriggerCondition<T>,
     triggerFunction: () -> Unit
@@ -62,7 +62,7 @@ fun <T> CoroutineScope.Trigger(
     triggerFunction = triggerFunction
 )
 
-fun <T> CoroutineScope.Trigger(
+public fun <T> CoroutineScope.Trigger(
     triggerOnSimultaneousValues: Boolean,
     vararg triggerConditions: TriggerCondition<T>,
     triggerFunction: () -> Unit
@@ -82,23 +82,23 @@ fun <T> CoroutineScope.Trigger(
  * @param triggerConditions The [TriggerCondition]s which need to be met for a trigger to fire.
  * @param triggerFunction The function to be executed when the trigger fires.
  */
-class Trigger<T> internal constructor(
+public class Trigger<T> internal constructor(
     scope: CoroutineScope,
-    val triggerOnSimultaneousValues: Boolean = false,
-    val maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
+    public val triggerOnSimultaneousValues: Boolean = false,
+    public val maxTriggerCount: MaxTriggerCount = MaxTriggerCount.Limited(1),
     vararg triggerConditions: TriggerCondition<T>,
     triggerFunction: () -> Unit
 ) : CoroutineScope {
     private val job = Job(scope.coroutineContext[Job])
 
-    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
+    public override val coroutineContext: CoroutineContext = scope.coroutineContext + job
 
     private val channelList: MutableList<ReceiveChannel<ValueInstant<T>>> = ArrayList()
 
     /**
      * Stops the [Trigger] and cancels the open channels.
      */
-    fun cancel() {
+    public fun cancel() {
         if (maxTriggerCount is MaxTriggerCount.Limited && maxTriggerCount.atomicCount.get() > 0) {
             maxTriggerCount.atomicCount.decrementAndGet()
 
@@ -141,17 +141,17 @@ class Trigger<T> internal constructor(
 /**
  * Sealed class to determine the number of times a [Trigger] should fire.
  */
-sealed class MaxTriggerCount {
+public sealed class MaxTriggerCount {
 
     /**
      * Class which sets the number of times a [Trigger] can fire.
      */
-    data class Limited(val totalCount: Int) : MaxTriggerCount() {
+    public data class Limited(public val totalCount: Int) : MaxTriggerCount() {
 
         /**
          * The number of charges left in the [Trigger]
          */
-        val remainingCount get() = atomicCount.get()
+        public val remainingCount get() = atomicCount.get()
 
         internal val atomicCount = AtomicInteger(totalCount)
 
@@ -160,7 +160,7 @@ sealed class MaxTriggerCount {
     /**
      * Class which sets a [Trigger] to fire unlimited times.
      */
-    object Unlimited : MaxTriggerCount()
+    public object Unlimited : MaxTriggerCount()
 }
 
 //TODO: Should support IOStrand, not just Input
@@ -170,10 +170,10 @@ sealed class MaxTriggerCount {
  * @param trackable The [Input] to monitor.
  * @param condition The conditions upon which to execute the [Trigger]'s function.
  */
-data class TriggerCondition<T>(
-    val trackable: Trackable<ValueInstant<T>>,
-    val condition: (ValueInstant<T>) -> Boolean
+public data class TriggerCondition<T>(
+    public val trackable: Trackable<ValueInstant<T>>,
+    public val condition: (ValueInstant<T>) -> Boolean
 ) {
-    var lastValue: ValueInstant<T>? = null
-    var hasBeenReached: Boolean = false
+    public var lastValue: ValueInstant<T>? = null
+    public var hasBeenReached: Boolean = false
 }

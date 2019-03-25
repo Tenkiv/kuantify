@@ -18,7 +18,7 @@
 
 package org.tenkiv.kuantify.data.vector
 
-enum class CircularDirection {
+public enum class CircularDirection {
     CLOCKWISE,
     COUNTER_CLOCKWISE
 }

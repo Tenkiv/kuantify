@@ -30,7 +30,7 @@ import kotlinx.coroutines.sync.*
  * @param onReceive The function to be executed when an update is received.
  * @return The opened [ReceiveChannel].
  */
-fun <T> BroadcastChannel<T>.consumeAndReturn(
+public fun <T> BroadcastChannel<T>.consumeAndReturn(
     scope: CoroutineScope,
     onReceive: suspend (T) -> Unit
 ): ReceiveChannel<T> {
@@ -41,9 +41,9 @@ fun <T> BroadcastChannel<T>.consumeAndReturn(
     return subChannel
 }
 
-class MutexValue<V : Any>(@PublishedApi internal val value: V, @PublishedApi internal val mutex: Mutex) {
+public class MutexValue<V : Any>(@PublishedApi internal val value: V, @PublishedApi internal val mutex: Mutex) {
 
-    suspend inline fun <R> withLock(block: (value: V) -> R): R = mutex.withLock {
+    public suspend inline fun <R> withLock(block: (value: V) -> R): R = mutex.withLock {
         block(value)
     }
 

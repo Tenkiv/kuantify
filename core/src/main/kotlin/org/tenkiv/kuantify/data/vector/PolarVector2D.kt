@@ -37,19 +37,19 @@ private fun ComparableQuantity<Angle>.compassInvert(): DaqcQuantity<Angle> {
     }
 }
 
-class PolarVector2D<Q : Quantity<Q>>(
+public class PolarVector2D<Q : Quantity<Q>>(
     magnitude: ComparableQuantity<Q>,
     angle: ComparableQuantity<Angle>,
-    val axisLabel: String,
-    val positiveDirection: CircularDirection
+    public val axisLabel: String,
+    public val positiveDirection: CircularDirection
 ) : DaqcData {
-    val magnitude = magnitude.toDaqc()
+    public val magnitude = magnitude.toDaqc()
 
-    val angle = angle.toDaqc()
+    public val angle = angle.toDaqc()
 
-    override val size get() = 2
+    public override val size get() = 2
 
-    override fun toDaqcValues() = listOf(magnitude, angle)
+    public override fun toDaqcValues() = listOf(magnitude, angle)
 
     /**
      * Converts this [PolarVector2D] to a [Pair] of [Double]s representing the equivalent components of a Euclidean vector in
@@ -66,14 +66,14 @@ class PolarVector2D<Q : Quantity<Q>>(
         return Pair(xComponent, yComponent)
     }
 
-    fun toComponents(): Components<Q> {
+    public fun toComponents(): Components<Q> {
         val components = toComponentDoubles()
         val unit = magnitude.unit
 
         return Components(components.first(unit), components.second(unit))
     }
 
-    infix fun compassScale(scalar: Double): PolarVector2D<Q> {
+    public infix fun compassScale(scalar: Double): PolarVector2D<Q> {
         val negativeScalar = scalar < 0
         val scaledMagnitude = magnitude * scalar.absoluteValue
         val angle = if (negativeScalar) angle.compassInvert() else angle
@@ -81,16 +81,16 @@ class PolarVector2D<Q : Quantity<Q>>(
         return PolarVector2D(scaledMagnitude, angle, axisLabel, positiveDirection)
     }
 
-    operator fun times(scalar: Double): PolarVector2D<Q> =
+    public operator fun times(scalar: Double): PolarVector2D<Q> =
         PolarVector2D(magnitude * scalar, angle, axisLabel, positiveDirection)
 
-    operator fun unaryPlus() =
+    public operator fun unaryPlus() =
         PolarVector2D(+magnitude, angle, axisLabel, positiveDirection)
 
-    operator fun unaryMinus() =
+    public operator fun unaryMinus() =
         PolarVector2D(-magnitude, angle, axisLabel, positiveDirection)
 
-    operator fun plus(other: PolarVector2D<Q>): PolarVector2D<Q> {
+    public operator fun plus(other: PolarVector2D<Q>): PolarVector2D<Q> {
         val (thisX, thisY) = toComponents()
         val (otherX, otherY) = other.toComponents()
 
@@ -105,7 +105,7 @@ class PolarVector2D<Q : Quantity<Q>>(
         )
     }
 
-    operator fun minus(other: PolarVector2D<Q>): PolarVector2D<Q> {
+    public operator fun minus(other: PolarVector2D<Q>): PolarVector2D<Q> {
         val (thisX, thisY) = toComponents()
         val (otherX, otherY) = other.toComponents()
 
@@ -123,7 +123,7 @@ class PolarVector2D<Q : Quantity<Q>>(
     /**
      * @return The dot product.
      */
-    inline infix fun <reified RQ : Quantity<RQ>> dot(other: PolarVector2D<*>): ComparableQuantity<RQ> {
+    public inline infix fun <reified RQ : Quantity<RQ>> dot(other: PolarVector2D<*>): ComparableQuantity<RQ> {
         val (thisX, thisY) = toComponents()
         val (otherX, otherY) = other.toComponents()
 
@@ -135,7 +135,7 @@ class PolarVector2D<Q : Quantity<Q>>(
         return (resultX.valueToDouble() + resultY.valueToDouble()).withSymbol(resultUnit.getSymbol()).asType()
     }
 
-    override fun equals(other: Any?): Boolean {
+    public override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
@@ -149,7 +149,7 @@ class PolarVector2D<Q : Quantity<Q>>(
         return true
     }
 
-    override fun hashCode(): Int {
+    public override fun hashCode(): Int {
         var result = axisLabel.hashCode()
         result = 31 * result + positiveDirection.hashCode()
         result = 31 * result + magnitude.hashCode()
@@ -157,13 +157,13 @@ class PolarVector2D<Q : Quantity<Q>>(
         return result
     }
 
-    override fun toString() =
+    public override fun toString() =
         "PolarVector2D($magnitude, $angle $positiveDirection from $axisLabel)"
 
-    data class Components<Q : Quantity<Q>>(val x: ComparableQuantity<Q>, val y: ComparableQuantity<Q>)
+    public data class Components<Q : Quantity<Q>>(val x: ComparableQuantity<Q>, val y: ComparableQuantity<Q>)
 
-    companion object {
-        fun <Q : Quantity<Q>> fromComponents(
+    public companion object {
+        public fun <Q : Quantity<Q>> fromComponents(
             xComponent: ComparableQuantity<Q>,
             yComponent: ComparableQuantity<Q>,
             axisLabel: String,

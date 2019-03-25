@@ -34,7 +34,7 @@ import org.tenkiv.kuantify.networking.configuration.*
 
 private typealias SensorConstructor<S> = (LocalAndroidDevice, Sensor, String) -> S
 
-open class LocalAndroidDevice internal constructor(context: Context) :
+public open class LocalAndroidDevice internal constructor(context: Context) :
     LocalDevice(GlobalScope.coroutineContext + Dispatchers.Main), AndroidDevice {
 
     internal val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
@@ -43,7 +43,7 @@ open class LocalAndroidDevice internal constructor(context: Context) :
     internal val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager
         ?: wrongSystemService()
 
-    final override val ambientTemperatureSensors: List<LocalAndroidAmbientTemperatureSensor> =
+    public final override val ambientTemperatureSensors: List<LocalAndroidAmbientTemperatureSensor> =
         getSensors(
             Sensor.TYPE_AMBIENT_TEMPERATURE,
             AndroidGateTypeId.AMBIENT_TEMPERATURE
@@ -51,7 +51,7 @@ open class LocalAndroidDevice internal constructor(context: Context) :
             LocalAndroidAmbientTemperatureSensor(device, sensor, id)
         }
 
-    final override val heartRateSensors: List<LocalAndroidHeartRateSensor> =
+    public final override val heartRateSensors: List<LocalAndroidHeartRateSensor> =
         getSensors(
             Sensor.TYPE_HEART_RATE,
             AndroidGateTypeId.HEART_RATE
@@ -59,7 +59,7 @@ open class LocalAndroidDevice internal constructor(context: Context) :
             LocalAndroidHeartRateSensor(device, sensor, id)
         }
 
-    final override val lightSensors: List<LocalAndroidLightSensor> =
+    public final override val lightSensors: List<LocalAndroidLightSensor> =
         getSensors(
             Sensor.TYPE_LIGHT,
             AndroidGateTypeId.LIGHT
@@ -67,7 +67,7 @@ open class LocalAndroidDevice internal constructor(context: Context) :
             LocalAndroidLightSensor(device, sensor, id)
         }
 
-    final override val proximitySensors: List<LocalAndroidProximitySensor> =
+    public final override val proximitySensors: List<LocalAndroidProximitySensor> =
         getSensors(
             Sensor.TYPE_PROXIMITY,
             AndroidGateTypeId.PROXIMITY
@@ -75,7 +75,7 @@ open class LocalAndroidDevice internal constructor(context: Context) :
             LocalAndroidProximitySensor(device, sensor, id)
         }
 
-    final override val pressureSensors: List<LocalAndroidPressureSensor> =
+    public final override val pressureSensors: List<LocalAndroidPressureSensor> =
         getSensors(
             Sensor.TYPE_PRESSURE,
             AndroidGateTypeId.PRESSURE
@@ -83,7 +83,7 @@ open class LocalAndroidDevice internal constructor(context: Context) :
             LocalAndroidPressureSensor(device, sensor, id)
         }
 
-    final override val relativeHumiditySensors: List<LocalAndroidRelativeHumiditySensor> =
+    public final override val relativeHumiditySensors: List<LocalAndroidRelativeHumiditySensor> =
         getSensors(
             Sensor.TYPE_RELATIVE_HUMIDITY,
             AndroidGateTypeId.RELATIVE_HUMIDITY
@@ -91,7 +91,7 @@ open class LocalAndroidDevice internal constructor(context: Context) :
             LocalAndroidRelativeHumiditySensor(device, sensor, id)
         }
 
-    final override val torchControllers: List<AndroidTorchController> = buildTorchControllers()
+    public final override val torchControllers: List<AndroidTorchController> = buildTorchControllers()
 
     private inline fun <T : DaqcValue, S : LocalAndroidSensor<T>> getSensors(
         sensorType: Int,
@@ -136,7 +136,7 @@ open class LocalAndroidDevice internal constructor(context: Context) :
         return result
     }
 
-    override fun getInfo(): String {
+    public override fun getInfo(): String {
         val info = AndroidDevice.Info(
             deviceId = uid,
             numAmbientTemperatureSensors = ambientTemperatureSensors.size,
@@ -159,10 +159,10 @@ open class LocalAndroidDevice internal constructor(context: Context) :
      * More Info: https://developer.android.com/training/articles/user-data-ids
      */
     @SuppressLint("HardwareIds")
-    final override val uid: String =
+    public final override val uid: String =
         "android-${Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)}"
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
         ambientTemperatureSensors.addSideRoutingTo(routing)
         heartRateSensors.addSideRoutingTo(routing)
@@ -173,7 +173,7 @@ open class LocalAndroidDevice internal constructor(context: Context) :
         torchControllers.addRoutingTo(routing)
     }
 
-    companion object {
+    public companion object {
         @Volatile
         private var device: LocalAndroidDevice? = null
 
@@ -195,9 +195,9 @@ open class LocalAndroidDevice internal constructor(context: Context) :
 /**
  * Exceptions thrown by [LocalAndroidSensor]s when a fatal error occurs.
  */
-open class AndroidSensorException(error: String) : Exception(error)
+public open class AndroidSensorException(error: String) : Exception(error)
 
 /**
  * Class which is thrown when a sensor is improperly initialized.
  */
-class AndroidSensorInitializationException(error: String) : AndroidSensorException(error)
+public class AndroidSensorInitializationException(error: String) : AndroidSensorException(error)

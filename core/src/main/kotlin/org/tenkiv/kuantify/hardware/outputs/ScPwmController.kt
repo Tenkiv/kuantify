@@ -33,18 +33,20 @@ import javax.measure.quantity.*
  *
  * @param digitalOutput The digital output
  */
-abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput<*>) :
+public abstract class ScPwmController<Q : Quantity<Q>>(public val digitalOutput: DigitalOutput<*>) :
     QuantityOutput<Q> {
 
-    override val isTransceiving get() = digitalOutput.isTransceivingPwm
+    public override val isTransceiving: InitializedTrackable<Boolean>
+        get() = digitalOutput.isTransceivingPwm
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
-    val avgFrequency: UpdatableQuantity<Frequency> get() = digitalOutput.avgFrequency
+    public val avgFrequency: UpdatableQuantity<Frequency>
+        get() = digitalOutput.avgFrequency
 
-    override fun setOutput(setting: DaqcQuantity<Q>): SettingViability {
+    public override fun setOutput(setting: DaqcQuantity<Q>): SettingViability {
         val result = digitalOutput.pulseWidthModulate(convertOutput(setting))
 
         if (result is SettingViability.Viable) _broadcastChannel.offer(setting.now())
@@ -61,5 +63,7 @@ abstract class ScPwmController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput
      */
     protected abstract fun convertOutput(setting: DaqcQuantity<Q>): DaqcQuantity<Dimensionless>
 
-    override fun stopTransceiving() = digitalOutput.stopTransceiving()
+    public override fun stopTransceiving() {
+        digitalOutput.stopTransceiving()
+    }
 }

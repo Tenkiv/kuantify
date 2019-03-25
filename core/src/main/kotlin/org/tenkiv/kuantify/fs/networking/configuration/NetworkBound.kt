@@ -20,15 +20,15 @@ package org.tenkiv.kuantify.fs.networking.configuration
 
 import org.tenkiv.kuantify.networking.configuration.*
 
-typealias CombinedRouting = (CombinedNetworkRouting) -> Unit
+public typealias CombinedRouting = (CombinedNetworkRouting) -> Unit
 
-interface NetworkBoundCombined {
+public interface NetworkBoundCombined {
 
-    val basePath: Path
+    public val basePath: Path
 
-    fun combinedRouting(routing: CombinedNetworkRouting)
+    public fun combinedRouting(routing: CombinedNetworkRouting)
 
-    fun CombinedNetworkRouting.addToThisPath(build: CombinedNetworkRouting.() -> Unit) {
+    public fun CombinedNetworkRouting.addToThisPath(build: CombinedNetworkRouting.() -> Unit) {
         route(basePath) {
             build()
         }
@@ -36,7 +36,7 @@ interface NetworkBoundCombined {
 
 }
 
-fun Iterable<NetworkBoundCombined>.addCombinedRoutingTo(routing: CombinedNetworkRouting) {
+public fun Iterable<NetworkBoundCombined>.addCombinedRoutingTo(routing: CombinedNetworkRouting) {
     forEach {
         it.combinedRouting(routing)
     }

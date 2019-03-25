@@ -38,25 +38,25 @@ import kotlin.reflect.*
 
 private val logger = KotlinLogging.logger {}
 
-sealed class FSRemoteOutput<T : DaqcValue, D : FSRemoteDevice>(device: D, uid: String) :
+public sealed class FSRemoteOutput<T : DaqcValue, D : FSRemoteDevice>(device: D, uid: String) :
     FSRemoteControlGate<T, D>(device, uid), Output<T> {
 
     internal val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
-    final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
+    public final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = _updateBroadcaster
 
     internal val settingChannel = Channel<T>(Channel.UNLIMITED)
 
     internal val _isTransceiving = Updatable(false)
-    final override val isTransceiving: InitializedTrackable<Boolean>
+    public final override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    override fun setOutput(setting: T): SettingViability {
+    public override fun setOutput(setting: T): SettingViability {
         val connected = command { settingChannel.offer(setting) }
         return if (connected) SettingViability.Viable else SettingViability.Unviable(ConnectionException(this))
     }
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
@@ -70,14 +70,14 @@ sealed class FSRemoteOutput<T : DaqcValue, D : FSRemoteDevice>(device: D, uid: S
     }
 }
 
-abstract class FSRemoteQuantityOutput<Q : Quantity<Q>, D : FSRemoteDevice>(
+public abstract class FSRemoteQuantityOutput<Q : Quantity<Q>, D : FSRemoteDevice>(
     device: D,
     uid: String
 ) : FSRemoteOutput<DaqcQuantity<Q>, D>(device, uid), QuantityOutput<Q> {
 
-    abstract val quantityType: KClass<Q>
+    public abstract val quantityType: KClass<Q>
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
@@ -101,10 +101,10 @@ abstract class FSRemoteQuantityOutput<Q : Quantity<Q>, D : FSRemoteDevice>(
     }
 }
 
-abstract class FSRemoteBinaryStateOutput<D : FSRemoteDevice>(device: D, uid: String) :
+public abstract class FSRemoteBinaryStateOutput<D : FSRemoteDevice>(device: D, uid: String) :
     FSRemoteOutput<BinaryState, D>(device, uid), BinaryStateOutput {
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {

@@ -24,17 +24,17 @@ import org.tenkiv.kuantify.*
  * Interface defining the basic features of a device that can be connected to. This is in most cases a device located
  * across a network or serial connection.
  */
-interface RemoteDevice : Device {
+public interface RemoteDevice : Device {
 
-    val hostIp: String
+    public val hostIp: String
 
     /**
      * Value representing if the Device is connected.
      */
-    val isConnected: InitializedTrackable<Boolean>
+    public val isConnected: InitializedTrackable<Boolean>
 
-    suspend fun connect()
+    public suspend fun connect()
 
-    suspend fun disconnect()
+    public suspend fun disconnect()
 
 }

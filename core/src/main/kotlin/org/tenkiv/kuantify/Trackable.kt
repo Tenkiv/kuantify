@@ -29,22 +29,22 @@ import kotlin.coroutines.*
 import kotlin.properties.*
 import kotlin.reflect.*
 
-typealias TrackableQuantity<Q> = Trackable<ComparableQuantity<Q>>
-typealias InitializedTrackableQuantity<Q> = InitializedTrackable<ComparableQuantity<Q>>
+public typealias TrackableQuantity<Q> = Trackable<ComparableQuantity<Q>>
+public typealias InitializedTrackableQuantity<Q> = InitializedTrackable<ComparableQuantity<Q>>
 
 /**
  * The base interface which defines objects which have the ability to update their status.
  */
-interface Trackable<out T> : CoroutineScope {
+public interface Trackable<out T> : CoroutineScope {
 
     /**
      * The [ConflatedBroadcastChannel] over which updates are broadcast.
      */
-    val updateBroadcaster: ConflatedBroadcastChannel<out T>
+    public val updateBroadcaster: ConflatedBroadcastChannel<out T>
 
 }
 
-fun <T> Trackable<ValueInstant<T>>.addTrigger(
+public fun <T> Trackable<ValueInstant<T>>.addTrigger(
     condition: (ValueInstant<T>) -> Boolean,
     onTrigger: () -> Unit
 ): Trigger<out T> =
@@ -53,7 +53,7 @@ fun <T> Trackable<ValueInstant<T>>.addTrigger(
         triggerFunction = onTrigger
     )
 
-interface InitializedTrackable<out T> : Trackable<T> {
+public interface InitializedTrackable<out T> : Trackable<T> {
     val value: T
 }
 
@@ -62,36 +62,36 @@ interface InitializedTrackable<out T> : Trackable<T> {
  *
  * @return The value or null.
  */
-val <T> Trackable<T>.valueOrNull get() = updateBroadcaster.valueOrNull
+public val <T> Trackable<T>.valueOrNull get() = updateBroadcaster.valueOrNull
 
 /**
  * Gets the current value or suspends and waits for one to exist.
  *
  * @return The current value.
  */
-suspend fun <T> Trackable<T>.getValue(): T =
+public suspend fun <T> Trackable<T>.getValue(): T =
     updateBroadcaster.valueOrNull ?: updateBroadcaster.openSubscription().receive()
 
-interface RatedTrackable<out T> : Trackable<ValueInstant<T>> {
-    val updateRate: UpdateRate
+public interface RatedTrackable<out T> : Trackable<ValueInstant<T>> {
+    public val updateRate: UpdateRate
 }
 
-sealed class UpdateRate(rate: TrackableQuantity<Frequency>) : TrackableQuantity<Frequency> by rate {
+public sealed class UpdateRate(rate: TrackableQuantity<Frequency>) : TrackableQuantity<Frequency> by rate {
 
-    class RunningAverage internal constructor(rate: TrackableQuantity<Frequency>) : UpdateRate(rate)
+    public class RunningAverage internal constructor(rate: TrackableQuantity<Frequency>) : UpdateRate(rate)
 
     /**
      * Means the update rate is a result of some set configuration and will only change when that configuration is
      * changed.
      */
-    class Configured(rate: TrackableQuantity<Frequency>) : UpdateRate(rate)
+    public class Configured(rate: TrackableQuantity<Frequency>) : UpdateRate(rate)
 
 }
 
-fun RatedTrackable<*>.runningAverage(avgPeriod: Duration = 1.minutesSpan): AverageUpdateRateDelegate =
+public fun RatedTrackable<*>.runningAverage(avgPeriod: Duration = 1.minutesSpan): AverageUpdateRateDelegate =
     AverageUpdateRateDelegate(this, avgPeriod)
 
-class AverageUpdateRateDelegate internal constructor(
+public class AverageUpdateRateDelegate internal constructor(
     trackable: RatedTrackable<*>,
     private val avgPeriod: Duration
 ) : ReadOnlyProperty<RatedTrackable<*>, UpdateRate.RunningAverage> {
@@ -126,7 +126,7 @@ class AverageUpdateRateDelegate internal constructor(
         }
     }
 
-    override fun getValue(thisRef: RatedTrackable<*>, property: KProperty<*>): UpdateRate.RunningAverage =
+    public override fun getValue(thisRef: RatedTrackable<*>, property: KProperty<*>): UpdateRate.RunningAverage =
         UpdateRate.RunningAverage(updatable)
 }
 
@@ -154,5 +154,5 @@ private class CombinedTrackable<out T>(scope: CoroutineScope, trackables: Array<
     fun cancel() = job.cancel()
 }
 
-fun <T> CoroutineScope.CombinedTrackable(vararg trackables: Trackable<T>): Trackable<T> =
+public fun <T> CoroutineScope.CombinedTrackable(vararg trackables: Trackable<T>): Trackable<T> =
     CombinedTrackable(this, trackables)

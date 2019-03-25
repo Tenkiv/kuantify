@@ -23,12 +23,12 @@ package org.tenkiv.kuantify.data
  *
  * All implementations need to be **completely immutable** to function properly.
  */
-interface DaqcData {
+public interface DaqcData {
     /**
      * The number of [DaqcValue]s this DaqcData is represented by.
      */
-    val size: Int
+    public val size: Int
 
     // TODO: Keep looking / waiting for similar data structure that forces immutability
-    fun toDaqcValues(): List<DaqcValue>
+    public fun toDaqcValues(): List<DaqcValue>
 }

@@ -35,21 +35,21 @@ import javax.measure.quantity.*
  *
  * @param digitalInput The digital input
  */
-abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput<*>) : QuantityInput<Q> {
+public abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput<*>) : QuantityInput<Q> {
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
     private val _updateErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    val updateErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    public val updateErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _updateErrorBroadcaster
 
-    final override val isTransceiving get() = digitalInput.isTransceivingPwm
+    public final override val isTransceiving get() = digitalInput.isTransceivingPwm
 
-    final override val updateRate get() = digitalInput.updateRate
+    public final override val updateRate get() = digitalInput.updateRate
 
-    val avgFrequency: UpdatableQuantity<Frequency> get() = digitalInput.avgFrequency
+    public val avgFrequency: UpdatableQuantity<Frequency> get() = digitalInput.avgFrequency
 
     init {
         launch {
@@ -64,9 +64,9 @@ abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput<*>) :
         }
     }
 
-    final override fun startSampling() = digitalInput.startSamplingPwm()
+    public final override fun startSampling() = digitalInput.startSamplingPwm()
 
-    final override fun stopTransceiving() = digitalInput.stopTransceiving()
+    public final override fun stopTransceiving() = digitalInput.stopTransceiving()
 
     /**
      * Function to convert the percent of the digital input to a [DaqcQuantity] or return an error.

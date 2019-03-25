@@ -35,7 +35,7 @@ import org.tenkiv.kuantify.fs.networking.*
 
 private val logger = KotlinLogging.logger {}
 
-fun Application.kuantifyHost() {
+public fun Application.kuantifyHost() {
     KuantifyHost.apply { init() }
 }
 

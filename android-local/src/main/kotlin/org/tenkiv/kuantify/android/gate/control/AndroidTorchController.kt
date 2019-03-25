@@ -31,26 +31,29 @@ import org.tenkiv.kuantify.networking.configuration.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
-class AndroidTorchController(override val device: LocalAndroidDevice, override val uid: String, val cameraId: String) :
-    AndroidOutput<BinaryState>, LocalBinaryStateOutput<LocalAndroidDevice> {
+public class AndroidTorchController(
+    public override val device: LocalAndroidDevice,
+    public override val uid: String,
+    public val cameraId: String
+) : AndroidOutput<BinaryState>, LocalBinaryStateOutput<LocalAndroidDevice> {
 
-    override val coroutineContext: CoroutineContext
+    public override val coroutineContext: CoroutineContext
         get() = device.coroutineContext
 
-    override val basePath: Path = listOf(RC.DAQC_GATE, uid)
+    public override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
     private val torchCallbackRegistered = AtomicBoolean(false)
 
     private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<BinaryState>>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<BinaryState>>
+    public override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<BinaryState>>
         get() = _updateBroadcaster
 
     private val _isTransceiving = Updatable(false)
-    override val isTransceiving: InitializedTrackable<Boolean>
+    public override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
     private val torchCallback: CameraManager.TorchCallback = object : CameraManager.TorchCallback() {
-        override fun onTorchModeChanged(cameraId: String, enabled: Boolean) {
+        public override fun onTorchModeChanged(cameraId: String, enabled: Boolean) {
             super.onTorchModeChanged(cameraId, enabled)
 
             if (cameraId == this@AndroidTorchController.cameraId) {
@@ -60,7 +63,7 @@ class AndroidTorchController(override val device: LocalAndroidDevice, override v
     }
 
     //TODO: This may need to take camera device availability into account
-    override fun setOutput(setting: BinaryState): SettingViability.Viable {
+    public override fun setOutput(setting: BinaryState): SettingViability.Viable {
         if (!torchCallbackRegistered.get()) {
             device.cameraManager.registerTorchCallback(torchCallback, null)
             _isTransceiving.value = true
@@ -70,7 +73,7 @@ class AndroidTorchController(override val device: LocalAndroidDevice, override v
         return SettingViability.Viable
     }
 
-    override fun stopTransceiving() {
+    public override fun stopTransceiving() {
         setOutput(BinaryState.Low)
         device.cameraManager.unregisterTorchCallback(torchCallback)
         _isTransceiving.value = false

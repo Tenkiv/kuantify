@@ -28,26 +28,26 @@ import org.tenkiv.kuantify.gate.acquire.input.*
 import javax.measure.*
 import kotlin.reflect.*
 
-typealias AndroidQuantityInput<Q> = AndroidInput<DaqcQuantity<Q>>
+public typealias AndroidQuantityInput<Q> = AndroidInput<DaqcQuantity<Q>>
 
-interface AndroidAcquireGate<T : DaqcData> : AndroidDaqcGate<T>, AcquireGate<T>
+public interface AndroidAcquireGate<T : DaqcData> : AndroidDaqcGate<T>, AcquireGate<T>
 
-interface AndroidInput<T : DaqcValue> : AndroidAcquireGate<T>, Input<T>
+public interface AndroidInput<T : DaqcValue> : AndroidAcquireGate<T>, Input<T>
 
-class AndroidRemoteQuantityInput<Q : Quantity<Q>> internal constructor(
+public class AndroidRemoteQuantityInput<Q : Quantity<Q>> internal constructor(
     device: RemoteAndroidDevice,
     uid: String,
-    override val quantityType: KClass<Q>
+    public override val quantityType: KClass<Q>
 ) : FSRemoteQuantityInput<Q, RemoteAndroidDevice>(device, uid), AndroidQuantityInput<Q> {
 
-    override val updateRate: UpdateRate by runningAverage()
+    public override val updateRate: UpdateRate by runningAverage()
 }
 
-class AndroidRemoteBinaryStateInput internal constructor(
+public class AndroidRemoteBinaryStateInput internal constructor(
     device: RemoteAndroidDevice,
     uid: String
 ) : FSRemoteBinaryStateInput<RemoteAndroidDevice>(device, uid), AndroidInput<BinaryState> {
 
-    override val updateRate: UpdateRate by runningAverage()
+    public override val updateRate: UpdateRate by runningAverage()
 
 }

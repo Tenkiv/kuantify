@@ -26,16 +26,16 @@ import javax.measure.*
 import javax.measure.quantity.*
 
 @Serializer(forClass = ComparableQuantity::class)
-object ComparableQuantitySerializer : KSerializer<ComparableQuantity<*>> {
+public object ComparableQuantitySerializer : KSerializer<ComparableQuantity<*>> {
 
-    override val descriptor: SerialDescriptor = object : SerialClassDescImpl("ComparableQuantity") {
+    public override val descriptor: SerialDescriptor = object : SerialClassDescImpl("ComparableQuantity") {
         init {
             addElement("value")
             addElement("unit")
         }
     }
 
-    override fun deserialize(decoder: Decoder): ComparableQuantity<*> {
+    public override fun deserialize(decoder: Decoder): ComparableQuantity<*> {
         val inp: CompositeDecoder = decoder.beginStructure(descriptor)
         var value = 0.0
         lateinit var unit: String
@@ -51,7 +51,7 @@ object ComparableQuantitySerializer : KSerializer<ComparableQuantity<*>> {
         return value withSymbol unit
     }
 
-    override fun serialize(encoder: Encoder, obj: ComparableQuantity<*>) {
+    public override fun serialize(encoder: Encoder, obj: ComparableQuantity<*>) {
         val compositeOutput: CompositeEncoder = encoder.beginStructure(descriptor)
         //TODO: Probably change this to encodeSerializableElement so we can accommodate for numbers other than Double
         compositeOutput.encodeDoubleElement(descriptor, 0, obj.getValue().toDouble())
@@ -63,9 +63,9 @@ object ComparableQuantitySerializer : KSerializer<ComparableQuantity<*>> {
 /**
  * Converts a [Quantity] of a [Frequency] to a [Time].
  */
-fun Quantity<Frequency>.toPeriod(): Quantity<Time> = this.inverse().asType()
+public fun Quantity<Frequency>.toPeriod(): Quantity<Time> = this.inverse().asType()
 
 /**
  * Converts a [ComparableQuantity] of a [Frequency] to a [Time].
  */
-fun ComparableQuantity<Frequency>.toPeriod(): ComparableQuantity<Time> = this.inverse(Time::class.java)
+public fun ComparableQuantity<Frequency>.toPeriod(): ComparableQuantity<Time> = this.inverse(Time::class.java)

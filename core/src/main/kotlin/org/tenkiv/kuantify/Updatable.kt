@@ -23,23 +23,23 @@ import kotlinx.coroutines.channels.*
 import tec.units.indriya.*
 import kotlin.coroutines.*
 
-typealias UpdatableQuantity<Q> = Updatable<ComparableQuantity<Q>>
-typealias InitializedUpdatableQuantity<Q> = InitializedUpdatable<ComparableQuantity<Q>>
+public typealias UpdatableQuantity<Q> = Updatable<ComparableQuantity<Q>>
+public typealias InitializedUpdatableQuantity<Q> = InitializedUpdatable<ComparableQuantity<Q>>
 
 /**
  * Same as [Trackable] but allows setting.
  */
-interface Updatable<T> : Trackable<T> {
+public interface Updatable<T> : Trackable<T> {
 
-    override val updateBroadcaster: ConflatedBroadcastChannel<out T>
+    public override val updateBroadcaster: ConflatedBroadcastChannel<out T>
 
-    fun set(value: T)
+    public fun set(value: T)
 
 }
 
-interface InitializedUpdatable<T> : Updatable<T>, InitializedTrackable<T> {
+public interface InitializedUpdatable<T> : Updatable<T>, InitializedTrackable<T> {
 
-    override var value: T
+    public override var value: T
 
 }
 
@@ -71,7 +71,7 @@ private class SimpleInitializedUpdatable<T>(scope: CoroutineScope, initialValue:
     }
 }
 
-fun <T> CoroutineScope.Updatable(): Updatable<T> = SimpleUpdatable(this)
+public fun <T> CoroutineScope.Updatable(): Updatable<T> = SimpleUpdatable(this)
 
-fun <T> CoroutineScope.Updatable(initialValue: T): InitializedUpdatable<T> =
+public fun <T> CoroutineScope.Updatable(initialValue: T): InitializedUpdatable<T> =
     SimpleInitializedUpdatable(this, initialValue)

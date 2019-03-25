@@ -33,19 +33,21 @@ import javax.measure.quantity.*
  *
  * @param digitalOutput The digital output
  */
-abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: DigitalOutput<*>) :
+public abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(public val digitalOutput: DigitalOutput<*>) :
     QuantityOutput<Q> {
 
-    override val isTransceiving get() = digitalOutput.isTransceivingFrequency
+    public override val isTransceiving: InitializedTrackable<Boolean>
+        get() = digitalOutput.isTransceivingFrequency
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
 
-    final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
-    val avgFrequency: UpdatableQuantity<Frequency> get() = digitalOutput.avgFrequency
+    public val avgFrequency: UpdatableQuantity<Frequency>
+        get() = digitalOutput.avgFrequency
 
-    override fun setOutput(setting: DaqcQuantity<Q>): SettingViability {
+    public override fun setOutput(setting: DaqcQuantity<Q>): SettingViability {
         val result = digitalOutput.sustainTransitionFrequency(convertOutput(setting))
 
         if (result is SettingViability.Viable) _broadcastChannel.offer(setting.now())
@@ -62,5 +64,7 @@ abstract class ScDigitalFrequencyController<Q : Quantity<Q>>(val digitalOutput: 
      */
     protected abstract fun convertOutput(setting: DaqcQuantity<Q>): DaqcQuantity<Frequency>
 
-    override fun stopTransceiving() = digitalOutput.stopTransceiving()
+    public override fun stopTransceiving() {
+        digitalOutput.stopTransceiving()
+    }
 }

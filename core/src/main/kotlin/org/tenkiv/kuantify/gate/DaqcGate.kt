@@ -25,36 +25,36 @@ import org.tenkiv.kuantify.data.*
 /**
  * A general interface for an updatable that returns data.
  */
-interface DaqcGate<out T : DaqcData> : Trackable<ValueInstant<T>> {
+public interface DaqcGate<out T : DaqcData> : Trackable<ValueInstant<T>> {
     /**
      * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcGate]
      */
-    val daqcDataSize: Int
+    public val daqcDataSize: Int
 
-    val isTransceiving: InitializedTrackable<Boolean>
+    public val isTransceiving: InitializedTrackable<Boolean>
 
-    fun stopTransceiving()
+    public fun stopTransceiving()
 }
 
 /**
  * A [DaqcGate] which only has a single data parameter.
  */
-interface IOStrand<out T : DaqcValue> : DaqcGate<T> {
+public interface IOStrand<out T : DaqcValue> : DaqcGate<T> {
     /**
      * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcGate]
      *
      * [IOStrand]s only work with [DaqcValue] so this is always 1 in all [IOStrand]s
      */
-    override val daqcDataSize get() = 1
+    public override val daqcDataSize get() = 1
 }
 
-interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Comparable<T> {
+public interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Comparable<T> {
 
     /**
      * The range of values that this IOStrand is likely to handle. There is not necessarily a guarantee that there will
      * never be a value outside this range.
      */
-    val valueRange: ClosedRange<T>
+    public val valueRange: ClosedRange<T>
 
 }
 
@@ -63,7 +63,7 @@ interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Comparable<T>
  * @return a [Double] representation of the current value normalised to be between 0 and 1 based on the
  * [valueRange], null if the updatable does not yet have a value or the value is outside the [valueRange].
  */
-fun RangedIOStrand<*>.getNormalisedDoubleOrNull(): Double? {
+public fun RangedIOStrand<*>.getNormalisedDoubleOrNull(): Double? {
     val value = valueOrNull?.value
 
     if (value is BinaryState?) return value?.toDouble()

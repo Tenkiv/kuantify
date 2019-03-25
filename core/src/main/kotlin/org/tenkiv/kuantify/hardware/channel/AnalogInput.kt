@@ -26,7 +26,7 @@ import javax.measure.quantity.*
 /**
  * Class defining the basic features of an input which reads analog signals.
  */
-interface AnalogInput<out D : AnalogDaqDevice> :
+public interface AnalogInput<out D : AnalogDaqDevice> :
     QuantityInput<ElectricPotential>, QuantityDeviceGate<ElectricPotential, D> {
 
     /**
@@ -35,7 +35,7 @@ interface AnalogInput<out D : AnalogDaqDevice> :
      * Implementing backing  field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */
-    val buffer: Updatable<Boolean>
+    public val buffer: Updatable<Boolean>
 
     /**
      * Denotes the maximum acceptable error for the [AnalogInput].
@@ -43,7 +43,7 @@ interface AnalogInput<out D : AnalogDaqDevice> :
      * Implementing backing field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */
-    val maxAcceptableError: UpdatableQuantity<ElectricPotential>
+    public val maxAcceptableError: UpdatableQuantity<ElectricPotential>
 
     /**
      * Denotes the maximum [ElectricPotential] that the [AnalogInput] can read.
@@ -51,6 +51,6 @@ interface AnalogInput<out D : AnalogDaqDevice> :
      * Implementing backing field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */
-    val maxElectricPotential: UpdatableQuantity<ElectricPotential>
+    public val maxElectricPotential: UpdatableQuantity<ElectricPotential>
 
 }

@@ -37,23 +37,23 @@ import javax.measure.quantity.*
  * @param maximumEp The maximum [ElectricPotential] for the sensor.
  * @param acceptableError The maximum acceptable error for the sensor in [ElectricPotential].
  */
-abstract class ScAnalogSensor<Q : Quantity<Q>>(
-    val analogInput: AnalogInput<*>,
+public abstract class ScAnalogSensor<Q : Quantity<Q>>(
+    public val analogInput: AnalogInput<*>,
     maximumEp: ComparableQuantity<ElectricPotential>,
     acceptableError: ComparableQuantity<ElectricPotential>
 ) : QuantityInput<Q> {
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
     private val _updateErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    val updateErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    public val updateErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _updateErrorBroadcaster
 
-    final override val isTransceiving get() = analogInput.isTransceiving
+    public final override val isTransceiving get() = analogInput.isTransceiving
 
-    final override val updateRate get() = analogInput.updateRate
+    public final override val updateRate get() = analogInput.updateRate
 
     init {
         analogInput.maxElectricPotential.set(maximumEp)
@@ -79,7 +79,11 @@ abstract class ScAnalogSensor<Q : Quantity<Q>>(
      */
     protected abstract fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Q>>
 
-    final override fun startSampling() = analogInput.startSampling()
+    public final override fun startSampling() {
+        analogInput.startSampling()
+    }
 
-    final override fun stopTransceiving() = analogInput.stopTransceiving()
+    public final override fun stopTransceiving() {
+        analogInput.stopTransceiving()
+    }
 }

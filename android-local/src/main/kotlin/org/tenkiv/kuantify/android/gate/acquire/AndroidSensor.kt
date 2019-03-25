@@ -33,10 +33,10 @@ import kotlin.coroutines.*
 /**
  * Class which defines the basic aspects of any Android Sensor.
  */
-abstract class LocalAndroidSensor<T : DaqcValue>(
-    final override val device: LocalAndroidDevice,
-    val sensor: Sensor,
-    final override val uid: String
+public abstract class LocalAndroidSensor<T : DaqcValue>(
+    public final override val device: LocalAndroidDevice,
+    public val sensor: Sensor,
+    public final override val uid: String
 ) : AndroidInput<T>, LocalInput<T, LocalAndroidDevice> {
 
     private val manager: SensorManager get() = device.sensorManager
@@ -44,20 +44,20 @@ abstract class LocalAndroidSensor<T : DaqcValue>(
     /**
      * The sensor constant for the type of Android sensor.
      */
-    abstract val type: Int
+    public abstract val type: Int
 
-    final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
+    public final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
-    final override val coroutineContext: CoroutineContext get() = device.coroutineContext
+    public final override val coroutineContext: CoroutineContext get() = device.coroutineContext
 
     private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
-    final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
+    public final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = _updateBroadcaster
 
-    final override val updateRate: UpdateRate by runningAverage()
+    public final override val updateRate: UpdateRate by runningAverage()
 
     protected val _isTransceiving = Updatable(false)
-    override val isTransceiving: InitializedTrackable<Boolean>
+    public override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
     private val sensorListener = object : SensorEventListener {
@@ -80,12 +80,12 @@ abstract class LocalAndroidSensor<T : DaqcValue>(
         }
     }
 
-    override fun startSampling() {
+    public override fun startSampling() {
         _isTransceiving.value = true
         manager.registerListener(sensorListener, sensor, 100, 200)
     }
 
-    override fun stopTransceiving() {
+    public override fun stopTransceiving() {
         _isTransceiving.value = false
         manager.unregisterListener(sensorListener)
     }
@@ -96,5 +96,5 @@ abstract class LocalAndroidSensor<T : DaqcValue>(
      * @param data The [FloatArray] tuple given by a [SensorEvent].
      * @return The data in the form of a [DaqcValue].
      */
-    abstract fun convertData(data: FloatArray): T
+    public abstract fun convertData(data: FloatArray): T
 }

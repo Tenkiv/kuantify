@@ -35,22 +35,22 @@ import javax.measure.quantity.*
  *
  * @param digitalInput The digital input
  */
-abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: DigitalInput<*>) :
+public abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: DigitalInput<*>) :
     QuantityInput<Q> {
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
     private val _updateErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    val updateErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+    public val updateErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
         get() = _updateErrorBroadcaster
 
-    final override val isTransceiving get() = digitalInput.isTransceivingFrequency
+    public final override val isTransceiving get() = digitalInput.isTransceivingFrequency
 
-    final override val updateRate get() = digitalInput.updateRate
+    public final override val updateRate get() = digitalInput.updateRate
 
-    val avgFrequency: UpdatableQuantity<Frequency> get() = digitalInput.avgFrequency
+    public val avgFrequency: UpdatableQuantity<Frequency> get() = digitalInput.avgFrequency
 
     init {
         launch {
@@ -65,9 +65,13 @@ abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: Digit
         }
     }
 
-    final override fun startSampling() = digitalInput.startSamplingTransitionFrequency()
+    public final override fun startSampling() {
+        digitalInput.startSamplingTransitionFrequency()
+    }
 
-    final override fun stopTransceiving() = digitalInput.stopTransceiving()
+    public final override fun stopTransceiving() {
+        digitalInput.stopTransceiving()
+    }
 
     /**
      * Function to convert the [Frequency] of the digital input to a [DaqcQuantity] or return an error.

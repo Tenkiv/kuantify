@@ -18,27 +18,27 @@
 
 package org.tenkiv.kuantify.networking.configuration
 
-typealias NetworkBound<ST> = NetworkBoundSide<ST>
-typealias SideRouting<ST> = (SideNetworkRouting<ST>) -> Unit
-typealias Routing<ST> = SideRouting<ST>
+public typealias NetworkBound<ST> = NetworkBoundSide<ST>
+public typealias SideRouting<ST> = (SideNetworkRouting<ST>) -> Unit
+public typealias Routing<ST> = SideRouting<ST>
 
-interface NetworkBoundSide<ST> {
+public interface NetworkBoundSide<ST> {
 
-    val basePath: Path
+    public val basePath: Path
 
-    fun sideRouting(routing: SideNetworkRouting<ST>)
+    public fun sideRouting(routing: SideNetworkRouting<ST>)
 
-    fun SideNetworkRouting<ST>.addToThisPath(build: SideNetworkRouting<ST>.() -> Unit) {
+    public fun SideNetworkRouting<ST>.addToThisPath(build: SideNetworkRouting<ST>.() -> Unit) {
         route(basePath) {
             build()
         }
     }
 }
 
-fun <ST> Iterable<NetworkBound<ST>>.addSideRoutingTo(routing: SideNetworkRouting<ST>) {
+public fun <ST> Iterable<NetworkBound<ST>>.addSideRoutingTo(routing: SideNetworkRouting<ST>) {
     forEach {
         it.sideRouting(routing)
     }
 }
 
-fun <ST> Iterable<NetworkBound<ST>>.addRoutingTo(routing: SideNetworkRouting<ST>) = addSideRoutingTo(routing)
+public fun <ST> Iterable<NetworkBound<ST>>.addRoutingTo(routing: SideNetworkRouting<ST>) = addSideRoutingTo(routing)

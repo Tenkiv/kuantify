@@ -28,16 +28,18 @@ import org.tenkiv.kuantify.*
  *
  * @param locators The [DeviceLocator]s to be included.
  */
-class CombinationLocator internal constructor(vararg val locators: DeviceLocator<*>, scope: CoroutineScope) :
-    Trackable<LocatorUpdate<*>> {
+public class CombinationLocator internal constructor(
+    public vararg val locators: DeviceLocator<*>,
+    scope: CoroutineScope
+) : Trackable<LocatorUpdate<*>> {
 
     private val job = Job(scope.coroutineContext[Job])
 
-    override val coroutineContext = scope.coroutineContext + job
+    public override val coroutineContext = scope.coroutineContext + job
 
     private val _broadcastChannel = ConflatedBroadcastChannel<LocatorUpdate<*>>()
 
-    override val updateBroadcaster: ConflatedBroadcastChannel<out LocatorUpdate<*>>
+    public override val updateBroadcaster: ConflatedBroadcastChannel<out LocatorUpdate<*>>
         get() = _broadcastChannel
 
     init {
@@ -71,5 +73,5 @@ class CombinationLocator internal constructor(vararg val locators: DeviceLocator
     }
 }
 
-fun CoroutineScope.CombinationLocator(vararg locators: DeviceLocator<*>): CombinationLocator =
+public fun CoroutineScope.CombinationLocator(vararg locators: DeviceLocator<*>): CombinationLocator =
     CombinationLocator(locators = *locators, scope = this)

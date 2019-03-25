@@ -33,28 +33,28 @@ import javax.measure.quantity.*
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class LocalAndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
+public class LocalAndroidAmbientTemperatureSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Temperature>>(device, sensor, uid),
     LocalQuantityInput<Temperature, LocalAndroidDevice> {
 
-    override val type: Int get() = Sensor.TYPE_AMBIENT_TEMPERATURE
+    public override val type: Int get() = Sensor.TYPE_AMBIENT_TEMPERATURE
 
-    override fun convertData(data: FloatArray): DaqcQuantity<Temperature> = data[0].celsius.toDaqc()
+    public override fun convertData(data: FloatArray): DaqcQuantity<Temperature> = data[0].celsius.toDaqc()
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super<LocalQuantityInput>.sideRouting(routing)
     }
 }
 
-class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
+public class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Frequency>>(device, sensor, uid),
     LocalQuantityInput<Frequency, LocalAndroidDevice> {
 
-    override val type: Int get() = Sensor.TYPE_HEART_RATE
+    public override val type: Int get() = Sensor.TYPE_HEART_RATE
 
-    override fun convertData(data: FloatArray): DaqcQuantity<Frequency> = data[0].beatsPerMinute.toDaqc()
+    public override fun convertData(data: FloatArray): DaqcQuantity<Frequency> = data[0].beatsPerMinute.toDaqc()
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super<LocalQuantityInput>.sideRouting(routing)
     }
 }
@@ -65,15 +65,15 @@ class LocalAndroidHeartRateSensor(device: LocalAndroidDevice, sensor: Sensor, ui
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class LocalAndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
+public class LocalAndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Illuminance>>(device, sensor, uid),
     LocalQuantityInput<Illuminance, LocalAndroidDevice> {
 
-    override val type: Int get() = Sensor.TYPE_LIGHT
+    public override val type: Int get() = Sensor.TYPE_LIGHT
 
-    override fun convertData(data: FloatArray): DaqcQuantity<Illuminance> = data[0].lux.toDaqc()
+    public override fun convertData(data: FloatArray): DaqcQuantity<Illuminance> = data[0].lux.toDaqc()
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super<LocalQuantityInput>.sideRouting(routing)
     }
 }
@@ -84,15 +84,15 @@ class LocalAndroidLightSensor(device: LocalAndroidDevice, sensor: Sensor, uid: S
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class LocalAndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
+public class LocalAndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Length>>(device, sensor, uid),
     LocalQuantityInput<Length, LocalAndroidDevice> {
 
-    override val type: Int get() = Sensor.TYPE_PROXIMITY
+    public override val type: Int get() = Sensor.TYPE_PROXIMITY
 
-    override fun convertData(data: FloatArray): DaqcQuantity<Length> = data[0].centi.metre.toDaqc()
+    public override fun convertData(data: FloatArray): DaqcQuantity<Length> = data[0].centi.metre.toDaqc()
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super<LocalQuantityInput>.sideRouting(routing)
     }
 }
@@ -103,15 +103,15 @@ class LocalAndroidProximitySensor(device: LocalAndroidDevice, sensor: Sensor, ui
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class LocalAndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
+public class LocalAndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Pressure>>(device, sensor, uid),
     LocalQuantityInput<Pressure, LocalAndroidDevice> {
 
-    override val type: Int get() = Sensor.TYPE_PRESSURE
+    public override val type: Int get() = Sensor.TYPE_PRESSURE
 
-    override fun convertData(data: FloatArray): DaqcQuantity<Pressure> = data[0].hecto.pascal.toDaqc()
+    public override fun convertData(data: FloatArray): DaqcQuantity<Pressure> = data[0].hecto.pascal.toDaqc()
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super<LocalQuantityInput>.sideRouting(routing)
     }
 }
@@ -122,15 +122,15 @@ class LocalAndroidPressureSensor(device: LocalAndroidDevice, sensor: Sensor, uid
  * @param manager The Android device's [SensorManager].
  * @param sensor The sensor to be integrated.
  */
-class LocalAndroidRelativeHumiditySensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
+public class LocalAndroidRelativeHumiditySensor(device: LocalAndroidDevice, sensor: Sensor, uid: String) :
     LocalAndroidSensor<DaqcQuantity<Dimensionless>>(device, sensor, uid),
     LocalQuantityInput<Dimensionless, LocalAndroidDevice> {
 
-    override val type: Int get() = Sensor.TYPE_RELATIVE_HUMIDITY
+    public override val type: Int get() = Sensor.TYPE_RELATIVE_HUMIDITY
 
-    override fun convertData(data: FloatArray): DaqcQuantity<Dimensionless> = data[0].percent.toDaqc()
+    public override fun convertData(data: FloatArray): DaqcQuantity<Dimensionless> = data[0].percent.toDaqc()
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super<LocalQuantityInput>.sideRouting(routing)
     }
 }

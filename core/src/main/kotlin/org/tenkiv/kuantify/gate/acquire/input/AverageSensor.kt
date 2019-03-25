@@ -35,24 +35,24 @@ import kotlin.coroutines.*
  * @param inputs The inputs to be averaged together.
  *
  */
-class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
+public class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
     scope: CoroutineScope,
     private vararg val inputs: QuantityInput<Q>
 ) : QuantityInput<Q> {
 
     private val job = Job(scope.coroutineContext[Job])
 
-    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
+    public override val coroutineContext: CoroutineContext = scope.coroutineContext + job
 
     private val _isTransceiving = Updatable(false)
-    override val isTransceiving: InitializedTrackable<Boolean>
+    public override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    public override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
         get() = _broadcastChannel
 
-    override val updateRate by runningAverage()
+    public override val updateRate by runningAverage()
 
     init {
         launch(Dispatchers.Daqc) {
@@ -95,16 +95,23 @@ class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
         }
     }
 
-    override fun startSampling() = inputs.forEach { it.startSampling() }
+    public override fun startSampling() {
+        inputs.forEach { it.startSampling() }
+    }
 
     //TODO: We might not want to actually cancel the underlying inputs
-    override fun stopTransceiving() = inputs.forEach { it.stopTransceiving() }
+    public override fun stopTransceiving() {
+        inputs.forEach { it.stopTransceiving() }
+    }
 
-    fun cancel() = job.cancel()
+    fun cancel() {
+        job.cancel()
+    }
 }
 
-fun <Q : Quantity<Q>> CoroutineScope.AverageQuantitySensor(vararg inputs: QuantityInput<Q>): AverageQuantitySensor<Q> =
-    AverageQuantitySensor(this, *inputs)
+public fun <Q : Quantity<Q>> CoroutineScope.AverageQuantitySensor(
+    vararg inputs: QuantityInput<Q>
+): AverageQuantitySensor<Q> = AverageQuantitySensor(this, *inputs)
 
 /**
  * Sensor which notifies if the number of inputs in the group of [BinaryInput]s are toggled to the designated state.
@@ -114,7 +121,7 @@ fun <Q : Quantity<Q>> CoroutineScope.AverageQuantitySensor(vararg inputs: Quanti
  * @param threshold The minimum number of [BinaryInput]s which need to be in the desired state.
  * @param state The state for which the [BinaryInput]s should be checked. Default is [BinaryState.High].
  */
-class BinaryThresholdSensor internal constructor(
+public class BinaryThresholdSensor internal constructor(
     scope: CoroutineScope,
     threshold: Int,
     state: BinaryState = BinaryState.High,
@@ -123,17 +130,17 @@ class BinaryThresholdSensor internal constructor(
 
     private val job = Job(scope.coroutineContext[Job])
 
-    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
+    public override val coroutineContext: CoroutineContext = scope.coroutineContext + job
 
     private val _isTransceiving = Updatable(false)
-    override val isTransceiving: InitializedTrackable<Boolean>
+    public override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
     private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+    public override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
         get() = _broadcastChannel
 
-    override val updateRate by runningAverage()
+    public override val updateRate by runningAverage()
 
     init {
         launch(Dispatchers.Daqc) {
@@ -181,10 +188,14 @@ class BinaryThresholdSensor internal constructor(
         }
     }
 
-    override fun startSampling() = inputs.forEach { it.startSampling() }
+    public override fun startSampling() {
+        inputs.forEach { it.startSampling() }
+    }
 
     //TODO: We might not want to actually cancel the underlying inputs
-    override fun stopTransceiving() = inputs.forEach { it.stopTransceiving() }
+    public override fun stopTransceiving() {
+        inputs.forEach { it.stopTransceiving() }
+    }
 
 
     fun cancel() {
@@ -192,7 +203,7 @@ class BinaryThresholdSensor internal constructor(
     }
 }
 
-fun CoroutineScope.BinaryThresholdSensor(
+public fun CoroutineScope.BinaryThresholdSensor(
     threshold: Int,
     state: BinaryState = BinaryState.High,
     vararg inputs: BinaryStateInput

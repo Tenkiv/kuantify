@@ -27,19 +27,19 @@ import org.tenkiv.kuantify.gate.control.output.*
 import javax.measure.*
 import kotlin.reflect.*
 
-typealias AndroidQuantityOutput<Q> = AndroidOutput<DaqcQuantity<Q>>
+public typealias AndroidQuantityOutput<Q> = AndroidOutput<DaqcQuantity<Q>>
 
-interface AndroidControlGate<T : DaqcData> : AndroidDaqcGate<T>, ControlGate<T>
+public interface AndroidControlGate<T : DaqcData> : AndroidDaqcGate<T>, ControlGate<T>
 
-interface AndroidOutput<T : DaqcValue> : AndroidDaqcGate<T>, Output<T>
+public interface AndroidOutput<T : DaqcValue> : AndroidDaqcGate<T>, Output<T>
 
-class AndroidRemoteQuantityOutput<Q : Quantity<Q>>(
+public class AndroidRemoteQuantityOutput<Q : Quantity<Q>>(
     device: RemoteAndroidDevice,
     uid: String,
-    override val quantityType: KClass<Q>
+    public override val quantityType: KClass<Q>
 ) : FSRemoteQuantityOutput<Q, RemoteAndroidDevice>(device, uid), AndroidQuantityOutput<Q>
 
-class AndroidRemoteBinaryStateOutput(
+public class AndroidRemoteBinaryStateOutput(
     device: RemoteAndroidDevice,
     uid: String
 ) : FSRemoteBinaryStateOutput<RemoteAndroidDevice>(device, uid), AndroidOutput<BinaryState>

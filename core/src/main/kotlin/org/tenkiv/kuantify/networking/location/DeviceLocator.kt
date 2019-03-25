@@ -28,24 +28,24 @@ import java.time.*
 /**
  * Class defining functions expected from Device Locators.
  */
-abstract class DeviceLocator<T : Device> : Trackable<LocatorUpdate<T>> {
+public abstract class DeviceLocator<T : Device> : Trackable<LocatorUpdate<T>> {
 
     /**
      * The list of active devices that are both found and able to be connected to.
      *
      * Must be thread safe, this will be read from multiple threads.
      */
-    abstract val activeDevices: List<T>
+    public abstract val activeDevices: List<T>
 
     /**
      * Begins the active search for devices.
      */
-    abstract fun search()
+    public abstract fun search()
 
     /**
      * Stops the active search for devices.
      */
-    abstract fun stop()
+    public abstract fun stop()
 
     /**
      * Gets the device with the specified serial number either from the known active list or suspends and awaits
@@ -56,7 +56,7 @@ abstract class DeviceLocator<T : Device> : Trackable<LocatorUpdate<T>> {
      * @throws [ClosedReceiveChannelException] If the locator was stopped before the specific device could be found.
      */
     @Throws(ClosedReceiveChannelException::class)
-    suspend fun getDeviceForSerial(serialNumber: String): T {
+    public suspend fun getDeviceForSerial(serialNumber: String): T {
         return activeDevices.firstOrNull {
             it.uid == serialNumber
         } ?: awaitBroadcast(serialNumber).getOrElse { throw it }
@@ -70,7 +70,7 @@ abstract class DeviceLocator<T : Device> : Trackable<LocatorUpdate<T>> {
      * @return A [Try] of a [Device] or an exception.
      * @throws [ClosedReceiveChannelException] If the locator was stopped before the specific device could be found.
      */
-    suspend fun tryGetDeviceForSerial(serialNumber: String, timeout: Duration? = null): Try<T> {
+    public suspend fun tryGetDeviceForSerial(serialNumber: String, timeout: Duration? = null): Try<T> {
         val fromMemory = activeDevices.firstOrNull {
             it.uid == serialNumber
         }
@@ -88,7 +88,7 @@ abstract class DeviceLocator<T : Device> : Trackable<LocatorUpdate<T>> {
      * @param serialNumber The serial number of the device.
      * @retun The device with the specifeid serial number or null.
      */
-    fun getDeviceForSerialOrNull(serialNumber: String): T? =
+    public fun getDeviceForSerialOrNull(serialNumber: String): T? =
         activeDevices.firstOrNull { it.uid == serialNumber }
 
     @Suppress("MemberVisibilityCanBePrivate") // it's a lie, PublishedApi must be internal
@@ -126,17 +126,18 @@ abstract class DeviceLocator<T : Device> : Trackable<LocatorUpdate<T>> {
  *
  * @param wrappedDevice The base device to be wrapped.
  */
-sealed class LocatorUpdate<out T : Device>(val wrappedDevice: T) : Device by wrappedDevice
+public sealed class LocatorUpdate<out T : Device>(val wrappedDevice: T) : Device by wrappedDevice
+
 /**
  * A Device found by a Locator
  *
  * @param device The located [Device].
  */
-class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
+public class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
 
-    override fun toString() = "FoundDevice: $wrappedDevice"
+    public override fun toString() = "FoundDevice: $wrappedDevice"
 
-    override fun equals(other: Any?): Boolean {
+    public override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
@@ -147,20 +148,21 @@ class FoundDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
         return true
     }
 
-    override fun hashCode(): Int {
+    public override fun hashCode(): Int {
         return wrappedDevice.hashCode()
     }
 }
+
 /**
  * A Device previously found by a Locator that is no longer able to be connected to.
  *
  * @param device The removed [Device].
  */
-class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
+public class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
 
-    override fun toString() = "LostDevice: $wrappedDevice"
+    public override fun toString() = "LostDevice: $wrappedDevice"
 
-    override fun equals(other: Any?): Boolean {
+    public override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
@@ -171,7 +173,7 @@ class LostDevice<out T : Device>(device: T) : LocatorUpdate<T>(device) {
         return true
     }
 
-    override fun hashCode(): Int {
+    public override fun hashCode(): Int {
         return wrappedDevice.hashCode()
     }
 }

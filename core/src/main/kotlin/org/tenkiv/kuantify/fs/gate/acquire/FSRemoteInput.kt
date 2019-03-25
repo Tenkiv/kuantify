@@ -33,18 +33,18 @@ import tec.units.indriya.*
 import javax.measure.*
 import kotlin.reflect.*
 
-sealed class FSRemoteInput<T : DaqcValue, out D : FSRemoteDevice>(device: D, uid: String) :
+public sealed class FSRemoteInput<T : DaqcValue, out D : FSRemoteDevice>(device: D, uid: String) :
     FSRemoteAcquireGate<T, D>(device, uid), Input<T> {
 
     internal val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
+    public override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = _updateBroadcaster
 
     internal val _isTransceiving = Updatable(false)
-    override val isTransceiving: InitializedTrackable<Boolean>
+    public override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
@@ -59,12 +59,12 @@ sealed class FSRemoteInput<T : DaqcValue, out D : FSRemoteDevice>(device: D, uid
     }
 }
 
-abstract class FSRemoteQuantityInput<Q : Quantity<Q>, out D : FSRemoteDevice>(
+public abstract class FSRemoteQuantityInput<Q : Quantity<Q>, out D : FSRemoteDevice>(
     device: D,
     uid: String
 ) : FSRemoteInput<DaqcQuantity<Q>, D>(device, uid), QuantityInput<Q> {
 
-    abstract val quantityType: KClass<Q>
+    public abstract val quantityType: KClass<Q>
 
     private fun unsafeUpdate(measurement: ValueInstant<ComparableQuantity<*>>) {
         val (value, instant) = measurement
@@ -72,7 +72,7 @@ abstract class FSRemoteQuantityInput<Q : Quantity<Q>, out D : FSRemoteDevice>(
         _updateBroadcaster.offer(value.asType(quantityType.java).toDaqc() at instant)
     }
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
@@ -88,10 +88,10 @@ abstract class FSRemoteQuantityInput<Q : Quantity<Q>, out D : FSRemoteDevice>(
 
 }
 
-abstract class FSRemoteBinaryStateInput<out D : FSRemoteDevice>(device: D, uid: String) :
+public abstract class FSRemoteBinaryStateInput<out D : FSRemoteDevice>(device: D, uid: String) :
     FSRemoteInput<BinaryState, D>(device, uid), BinaryStateInput {
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {

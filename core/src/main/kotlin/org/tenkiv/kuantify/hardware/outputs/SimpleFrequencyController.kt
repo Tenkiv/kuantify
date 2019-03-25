@@ -28,9 +28,9 @@ import javax.measure.quantity.*
  *
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
-class SimpleFrequencyController internal constructor(digitalOutput: DigitalOutput<*>) :
+public class SimpleFrequencyController internal constructor(digitalOutput: DigitalOutput<*>) :
     ScDigitalFrequencyController<Frequency>(digitalOutput), CoroutineScope by digitalOutput {
 
-    override fun convertOutput(setting: DaqcQuantity<Frequency>) = setting
+    public override fun convertOutput(setting: DaqcQuantity<Frequency>) = setting
 
 }

@@ -25,22 +25,22 @@ import org.tenkiv.kuantify.hardware.device.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
-typealias UpdateReceiver<ST> = suspend (update: ST) -> Unit
-typealias MessageSerializer<MT, ST> = (update: MT) -> ST
+public typealias UpdateReceiver<ST> = suspend (update: ST) -> Unit
+public typealias MessageSerializer<MT, ST> = (update: MT) -> ST
 
 private val logger = KotlinLogging.logger {}
 
-abstract class NetworkRouteBinding<MT, ST>(
+public abstract class NetworkRouteBinding<MT, ST>(
     protected val networkCommunicator: NetworkCommunicator<ST>,
-    val networkUpdateChannel: Channel<ST>?
+    internal val networkUpdateChannel: Channel<ST>?
 ) : CoroutineScope {
 
-    final override val coroutineContext: CoroutineContext
+    public final override val coroutineContext: CoroutineContext
         get() = networkCommunicator.coroutineContext
 
-    abstract fun start()
+    public abstract fun start()
 
-    companion object {
+    public companion object {
 
         internal fun throwIllegalStateSend(route: String, device: Device): Nothing {
             throw IllegalStateException(
@@ -60,7 +60,7 @@ abstract class NetworkRouteBinding<MT, ST>(
 
 }
 
-class RecursionPreventingRouteBinding<MT, ST>(
+public class RecursionPreventingRouteBinding<MT, ST>(
     networkCommunicator: NetworkCommunicator<ST>,
     private val route: String,
     private val localUpdateChannel: ReceiveChannel<MT>?,
@@ -73,7 +73,7 @@ class RecursionPreventingRouteBinding<MT, ST>(
 
     private val ignoreNextUpdate = AtomicBoolean(false)
 
-    override fun start() {
+    public override fun start() {
         // Send
         if (sendUpdates) {
             launch {
@@ -99,12 +99,12 @@ class RecursionPreventingRouteBinding<MT, ST>(
         }
     }
 
-    override fun toString(): String = """
+    public override fun toString(): String = """
         RecursionPreventingNetworkCommunicator(route=$route, serializedPing=$serializedPing)
     """.trimIndent()
 }
 
-class StandardRouteBinding<MT, ST>(
+public class StandardRouteBinding<MT, ST>(
     networkCommunicator: NetworkCommunicator<ST>,
     private val route: String,
     private val localUpdateChannel: ReceiveChannel<MT>?,
@@ -115,7 +115,7 @@ class StandardRouteBinding<MT, ST>(
     private val serializedPing: ST
 ) : NetworkRouteBinding<MT, ST>(networkCommunicator, networkUpdateChannel) {
 
-    override fun start() {
+    public override fun start() {
         // Send
         if (sendUpdates) {
             launch {
@@ -136,7 +136,7 @@ class StandardRouteBinding<MT, ST>(
         }
     }
 
-    override fun toString(): String = """
+    public override fun toString(): String = """
         StandardRouteBinding(route=$route, serializedPing=$serializedPing)
     """.trimIndent()
 

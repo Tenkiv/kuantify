@@ -19,6 +19,8 @@
 package org.tenkiv.kuantify.hardware.inputs
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
 import javax.measure.quantity.*
@@ -28,17 +30,24 @@ import javax.measure.quantity.*
  *
  * @param digitalInput The [DigitalInput] that is being read from.
  */
-class SimpleDigitalFrequencySensor internal constructor(val digitalInput: DigitalInput<*>) :
+public class SimpleDigitalFrequencySensor internal constructor(public val digitalInput: DigitalInput<*>) :
     QuantityInput<Frequency>, CoroutineScope by digitalInput {
 
-    override val updateBroadcaster get() = digitalInput.transitionFrequencyBroadcaster
+    public override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Frequency>>
+        get() = digitalInput.transitionFrequencyBroadcaster
 
-    override val isTransceiving get() = digitalInput.isTransceivingFrequency
+    public override val isTransceiving: InitializedTrackable<Boolean>
+        get() = digitalInput.isTransceivingFrequency
 
-    override val updateRate get() = digitalInput.updateRate
+    public override val updateRate: UpdateRate
+        get() = digitalInput.updateRate
 
-    override fun startSampling() = digitalInput.startSamplingTransitionFrequency()
+    public override fun startSampling() {
+        digitalInput.startSamplingTransitionFrequency()
+    }
 
-    override fun stopTransceiving() = digitalInput.stopTransceiving()
+    public override fun stopTransceiving() {
+        digitalInput.stopTransceiving()
+    }
 
 }

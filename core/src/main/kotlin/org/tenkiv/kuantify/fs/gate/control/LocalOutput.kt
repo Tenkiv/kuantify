@@ -30,9 +30,9 @@ import org.tenkiv.kuantify.networking.configuration.*
 import javax.measure.*
 import kotlin.reflect.*
 
-interface LocalOutput<T : DaqcValue, out D : LocalDevice> : LocalControlGate<T, D>, Output<T> {
+public interface LocalOutput<T : DaqcValue, out D : LocalDevice> : LocalControlGate<T, D>, Output<T> {
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
@@ -50,12 +50,12 @@ interface LocalOutput<T : DaqcValue, out D : LocalDevice> : LocalControlGate<T, 
     }
 }
 
-interface LocalQuantityOutput<Q : Quantity<Q>, out D : LocalDevice> : LocalOutput<DaqcQuantity<Q>, D>,
+public interface LocalQuantityOutput<Q : Quantity<Q>, out D : LocalDevice> : LocalOutput<DaqcQuantity<Q>, D>,
     QuantityOutput<Q> {
 
-    val quantityType: KClass<Q>
+    public val quantityType: KClass<Q>
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {
@@ -79,9 +79,9 @@ interface LocalQuantityOutput<Q : Quantity<Q>, out D : LocalDevice> : LocalOutpu
     }
 }
 
-interface LocalBinaryStateOutput<out D : LocalDevice> : LocalOutput<BinaryState, D>, BinaryStateOutput {
+public interface LocalBinaryStateOutput<out D : LocalDevice> : LocalOutput<BinaryState, D>, BinaryStateOutput {
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
 
         routing.addToThisPath {

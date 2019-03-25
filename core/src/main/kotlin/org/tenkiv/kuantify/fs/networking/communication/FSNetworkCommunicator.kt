@@ -62,13 +62,14 @@ private fun NetworkCommunicator<String>.buildFSRouteBindingMap(
     return resultRouteBindingMap
 }
 
-class LocalNetworkCommunicator internal constructor(
+public class LocalNetworkCommunicator internal constructor(
     override val device: LocalDevice
 ) : NetworkCommunicator<String>(device) {
 
-    override val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>> = buildFSRouteBindingMap(device)
+    protected override val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>> =
+        buildFSRouteBindingMap(device)
 
-    override suspend fun sendMessage(route: String, message: String) {
+    protected override suspend fun sendMessage(route: String, message: String) {
         ClientHandler.sendToAll(NetworkMessage(route, message).serialize())
     }
 
@@ -83,17 +84,17 @@ class LocalNetworkCommunicator internal constructor(
 
 }
 
-abstract class FSRemoteNetworkCommunictor(final override val device: FSRemoteDevice) :
+public abstract class FSRemoteNetworkCommunictor(final override val device: FSRemoteDevice) :
     RemoteNetworkCommunicator<String>(device) {
 
-    final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>> =
+    protected final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>> =
         buildFSRouteBindingMap(device)
 
     internal abstract suspend fun cancel()
 
 }
 
-class FSRemoteWebsocketCommunicator(
+internal class FSRemoteWebsocketCommunicator(
     device: FSRemoteDevice,
     private val onCanceled: () -> Unit
 ) : FSRemoteNetworkCommunictor(device) {
@@ -101,7 +102,7 @@ class FSRemoteWebsocketCommunicator(
     @Volatile
     private var webSocketSession: WebSocketSession? = null
 
-    override val communicationMode: CommunicationMode
+    public override val communicationMode: CommunicationMode
         get() = CommunicationMode.NON_EXCLUSIVE
 
     private suspend fun startWebsocket() {
@@ -139,7 +140,7 @@ class FSRemoteWebsocketCommunicator(
         initialized.await()
     }
 
-    override suspend fun sendMessage(route: String, message: String) {
+    public override suspend fun sendMessage(route: String, message: String) {
         webSocketSession?.send(Frame.Text(NetworkMessage(route, message).serialize()))?.also {
             logger.trace { "Sent on route: $route, message - $message - to remote device: ${device.uid}" }
         } ?: attemptMessageWithoutConnection(route, message)
@@ -152,7 +153,7 @@ class FSRemoteWebsocketCommunicator(
         receiveMessage(route, message)
     }
 
-    suspend fun init() {
+    internal suspend fun init() {
         initBindings()
         startWebsocket()
     }

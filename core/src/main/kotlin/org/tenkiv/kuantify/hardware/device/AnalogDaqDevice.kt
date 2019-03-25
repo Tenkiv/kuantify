@@ -23,21 +23,21 @@ import org.tenkiv.kuantify.hardware.channel.*
 import tec.units.indriya.*
 import javax.measure.quantity.*
 
-interface AnalogDaqDevice : Device {
+public interface AnalogDaqDevice : Device {
 
     /**
      * The line frequency of the local electrical.
      */
-    val lineFrequency: ComparableQuantity<Frequency>
+    public val lineFrequency: ComparableQuantity<Frequency>
 
     /**
      * The temperature reference of the board for error correction on samples.
      */
-    val temperatureReference: QuantityInput<Temperature>
+    public val temperatureReference: QuantityInput<Temperature>
 
     /**
      * List of all [AnalogInput]s that this device has.
      */
-    val analogInputMap: Map<String, AnalogInput<*>>
+    public val analogInputMap: Map<String, AnalogInput<*>>
 
 }

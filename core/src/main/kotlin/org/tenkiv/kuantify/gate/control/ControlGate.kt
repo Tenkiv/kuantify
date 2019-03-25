@@ -21,8 +21,8 @@ package org.tenkiv.kuantify.gate.control
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 
-interface ControlGate<T : DaqcData> : DaqcGate<T> {
+public interface ControlGate<T : DaqcData> : DaqcGate<T> {
 
-    fun setOutput(setting: T): SettingViability
+    public fun setOutput(setting: T): SettingViability
 
 }

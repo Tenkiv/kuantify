@@ -31,19 +31,22 @@ import org.tenkiv.kuantify.hardware.channel.*
  *
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
-class SimpleBinaryStateController internal constructor(val digitalOutput: DigitalOutput<*>) :
+public class SimpleBinaryStateController internal constructor(val digitalOutput: DigitalOutput<*>) :
     BinaryStateOutput, CoroutineScope by digitalOutput {
 
-    override val isTransceiving: InitializedTrackable<Boolean> = digitalOutput.isTransceiving
+    public override val isTransceiving: InitializedTrackable<Boolean>
+        get() = digitalOutput.isTransceiving
 
     private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
 
-    override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+    public override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
         get() = _broadcastChannel
 
-    override fun stopTransceiving() = digitalOutput.stopTransceiving()
+    public override fun stopTransceiving() {
+        digitalOutput.stopTransceiving()
+    }
 
-    override fun setOutput(setting: BinaryState): SettingViability =
+    public override fun setOutput(setting: BinaryState): SettingViability =
         digitalOutput.setOutputState(setting)
 
 }

@@ -83,10 +83,10 @@ internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: Anal
     }
 }
 
-interface LocalAnalogInput<out D> : AnalogInput<D>, LocalQuantityInput<ElectricPotential, D>,
+public interface LocalAnalogInput<out D> : AnalogInput<D>, LocalQuantityInput<ElectricPotential, D>,
     NetworkBoundCombined where D : LocalDevice, D : AnalogDaqDevice {
 
-    override fun combinedRouting(routing: CombinedNetworkRouting) {
+    public override fun combinedRouting(routing: CombinedNetworkRouting) {
         routing.addToThisPath {
             combinedAnalogInputRouting(this@LocalAnalogInput)
         }
@@ -94,12 +94,12 @@ interface LocalAnalogInput<out D> : AnalogInput<D>, LocalQuantityInput<ElectricP
 
 }
 
-abstract class FSRemoteAnalogInput<out D>(device: D, uid: String) :
+public abstract class FSRemoteAnalogInput<out D>(device: D, uid: String) :
     FSRemoteQuantityInput<ElectricPotential, D>(device, uid),
     AnalogInput<D>,
     NetworkBoundCombined where D : AnalogDaqDevice, D : FSRemoteDevice {
 
-    override fun combinedRouting(routing: CombinedNetworkRouting) {
+    public override fun combinedRouting(routing: CombinedNetworkRouting) {
         routing.addToThisPath {
             combinedAnalogInputRouting(this@FSRemoteAnalogInput)
         }

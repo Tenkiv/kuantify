@@ -37,7 +37,7 @@ import tec.units.indriya.*
 import javax.measure.quantity.*
 
 @Suppress("LeakingThis")
-abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide<String>, NetworkBoundCombined
+public abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide<String>, NetworkBoundCombined
         where D : LocalDevice, D : DigitalOutputDevice {
 
     private val thisAsBinaryStateController = SimpleBinaryStateController(this)
@@ -47,11 +47,11 @@ abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide<St
     private val thisAsFrequencyController = SimpleFrequencyController(this)
 
     private val _isTransceiving: InitializedUpdatable<Boolean> = Updatable(false)
-    override val isTransceiving: InitializedTrackable<Boolean>
+    public override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
     private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalValue>>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalValue>>
+    public override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalValue>>
         get() = _updateBroadcaster
 
     init {
@@ -60,25 +60,25 @@ abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide<St
         }
     }
 
-    override fun asBinaryStateController(): BinaryStateOutput = thisAsBinaryStateController
+    public override fun asBinaryStateController(): BinaryStateOutput = thisAsBinaryStateController
 
-    override fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Dimensionless> {
+    public override fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Dimensionless> {
         this.avgFrequency.set(avgFrequency)
         return thisAsPwmController
     }
 
-    override fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Frequency> {
+    public override fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Frequency> {
         this.avgFrequency.set(avgFrequency)
         return thisAsFrequencyController
     }
 
-    override fun combinedRouting(routing: CombinedNetworkRouting) {
+    public override fun combinedRouting(routing: CombinedNetworkRouting) {
         routing.addToThisPath {
             digitalGateRouting(this@LocalDigitalOutput)
         }
     }
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         routing.addToThisPath {
             digitalGateIsTransceivingLocal(isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingLocal(isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
@@ -109,7 +109,7 @@ abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide<St
 }
 
 @Suppress("LeakingThis")
-abstract class FSRemoteDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide<String>, NetworkBoundCombined
+public abstract class FSRemoteDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide<String>, NetworkBoundCombined
         where D : DigitalOutputDevice, D : FSRemoteDevice {
 
     private val thisAsBinaryStateController = SimpleBinaryStateController(this)
@@ -119,11 +119,11 @@ abstract class FSRemoteDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide
     private val thisAsFrequencyController = SimpleFrequencyController(this)
 
     private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalValue>>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalValue>>
+    public override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalValue>>
         get() = _updateBroadcaster
 
     private val _binaryStateBroadcaster = ConflatedBroadcastChannel<BinaryStateMeasurement>()
-    override val binaryStateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+    public override val binaryStateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
         get() = _binaryStateBroadcaster
 
     private val _pwmBroadcaster = ConflatedBroadcastChannel<QuantityMeasurement<Dimensionless>>()
@@ -131,23 +131,23 @@ abstract class FSRemoteDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide
         get() = _pwmBroadcaster
 
     private val _transitionFrequencyBroadcaster = ConflatedBroadcastChannel<QuantityMeasurement<Frequency>>()
-    override val transitionFrequencyBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Frequency>>
+    public override val transitionFrequencyBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Frequency>>
         get() = _transitionFrequencyBroadcaster
 
     private val _isTransceiving = Updatable(false)
-    override val isTransceiving: InitializedTrackable<Boolean>
+    public override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
     private val _isTransceivingBinaryState = Updatable(false)
-    override val isTransceivingBinaryState: InitializedTrackable<Boolean>
+    public override val isTransceivingBinaryState: InitializedTrackable<Boolean>
         get() = _isTransceivingBinaryState
 
     private val _isTransceivingPwm = Updatable(false)
-    override val isTransceivingPwm: InitializedTrackable<Boolean>
+    public override val isTransceivingPwm: InitializedTrackable<Boolean>
         get() = _isTransceivingPwm
 
     private val _isTransceivingFrequency = Updatable(false)
-    override val isTransceivingFrequency: InitializedTrackable<Boolean>
+    public override val isTransceivingFrequency: InitializedTrackable<Boolean>
         get() = _isTransceivingFrequency
 
     init {
@@ -157,25 +157,25 @@ abstract class FSRemoteDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide
         }
     }
 
-    override fun asBinaryStateController(): BinaryStateOutput = thisAsBinaryStateController
+    public override fun asBinaryStateController(): BinaryStateOutput = thisAsBinaryStateController
 
-    override fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Dimensionless> {
+    public override fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Dimensionless> {
         this.avgFrequency.set(avgFrequency)
         return thisAsPwmController
     }
 
-    override fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Frequency> {
+    public override fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Frequency> {
         this.avgFrequency.set(avgFrequency)
         return thisAsFrequencyController
     }
 
-    override fun combinedRouting(routing: CombinedNetworkRouting) {
+    public override fun combinedRouting(routing: CombinedNetworkRouting) {
         routing.addToThisPath {
             digitalGateRouting(this@FSRemoteDigitalOutput)
         }
     }
 
-    override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun sideRouting(routing: SideNetworkRouting<String>) {
         routing.addToThisPath {
             digitalGateIsTransceivingRemote(_isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingRemote(_isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)

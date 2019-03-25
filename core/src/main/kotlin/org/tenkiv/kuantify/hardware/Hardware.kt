@@ -21,10 +21,10 @@ package org.tenkiv.kuantify.hardware
 import tec.units.indriya.*
 import javax.measure.quantity.*
 
-sealed class LineNoiseFrequency {
+public sealed class LineNoiseFrequency {
 
-    data class AccountFor(val frequency: ComparableQuantity<Frequency>) : LineNoiseFrequency()
+    public data class AccountFor(public val frequency: ComparableQuantity<Frequency>) : LineNoiseFrequency()
 
-    object Ignore : LineNoiseFrequency()
+    public object Ignore : LineNoiseFrequency()
 
 }

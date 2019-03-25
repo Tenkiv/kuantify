@@ -34,13 +34,13 @@ import java.nio.file.*
 import java.time.*
 import kotlin.coroutines.*
 
-typealias ValueSerializer<T> = (T) -> String
-typealias ValueDeserializer<T> = (String) -> T
-typealias RecordingFilter<T, U> = Recorder<T, U>.(ValueInstant<T>) -> Boolean
+public typealias ValueSerializer<T> = (T) -> String
+public typealias ValueDeserializer<T> = (String) -> T
+public typealias RecordingFilter<T, U> = Recorder<T, U>.(ValueInstant<T>) -> Boolean
 internal typealias StorageFilter<T> = (ValueInstant<T>) -> Boolean
 
 //TODO: Move default parameter values in recorder creation function to constants
-fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
+public fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
@@ -59,7 +59,7 @@ fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
     valueDeserializer = valueDeserializer
 )
 
-fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
+public fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     numSamplesMemory: StorageSamples = StorageSamples.Number(100),
@@ -78,7 +78,7 @@ fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
     valueDeserializer = valueDeserializer
 )
 
-fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
+public fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryStorageLength: StorageLength = StorageSamples.Number(100),
@@ -92,50 +92,50 @@ fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
 )
 
 // TODO: Use this from coral
-fun <T> Iterable<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
+public fun <T> Iterable<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
     this.filter { it.instant in instantRange }
 
 /**
  * Sealed class denoting the frequency at which samples should be stored.
  */
-sealed class StorageFrequency {
+public sealed class StorageFrequency {
 
     /**
      * Store all data received.
      */
-    object All : StorageFrequency()
+    public object All : StorageFrequency()
 
     /**
      * Store the data within an interval.
      *
      * @param interval The [Duration] over which samples will be stored.
      */
-    data class Interval(val interval: Duration) : StorageFrequency()
+    public data class Interval(val interval: Duration) : StorageFrequency()
 
     /**
      * Store data per number of measurements received.
      *
      * @param number The interval of samples at which to store a new sample.
      */
-    data class PerNumMeasurements(val number: Int) : StorageFrequency()
+    public data class PerNumMeasurements(val number: Int) : StorageFrequency()
 }
 
 /**
  * Sealed class for how long data should be stored either in memory or on disk.
  */
-sealed class StorageLength
+public sealed class StorageLength
 
 /**
  * Sealed class denoting the number of samples to be kept in either memory or on disk.
  */
-sealed class StorageSamples : StorageLength(), Comparable<StorageSamples> {
+public sealed class StorageSamples : StorageLength(), Comparable<StorageSamples> {
 
     /**
      * Keep all data unless otherwise noted.
      */
-    object All : StorageSamples() {
+    public object All : StorageSamples() {
 
-        override fun compareTo(other: StorageSamples): Int =
+        public override fun compareTo(other: StorageSamples): Int =
             when (other) {
                 is All -> 0
                 else -> 1
@@ -146,9 +146,9 @@ sealed class StorageSamples : StorageLength(), Comparable<StorageSamples> {
     /**
      * Keep no data
      */
-    object None : StorageSamples() {
+    public object None : StorageSamples() {
 
-        override fun compareTo(other: StorageSamples): Int =
+        public override fun compareTo(other: StorageSamples): Int =
             when (other) {
                 is None -> 0
                 else -> -1
@@ -160,9 +160,9 @@ sealed class StorageSamples : StorageLength(), Comparable<StorageSamples> {
      *
      * @param numSamples The number of samples to keep in memory or on disk.
      */
-    data class Number(val numSamples: Int) : StorageSamples() {
+    public data class Number(val numSamples: Int) : StorageSamples() {
 
-        override fun compareTo(other: StorageSamples): Int =
+        public override fun compareTo(other: StorageSamples): Int =
             when (other) {
                 is All -> -1
                 is None -> 1
@@ -175,14 +175,14 @@ sealed class StorageSamples : StorageLength(), Comparable<StorageSamples> {
 /**
  * Sealed class denoting the length of time which a sample should be kept in memory or on disk.
  */
-sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
+public sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
 
     /**
      * Keep the data without respect to time.
      */
-    object Forever : StorageDuration() {
+    public object Forever : StorageDuration() {
 
-        override fun compareTo(other: StorageDuration): Int =
+        public override fun compareTo(other: StorageDuration): Int =
             when (other) {
                 is Forever -> 0
                 else -> 1
@@ -193,9 +193,9 @@ sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
     /**
      * Keep none of the data.
      */
-    object None : StorageDuration() {
+    public object None : StorageDuration() {
 
-        override fun compareTo(other: StorageDuration): Int =
+        public override fun compareTo(other: StorageDuration): Int =
             when (other) {
                 is None -> 0
                 else -> -1
@@ -207,9 +207,9 @@ sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
      *
      * @param duration The [Duration] with which to keep the data.
      */
-    data class For(val duration: Duration) : StorageDuration() {
+    public data class For(val duration: Duration) : StorageDuration() {
 
-        override fun compareTo(other: StorageDuration): Int =
+        public override fun compareTo(other: StorageDuration): Int =
             when (other) {
                 is Forever -> -1
                 is None -> 1
@@ -221,18 +221,18 @@ sealed class StorageDuration : StorageLength(), Comparable<StorageDuration> {
 /**
  * Recorder to store data either in memory, on disk, or both depending on certain parameters.
  */
-class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
+public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
 
-    val updatable: U
-    val storageFrequency: StorageFrequency
-    val memoryStorageLength: StorageLength
-    val diskStorageLength: StorageLength
+    public val updatable: U
+    public val storageFrequency: StorageFrequency
+    public val memoryStorageLength: StorageLength
+    public val diskStorageLength: StorageLength
     private val filterOnRecord: RecordingFilter<T, U>
     private val valueSerializer: ValueSerializer<T>?
     private val valueDeserializer: ValueDeserializer<T>?
 
     private val job: Job
-    override val coroutineContext: CoroutineContext
+    public override val coroutineContext: CoroutineContext
 
     private val receiveChannel: ReceiveChannel<ValueInstant<T>>
 
@@ -362,7 +362,7 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
      * @return A [List] of [ValueInstant]s of the data in heap memory sent by the Recorder's [Trackable].
      */
     //TODO: Make this return truly immutable list.
-    fun getDataInMemory(): List<ValueInstant<T>> = ArrayList(_dataInMemory)
+    public fun getDataInMemory(): List<ValueInstant<T>> = ArrayList(_dataInMemory)
 
     /**
      * Gets all data both in heap memory and disk. If disk data exists the function will suspend until data is restored
@@ -370,7 +370,7 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
      *
      * @return A [List] of [ValueInstant]s of all the data sent by the Recorder's [Trackable].
      */
-    suspend fun getAllData(): List<ValueInstant<T>> =
+    public suspend fun getAllData(): List<ValueInstant<T>> =
         if (memoryStorageLength >= diskStorageLength) {
             getDataInMemory()
         } else {
@@ -384,7 +384,7 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
      * @param instantRange The range of time over which to get data.
      * @return A [List] of [ValueInstant]s stored by the recorder within the [ClosedRange].
      */
-    suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
+    public suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
         withContext(coroutineContext + Dispatchers.Daqc) {
             val oldestRequested = instantRange.start
 
@@ -405,8 +405,8 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
      *
      * @param shouldDeleteDiskData If the recorder should delete the data stored on disk.
      */
-    fun cancel(shouldDeleteDiskData: Boolean = false) = launch {
-        receiveChannel.cancel(CancellationException("Recorder manually stopped"))
+    public fun cancel(shouldDeleteDiskData: Boolean = false): Job = launch {
+        receiveChannel.cancel()
 
         val stoppingFiles = ArrayList<Job>()
         files.forEach { file ->
@@ -419,7 +419,7 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
         }
 
         stoppingFiles.joinAll()
-        job.cancel(CancellationException("Recorder manually stopped"))
+        job.cancel()
     }
 
     // Can only be called from Contexts.Daqc
@@ -712,7 +712,7 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
 
     }
 
-    companion object {
+    public companion object {
         @PublishedApi
         internal val memoryDurationDefault = 30L.secondsSpan
 
@@ -754,7 +754,7 @@ class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
                 thisUid.toString()
             }
 
-        suspend fun deleteAllRecordsFromDisk() =
+        public suspend fun deleteAllRecordsFromDisk(): Boolean =
             withContext(Dispatchers.IO) {
                 recordersDirectory.delete()
             }
