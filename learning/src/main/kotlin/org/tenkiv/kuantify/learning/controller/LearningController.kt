@@ -40,12 +40,12 @@ import java.time.*
 import kotlin.coroutines.*
 
 //TODO: Make correlatedInputs optional.
-class LearningController<T> internal constructor(
+public class LearningController<T> internal constructor(
     scope: CoroutineScope,
     targetInput: RangedInput<T>,
     correlatedInputs: Collection<RangedInput<*>>,
     outputs: Collection<RangedOutput<*>>,
-    val minTimeBetweenActions: Duration,
+    public val minTimeBetweenActions: Duration,
     expRepMaxSize: Int = 500_000,
     batchSize: Int = 32,
     targetDqnUpdateFreq: Int = 500,
@@ -60,22 +60,24 @@ class LearningController<T> internal constructor(
 
     private val job = Job(scope.coroutineContext[Job])
 
-    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
+    public override val coroutineContext: CoroutineContext = scope.coroutineContext + job
 
     //TODO
     private val trainingManagementDispatcher: CoroutineDispatcher = newSingleThreadContext("")
 
     private val environment = ControllerEnvironment(this)
 
-    val targetInput = Recorder(
+    public val targetInput: Recorder<T, RangedInput<T>> = Recorder(
         targetInput,
         StorageFrequency.All,
         StorageSamples.Number(3)
     )
-    val correlatedInputs = correlatedInputs.map {
+
+    public val correlatedInputs: List<Recorder<DaqcValue, RangedInput<*>>> = correlatedInputs.map {
         Recorder(it, StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
     }
-    val outputs: List<Recorder<DaqcValue, RangedOutput<*>>> = kotlin.run {
+
+    public val outputs: List<Recorder<DaqcValue, RangedOutput<*>>> = kotlin.run {
         val outputsBuilder = ImmutableList.builder<Recorder<DaqcValue, RangedOutput<*>>>()
         outputsBuilder.addAll(outputs.map {
             Recorder(it, StorageFrequency.All, StorageDuration.For(minTimeBetweenActions))
@@ -93,11 +95,11 @@ class LearningController<T> internal constructor(
         }
 
     private val _isTransceiving = Updatable(false)
-    override val isTransceiving get() = _isTransceiving
+    public override val isTransceiving get() = _isTransceiving
 
     private val _broadcastChannel = ConflatedBroadcastChannel<ValueInstant<T>>()
 
-    override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
+    public override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
         get() = _broadcastChannel
 
     init {
@@ -141,7 +143,7 @@ class LearningController<T> internal constructor(
         }
     }
 
-    override fun setOutput(setting: T): SettingViability.Viable {
+    public override fun setOutput(setting: T): SettingViability.Viable {
         launch(trainingManagementDispatcher) {
             // Wait until all inputs have a value. This is hacky and sucks but rl4j makes life difficult.
             targetInput.updatable.startSampling()
@@ -166,11 +168,11 @@ class LearningController<T> internal constructor(
         return SettingViability.Viable
     }
 
-    override fun stopTransceiving() {
+    public override fun stopTransceiving() {
         agentRunner?.cancel()
         agentRunner = null
     }
 
-    fun cancel() = job.cancel()
+    public fun cancel() = job.cancel()
 
 }

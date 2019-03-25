@@ -22,7 +22,7 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.control.output.*
 
-sealed class OutputActionHandler {
+internal sealed class OutputActionHandler {
 
     abstract val actionSet: Set<Int>
 
@@ -30,7 +30,7 @@ sealed class OutputActionHandler {
 
 }
 
-class BinaryStateOutputActionHandler(private val output: BinaryStateOutput) : OutputActionHandler() {
+internal class BinaryStateOutputActionHandler(private val output: BinaryStateOutput) : OutputActionHandler() {
 
     override val actionSet get() = setOf(0, 1, 2)
 
@@ -49,7 +49,7 @@ class BinaryStateOutputActionHandler(private val output: BinaryStateOutput) : Ou
 
 }
 
-class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) : OutputActionHandler() {
+internal class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) : OutputActionHandler() {
 
     override val actionSet get() = setOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
@@ -96,4 +96,4 @@ class QuantityOutputActionHandler(private val output: RangedQuantityOutput<*>) :
 
 }
 
-class InvalidActionException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)
+internal class InvalidActionException(message: String? = null, cause: Throwable? = null) : Throwable(message, cause)
