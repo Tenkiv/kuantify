@@ -32,14 +32,13 @@ val device = LocalAndroidDevice.get(this)
 val lightSensor = device.lightSensors.first()
 
 lightSensor.startSampling()
-GlobalScope.launch { // make sure you're familiar with Kotlin coroutines, probably don't actually use GlobalScope
-    lightSensor.updateBroadcaster.consumeEach { measurement ->
-        // Do something with every measurement
-    }
+lightSensor.updateBroadcaster.consumeEach { measurement ->
+    // Do something with every measurement
 }
+
 ```
 
-This example assumes your program is acually running in Android.
+This example assumes your program is actually running in Android.
 
 ```
 val device = LocalAndroidDevice.get(this)
@@ -62,7 +61,16 @@ lightSensor.updateBroadcaster.consumeEach
 Each `Input` has a [BroadcastChannel](https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-broadcast-channel/index.html)
 called `updateBroadcaster` that broadcasts updates from that `Input`. Here we're just consuming all updates.
 
-In the above example we're using Kuantify on the device with the sensors and controllers. But Kuantify is primarily
+Using an `Output` is very similar.
+```$xslt
+val device = LocalAndroidDevice.get(this)
+val torchController = device.torchControllers.first()
+
+torchController.setOutput(BinaryState.High)
+```
+
+
+In the above examples we're using Kuantify on the device with the sensors and controllers. But Kuantify is primarily
 intended to be used on a device that is connected to other devices which actually have the sensors and controllers.
 So let's change our example to now run on a computer that is connected to an Android device. The Android device is now a
 `RemoteDevice`. Note: to do this we need to run a host utility on the Android Device we're connecting to. This utility
@@ -70,17 +78,17 @@ is trivial to make but you can just install android-simple-host to get started w
 in the "Supporting Devices" section.
 
 ```$xslt
-runBlocking {
-    val device = RemoteAndroidDeivce("192.168.1.5:8080")
-    device.connect()
-    val lightSensor = device.lightSensors.first()
 
-    lightSensor.startSampling()
+val device = RemoteAndroidDeivce("192.168.1.5")
+device.connect()
+val lightSensor = device.lightSensors.first()
 
-    lightSensor.updateBroadcaster.consumeEach { measurement ->
-        println(measurement)
-    }
+lightSensor.startSampling()
+
+lightSensor.updateBroadcaster.consumeEach { measurement ->
+    // Do something with every measurement
 }
+
 ```
 
 The only difference here is we now first connect to the device before using it. We're running everything in some
@@ -97,13 +105,16 @@ include National Instruments / Agilent data acquisition systems and Arduino boar
 1. Devices which are intended to have software installed directly on them. Examples include standard Android devices and
 Raspberry Pi.
 
+Both categories utilize Kuantifies built in message routing system for communication, although in the case of full stack
+devices most of the routing should be handled automatically.
+
 ### First Category - Remote Only Devices
 Adding support for a remote only device is basically a matter of binding the functionality of the device to the Kuantify
 interfaces. So you'll create a class that extends `Device` and potentially some of the other Device interfaces depending
-on the functionality of the device you're adding support for. At this time Kuantify has very few concrete abstractions
-for this process and we're still brainstorming what we may be able to abstract out. In most cases this process is a
+on the functionality of the device you're adding support for. In most cases this process is a
 matter of establishing some connection, serializing / deserialzing commands and incoming data and sending / receiving
-these things to and from the device. Kuantify already depends on [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization)
+these things to and from the device. Most of this process will be handled with a custom `NetworkCommunicator`.
+Kuantify already depends on [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization)
 and parts of [ktor](https://ktor.io/) so you should consider using them for these tasks. [Ktor supports raw tcp and udp
 sockets](https://ktor.io/clients/raw-sockets.html) which are often necessary for supporting a device. Both of these
 libraries are pure kotlin and multiplatform so you only need to make one set of common code to support the device on all
