@@ -25,6 +25,12 @@ plugins {
     id("digital.wup.android-maven-publish") version "3.6.2"
 }
 
+buildscript {
+    repositories {
+        jcenter()
+    }
+}
+
 android {
     compileSdkVersion(28)
     defaultConfig {
@@ -54,23 +60,6 @@ dependencies {
 
 
     //  testImplementation(group = "junit", name = "junit", version = Vof.junit)
-}
-
-tasks {
-    register<Jar>("sourcesJar") {
-        from(kotlin.sourceSets["main"].kotlin)
-        classifier = "sources"
-    }
-
-    register<Jar>("javadocJar") {
-        from(tasks["dokka"])
-        classifier = "javadoc"
-    }
-
-    getByName("build") {
-        dependsOn("sourcesJar")
-        dependsOn("javadocJar")
-    }
 }
 
 publishing {

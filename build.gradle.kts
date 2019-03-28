@@ -20,18 +20,18 @@
 
 plugins {
     base
+    java
     kotlin("jvm") version Vof.kotlin apply false
     kotlin("android") version Vof.kotlin apply false
     kotlin("android.extensions") version Vof.kotlin apply false
     id("kotlinx-serialization") version Vof.kotlin apply false
     id("org.jetbrains.dokka") version Vof.dokka apply false
-    signing
+    `maven-publish`
 }
 
 buildscript {
     repositories {
         google()
-        jcenter()
     }
 
     dependencies {
@@ -40,14 +40,6 @@ buildscript {
 }
 
 subprojects {
-    buildscript {
-        repositories {
-            mavenCentral()
-            jcenter()
-            google()
-        }
-    }
-
     repositories {
         mavenCentral()
         jcenter()
@@ -56,11 +48,6 @@ subprojects {
         maven(url = "https://kotlin.bintray.com/ktor")
         maven(url = "https://kotlin.bintray.com/kotlinx")
     }
-}
 
-val projectList = listOf(
-    project(":core"),
-    project(":android-core"),
-    project(":android-local"),
-    project(":learning")
-)
+
+}

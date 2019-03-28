@@ -28,23 +28,6 @@ dependencies {
     compile(project(":core"))
 }
 
-tasks {
-    register<Jar>("sourcesJar") {
-        from(kotlin.sourceSets["main"].kotlin)
-        classifier = "sources"
-    }
-
-    register<Jar>("javadocJar") {
-        from(tasks["dokka"])
-        classifier = "javadoc"
-    }
-
-    getByName("build") {
-        dependsOn("sourcesJar")
-        dependsOn("javadocJar")
-    }
-}
-
 publishing {
     publications {
         create<MavenPublication>("maven-${project.name}") {
@@ -98,5 +81,22 @@ publishing {
                 password = System.getenv("MAVEN_REPO_PASSWORD")
             }
         }
+    }
+}
+
+tasks {
+    register<Jar>("sourcesJar") {
+        from(kotlin.sourceSets["main"].kotlin)
+        classifier = "sources"
+    }
+
+    register<Jar>("javadocJar") {
+        from(getByName("dokka"))
+        classifier = "javadoc"
+    }
+
+    getByName("build") {
+        dependsOn("sourcesJar")
+        dependsOn("javadocJar")
     }
 }
