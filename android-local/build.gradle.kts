@@ -49,10 +49,9 @@ android {
 
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-
     api(project(":android-core"))
-
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version = Vof.coroutinesX)
+
 
     //  testImplementation(group = "junit", name = "junit", version = Vof.junit)
 }

@@ -19,20 +19,54 @@
 package org.tenkiv.kuantify.android.host
 
 import android.app.*
+import android.content.*
+import android.content.ContentValues.TAG
+import android.graphics.*
+import android.net.wifi.*
 import android.os.*
+import android.support.constraint.ConstraintLayout.LayoutParams.PARENT_ID
+import android.util.*
+import android.view.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import mu.*
+import org.jetbrains.anko.*
+import org.jetbrains.anko.constraint.layout.*
+import org.jetbrains.anko.constraint.layout.ConstraintSetBuilder.Side.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.server.*
 
-class MainActivity : Activity() {
 
+
+
+//class MainActivity : Activity() {
+//
+//    override fun onCreate(savedInstanceState: Bundle?) {
+//        super.onCreate(savedInstanceState)
+////        setContentView(R.layout.activity_main)
+////        val textView = findViewById<TextView>(R.id.textView)
+//
+
+//
+//        logger.trace { "This is logging of - kotlin-logging" }
+//    }
+//
+//    companion object : KLogging()
+//}
+
+class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        setContentView(R.layout.activity_main)
-//        val textView = findViewById<TextView>(R.id.textView)
+        Log.i(TAG, "Starting Activity")
+        MainActivityUI(applicationContext).setContentView(this)
+    }
+}
+
+class MainActivityUI(private val applicationContext: Context) : AnkoComponent<MainActivity> {
+    override fun createView(ui: AnkoContext<MainActivity>) = with(ui) {
+        val bgColor = Color.parseColor("#142128")
+        val fontColor = Color.parseColor("#a3b3b7")
+        val kuantifyColor = Color.parseColor("#9b96e2")
 
         val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) {
             kuantifyHost()
@@ -42,8 +76,59 @@ class MainActivity : Activity() {
         val device = LocalAndroidDevice.get(applicationContext)
         device.startHosting()
 
-        logger.trace { "This is logging of - kotlin-logging" }
-    }
+        constraintLayout {
+            setBackgroundColor(bgColor)
 
-    companion object : KLogging()
+            val title = textView("Kuantify Host") {
+                id = View.generateViewId()
+                textSize = 48f
+                textColor = fontColor
+            }.lparams(width = matchParent) {
+                setPadding(12, 0, 12, 0)
+            }
+
+            val wifiMan = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
+            val wifiInf = wifiMan.connectionInfo
+            val ipAddress = wifiInf.ipAddress
+            val ip = String.format(
+                "%d.%d.%d.%d", ipAddress and 0xff, ipAddress shr 8 and 0xff, ipAddress shr 16 and 0xff,
+                ipAddress shr 24 and 0xff
+            )
+
+            val ipText = textView(ip) {
+                id = View.generateViewId()
+                textSize = 24f
+                textColor = kuantifyColor
+            }.lparams(width = matchParent) {
+                setPadding(12, 0, 12, 0)
+            }
+
+            val startButton = button("Start") {
+                id = View.generateViewId()
+                textSize = 48f
+                setBackgroundColor(kuantifyColor)
+                textColor = Color.BLACK
+            }.lparams {
+                setPadding(12, 0, 12, 0)
+            }
+
+            val endButton = button("Close") {
+                id = View.generateViewId()
+                textSize = 48f
+                setBackgroundColor(Color.DKGRAY)
+                textColor = fontColor
+            }.lparams {
+                setPadding(12, 0, 12, 0)
+            }
+
+            applyConstraintSet {
+                connect(
+                    TOP of title to TOP of PARENT_ID margin dip(40),
+                    TOP of ipText to BOTTOM of title margin dip(40),
+                    TOP of startButton to BOTTOM of ipText margin dip(50),
+                    TOP of endButton to BOTTOM of startButton margin dip(20)
+                )
+            }
+        }
+    }
 }

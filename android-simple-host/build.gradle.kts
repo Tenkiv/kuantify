@@ -52,7 +52,9 @@ android {
 
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-
+    implementation(group = "org.jetbrains.anko", name = "anko", version = Vof.anko)
+    implementation(group = "org.jetbrains.anko", name = "anko-constraint-layout", version = Vof.anko)
+    implementation(group = "com.android.support.constraint", name = "constraint-layout", version = "1.1.0-beta4")
     implementation(project(":android-local"))
     implementation(group = "io.ktor", name = "ktor-server-netty", version = Vof.ktor)
     implementation(group ="com.noveogroup.android", name = "android-logger", version = "1.3.1")
