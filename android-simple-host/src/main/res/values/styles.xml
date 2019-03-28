@@ -20,7 +20,7 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
         <!-- Customize your theme here. -->
-
+        <item name="android:background">@color/primaryDark</item>
     </style>
 
 </resources>

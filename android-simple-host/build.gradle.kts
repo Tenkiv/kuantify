@@ -24,6 +24,7 @@ plugins {
 
 android {
     compileSdkVersion(28)
+    buildToolsVersion("3.2.1")
     defaultConfig {
         applicationId = "org.tenkiv.kuantify.simple_host"
 
@@ -52,13 +53,9 @@ android {
 
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
-    implementation(group = "org.jetbrains.anko", name = "anko", version = Vof.anko)
-    implementation(group = "org.jetbrains.anko", name = "anko-constraint-layout", version = Vof.anko)
     implementation(group = "com.android.support.constraint", name = "constraint-layout", version = "1.1.0-beta4")
     implementation(project(":android-local"))
     implementation(group = "io.ktor", name = "ktor-server-netty", version = Vof.ktor)
     implementation(group ="com.noveogroup.android", name = "android-logger", version = "1.3.1")
     implementation(group = "io.github.microutils", name = "kotlin-logging", version = "1.6.24")
-
-//    testImplementation(group = "junit", name = "junit", version = Vof.junit)
 }
