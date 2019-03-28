@@ -31,7 +31,7 @@ object Vof {
     const val physikal = "2.0.6.3-SNAPSHOT"
 
     // Android
-    const val androidGradle = "3.3.0"
+    const val androidGradle = "3.2.1"
     const val anko = "0.10.8"
 
     // Other

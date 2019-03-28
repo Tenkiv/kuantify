@@ -18,13 +18,13 @@
 
 plugins {
     id("com.android.application")
-    kotlin("android")
+    id("kotlin-android")
     kotlin("android.extensions")
 }
 
 android {
     compileSdkVersion(28)
-    buildToolsVersion("3.2.1")
+    
     defaultConfig {
         applicationId = "org.tenkiv.kuantify.simple_host"
 
