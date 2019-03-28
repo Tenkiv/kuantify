@@ -104,7 +104,7 @@ tasks {
     }
 
     register<Jar>("javadocJar") {
-        from(tasks["dokka"])
+        from(getByName("dokka"))
         classifier = "javadoc"
     }
 
