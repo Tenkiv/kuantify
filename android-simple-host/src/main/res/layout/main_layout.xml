@@ -101,12 +101,12 @@
             android:fontFamily="@font/sarala_regular"
             app:layout_constraintHorizontal_bias="0.5"
             android:layout_marginBottom="8dp"
-            app:layout_constraintBottom_toTopOf="@+id/textView3"/>
+            app:layout_constraintBottom_toTopOf="@+id/connectionStatusTextView"/>
 
     <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/textView3"
+            android:id="@+id/connectionStatusTextView"
             android:textAlignment="center"
             android:textStyle="italic"
             android:textColor="@color/primaryAccent"

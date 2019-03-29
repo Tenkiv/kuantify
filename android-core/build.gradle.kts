@@ -30,7 +30,7 @@ dependencies {
 
 tasks {
     register<Jar>("sourcesJar") {
-        from(sourceSets.main.get().allSource)
+        from(kotlin.sourceSets["main"].kotlin)
         archiveClassifier.set("sources")
     }
 

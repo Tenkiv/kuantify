@@ -23,13 +23,6 @@ plugins {
     id("kotlinx-serialization")
     id("org.jetbrains.dokka")
     id("digital.wup.android-maven-publish") version "3.6.2"
-    `maven-publish`
-}
-
-buildscript {
-    repositories {
-        jcenter()
-    }
 }
 
 android {
@@ -58,6 +51,23 @@ dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     api(project(":android-core"))
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version = Vof.coroutinesX)
+}
+
+tasks {
+    register<Jar>("sourcesJar") {
+        from(kotlin.sourceSets["main"].kotlin)
+        archiveClassifier.set("sources")
+    }
+
+    register<Jar>("javadocJar") {
+        from(getByName("dokka"))
+        archiveClassifier.set("javadoc")
+    }
+
+    getByName("build") {
+        dependsOn("sourcesJar")
+        dependsOn("javadocJar")
+    }
 }
 
 val isRelease = !version.toString().endsWith("SNAPSHOT")
@@ -121,21 +131,3 @@ publishing {
         }
     }
 }
-
-tasks {
-    register<Jar>("sourcesJar") {
-        from(kotlin.sourceSets["main"].kotlin)
-        archiveClassifier.set("sources")
-    }
-
-    register<Jar>("javadocJar") {
-        from(getByName("dokka"))
-        archiveClassifier.set("javadoc")
-    }
-
-    getByName("build") {
-        dependsOn("sourcesJar")
-        dependsOn("javadocJar")
-    }
-}
-

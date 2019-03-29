@@ -25,14 +25,16 @@ plugins {
 
 dependencies {
     compile(project(":core"))
+
     implementation(group = "org.deeplearning4j", name = "rl4j-core", version = Vof.dl4j)
     implementation(group = "org.nield", name = "kotlin-statistics", version = Vof.statistics)
+
     testImplementation(group = "org.nd4j", name = "nd4j-native-platform", version = Vof.dl4j)
 }
 
 tasks {
     register<Jar>("sourcesJar") {
-        from(sourceSets.main.get().allSource)
+        from(kotlin.sourceSets["main"].kotlin)
         archiveClassifier.set("sources")
     }
 

@@ -30,6 +30,7 @@ plugins {
 buildscript {
     repositories {
         google()
+        jcenter()
     }
 
     dependencies {
@@ -38,6 +39,15 @@ buildscript {
 }
 
 subprojects {
+    buildscript {
+        repositories {
+            mavenCentral()
+            jcenter()
+            google()
+        }
+    }
+
+
     repositories {
         mavenCentral()
         jcenter()

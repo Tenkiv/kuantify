@@ -22,5 +22,4 @@
         <!-- Customize your theme here. -->
         <item name="android:background">@color/primaryDark</item>
     </style>
-
 </resources>

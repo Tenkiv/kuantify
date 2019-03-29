@@ -21,20 +21,24 @@ import android.animation.*
 import android.animation.ValueAnimator.INFINITE
 import android.animation.ValueAnimator.REVERSE
 import android.app.*
+import android.content.*
+import android.net.wifi.*
 import android.os.*
-import android.view.*
 import android.view.animation.*
+import android.widget.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.android.synthetic.main.main_layout.*
 import kotlinx.coroutines.*
-import org.tenkiv.coral.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.server.*
-import java.util.concurrent.*
+
+
 
 class MainActivity : Activity() {
+    val va = ValueAnimator.ofFloat(0f, 10f)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -43,30 +47,33 @@ class MainActivity : Activity() {
         val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) { kuantifyHost() }
         server.start()
         val device = LocalAndroidDevice.get(applicationContext)
-        device.startHosting()
+        startHosting(device)
+
+        val wm = getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val wifiInf = wm.connectionInfo
+        val ipAddress = wifiInf.ipAddress
+        println(ipAddress)
 
         startButton.setOnClickListener { startButton ->
             if (!device.isHosting) {
-                device.startHosting()
+                startHosting(device)
 
-                setActiveState(startButton, false)
+                setActiveState(startButton as Button, false)
                 setActiveState(stopButton, true)
             }
         }
 
         stopButton.setOnClickListener { stopButton ->
             if (device.isHosting) {
-                GlobalScope.launch {
-                    device.stopHosting()
-                }
+                stopHosting(device)
 
-                setActiveState(stopButton, false)
+                setActiveState(stopButton as Button, false)
                 setActiveState(startButton, true)
             }
         }
 
         //animation
-        ValueAnimator.ofFloat(0f, 10f).apply {
+        va.apply {
             duration = 1000
             interpolator = AccelerateDecelerateInterpolator()
             addUpdateListener {
@@ -78,14 +85,40 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun setActiveState(button : View, setActive: Boolean) {
+    override fun onPause() {
+        super.onPause()
+        va.pause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        va.resume()
+    }
+
+    private fun setActiveState(button: Button, setActive: Boolean) {
         if (setActive) {
             button.setBackgroundColor(getColor(R.color.primaryAccent))
+            button.setTextColor(getColor(R.color.primaryDark))
         } else {
             button.setBackgroundColor(getColor(R.color.primaryInactive))
+            button.setTextColor(getColor(R.color.primaryFont))
         }
     }
+
+    private fun startHosting(device: LocalAndroidDevice) {
+        device.startHosting()
+        connectionStatusTextView.text = "connected"
+    }
+
+    private fun stopHosting(device: LocalAndroidDevice) {
+        GlobalScope.launch {
+            device.stopHosting()
+        }
+        connectionStatusTextView.text = "disconnected"
+    }
 }
+
+
 
 
 
