@@ -19,8 +19,10 @@ package org.tenkiv.kuantify.android.host
 
 import android.app.*
 import android.os.*
+import android.view.animation.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import kotlinx.android.synthetic.main.main_layout.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.server.*
@@ -36,5 +38,26 @@ class MainActivity : Activity() {
         val device = LocalAndroidDevice.get(applicationContext)
         device.startHosting()
         setContentView(R.layout.main_layout)
+
+        val daqcDudeAnimation = TranslateAnimation(0f, 0f, 0f, 10f).apply {
+            interpolator = AccelerateDecelerateInterpolator()
+            duration = 2000
+            fillAfter = false
+            repeatCount = Animation.INFINITE
+        }
+
+        daqcDudeImageView.startAnimation(daqcDudeAnimation)
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+

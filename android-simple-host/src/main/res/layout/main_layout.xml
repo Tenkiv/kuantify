@@ -55,7 +55,7 @@
             android:textColor="@color/primaryFont"
             android:text="default ip"
             android:elevation="1dp"
-            android:fontFamily="@font/rubik-regular"/>
+            android:fontFamily="@font/rubik_regular"/>
 
     <Button
             android:text="Start"
@@ -107,12 +107,12 @@
             android:elevation="1dp"
             android:fontFamily="@font/rubik_italic"
             android:layout_marginBottom="36dp"
-            app:layout_constraintBottom_toTopOf="@+id/imageView"/>
+            app:layout_constraintBottom_toTopOf="@+id/daqcDudeImageView"/>
     <ImageView
             android:src="@drawable/daqc_dude"
             android:layout_width="68dp"
             android:layout_height="78dp"
-            android:id="@+id/imageView"
+            android:id="@+id/daqcDudeImageView"
             android:elevation="0dp" android:layout_marginBottom="24dp"
             app:layout_constraintBottom_toBottomOf="parent" android:layout_marginEnd="8dp"
             app:layout_constraintEnd_toEndOf="parent" android:layout_marginStart="8dp"
