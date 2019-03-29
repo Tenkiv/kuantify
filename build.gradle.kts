@@ -142,3 +142,5 @@ configure(nonAndroidProjects) {
         }
     }
 }
+
+println(project(":core").tasks.names)
