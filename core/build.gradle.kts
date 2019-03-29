@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.gradle.tasks.*
 plugins {
     kotlin("jvm")
     id("kotlinx-serialization")
-    id("org.jetbrains.dokka")
 }
 
 dependencies {

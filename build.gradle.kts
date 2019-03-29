@@ -18,6 +18,8 @@
 
 @file:Suppress("KDocMissingDocumentation", "PublicApiImplicitType")
 
+import org.jetbrains.dokka.gradle.*
+
 plugins {
     base
     java
@@ -46,6 +48,8 @@ val nonAndroidProjects = subprojects.filter {
 }
 
 subprojects {
+    apply<DokkaPlugin>()
+
     repositories {
         mavenCentral()
         jcenter()
