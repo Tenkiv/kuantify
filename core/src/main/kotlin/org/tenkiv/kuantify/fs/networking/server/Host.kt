@@ -43,7 +43,7 @@ internal object KuantifyHost {
     @Volatile
     private var hostedDevice: LocalDevice? = null
 
-    internal val isHosting = hostedDevice != null
+    internal val isHosting get() = hostedDevice != null
 
     fun Application.init() {
 

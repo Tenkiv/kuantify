@@ -18,18 +18,13 @@
 
 @file:Suppress("KDocMissingDocumentation", "PublicApiImplicitType")
 
-import org.jetbrains.dokka.gradle.*
-
 plugins {
     base
-    java
-    signing
     kotlin("jvm") version Vof.kotlin apply false
     kotlin("android") version Vof.kotlin apply false
     kotlin("android.extensions") version Vof.kotlin apply false
     id("kotlinx-serialization") version Vof.kotlin apply false
     id("org.jetbrains.dokka") version Vof.dokka apply false
-    `maven-publish`
 }
 
 buildscript {
@@ -42,14 +37,6 @@ buildscript {
     }
 }
 
-val isRelease = !version.toString().endsWith("SNAPSHOT")
-val nonAndroidProjects = subprojects.filter {
-    it.name == "core" || it.name == "learning" || it.name == "android-core"
-}
-val androidProjects = subprojects.filter {
-    it.name == "android-local"
-}
-
 subprojects {
     repositories {
         mavenCentral()
@@ -58,71 +45,5 @@ subprojects {
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
         maven(url = "https://kotlin.bintray.com/ktor")
         maven(url = "https://kotlin.bintray.com/kotlinx")
-    }
-}
-
-println(nonAndroidProjects)
-
-configure(nonAndroidProjects) {
-    apply<MavenPublishPlugin>()
-    apply<JavaPlugin>()
-
-    publishing {
-        publications {
-            if (isRelease) {
-                println("publication is release!")
-            } else {
-                create<MavenPublication>("maven-${project.name}-snapshot") {
-                    groupId = "org.tenkiv.kuantify"
-                    artifactId = "kuantify-${project.name}"
-                    version = project.version.toString()
-
-                    from(components["java"])
-
-                    for (file in project.fileTree("build/libs").files) {
-                        when {
-                            file.name.contains("javadoc") -> {
-                                val a = artifact(file)
-                                a.classifier = "javadoc"
-                            }
-                            file.name.contains("sources") -> {
-                                val a = artifact(file)
-                                a.classifier = "sources"
-                            }
-                        }
-                    }
-
-                    pom {
-                        name.set(project.name)
-                        description.set(Info.pomDescription)
-                        url.set(System.getenv("CI_PROJECT_URL"))
-                        licenses {
-                            license {
-                                name.set(Info.pomLicense)
-                                url.set(Info.pomLicenseUrl)
-                            }
-                        }
-                        organization {
-                            name.set(Info.pomOrg)
-                        }
-                        scm {
-                            connection.set(System.getenv("CI_REPOSITORY_URL"))
-                            url.set(System.getenv("CI_PROJECT_URL"))
-                        }
-                    }
-                }
-            }
-        }
-        repositories {
-            maven {
-                val releasesRepoUrl = uri(Info.sonatypeReleaseRepoUrl)
-                val snapshotsRepoUrl = uri(Info.sonatypeSnapshotRepoUrl)
-                url = if (isRelease) releasesRepoUrl else snapshotsRepoUrl
-                credentials {
-                    username = System.getenv("MAVEN_REPO_USER")
-                    password = System.getenv("MAVEN_REPO_PASSWORD")
-                }
-            }
-        }
     }
 }

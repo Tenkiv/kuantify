@@ -58,4 +58,5 @@ dependencies {
     implementation(group = "io.ktor", name = "ktor-server-netty", version = Vof.ktor)
     implementation(group ="com.noveogroup.android", name = "android-logger", version = "1.3.1")
     implementation(group = "io.github.microutils", name = "kotlin-logging", version = "1.6.24")
+    implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version = Vof.coroutinesX)
 }

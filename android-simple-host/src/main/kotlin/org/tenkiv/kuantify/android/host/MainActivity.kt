@@ -17,36 +17,73 @@
 
 package org.tenkiv.kuantify.android.host
 
+import android.animation.*
+import android.animation.ValueAnimator.INFINITE
+import android.animation.ValueAnimator.REVERSE
 import android.app.*
 import android.os.*
+import android.view.*
 import android.view.animation.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.android.synthetic.main.main_layout.*
+import kotlinx.coroutines.*
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.server.*
+import java.util.concurrent.*
 
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) {
-            kuantifyHost()
-        }
-        server.start()
 
-        val device = LocalAndroidDevice.get(applicationContext)
-        device.startHosting()
         setContentView(R.layout.main_layout)
 
-        val daqcDudeAnimation = TranslateAnimation(0f, 0f, 0f, 10f).apply {
-            interpolator = AccelerateDecelerateInterpolator()
-            duration = 2000
-            fillAfter = false
-            repeatCount = Animation.INFINITE
+        val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) { kuantifyHost() }
+        server.start()
+        val device = LocalAndroidDevice.get(applicationContext)
+        device.startHosting()
+
+        startButton.setOnClickListener { startButton ->
+            if (!device.isHosting) {
+                device.startHosting()
+
+                setActiveState(startButton, false)
+                setActiveState(stopButton, true)
+            }
         }
 
-        daqcDudeImageView.startAnimation(daqcDudeAnimation)
+        stopButton.setOnClickListener { stopButton ->
+            if (device.isHosting) {
+                GlobalScope.launch {
+                    device.stopHosting()
+                }
+
+                setActiveState(stopButton, false)
+                setActiveState(startButton, true)
+            }
+        }
+
+        //animation
+        ValueAnimator.ofFloat(0f, 10f).apply {
+            duration = 1000
+            interpolator = AccelerateDecelerateInterpolator()
+            addUpdateListener {
+                daqcDudeImageView.translationY = it.animatedValue as Float
+            }
+            repeatCount = INFINITE
+            repeatMode = REVERSE
+            start()
+        }
+    }
+
+    private fun setActiveState(button : View, setActive: Boolean) {
+        if (setActive) {
+            button.setBackgroundColor(getColor(R.color.primaryAccent))
+        } else {
+            button.setBackgroundColor(getColor(R.color.primaryInactive))
+        }
     }
 }
 

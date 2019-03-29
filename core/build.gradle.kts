@@ -22,6 +22,7 @@ plugins {
     kotlin("jvm")
     id("kotlinx-serialization")
     id("org.jetbrains.dokka")
+    `maven-publish`
     java
 }
 
@@ -102,5 +103,65 @@ tasks {
         dependsOn("sourcesJar")
         dependsOn("javadocJar")
     }
+}
 
+val isRelease = !version.toString().endsWith("SNAPSHOT")
+
+publishing {
+    publications {
+        if (isRelease) {
+            println("publication is release!")
+        } else {
+            create<MavenPublication>("maven-${project.name}-snapshot") {
+                groupId = "org.tenkiv.kuantify"
+                artifactId = "kuantify-${project.name}"
+                version = project.version.toString()
+
+                from(components["java"])
+
+                for (file in project.fileTree("build/libs").files) {
+                    when {
+                        file.name.contains("javadoc") -> {
+                            val a = artifact(file)
+                            a.classifier = "javadoc"
+                        }
+                        file.name.contains("sources") -> {
+                            val a = artifact(file)
+                            a.classifier = "sources"
+                        }
+                    }
+                }
+
+                pom {
+                    name.set(project.name)
+                    description.set(Info.pomDescription)
+                    url.set(System.getenv("CI_PROJECT_URL"))
+                    licenses {
+                        license {
+                            name.set(Info.pomLicense)
+                            url.set(Info.pomLicenseUrl)
+                        }
+                    }
+                    organization {
+                        name.set(Info.pomOrg)
+                    }
+                    scm {
+                        connection.set(System.getenv("CI_REPOSITORY_URL"))
+                        url.set(System.getenv("CI_PROJECT_URL"))
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            val releasesRepoUrl = uri(Info.sonatypeReleaseRepoUrl)
+            val snapshotsRepoUrl = uri(Info.sonatypeSnapshotRepoUrl)
+            url = if (isRelease) releasesRepoUrl else snapshotsRepoUrl
+            credentials {
+                username = System.getenv("MAVEN_REPO_USER")
+                password = System.getenv("MAVEN_REPO_PASSWORD")
+            }
+        }
+    }
 }
