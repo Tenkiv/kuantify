@@ -61,44 +61,50 @@ dependencies {
     //  testImplementation(group = "junit", name = "junit", version = Vof.junit)
 }
 
+val isRelease = !version.toString().endsWith("SNAPSHOT")
+
 publishing {
     publications {
-        create<MavenPublication>("maven-${project.name}") {
-            groupId = "org.tenkiv.kuantify"
-            artifactId = "kuantify-${project.name}"
-            version = project.version.toString()
+        if (isRelease) {
+            println("android-local is release version!")
+        } else {
+            create<MavenPublication>("maven-${project.name}-snapshot") {
+                groupId = "org.tenkiv.kuantify"
+                artifactId = "kuantify-${project.name}"
+                version = project.version.toString()
 
-            from(components["android"])
+                from(components["android"])
 
-            for (file in project.fileTree("build/libs").files) {
-                when {
-                    file.name.contains("javadoc") -> {
-                        val a = artifact(file)
-                        a.classifier = "javadoc"
-                    }
-                    file.name.contains("sources") -> {
-                        val a = artifact(file)
-                        a.classifier = "sources"
-                    }
-                }
-            }
-
-            pom {
-                name.set(project.name)
-                description.set(Info.pomDescription)
-                url.set(System.getenv("CI_PROJECT_URL"))
-                licenses {
-                    license {
-                        name.set(Info.pomLicense)
-                        url.set(Info.pomLicenseUrl)
+                for (file in project.fileTree("build/libs").files) {
+                    when {
+                        file.name.contains("javadoc") -> {
+                            val a = artifact(file)
+                            a.classifier = "javadoc"
+                        }
+                        file.name.contains("sources") -> {
+                            val a = artifact(file)
+                            a.classifier = "sources"
+                        }
                     }
                 }
-                organization {
-                    name.set(Info.pomOrg)
-                }
-                scm {
-                    connection.set(System.getenv("CI_REPOSITORY_URL"))
+
+                pom {
+                    name.set(project.name)
+                    description.set(Info.pomDescription)
                     url.set(System.getenv("CI_PROJECT_URL"))
+                    licenses {
+                        license {
+                            name.set(Info.pomLicense)
+                            url.set(Info.pomLicenseUrl)
+                        }
+                    }
+                    organization {
+                        name.set(Info.pomOrg)
+                    }
+                    scm {
+                        connection.set(System.getenv("CI_REPOSITORY_URL"))
+                        url.set(System.getenv("CI_PROJECT_URL"))
+                    }
                 }
             }
         }
