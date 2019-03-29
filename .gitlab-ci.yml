@@ -49,7 +49,7 @@ mavenDeploy:
   stage: deploy
   script:
     - ./gradlew clean build
-#    - ./gradlew :core:publish
-#    - ./gradlew :android-core:publish
-#    - ./gradlew :android-local:publish
-#    - ./gradlew :learning:publish
+    - ./gradlew :core:publish
+    - ./gradlew :android-core:publish
+    - ./gradlew :android-local:publish
+    - ./gradlew :learning:publish

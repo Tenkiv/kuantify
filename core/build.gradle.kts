@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.gradle.tasks.*
 plugins {
     kotlin("jvm")
     id("kotlinx-serialization")
+    java
 }
 
 dependencies {
@@ -85,4 +86,20 @@ tasks {
             includeEngines("spek2")
         }
     }
+
+    register<Jar>("sourcesJar") {
+        from(sourceSets.main.get().allSource)
+        archiveClassifier.set("sources")
+    }
+
+    register<Jar>("javadocJar") {
+        from(getByName("dokka"))
+        archiveClassifier.set("javadoc")
+    }
+
+    getByName("build") {
+        dependsOn("sourcesJar")
+        dependsOn("javadocJar")
+    }
+    
 }

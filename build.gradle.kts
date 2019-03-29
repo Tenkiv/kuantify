@@ -46,6 +46,9 @@ val isRelease = !version.toString().endsWith("SNAPSHOT")
 val nonAndroidProjects = subprojects.filter {
     it.name == "core" || it.name == "learning" || it.name == "android-core"
 }
+val androidProjects = subprojects.filter {
+    it.name == "android-local"
+}
 
 subprojects {
     apply<DokkaPlugin>()
@@ -65,23 +68,6 @@ println(nonAndroidProjects)
 configure(nonAndroidProjects) {
     apply<MavenPublishPlugin>()
     apply<JavaPlugin>()
-
-    tasks {
-        register<Jar>("sourcesJar") {
-            from(sourceSets.main.get().allSource)
-            archiveClassifier.set("sources")
-        }
-
-        register<Jar>("javadocJar") {
-            from(getByName("dokka"))
-            archiveClassifier.set("javadoc")
-        }
-
-        getByName("build") {
-            dependsOn("sourcesJar")
-            dependsOn("javadocJar")
-        }
-    }
 
     publishing {
         publications {
@@ -142,5 +128,3 @@ configure(nonAndroidProjects) {
         }
     }
 }
-
-println(project(":core").tasks.names)

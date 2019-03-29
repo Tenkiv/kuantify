@@ -19,8 +19,26 @@
 plugins {
     kotlin("jvm")
     id("kotlinx-serialization")
+    java
 }
 
 dependencies {
     compile(project(":core"))
+}
+
+tasks {
+    register<Jar>("sourcesJar") {
+        from(sourceSets.main.get().allSource)
+        archiveClassifier.set("sources")
+    }
+
+    register<Jar>("javadocJar") {
+        from(getByName("dokka"))
+        archiveClassifier.set("javadoc")
+    }
+
+    getByName("build") {
+        dependsOn("sourcesJar")
+        dependsOn("javadocJar")
+    }
 }

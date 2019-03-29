@@ -1,0 +1,41 @@
+<!--
+  ~ Copyright 2019 Tenkiv, Inc.
+  ~
+  ~ Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+  ~ documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+  ~ rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  ~ permit persons to whom the Software is furnished to do so, subject to the following conditions:
+  ~
+  ~ The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+  ~ Software.
+  ~
+  ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+  ~ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+  ~ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+  ~ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  -->
+
+<vector android:height="861dp" android:viewportHeight="861.42"
+    android:viewportWidth="604.29" android:width="604dp" xmlns:android="http://schemas.android.com/apk/res/android">
+    <path android:fillColor="#00000000"
+        android:pathData="M591.15,631.64a48,48 0,0 1,-48 48h0a48,48 0,0 1,-48 -48L495.15,322.98a21.11,21.11 0,0 0,-21 -21.1h0a21.1,21.1 0,0 0,-21.23 21.1L452.92,486.87c0,106.46 -67.54,192.76 -150.84,192.76h0c-83.3,0 -150.84,-86.3 -150.84,-192.76L151.24,322.98a21.1,21.1 0,0 0,-21.23 -21.1h0a21.11,21.11 0,0 0,-21 21.1L109.01,631.64a48,48 0,0 1,-48 48h0a48,48 0,0 1,-48 -48l-0.12,-522.26h96.38L109.27,205.76h96.38L205.65,13L398.53,13L398.53,205.76h96.38L494.91,109.38h96.38Z"
+        android:strokeColor="#9b96e2" android:strokeLineCap="round" android:strokeWidth="20"/>
+    <path android:fillColor="#00000000"
+        android:pathData="M430.84,666.65c-32.17,41.11 -81.91,63.75 -128.16,63.75s-92.83,-22.64 -125,-63.75"
+        android:strokeColor="#9b96e2" android:strokeLineCap="round" android:strokeWidth="17"/>
+    <path android:fillColor="#00000000"
+        android:pathData="M399.02,742.94c-28.83,21.38 -63.47,32.81 -96.34,32.81 -32.39,0 -64.93,-11.09 -92.57,-31.86"
+        android:strokeColor="#9b96e2" android:strokeLineCap="round" android:strokeWidth="14"/>
+    <path android:fillColor="#00000000"
+        android:pathData="M371.92,804.71c-22.2,10.76 -46.16,16.4 -69.24,16.4a150.93,150.93 0,0 1,-67.67 -16.4"
+        android:strokeColor="#9b96e2" android:strokeLineCap="round" android:strokeWidth="11"/>
+    <path android:fillColor="#00000000"
+        android:pathData="M351.79,847.72a155.6,155.6 0,0 1,-49.11 8.2,148 148,0 0,1 -48.22,-8.2"
+        android:strokeColor="#9b96e2" android:strokeLineCap="round" android:strokeWidth="8"/>
+    <path android:fillColor="#00000000"
+        android:pathData="M350.14,74.77L350.14,99.03"
+        android:strokeColor="#9b96e2" android:strokeLineCap="round" android:strokeWidth="20"/>
+    <path android:fillColor="#00000000"
+        android:pathData="M254.15,74.77L254.15,99.03"
+        android:strokeColor="#9b96e2" android:strokeLineCap="round" android:strokeWidth="20"/>
+</vector>

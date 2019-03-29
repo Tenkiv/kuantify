@@ -56,9 +56,6 @@ dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     api(project(":android-core"))
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version = Vof.coroutinesX)
-
-
-    //  testImplementation(group = "junit", name = "junit", version = Vof.junit)
 }
 
 val isRelease = !version.toString().endsWith("SNAPSHOT")
@@ -120,5 +117,22 @@ publishing {
                 password = System.getenv("MAVEN_REPO_PASSWORD")
             }
         }
+    }
+}
+
+tasks {
+    register<Jar>("sourcesJar") {
+        from(kotlin.sourceSets["main"].kotlin)
+        archiveClassifier.set("sources")
+    }
+
+    register<Jar>("javadocJar") {
+        from(getByName("dokka"))
+        archiveClassifier.set("javadoc")
+    }
+
+    getByName("build") {
+        dependsOn("sourcesJar")
+        dependsOn("javadocJar")
     }
 }
