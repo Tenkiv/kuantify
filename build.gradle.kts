@@ -48,6 +48,4 @@ subprojects {
         maven(url = "https://kotlin.bintray.com/ktor")
         maven(url = "https://kotlin.bintray.com/kotlinx")
     }
-
-
 }
