@@ -1,3 +1,5 @@
+import org.jetbrains.dokka.gradle.*
+
 /*
  * Copyright 2019 Tenkiv, Inc.
  *
@@ -35,7 +37,7 @@ tasks {
     }
 
     register<Jar>("javadocJar") {
-        from(getByName("dokka"))
+        from(getByName<DokkaTask>("dokka"))
         archiveClassifier.set("javadoc")
     }
 

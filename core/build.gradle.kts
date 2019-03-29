@@ -16,6 +16,7 @@
  *
  */
 
+import org.jetbrains.dokka.gradle.*
 import org.jetbrains.kotlin.gradle.tasks.*
 
 plugins {
@@ -95,7 +96,7 @@ tasks {
     }
 
     register<Jar>("javadocJar") {
-        from(getByName("dokka"))
+        from(getByName<DokkaTask>("dokka"))
         archiveClassifier.set("javadoc")
     }
 
