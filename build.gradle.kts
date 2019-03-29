@@ -51,8 +51,6 @@ val androidProjects = subprojects.filter {
 }
 
 subprojects {
-    apply<DokkaPlugin>()
-
     repositories {
         mavenCentral()
         jcenter()

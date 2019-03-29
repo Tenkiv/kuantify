@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.gradle.tasks.*
 plugins {
     kotlin("jvm")
     id("kotlinx-serialization")
+    id("org.jetbrains.dokka")
     java
 }
 
@@ -101,5 +102,5 @@ tasks {
         dependsOn("sourcesJar")
         dependsOn("javadocJar")
     }
-    
+
 }
