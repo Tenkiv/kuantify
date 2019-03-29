@@ -20,8 +20,6 @@ plugins {
     kotlin("jvm")
     id("kotlinx-serialization")
     id("org.jetbrains.dokka")
-    `maven-publish`
-    java
 }
 
 dependencies {
@@ -81,22 +79,5 @@ publishing {
                 password = System.getenv("MAVEN_REPO_PASSWORD")
             }
         }
-    }
-}
-
-tasks {
-    register<Jar>("sourcesJar") {
-        from(kotlin.sourceSets["main"].kotlin)
-        classifier = "sources"
-    }
-
-    register<Jar>("javadocJar") {
-        from(getByName("dokka"))
-        classifier = "javadoc"
-    }
-
-    getByName("build") {
-        dependsOn("sourcesJar")
-        dependsOn("javadocJar")
     }
 }

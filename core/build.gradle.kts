@@ -20,10 +20,8 @@ import org.jetbrains.kotlin.gradle.tasks.*
 
 plugins {
     kotlin("jvm")
-    java
     id("kotlinx-serialization")
     id("org.jetbrains.dokka")
-    `maven-publish`
 }
 
 dependencies {
@@ -96,21 +94,6 @@ tasks {
         useJUnitPlatform {
             includeEngines("spek2")
         }
-    }
-
-    register<Jar>("sourcesJar") {
-        from(kotlin.sourceSets["main"].kotlin)
-        classifier = "sources"
-    }
-
-    register<Jar>("javadocJar") {
-        from(getByName("dokka"))
-        classifier = "javadoc"
-    }
-
-    getByName("build") {
-        dependsOn("sourcesJar")
-        dependsOn("javadocJar")
     }
 }
 

@@ -39,6 +39,11 @@ buildscript {
     }
 }
 
+val isRelease = !version.toString().endsWith("SNAPSHOT")
+val nonAndroidProjects = subprojects.filter {
+    it.name == "core" || it.name == "learning" || it.name == "android-core"
+}
+
 subprojects {
     repositories {
         mavenCentral()
@@ -47,5 +52,29 @@ subprojects {
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
         maven(url = "https://kotlin.bintray.com/ktor")
         maven(url = "https://kotlin.bintray.com/kotlinx")
+    }
+}
+
+println(nonAndroidProjects)
+
+configure(nonAndroidProjects) {
+    apply<MavenPublishPlugin>()
+    apply<JavaPlugin>()
+
+    tasks {
+        register<Jar>("sourcesJar") {
+            from(sourceSets.main.get().allSource)
+            archiveClassifier.set("sources")
+        }
+
+        register<Jar>("javadocJar") {
+            from(getByName("dokka"))
+            archiveClassifier.set("javadoc")
+        }
+
+        getByName("build") {
+            dependsOn("sourcesJar")
+            dependsOn("javadocJar")
+        }
     }
 }

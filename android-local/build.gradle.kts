@@ -21,7 +21,6 @@ plugins {
     kotlin("android")
     kotlin("android.extensions")
     id("kotlinx-serialization")
-    id("org.jetbrains.dokka")
     id("digital.wup.android-maven-publish") version "3.6.2"
 }
 
