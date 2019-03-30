@@ -97,6 +97,8 @@ tasks {
         useJUnitPlatform {
             includeEngines("spek2")
         }
+
+        maxHeapSize = "4g"
     }
 
     register<Jar>("sourcesJar") {
