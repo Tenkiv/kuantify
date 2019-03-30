@@ -50,9 +50,14 @@ class MainActivity : Activity() {
         val ipAddress = wifiInf.ipAddress
         println(ipAddress)
 
+        //create intent that contains the service class
+        val serviceIntent = Intent(this, HostService::class.java)
+
+        //initializes service with service's onCreate and onStartCommand
+        startService(serviceIntent)
+
 
         startButton.setOnClickListener { startButton ->
-            val serviceIntent = Intent(this, HostService::class.java)
             startService(serviceIntent)
 
             setActiveState(startButton as Button, false)
@@ -61,7 +66,6 @@ class MainActivity : Activity() {
         }
 
         stopButton.setOnClickListener { stopButton ->
-            val serviceIntent = Intent(this, HostService::class.java)
             stopService(serviceIntent)
 
             setActiveState(stopButton as Button, false)

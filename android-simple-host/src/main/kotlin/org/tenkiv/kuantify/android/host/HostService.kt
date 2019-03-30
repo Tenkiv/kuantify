@@ -20,10 +20,27 @@ package org.tenkiv.kuantify.android.host
 import android.app.*
 import android.content.*
 import android.os.*
+import android.support.v4.app.*
 
 class HostService : Service() {
 
-    //called every time you start the service
+    //called only once when the service is first initialized
+    override fun onCreate() {
+        super.onCreate()
+
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0)
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Kuantify Host Service")
+            .setContentText("Kuantify is hosting device")
+            .setSmallIcon(R.drawable.ic_daqc_dude_notification_icon)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        startForeground(1, notification)
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         return super.onStartCommand(intent, flags, startId)
     }

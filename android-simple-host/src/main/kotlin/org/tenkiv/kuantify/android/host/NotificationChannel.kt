@@ -20,8 +20,9 @@ package org.tenkiv.kuantify.android.host
 import android.app.*
 import android.os.*
 
+const val CHANNEL_ID: String = "hostChannel"
+
 class NotificationChannel : Application() {
-    val channelId = "hostChannel"
 
     override fun onCreate() {
         super.onCreate()
@@ -32,7 +33,7 @@ class NotificationChannel : Application() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             //verison is oreo or higher
             val serviceChannel = NotificationChannel(
-                channelId,
+                CHANNEL_ID,
                 "Host Channel",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
