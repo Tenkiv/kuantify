@@ -22,15 +22,11 @@ import android.animation.ValueAnimator.INFINITE
 import android.animation.ValueAnimator.REVERSE
 import android.app.*
 import android.content.*
-import android.net.wifi.*
 import android.os.*
 import android.view.animation.*
 import android.widget.*
 import kotlinx.android.synthetic.main.main_layout.*
-import kotlinx.coroutines.*
-import org.tenkiv.kuantify.android.device.*
-
-
+import java.net.*
 
 class MainActivity : Activity() {
     val va = ValueAnimator.ofFloat(0f, 10f)
@@ -40,26 +36,19 @@ class MainActivity : Activity() {
 
         setContentView(R.layout.main_layout)
 
-//        val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) { kuantifyHost() }
-//        server.start()
-//        val device = LocalAndroidDevice.get(applicationContext)
-//        startHosting(device)
-
-        val wm = getSystemService(Context.WIFI_SERVICE) as WifiManager
-        val wifiInf = wm.connectionInfo
-        val ipAddress = wifiInf.ipAddress
-        println(ipAddress)
+        ipTextView.text = getLocalIpAddress()
 
         //create intent that contains the service class
         val serviceIntent = Intent(this, HostService::class.java)
 
         //initializes service with service's onCreate and onStartCommand
         startService(serviceIntent)
+        connectionStatusTextView.text = "connected"
 
 
         startButton.setOnClickListener { startButton ->
             startService(serviceIntent)
-
+            connectionStatusTextView.text = "connected"
             setActiveState(startButton as Button, false)
             setActiveState(stopButton, true)
 
@@ -67,7 +56,7 @@ class MainActivity : Activity() {
 
         stopButton.setOnClickListener { stopButton ->
             stopService(serviceIntent)
-
+            connectionStatusTextView.text = "disconnected"
             setActiveState(stopButton as Button, false)
             setActiveState(startButton, true)
         }
@@ -105,16 +94,24 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun startHosting(device: LocalAndroidDevice) {
-        device.startHosting()
-        connectionStatusTextView.text = "connected"
-    }
-
-    private fun stopHosting(device: LocalAndroidDevice) {
-        GlobalScope.launch {
-            device.stopHosting()
+    private fun getLocalIpAddress(): String? {
+        try {
+            val en = NetworkInterface.getNetworkInterfaces()
+            while (en.hasMoreElements()) {
+                val intf = en.nextElement()
+                val enumIpAddr = intf.inetAddresses
+                while (enumIpAddr.hasMoreElements()) {
+                    val inetAddress = enumIpAddr.nextElement()
+                    if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
+                        return inetAddress.getHostAddress()
+                    }
+                }
+            }
+        } catch (ex: SocketException) {
+            ex.printStackTrace()
         }
-        connectionStatusTextView.text = "disconnected"
+
+        return null
     }
 }
 

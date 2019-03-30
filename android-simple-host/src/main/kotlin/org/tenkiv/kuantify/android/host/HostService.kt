@@ -21,8 +21,18 @@ import android.app.*
 import android.content.*
 import android.os.*
 import android.support.v4.app.*
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
+import kotlinx.coroutines.*
+import org.tenkiv.kuantify.android.device.*
+import org.tenkiv.kuantify.fs.networking.*
+import org.tenkiv.kuantify.fs.networking.server.*
+import java.util.concurrent.*
 
 class HostService : Service() {
+
+    private val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) { kuantifyHost() }
+    private val device = LocalAndroidDevice.get(applicationContext)
 
     //called only once when the service is first initialized
     override fun onCreate() {
@@ -38,11 +48,22 @@ class HostService : Service() {
             .setContentIntent(pendingIntent)
             .build()
 
+        server.start()
+        device.startHosting()
+
         startForeground(1, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         return super.onStartCommand(intent, flags, startId)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+//        GlobalScope.launch {
+//            device.stopHosting()
+//            server.stop(1, 5, TimeUnit.SECONDS)
+//        }
     }
 
     override fun onBind(intent: Intent?): IBinder? {
