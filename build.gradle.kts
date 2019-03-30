@@ -57,3 +57,7 @@ subprojects {
         maven(url = "https://kotlin.bintray.com/kotlinx")
     }
 }
+
+tasks.getByName<Test>("test") {
+    maxHeapSize = "4g"
+}
