@@ -15,35 +15,20 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-object Vof {
-    const val kotlin = "1.3.21"
+package org.tenkiv.kuantify.android.host
 
-    // Kotlin extensions
-    const val coroutinesX = "1.1.1"
-    const val serializationX = "0.10.0"
+import android.app.*
+import android.content.*
+import android.os.*
 
-    // Jetbrains
-    const val ktor = "1.1.3"
-    const val dokka = "0.9.18"
+class HostService : Service() {
 
-    // Tenkiv
-    const val coral = "2.1.2.3-SNAPSHOT"
-    const val physikal = "2.0.6.3-SNAPSHOT"
+    //called every time you start the service
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        return super.onStartCommand(intent, flags, startId)
+    }
 
-    // Android
-    const val androidGradle = "3.2.1"
-    const val anko = "0.10.8"
-
-    // Other
-    const val arrow = "0.8.1"
-    const val statistics = "1.2.1"
-    const val dl4j = "1.0.0-beta3"
-    const val logging = "1.6.22"
-    const val slf4j = "1.7.25"
-
-    // Test
-    const val spek = "2.0.0"
-    const val mockk = "1.9.1.kotlin12"
-    const val junit = "5.4.0"
-    const val junitPlatform = "1.4.0"
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
+    }
 }

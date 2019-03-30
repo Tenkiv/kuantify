@@ -17,4 +17,5 @@
 
 <resources>
     <string name="app_name">Kuantify Host</string>
+    <string name="local_service_started">HOST_SERVICE</string>
 </resources>

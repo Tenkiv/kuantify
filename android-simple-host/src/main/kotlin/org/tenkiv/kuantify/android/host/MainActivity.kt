@@ -26,13 +26,9 @@ import android.net.wifi.*
 import android.os.*
 import android.view.animation.*
 import android.widget.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
 import kotlinx.android.synthetic.main.main_layout.*
 import kotlinx.coroutines.*
 import org.tenkiv.kuantify.android.device.*
-import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.server.*
 
 
 
@@ -44,32 +40,32 @@ class MainActivity : Activity() {
 
         setContentView(R.layout.main_layout)
 
-        val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) { kuantifyHost() }
-        server.start()
-        val device = LocalAndroidDevice.get(applicationContext)
-        startHosting(device)
+//        val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) { kuantifyHost() }
+//        server.start()
+//        val device = LocalAndroidDevice.get(applicationContext)
+//        startHosting(device)
 
         val wm = getSystemService(Context.WIFI_SERVICE) as WifiManager
         val wifiInf = wm.connectionInfo
         val ipAddress = wifiInf.ipAddress
         println(ipAddress)
 
-        startButton.setOnClickListener { startButton ->
-            if (!device.isHosting) {
-                startHosting(device)
 
-                setActiveState(startButton as Button, false)
-                setActiveState(stopButton, true)
-            }
+        startButton.setOnClickListener { startButton ->
+            val serviceIntent = Intent(this, HostService::class.java)
+            startService(serviceIntent)
+
+            setActiveState(startButton as Button, false)
+            setActiveState(stopButton, true)
+
         }
 
         stopButton.setOnClickListener { stopButton ->
-            if (device.isHosting) {
-                stopHosting(device)
+            val serviceIntent = Intent(this, HostService::class.java)
+            stopService(serviceIntent)
 
-                setActiveState(stopButton as Button, false)
-                setActiveState(startButton, true)
-            }
+            setActiveState(stopButton as Button, false)
+            setActiveState(startButton, true)
         }
 
         //animation
