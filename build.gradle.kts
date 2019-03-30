@@ -25,6 +25,7 @@ plugins {
     kotlin("android.extensions") version Vof.kotlin apply false
     id("kotlinx-serialization") version Vof.kotlin apply false
     id("org.jetbrains.dokka") version Vof.dokka apply false
+    signing
 }
 
 buildscript {
@@ -46,7 +47,6 @@ subprojects {
             google()
         }
     }
-
 
     repositories {
         mavenCentral()

@@ -51,8 +51,12 @@ android {
 
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+
     api(project(":android-core"))
+
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version = Vof.coroutinesX)
+
+    //  testImplementation(group = "junit", name = "junit", version = Vof.junit)
 }
 
 tasks {
@@ -72,50 +76,44 @@ tasks {
     }
 }
 
-val isRelease = !version.toString().endsWith("SNAPSHOT")
-
 publishing {
     publications {
-        if (isRelease) {
-            println("android-local is release version!")
-        } else {
-            create<MavenPublication>("maven-${project.name}-snapshot") {
-                groupId = "org.tenkiv.kuantify"
-                artifactId = "kuantify-${project.name}"
-                version = project.version.toString()
+        create<MavenPublication>("maven-${project.name}") {
+            groupId = "org.tenkiv.kuantify"
+            artifactId = "kuantify-${project.name}"
+            version = project.version.toString()
 
-                from(components["android"])
+            from(components["android"])
 
-                for (file in project.fileTree("build/libs").files) {
-                    when {
-                        file.name.contains("javadoc") -> {
-                            val a = artifact(file)
-                            a.classifier = "javadoc"
-                        }
-                        file.name.contains("sources") -> {
-                            val a = artifact(file)
-                            a.classifier = "sources"
-                        }
+            for (file in project.fileTree("build/libs").files) {
+                when {
+                    file.name.contains("javadoc") -> {
+                        val a = artifact(file)
+                        a.classifier = "javadoc"
+                    }
+                    file.name.contains("sources") -> {
+                        val a = artifact(file)
+                        a.classifier = "sources"
                     }
                 }
+            }
 
-                pom {
-                    name.set(project.name)
-                    description.set(Info.pomDescription)
+            pom {
+                name.set(project.name)
+                description.set(Info.pomDescription)
+                url.set(System.getenv("CI_PROJECT_URL"))
+                licenses {
+                    license {
+                        name.set(Info.pomLicense)
+                        url.set(Info.pomLicenseUrl)
+                    }
+                }
+                organization {
+                    name.set(Info.pomOrg)
+                }
+                scm {
+                    connection.set(System.getenv("CI_REPOSITORY_URL"))
                     url.set(System.getenv("CI_PROJECT_URL"))
-                    licenses {
-                        license {
-                            name.set(Info.pomLicense)
-                            url.set(Info.pomLicenseUrl)
-                        }
-                    }
-                    organization {
-                        name.set(Info.pomOrg)
-                    }
-                    scm {
-                        connection.set(System.getenv("CI_REPOSITORY_URL"))
-                        url.set(System.getenv("CI_PROJECT_URL"))
-                    }
                 }
             }
         }
@@ -133,3 +131,4 @@ publishing {
         }
     }
 }
+

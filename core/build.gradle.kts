@@ -21,10 +21,10 @@ import org.jetbrains.kotlin.gradle.tasks.*
 
 plugins {
     kotlin("jvm")
+    java
     id("kotlinx-serialization")
     id("org.jetbrains.dokka")
     `maven-publish`
-    java
 }
 
 dependencies {
@@ -65,18 +65,27 @@ dependencies {
     //Test
     testImplementation(kotlin("reflect", Vof.kotlin))
     testImplementation(kotlin("test", Vof.kotlin))
+
     testImplementation(group = "org.spekframework.spek2", name = "spek-dsl-jvm", version = Vof.spek) {
         exclude(group = "org.jetbrains.kotlin")
     }
+
     testRuntimeOnly(group = "org.spekframework.spek2", name = "spek-runner-junit5", version = Vof.spek) {
         exclude(group = "org.jetbrains.kotlin")
         exclude(group = "org.junit.platform")
     }
-    testRuntimeOnly(group = "org.junit.platform", name = "junit-platform-launcher", version = Vof.junitPlatform)
+
+    testRuntimeOnly(group = "org.junit.platform", name = "junit-platform-launcher", version = Vof.junitPlatform) {
+        because("Needed to run tests IDEs that bundle an older version")
+    }
+
     testImplementation(gradleTestKit())
+
     testImplementation(group = "io.mockk", name = "mockk", version = Vof.mockk)
+
     testImplementation(group = "io.ktor", name = "ktor-server-test-host", version = Vof.ktor)
     testImplementation(group = "io.ktor", name = "ktor-client-cio", version = Vof.ktor)
+
 }
 
 tasks {
@@ -106,59 +115,54 @@ tasks {
     }
 }
 
-val isRelease = !version.toString().endsWith("SNAPSHOT")
-
 publishing {
     publications {
-        if (isRelease) {
-            println("publication is release!")
-        } else {
-            create<MavenPublication>("maven-${project.name}-snapshot") {
-                groupId = "org.tenkiv.kuantify"
-                artifactId = "kuantify-${project.name}"
-                version = project.version.toString()
+        create<MavenPublication>("maven-${project.name}") {
+            groupId = "org.tenkiv.kuantify"
+            artifactId = "kuantify-${project.name}"
+            version = project.version.toString()
 
-                from(components["java"])
+            from(components["java"])
 
-                for (file in project.fileTree("build/libs").files) {
-                    when {
-                        file.name.contains("javadoc") -> {
-                            val a = artifact(file)
-                            a.classifier = "javadoc"
-                        }
-                        file.name.contains("sources") -> {
-                            val a = artifact(file)
-                            a.classifier = "sources"
-                        }
+            for (file in project.fileTree("build/libs").files) {
+                when {
+                    file.name.contains("javadoc") -> {
+                        val a = artifact(file)
+                        a.classifier = "javadoc"
+                    }
+                    file.name.contains("sources") -> {
+                        val a = artifact(file)
+                        a.classifier = "sources"
                     }
                 }
+            }
 
-                pom {
-                    name.set(project.name)
-                    description.set(Info.pomDescription)
+            pom {
+                name.set(project.name)
+                description.set(Info.pomDescription)
+                url.set(System.getenv("CI_PROJECT_URL"))
+                licenses {
+                    license {
+                        name.set(Info.pomLicense)
+                        url.set(Info.pomLicenseUrl)
+                    }
+                }
+                organization {
+                    name.set(Info.pomOrg)
+                }
+                scm {
+                    connection.set(System.getenv("CI_REPOSITORY_URL"))
                     url.set(System.getenv("CI_PROJECT_URL"))
-                    licenses {
-                        license {
-                            name.set(Info.pomLicense)
-                            url.set(Info.pomLicenseUrl)
-                        }
-                    }
-                    organization {
-                        name.set(Info.pomOrg)
-                    }
-                    scm {
-                        connection.set(System.getenv("CI_REPOSITORY_URL"))
-                        url.set(System.getenv("CI_PROJECT_URL"))
-                    }
                 }
             }
         }
     }
     repositories {
         maven {
+            // change URLs to point to your repos, e.g. http://my.org/repo
             val releasesRepoUrl = uri(Info.sonatypeReleaseRepoUrl)
             val snapshotsRepoUrl = uri(Info.sonatypeSnapshotRepoUrl)
-            url = if (isRelease) releasesRepoUrl else snapshotsRepoUrl
+            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
             credentials {
                 username = System.getenv("MAVEN_REPO_USER")
                 password = System.getenv("MAVEN_REPO_PASSWORD")
@@ -166,3 +170,4 @@ publishing {
         }
     }
 }
+
