@@ -16,8 +16,11 @@
  *
  */
 
+import org.gradle.internal.impldep.org.apache.ivy.util.*
 import org.jetbrains.dokka.gradle.*
 import org.jetbrains.kotlin.gradle.tasks.*
+import java.util.*
+import java.io.*
 
 plugins {
     kotlin("jvm")
@@ -118,14 +121,57 @@ tasks {
 }
 
 val isRelease = !version.toString().endsWith("SNAPSHOT")
+val properties = Properties()
+val propertiesFile = File(rootDir, "local.properties")
+if (propertiesFile.canRead()) {
+    properties.load(FileInputStream(propertiesFile))
+}
 
 publishing {
     publications {
         if (isRelease) {
             println("$project - version is release")
-            
-        } else {
             create<MavenPublication>("maven-${project.name}") {
+                groupId = "org.tenkiv.kuantify"
+                artifactId = "kuantify-${project.name}"
+                version = project.version.toString()
+
+                from(components["java"])
+
+                for (file in project.fileTree("build/libs").files) {
+                    when {
+                        file.name.contains("javadoc") -> {
+                            val a = artifact(file)
+                            a.classifier = "javadoc"
+                        }
+                        file.name.contains("sources") -> {
+                            val a = artifact(file)
+                            a.classifier = "sources"
+                        }
+                    }
+                }
+
+                pom {
+                    name.set(project.name)
+                    description.set(Info.pomDescription)
+                    url.set(Info.projectUrl)
+                    licenses {
+                        license {
+                            name.set(Info.pomLicense)
+                            url.set(Info.pomLicenseUrl)
+                        }
+                    }
+                    organization {
+                        name.set(Info.pomOrg)
+                    }
+                    scm {
+                        connection.set(Info.projectCloneUrl)
+                        url.set(Info.projectUrl)
+                    }
+                }
+            }
+        } else {
+            create<MavenPublication>("maven-${project.name}-snapshot") {
                 groupId = "org.tenkiv.kuantify"
                 artifactId = "kuantify-${project.name}"
                 version = project.version.toString()
