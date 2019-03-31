@@ -123,6 +123,7 @@ publishing {
     publications {
         if (isRelease) {
             println("$project - version is release")
+            
         } else {
             create<MavenPublication>("maven-${project.name}") {
                 groupId = "org.tenkiv.kuantify"
@@ -167,7 +168,6 @@ publishing {
     }
     repositories {
         maven {
-            // change URLs to point to your repos, e.g. http://my.org/repo
             val releasesRepoUrl = uri(Info.sonatypeReleaseRepoUrl)
             val snapshotsRepoUrl = uri(Info.sonatypeSnapshotRepoUrl)
             url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
