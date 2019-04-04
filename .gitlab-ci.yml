@@ -49,4 +49,4 @@ mavenDeploy:
   stage: deploy
   script:
     - ./gradlew clean build
-    - if grep -q "SNAPSHOT" gradle.properties; then ./gradlew :core:publish ./gradlew :android-core:publish ./gradlew :android-local:publish ./gradlew :learning:publish; fi
+    - if grep -q "SNAPSHOT" gradle.properties; then ./gradlew :core:publish; ./gradlew :android-core:publish; ./gradlew :android-local:publish; ./gradlew :learning:publish; fi
