@@ -16,11 +16,10 @@
  *
  */
 
-import org.gradle.internal.impldep.org.apache.ivy.util.*
 import org.jetbrains.dokka.gradle.*
 import org.jetbrains.kotlin.gradle.tasks.*
-import java.util.*
 import java.io.*
+import java.util.*
 
 plugins {
     kotlin("jvm")
@@ -28,6 +27,7 @@ plugins {
     id("kotlinx-serialization")
     id("org.jetbrains.dokka")
     `maven-publish`
+    signing
 }
 
 dependencies {
@@ -105,18 +105,13 @@ tasks {
     }
 
     register<Jar>("sourcesJar") {
-        from(kotlin.sourceSets["main"].kotlin)
         archiveClassifier.set("sources")
+        from(kotlin.sourceSets["main"].kotlin)
     }
 
     register<Jar>("javadocJar") {
-        from(getByName<DokkaTask>("dokka"))
         archiveClassifier.set("javadoc")
-    }
-
-    getByName("build") {
-        dependsOn("sourcesJar")
-        dependsOn("javadocJar")
+        from(getByName<DokkaTask>("dokka"))
     }
 }
 
@@ -126,6 +121,10 @@ val propertiesFile = File(rootDir, "local.properties")
 if (propertiesFile.canRead()) {
     properties.load(FileInputStream(propertiesFile))
 }
+
+extra["signing.keyId"] = properties.getProperty("SIGNING_KEYID")
+extra["signing.secretKeyRingFile"] = properties.getProperty("SIGNING_SECRETKEYRINGFILE")
+extra["signing.password"] = properties.getProperty("SIGNING_KEYPASSWORD")
 
 publishing {
     publications {
@@ -137,19 +136,8 @@ publishing {
                 version = project.version.toString()
 
                 from(components["java"])
-
-                for (file in project.fileTree("build/libs").files) {
-                    when {
-                        file.name.contains("javadoc") -> {
-                            val a = artifact(file)
-                            a.classifier = "javadoc"
-                        }
-                        file.name.contains("sources") -> {
-                            val a = artifact(file)
-                            a.classifier = "sources"
-                        }
-                    }
-                }
+                artifact(tasks["sourcesJar"])
+                artifact(tasks["javadocJar"])
 
                 pom {
                     name.set(project.name)
@@ -177,19 +165,8 @@ publishing {
                 version = project.version.toString()
 
                 from(components["java"])
-
-                for (file in project.fileTree("build/libs").files) {
-                    when {
-                        file.name.contains("javadoc") -> {
-                            val a = artifact(file)
-                            a.classifier = "javadoc"
-                        }
-                        file.name.contains("sources") -> {
-                            val a = artifact(file)
-                            a.classifier = "sources"
-                        }
-                    }
-                }
+                artifact(tasks["sourcesJar"])
+                artifact(tasks["javadocJar"])
 
                 pom {
                     name.set(project.name)
@@ -218,10 +195,21 @@ publishing {
             val snapshotsRepoUrl = uri(Info.sonatypeSnapshotRepoUrl)
             url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
             credentials {
-                username = System.getenv("MAVEN_REPO_USER")
-                password = System.getenv("MAVEN_REPO_PASSWORD")
+                if (isRelease) {
+                    username = properties.getProperty("MAVEN_USER")
+                    password = properties.getProperty("MAVEN_PASSWORD")
+                } else {
+                    username = System.getenv("MAVEN_REPO_USER")
+                    password = System.getenv("MAVEN_REPO_PASSWORD")
+                }
             }
         }
+    }
+}
+
+signing {
+    if (isRelease) {
+        sign(publishing.publications["maven-${project.name}"])
     }
 }
 

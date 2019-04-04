@@ -1,5 +1,3 @@
-import org.jetbrains.dokka.gradle.*
-
 /*
  * Copyright 2019 Tenkiv, Inc.
  *
@@ -17,6 +15,11 @@ import org.jetbrains.dokka.gradle.*
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+
+import org.jetbrains.dokka.gradle.*
+import java.io.*
+import java.util.*
+
 
 plugins {
     id("com.android.library")
@@ -70,38 +73,64 @@ tasks {
         archiveClassifier.set("javadoc")
     }
 
-    getByName("build") {
+    getByName("assemble") {
         dependsOn("sourcesJar")
         dependsOn("javadocJar")
     }
 }
 
 val isRelease = !version.toString().endsWith("SNAPSHOT")
+val properties = Properties()
+val propertiesFile = File(rootDir, "local.properties")
+if (propertiesFile.canRead()) {
+    properties.load(FileInputStream(propertiesFile))
+}
+
+extra["signing.keyId"] = properties.getProperty("SIGNING_KEYID")
+extra["signing.secretKeyRingFile"] = properties.getProperty("SIGNING_SECRETKEYRINGFILE")
+extra["signing.password"] = properties.getProperty("SIGNING_KEYPASSWORD")
 
 publishing {
     publications {
         if (isRelease) {
             println("$project - version is release")
-        } else {
             create<MavenPublication>("maven-${project.name}") {
                 groupId = "org.tenkiv.kuantify"
                 artifactId = "kuantify-${project.name}"
                 version = project.version.toString()
 
                 from(components["android"])
+                artifact(tasks["sourcesJar"])
+                artifact(tasks["javadocJar"])
 
-                for (file in project.fileTree("build/libs").files) {
-                    when {
-                        file.name.contains("javadoc") -> {
-                            val a = artifact(file)
-                            a.classifier = "javadoc"
-                        }
-                        file.name.contains("sources") -> {
-                            val a = artifact(file)
-                            a.classifier = "sources"
+                pom {
+                    name.set(project.name)
+                    description.set(Info.pomDescription)
+                    url.set(Info.projectUrl)
+                    licenses {
+                        license {
+                            name.set(Info.pomLicense)
+                            url.set(Info.pomLicenseUrl)
                         }
                     }
+                    organization {
+                        name.set(Info.pomOrg)
+                    }
+                    scm {
+                        connection.set(Info.projectCloneUrl)
+                        url.set(Info.projectUrl)
+                    }
                 }
+            }
+        } else {
+            create<MavenPublication>("maven-${project.name}-snapshot") {
+                groupId = "org.tenkiv.kuantify"
+                artifactId = "kuantify-${project.name}"
+                version = project.version.toString()
+
+                from(components["android"])
+                artifact(tasks["sourcesJar"])
+                artifact(tasks["javadocJar"])
 
                 pom {
                     name.set(project.name)
@@ -126,13 +155,17 @@ publishing {
     }
     repositories {
         maven {
-            // change URLs to point to your repos, e.g. http://my.org/repo
             val releasesRepoUrl = uri(Info.sonatypeReleaseRepoUrl)
             val snapshotsRepoUrl = uri(Info.sonatypeSnapshotRepoUrl)
             url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
             credentials {
-                username = System.getenv("MAVEN_REPO_USER")
-                password = System.getenv("MAVEN_REPO_PASSWORD")
+                if (isRelease) {
+                    username = properties.getProperty("MAVEN_USER")
+                    password = properties.getProperty("MAVEN_PASSWORD")
+                } else {
+                    username = System.getenv("MAVEN_REPO_USER")
+                    password = System.getenv("MAVEN_REPO_PASSWORD")
+                }
             }
         }
     }
