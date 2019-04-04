@@ -25,15 +25,16 @@ import org.tenkiv.kuantify.networking.communication.*
 public typealias Path = List<String>
 public typealias Ping = Unit
 
-private val logger = KotlinLogging.logger {}
+@PublishedApi
+internal val sideRouteConfigBuilderLogger = KotlinLogging.logger {}
 
 @DslMarker
 internal annotation class SideRouteMarker
 
 public class SideRouteConfig<ST>(
-    private val networkCommunicator: NetworkCommunicator<ST>,
-    private val serializedPing: ST,
-    private val formatPath: (Path) -> String
+    @PublishedApi internal val networkCommunicator: NetworkCommunicator<ST>,
+    @PublishedApi internal val serializedPing: ST,
+    @PublishedApi internal val formatPath: (Path) -> String
 ) {
 
     public val networkRouteBindingMap: HashMap<String, NetworkRouteBinding<*, ST>> = HashMap()
@@ -41,11 +42,13 @@ public class SideRouteConfig<ST>(
     public val baseRoute: SideNetworkRouting<ST>
         get() = SideNetworkRouting(this, emptyList())
 
-    private val remoteConnectionCommunicator: Boolean =
+    @PublishedApi
+    internal val remoteConnectionCommunicator: Boolean =
         (networkCommunicator as? RemoteNetworkCommunicator)?.communicationMode != CommunicationMode.NO_CONNECTION
 
     @Suppress("NAME_SHADOWING")
-    public fun <MT> addRouteBinding(
+    @PublishedApi
+    internal inline fun <MT> addRouteBinding(
         path: Path,
         recursiveSynchronizer: Boolean, //TODO: Rename this
         build: SideRouteBindingBuilder<MT, ST>.() -> Unit
@@ -63,35 +66,39 @@ public class SideRouteConfig<ST>(
 
         val currentBinding = networkRouteBindingMap[path]
         if (currentBinding != null) {
-            logger.warn { "Overriding side route binding for route $path." }
+            sideRouteConfigBuilderLogger.warn { "Overriding side route binding for route $path." }
         }
 
-        fun standardRouteBinding() = StandardRouteBinding(
-            networkCommunicator,
-            path,
-            routeBindingBuilder.localUpdateChannel,
-            networkUpdateChannel,
-            routeBindingBuilder.serializeMessage,
-            routeBindingBuilder.send,
-            routeBindingBuilder.receive,
-            serializedPing
-        )
+        val standardRouteBinding by lazy(LazyThreadSafetyMode.NONE) {
+            StandardRouteBinding(
+                networkCommunicator,
+                path,
+                routeBindingBuilder.localUpdateChannel,
+                networkUpdateChannel,
+                routeBindingBuilder.serializeMessage,
+                routeBindingBuilder.send,
+                routeBindingBuilder.receive,
+                serializedPing
+            )
+        }
 
-        fun recursionPreventingRouteBinding() = RecursionPreventingRouteBinding(
-            networkCommunicator,
-            path,
-            routeBindingBuilder.localUpdateChannel,
-            networkUpdateChannel,
-            routeBindingBuilder.serializeMessage,
-            routeBindingBuilder.send,
-            routeBindingBuilder.receive,
-            serializedPing
-        )
+        val recursionPreventingRouteBinding by lazy(LazyThreadSafetyMode.NONE) {
+            RecursionPreventingRouteBinding(
+                networkCommunicator,
+                path,
+                routeBindingBuilder.localUpdateChannel,
+                networkUpdateChannel,
+                routeBindingBuilder.serializeMessage,
+                routeBindingBuilder.send,
+                routeBindingBuilder.receive,
+                serializedPing
+            )
+        }
 
         networkRouteBindingMap[path] = if (remoteConnectionCommunicator && recursiveSynchronizer) {
-            recursionPreventingRouteBinding()
+            recursionPreventingRouteBinding
         } else {
-            standardRouteBinding()
+            standardRouteBinding
         }
     }
 
@@ -99,12 +106,12 @@ public class SideRouteConfig<ST>(
 
 @Suppress("NAME_SHADOWING")
 @SideRouteMarker
-public class SideNetworkRouting<ST> internal constructor(
-    private val config: SideRouteConfig<ST>,
-    private val path: Path
+public class SideNetworkRouting<ST> @PublishedApi internal constructor(
+    @PublishedApi internal val config: SideRouteConfig<ST>,
+    @PublishedApi internal val path: Path
 ) {
 
-    public fun <MT> bind(
+    public inline fun <MT> bind(
         vararg path: String,
         recursiveSynchronizer: Boolean = false,
         build: SideRouteBindingBuilder<MT, ST>.() -> Unit
@@ -112,7 +119,7 @@ public class SideNetworkRouting<ST> internal constructor(
         bind(path.toList(), recursiveSynchronizer, build)
     }
 
-    public fun <MT> bind(
+    public inline fun <MT> bind(
         path: Path,
         recursiveSynchronizer: Boolean = false,
         build: SideRouteBindingBuilder<MT, ST>.() -> Unit
@@ -126,12 +133,12 @@ public class SideNetworkRouting<ST> internal constructor(
         )
     }
 
-    public fun route(vararg path: String, build: SideNetworkRouting<ST>.() -> Unit) {
+    public inline fun route(vararg path: String, build: SideNetworkRouting<ST>.() -> Unit) {
         route(path.toList(), build)
     }
 
 
-    public fun route(path: Path, build: SideNetworkRouting<ST>.() -> Unit) {
+    public inline fun route(path: Path, build: SideNetworkRouting<ST>.() -> Unit) {
         val path = this.path + path
 
         SideNetworkRouting(config, path).apply(build)
@@ -139,12 +146,15 @@ public class SideNetworkRouting<ST> internal constructor(
 }
 
 @SideRouteMarker
-public class SideRouteBindingBuilder<MT, ST> internal constructor() {
+public class SideRouteBindingBuilder<MT, ST> @PublishedApi internal constructor() {
 
+    @PublishedApi
     internal var localUpdateChannel: ReceiveChannel<MT>? = null
 
+    @PublishedApi
     internal var serializeMessage: MessageSerializer<MT, ST>? = null
 
+    @PublishedApi
     internal var send: Boolean = false
 
     @PublishedApi
@@ -163,10 +173,8 @@ public class SideRouteBindingBuilder<MT, ST> internal constructor() {
         receive = receiver
     }
 
-    public infix fun SetUpdateChannel.withUpdateChannel(build: SideWithUpdateChannel.() -> Unit) {
-        val wuc = SideWithUpdateChannel()
-        wuc.build()
-        this@SideRouteBindingBuilder.send = wuc.send
+    public inline infix fun SetUpdateChannel.withUpdateChannel(build: SideWithUpdateChannel.() -> Unit) {
+        this@SideRouteBindingBuilder.send = SideWithUpdateChannel().apply(build).send
     }
 }
 
@@ -176,6 +184,7 @@ public class SetUpdateChannel internal constructor()
 @CombinedRouteMarker
 @SideRouteMarker
 public class SideWithUpdateChannel {
+    @PublishedApi
     internal var send: Boolean = false
 
     public fun send() {

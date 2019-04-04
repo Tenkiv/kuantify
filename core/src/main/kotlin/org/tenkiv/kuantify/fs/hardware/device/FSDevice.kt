@@ -41,6 +41,7 @@ public interface FSDevice : Device, NetworkBoundCombined {
     }
 
     public companion object {
+        @PublishedApi
         internal val serializedPing = Json.stringify(UnitSerializer, Unit)
     }
 }
@@ -135,8 +136,8 @@ abstract class FSRemoteDevice protected constructor(coroutineContext: CoroutineC
         networkCommunicator = null
     }
 
-    companion object {
-        suspend fun getInfo(hostIp: String): String =
+    public companion object {
+        public suspend fun getInfo(hostIp: String): String =
             httpClient.get<String>("${RC.HTTP}$hostIp:${RC.DEFAULT_PORT}${RC.INFO}").also {
                 logger.trace { "Got info for device at IP address $hostIp" }
             }
