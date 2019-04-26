@@ -58,10 +58,10 @@ android {
 
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    implementation(project(":android-local"))
     implementation(group = "com.android.support", name = "support-compat", version = "28.0.0")
     implementation(group = "com.android.support", name = "localbroadcastmanager", version = "28.0.0")
     implementation(group = "com.android.support.constraint", name = "constraint-layout", version = "1.1.0-beta4")
-    implementation(project(":android-local"))
     implementation(group = "io.ktor", name = "ktor-server-netty", version = Vof.ktor)
     implementation(group ="com.noveogroup.android", name = "android-logger", version = "1.3.1")
     implementation(group = "io.github.microutils", name = "kotlin-logging", version = "1.6.24")

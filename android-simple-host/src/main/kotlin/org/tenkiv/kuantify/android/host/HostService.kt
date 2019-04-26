@@ -19,9 +19,9 @@ package org.tenkiv.kuantify.android.host
 
 import android.app.*
 import android.content.*
-import android.databinding.*
 import android.os.*
-import android.support.v4.app.*
+import androidx.core.app.*
+import androidx.databinding.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.*
