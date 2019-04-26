@@ -18,8 +18,7 @@
 package org.tenkiv.kuantify.android.host
 
 import android.animation.*
-import android.animation.ValueAnimator.INFINITE
-import android.animation.ValueAnimator.REVERSE
+import android.animation.ValueAnimator.*
 import android.app.*
 import android.content.*
 import android.os.*
@@ -39,15 +38,14 @@ class MainActivity : Activity() {
         ipTextView.text = getLocalIpAddress()
 
         //create intent that contains the service class
-        //val serviceIntent = Intent(this, HostService::class.java)
+        val serviceIntent = Intent(this, HostService::class.java)
 
         //initializes service with service's onCreate and onStartCommand
-        //startService(serviceIntent)
+        startService(serviceIntent)
         connectionStatusTextView.text = "connected"
 
 
         startButton.setOnClickListener { startButton ->
-            //(serviceIntent)
             connectionStatusTextView.text = "connected"
             setActiveState(startButton as Button, false)
             setActiveState(stopButton, true)
@@ -55,7 +53,7 @@ class MainActivity : Activity() {
         }
 
         stopButton.setOnClickListener { stopButton ->
-           // stopService(serviceIntent)
+            stopService(serviceIntent)
             connectionStatusTextView.text = "disconnected"
             setActiveState(stopButton as Button, false)
             setActiveState(startButton, true)
@@ -108,7 +106,7 @@ class MainActivity : Activity() {
                 }
             }
         } catch (ex: SocketException) {
-            ex.printStackTrace()
+            return "Unknown IP"
         }
 
         return null

@@ -34,6 +34,11 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
     }
+
+    dataBinding {
+        setEnabled(true)
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
@@ -61,4 +66,5 @@ dependencies {
     implementation(group ="com.noveogroup.android", name = "android-logger", version = "1.3.1")
     implementation(group = "io.github.microutils", name = "kotlin-logging", version = "1.6.24")
     implementation(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version = Vof.coroutinesX)
+    implementation(group = "androidx.databinding", name = "databinding-common", version = "3.4.0")
 }
