@@ -1,4 +1,4 @@
-# Kuantify
+# Kuantify &nbsp;[![License](http://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT) 
 
 **Kuantify is usable in its current state but it's in a very early pre-alpha stage of development. Some things will not 
 work and you should expect relatively frequent breaking changes.**
@@ -18,6 +18,14 @@ actually want to keep the number of supported devices to a minimum until we stab
 maintenance nightmare. For now we only support the sensors and physical controls build into Android. Although Android
 phone sensors are not really a big intended use case for this library, they provide a great accessible way to start
 getting a feel for Kuantify and you can actually throw together some fairly interesting demos.
+
+## Artifacts
+| | Core | Android Core | Learning
+ ------- | :-----: | :-----: | :-----:
+ JVM | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-core) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-core) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-learning/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-learning)
+ 
+ Local (for adapting OS support for device sensors and controllers to Kuantify):
+ * Android Local - [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-local/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-local)
 
 ## Basics
 First of all, in the name of type safety, Kuantify never passes around data as raw numbers. We use `DaqcValue` which is
