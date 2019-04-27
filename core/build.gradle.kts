@@ -34,7 +34,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
     //General kotlin utilities
-    compile(group = "org.tenkiv.coral", name = "coral", version = Vof.coral)
+    compile(group = "org.tenkiv.coral", name = "coral-jvm", version = Vof.coral)
     compile(group = "io.arrow-kt", name = "arrow-core", version = Vof.arrow)
     implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect")
 
@@ -44,7 +44,7 @@ dependencies {
     compile(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-slf4j", version = Vof.coroutinesX)
 
     //Logging
-    implementation(group = "io.github.microutils", name = "kotlin-logging", version = Vof.logging)
+    implementation(group = "io.github.microutils", name = "kotlin-logging", version = Vof.kotlinLogging)
 
     //Serialization
     compile(
@@ -54,7 +54,7 @@ dependencies {
     )
 
     //Units of measurement
-    compile(group = "org.tenkiv.physikal", name = "complete-units", version = Vof.physikal)
+    compile(group = "org.tenkiv.physikal", name = "physikal-complete-units", version = Vof.physikal)
 
     //ktor
     implementation(group = "io.ktor", name = "ktor-server-core", version = Vof.ktor)
