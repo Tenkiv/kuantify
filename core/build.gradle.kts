@@ -97,11 +97,14 @@ tasks {
     }
 
     withType<Test> {
+        outputs.upToDateWhen { false }
         useJUnitPlatform {
             includeEngines("spek2")
         }
 
-        maxHeapSize = "4g"
+        testLogging.showStandardStreams = true
+
+        maxHeapSize = "1g"
     }
 
     register<Jar>("sourcesJar") {

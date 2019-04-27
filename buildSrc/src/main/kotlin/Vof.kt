@@ -45,7 +45,7 @@ object Vof {
     const val dl4j = "1.0.0-beta3"
 
     // Test
-    const val spek = "2.0.0"
+    const val spek = "2.0.2"
     const val mockk = "1.9.3.kotlin12"
     const val junitPlatform = "1.4.0"
 }
