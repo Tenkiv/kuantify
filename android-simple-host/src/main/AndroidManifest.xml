@@ -45,6 +45,7 @@
             </intent-filter>
         </activity>
         <service android:name=".HostService"/>
+        <receiver android:name=".ActionReceiver"/>
     </application>
 
 </manifest>
