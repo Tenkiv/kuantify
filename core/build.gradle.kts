@@ -129,7 +129,6 @@ extra["signing.password"] = properties.getProperty("SIGNING_KEYPASSWORD")
 publishing {
     publications {
         if (isRelease) {
-            println("$project - version is release")
             create<MavenPublication>("maven-${project.name}") {
                 groupId = "org.tenkiv.kuantify"
                 artifactId = "kuantify-${project.name}"
@@ -147,6 +146,11 @@ publishing {
                         license {
                             name.set(Info.pomLicense)
                             url.set(Info.pomLicenseUrl)
+                        }
+                    }
+                    developers {
+                        developer {
+                            email.set(Info.projectDevEmail)
                         }
                     }
                     organization {
@@ -176,6 +180,11 @@ publishing {
                         license {
                             name.set(Info.pomLicense)
                             url.set(Info.pomLicenseUrl)
+                        }
+                    }
+                    developers {
+                        developer {
+                            email.set(Info.projectDevEmail)
                         }
                     }
                     organization {

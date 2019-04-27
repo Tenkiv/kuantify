@@ -28,7 +28,6 @@ import kotlinx.coroutines.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.server.*
-import org.tenkiv.kuantify.hardware.device.*
 import java.util.concurrent.*
 
 class HostService : Service() {
@@ -39,7 +38,6 @@ class HostService : Service() {
     //called only once when the service is first initialized
     override fun onCreate() {
         super.onCreate()
-        println("service OnCreate is called")
 
         val showActivityPI = PendingIntent.getActivity(
             this,
@@ -58,7 +56,7 @@ class HostService : Service() {
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Kuantify Host Service")
-            .setContentText("Kuantify is hosting device")
+            .setContentText("Kuantify is hosting device.")
             .setSmallIcon(R.drawable.ic_daqc_dude_notification_icon)
             .setContentIntent(showActivityPI)
             .addAction(R.drawable.ic_daqc_dude_notification_icon, "Stop Hosting", stopServicePI)
@@ -72,13 +70,11 @@ class HostService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        println("service onStartCommand is called")
         return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        println("service onDestroy is called")
         runBlocking { device.stopHosting() }
         server.stop(1, 1, TimeUnit.SECONDS)
         isRunning.set(false)
@@ -95,9 +91,7 @@ class HostService : Service() {
 
 class ActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        println("button is pressed?")
         val serviceIntent = Intent(context, HostService::class.java)
         context.stopService(serviceIntent)
-        println("service has been stopped via notification button")
     }
 }

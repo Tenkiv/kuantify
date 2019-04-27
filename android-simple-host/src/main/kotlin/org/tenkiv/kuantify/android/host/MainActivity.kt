@@ -97,12 +97,12 @@ class MainActivity : Activity() {
             button.setBackgroundColor(getColor(R.color.primaryAccent))
             button.setTextColor(getColor(R.color.primaryDark))
             button.text = "Start"
-            connectionStatusTextView.text = "disconnected"
+            connectionStatusTextView.text = "not hosting"
         } else {
             button.setBackgroundColor(getColor(R.color.primaryInactive))
             button.setTextColor(getColor(R.color.primaryFont))
             button.text = "Stop"
-            connectionStatusTextView.text = "connected"
+            connectionStatusTextView.text = "hosting"
         }
     }
 

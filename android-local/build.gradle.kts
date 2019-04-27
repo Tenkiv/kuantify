@@ -28,6 +28,7 @@ plugins {
     id("kotlinx-serialization")
     id("org.jetbrains.dokka")
     id("digital.wup.android-maven-publish") version "3.6.2"
+    signing
 }
 
 android {
@@ -93,7 +94,6 @@ extra["signing.password"] = properties.getProperty("SIGNING_KEYPASSWORD")
 publishing {
     publications {
         if (isRelease) {
-            println("$project - version is release")
             create<MavenPublication>("maven-${project.name}") {
                 groupId = "org.tenkiv.kuantify"
                 artifactId = "kuantify-${project.name}"
@@ -111,6 +111,11 @@ publishing {
                         license {
                             name.set(Info.pomLicense)
                             url.set(Info.pomLicenseUrl)
+                        }
+                    }
+                    developers {
+                        developer {
+                            email.set(Info.projectDevEmail)
                         }
                     }
                     organization {
@@ -142,6 +147,11 @@ publishing {
                             url.set(Info.pomLicenseUrl)
                         }
                     }
+                    developers {
+                        developer {
+                            email.set(Info.projectDevEmail)
+                        }
+                    }
                     organization {
                         name.set(Info.pomOrg)
                     }
@@ -168,6 +178,12 @@ publishing {
                 }
             }
         }
+    }
+}
+
+signing {
+    if (isRelease) {
+        sign(publishing.publications["maven-${project.name}"])
     }
 }
 
