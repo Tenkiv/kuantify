@@ -1,4 +1,4 @@
-# Kuantify &nbsp;[![License](http://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT) 
+# Kuantify &nbsp;[![License](http://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Matrix](https://img.shields.io/badge/chat-matrix-green.svg)](https://matrix.to/#/!RSKDuyeCWSXlzqYSmI:matrix.org?via=matrix.org)
 
 **Kuantify is usable in its current state but it's in a very early pre-alpha stage of development. Some things will not 
 work and you should expect relatively frequent breaking changes.**
