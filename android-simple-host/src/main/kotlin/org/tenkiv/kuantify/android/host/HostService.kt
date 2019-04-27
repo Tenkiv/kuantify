@@ -28,16 +28,18 @@ import kotlinx.coroutines.*
 import org.tenkiv.kuantify.android.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.server.*
+import org.tenkiv.kuantify.hardware.device.*
 import java.util.concurrent.*
 
 class HostService : Service() {
 
     private val server = embeddedServer(Netty, port = RC.DEFAULT_PORT) { kuantifyHost() }
-    private val device = LocalAndroidDevice.get(applicationContext)
+    private val device by lazy(LazyThreadSafetyMode.NONE) { LocalAndroidDevice.get(applicationContext) }
 
     //called only once when the service is first initialized
     override fun onCreate() {
         super.onCreate()
+        println("service OnCreate is called")
 
         val showActivityPI = PendingIntent.getActivity(
             this,
@@ -46,13 +48,10 @@ class HostService : Service() {
             0
         )
 
-        val stopServiceIntent = Intent(this, ActionReceiver::class.java)
-
-        //val lbm = LocalBroadcastManager.getInstance(this).registerReceiver()
-
+        val stopServiceIntent = Intent(applicationContext, ActionReceiver::class.java)
         val stopServicePI = PendingIntent.getBroadcast(
             this,
-            1,
+            0,
             stopServiceIntent,
             0
         )
@@ -72,11 +71,16 @@ class HostService : Service() {
         isRunning.set(true)
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        println("service onStartCommand is called")
+        return super.onStartCommand(intent, flags, startId)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-
+        println("service onDestroy is called")
         runBlocking { device.stopHosting() }
-        server.stop(1, 5, TimeUnit.SECONDS)
+        server.stop(1, 1, TimeUnit.SECONDS)
         isRunning.set(false)
     }
 
@@ -90,9 +94,10 @@ class HostService : Service() {
 }
 
 class ActionReceiver : BroadcastReceiver() {
-
     override fun onReceive(context: Context, intent: Intent) {
-        context.stopService(intent)
+        println("button is pressed?")
+        val serviceIntent = Intent(context, HostService::class.java)
+        context.stopService(serviceIntent)
+        println("service has been stopped via notification button")
     }
-
 }

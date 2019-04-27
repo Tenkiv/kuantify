@@ -16,7 +16,7 @@
   ~ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   -->
 
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
                                              xmlns:app="http://schemas.android.com/apk/res-auto"
                                              xmlns:tools="http://schemas.android.com/tools"
                                              android:layout_width="match_parent"
@@ -62,31 +62,10 @@
             android:fontFamily="@font/rubik_regular"/>
 
     <Button
-            android:text="Start"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/startButton"
-            android:textSize="18sp"
-            android:background="@color/primaryInactive"
-            android:textColor="@color/primaryFont"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginEnd="8dp"
-            app:layout_constraintStart_toStartOf="parent"
-            android:layout_marginStart="8dp"
-            android:elevation="1dp"
-            android:outlineProvider="none"
-            android:fontFamily="@font/sarala_regular"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintTop_toBottomOf="@+id/ipTextView"
-            app:layout_constraintBottom_toTopOf="@+id/stopButton"
-            app:layout_constraintVertical_chainStyle="packed"
-            android:layout_marginBottom="16dp"/>
-
-    <Button
             android:text="Stop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/stopButton"
+            android:id="@+id/statusButton"
             android:background="@color/primaryAccent"
             android:textSize="18sp"
             android:textColor="@color/primaryDark"
@@ -95,7 +74,7 @@
             app:layout_constraintStart_toStartOf="parent"
             android:layout_marginStart="8dp"
             android:layout_marginTop="32dp"
-            app:layout_constraintTop_toBottomOf="@+id/startButton"
+            app:layout_constraintTop_toBottomOf="@+id/ipTextView"
             android:elevation="1dp"
             android:outlineProvider="none"
             android:fontFamily="@font/sarala_regular"
@@ -134,4 +113,4 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginStart="8dp"
             app:layout_constraintStart_toStartOf="parent"/>
-</android.support.constraint.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

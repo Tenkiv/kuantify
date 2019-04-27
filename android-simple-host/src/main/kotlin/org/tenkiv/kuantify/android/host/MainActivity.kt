@@ -24,6 +24,7 @@ import android.content.*
 import android.os.*
 import android.view.animation.*
 import android.widget.*
+import androidx.databinding.*
 import kotlinx.android.synthetic.main.main_layout.*
 import java.net.*
 
@@ -44,19 +45,28 @@ class MainActivity : Activity() {
         startService(serviceIntent)
         connectionStatusTextView.text = "connected"
 
+        HostService.isRunning.addOnPropertyChangedCallback(
+            object : Observable.OnPropertyChangedCallback() {
+                override fun onPropertyChanged(observable: Observable, propertyId: Int) {
+                    val observableBool = observable as ObservableBoolean
+                    println("Observable boolean value changed to ${observableBool.get()}")
+                    if (observableBool.get()) {
+                        //service is NOW running
+                        setActiveState(statusButton, false)
+                    } else {
+                        //service is no longer running
+                        setActiveState(statusButton, true)
+                    }
+                }
+            }
+        )
 
-        startButton.setOnClickListener { startButton ->
-            connectionStatusTextView.text = "connected"
-            setActiveState(startButton as Button, false)
-            setActiveState(stopButton, true)
-
-        }
-
-        stopButton.setOnClickListener { stopButton ->
-            stopService(serviceIntent)
-            connectionStatusTextView.text = "disconnected"
-            setActiveState(stopButton as Button, false)
-            setActiveState(startButton, true)
+        statusButton.setOnClickListener {
+            if (HostService.isRunning.get()) {
+                stopService(serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
         }
 
         //animation
@@ -82,13 +92,17 @@ class MainActivity : Activity() {
         va.resume()
     }
 
-    private fun setActiveState(button: Button, setActive: Boolean) {
-        if (setActive) {
+    private fun setActiveState(button: Button, isHosting: Boolean) {
+        if (isHosting) {
             button.setBackgroundColor(getColor(R.color.primaryAccent))
             button.setTextColor(getColor(R.color.primaryDark))
+            button.text = "Start"
+            connectionStatusTextView.text = "disconnected"
         } else {
             button.setBackgroundColor(getColor(R.color.primaryInactive))
             button.setTextColor(getColor(R.color.primaryFont))
+            button.text = "Stop"
+            connectionStatusTextView.text = "connected"
         }
     }
 
@@ -108,7 +122,6 @@ class MainActivity : Activity() {
         } catch (ex: SocketException) {
             return "Unknown IP"
         }
-
         return null
     }
 }
