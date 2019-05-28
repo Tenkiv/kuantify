@@ -3,10 +3,9 @@
 **Kuantify is usable in its current state but it's in a very early pre-alpha stage of development. Some things will not 
 work and you should expect relatively frequent breaking changes.**
 
-Kuantify is a data acquisition and control library written in Kotlin. Its purpose it to provide a common set of 
-interfaces and abstractions for utilizing arbitrary collection and control endpoints in a safe, reasonable, and 
-performant way. 
-Kuantify is focused on enabling rapid prototyping of data acquisition and control programs and a smooth transition 
+Kuantify is a physical computing / data acquisition and control library written in Kotlin. Its purpose is to provide a 
+common set of interfaces and abstractions for utilizing arbitrary collection and control endpoints in a safe, reasonable, and performant way. 
+Kuantify is focused on enabling rapid prototyping of physical computing programs and a smooth transition 
 from prototypes to production.
 
 Kuantify currently only works on the JVM and Android but it is a core design principle for it to ultimately be 
