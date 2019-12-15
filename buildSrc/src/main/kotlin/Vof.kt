@@ -16,16 +16,16 @@
  */
 
 object Vof {
-    const val kotlin = "1.3.31"
+    const val kotlin = "1.3.61"
 
     // Kotlin extensions
-    const val coroutinesX = "1.2.1"
-    const val serializationX = "0.10.0"
+    const val coroutinesX = "1.3.3"
+    const val serializationX = "0.14.0"
 
     // Jetbrains
-    const val ktor = "1.1.5"
+    const val ktor = "1.2.6"
     const val dokka = "0.9.18"
-    const val kotlinLogging = "1.6.26"
+    const val kotlinLogging = "1.7.8"
 
     // Tenkiv
     const val coral = "2.3.4"
@@ -45,7 +45,7 @@ object Vof {
     const val dl4j = "1.0.0-beta3"
 
     // Test
-    const val spek = "2.0.2"
-    const val mockk = "1.9.3.kotlin12"
-    const val junitPlatform = "1.4.0"
+    const val spek = "2.0.9"
+    const val mockk = "1.9.3"
+    const val junitPlatform = "1.5.2"
 }

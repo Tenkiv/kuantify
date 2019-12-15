@@ -62,7 +62,7 @@ dependencies {
     implementation(group = "io.ktor", name = "ktor-server-sessions", version = Vof.ktor)
 
     implementation(group = "io.ktor", name = "ktor-client-core", version = Vof.ktor)
-    implementation(group = "io.ktor", name = "ktor-client-websocket", version = Vof.ktor)
+    implementation(group = "io.ktor", name = "ktor-client-websockets", version = Vof.ktor)
 
 
     //Test
