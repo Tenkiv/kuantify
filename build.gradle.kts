@@ -23,7 +23,7 @@ plugins {
     kotlin("jvm") version Vof.kotlin apply false
     kotlin("android") version Vof.kotlin apply false
     kotlin("android.extensions") version Vof.kotlin apply false
-    id("kotlinx-serialization") version Vof.kotlin apply false
+    id("org.jetbrains.kotlin.plugin.serialization") version Vof.kotlin apply false
     id("org.jetbrains.dokka") version Vof.dokka apply false
     signing
 }
@@ -53,7 +53,5 @@ subprojects {
         jcenter()
         google()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
-        maven(url = "https://kotlin.bintray.com/ktor")
-        maven(url = "https://kotlin.bintray.com/kotlinx")
     }
 }

@@ -24,45 +24,41 @@ import java.util.*
 plugins {
     kotlin("jvm")
     java
-    id("kotlinx-serialization")
+    id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.dokka")
     `maven-publish`
     signing
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
+    implementation(kotlin("stdlib-jdk8", Vof.kotlin))
 
     //General kotlin utilities
-    compile(group = "org.tenkiv.coral", name = "coral-jvm", version = Vof.coral)
-    compile(group = "io.arrow-kt", name = "arrow-core", version = Vof.arrow)
-    implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect")
+    api(group = "org.tenkiv.coral", name = "coral-jvm", version = Vof.coral)
+    api(group = "io.arrow-kt", name = "arrow-core", version = Vof.arrow)
+    implementation(kotlin("reflect", Vof.kotlin))
 
     //Coroutines
-    compile(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = Vof.coroutinesX)
-    compile(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-jdk8", version = Vof.coroutinesX)
-    compile(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-slf4j", version = Vof.coroutinesX)
+    api(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version = Vof.coroutinesX)
+    api(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-jdk8", version = Vof.coroutinesX)
+    api(group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-slf4j", version = Vof.coroutinesX)
 
     //Logging
     implementation(group = "io.github.microutils", name = "kotlin-logging", version = Vof.kotlinLogging)
 
     //Serialization
-    compile(
-        group = "org.jetbrains.kotlinx",
-        name = "kotlinx-serialization-runtime",
-        version = Vof.serializationX
-    )
+    api(group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-runtime", version = Vof.serializationX)
 
     //Units of measurement
-    compile(group = "org.tenkiv.physikal", name = "physikal-complete-units", version = Vof.physikal)
+    api(group = "org.tenkiv.physikal", name = "physikal-complete-units", version = Vof.physikal)
 
     //ktor
     implementation(group = "io.ktor", name = "ktor-server-core", version = Vof.ktor)
     implementation(group = "io.ktor", name = "ktor-websockets", version = Vof.ktor)
     implementation(group = "io.ktor", name = "ktor-server-sessions", version = Vof.ktor)
 
-    implementation(group = "io.ktor", name = "ktor-client-core", version = Vof.ktor)
-    implementation(group = "io.ktor", name = "ktor-client-websockets", version = Vof.ktor)
+    implementation(group = "io.ktor", name = "ktor-client-core-jvm", version = Vof.ktor)
+    implementation(group = "io.ktor", name = "ktor-client-websockets-jvm", version = Vof.ktor)
 
 
     //Test

@@ -24,7 +24,7 @@ object Vof {
 
     // Jetbrains
     const val ktor = "1.2.6"
-    const val dokka = "0.9.18"
+    const val dokka = "0.10.0"
     const val kotlinLogging = "1.7.8"
 
     // Tenkiv

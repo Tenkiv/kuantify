@@ -22,7 +22,7 @@ import java.util.*
 
 plugins {
     kotlin("jvm")
-    id("kotlinx-serialization")
+    id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.dokka")
     `maven-publish`
     java
