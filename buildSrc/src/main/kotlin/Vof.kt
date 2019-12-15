@@ -32,7 +32,7 @@ object Vof {
     const val physikal = "2.3.0.2"
 
     // Android
-    const val androidGradle = "3.2.1"
+    const val androidGradle = "3.5.2"
     const val androidMaven = "3.6.2"
     const val androidSupport = "28.0.0"
     const val androidxConstraintLayout = "1.1.3"
