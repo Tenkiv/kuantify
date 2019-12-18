@@ -29,7 +29,7 @@ plugins {
 }
 
 dependencies {
-    compile(project(":core"))
+    api(project(":core"))
 
     implementation(group = "org.deeplearning4j", name = "rl4j-core", version = Vof.dl4j)
     implementation(group = "org.nield", name = "kotlin-statistics", version = Vof.statistics)

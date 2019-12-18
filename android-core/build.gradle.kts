@@ -30,7 +30,7 @@ plugins {
 }
 
 dependencies {
-    compile(project(":core"))
+    api(project(":core"))
 }
 
 tasks {
