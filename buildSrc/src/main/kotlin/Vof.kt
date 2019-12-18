@@ -28,7 +28,7 @@ object Vof {
     const val kotlinLogging = "1.7.8"
 
     // Tenkiv
-    const val coral = "2.3.4"
+    const val coral = "2.4.2-SNAPSHOT"
     const val physikal = "2.3.0.2"
 
     // Android
