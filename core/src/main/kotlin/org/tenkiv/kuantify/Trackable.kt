@@ -43,15 +43,6 @@ public interface Trackable<out T> : CoroutineScope {
 
 }
 
-public fun <T> Trackable<ValueInstant<T>>.addTrigger(
-    condition: (ValueInstant<T>) -> Boolean,
-    onTrigger: () -> Unit
-): Trigger<out T> =
-    Trigger(
-        triggerConditions = *arrayOf(TriggerCondition(this, condition)),
-        triggerFunction = onTrigger
-    )
-
 public interface InitializedTrackable<out T> : Trackable<T> {
     val value: T
 }
