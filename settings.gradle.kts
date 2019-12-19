@@ -18,4 +18,4 @@
 
 rootProject.name = "kuantify"
 
-include("core", ":android-core", ":android-local", "android-simple-host")
+include("core", "android-core", "android-local", "android-simple-host")
