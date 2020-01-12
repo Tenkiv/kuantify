@@ -19,9 +19,9 @@ phone sensors are not really a big intended use case for this library, they prov
 getting a feel for Kuantify and you can actually throw together some fairly interesting demos.
 
 ## Artifacts
-| | Core | Android Core | Learning
- ------- | :-----: | :-----: | :-----:
- JVM | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-core) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-core) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-learning/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-learning)
+| | Core | Android Core
+ ------- | :-----: | :-----:
+ JVM | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-core) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-core)
  
  Local (for adapting OS support for device sensors and controllers to Kuantify):
  * Android Local - [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-local/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-local)

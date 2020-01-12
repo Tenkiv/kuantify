@@ -1,10 +1,9 @@
 # Created by .ignore support plugin (hsz.mobi)
 
-learning/build
 android-local/build
-android-core/build
+androidInterfaceCommon/build
 android-simple-host/build
-core/build
+coreJvm/build
 
 ### Java template
 out
@@ -48,7 +47,7 @@ TestRecording.json
 
 *.iml
 
-core/recorders/
+coreJvm/recorders/
 local.properties
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
