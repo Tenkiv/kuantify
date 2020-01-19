@@ -1,8 +1,6 @@
-import com.sun.jndi.toolkit.url.Uri
 import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.kotlin.dsl.support.delegates.ProjectDelegate.*
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.TaskContainerScope

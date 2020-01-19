@@ -383,10 +383,9 @@ public fun <Q : Quantity<Q>> ComparableQuantity<Q>.toDaqc(): DaqcQuantity<Q> =
 // type
 @Serializable
 public data class DaqcValueEnvelope(
+    //TODO: this star projection serializable breaks the entire build
     @Serializable(with = ComparableQuantitySerializer::class)
-    @Optional
     public val quantity: ComparableQuantity<*>? = null,
     @Serializable(with = BinaryState.Companion::class)
-    @Optional
     public val binaryState: BinaryState? = null
 )
