@@ -18,40 +18,133 @@
 
 @file:Suppress("KDocMissingDocumentation", "PublicApiImplicitType")
 
-plugins {
-    base
-    kotlin("jvm") version Vof.kotlin apply false
-    kotlin("android") version Vof.kotlin apply false
-    kotlin("android.extensions") version Vof.kotlin apply false
-    id("org.jetbrains.kotlin.plugin.serialization") version Vof.kotlin apply false
-    id("org.jetbrains.dokka") version Vof.dokka apply false
-    signing
-}
-
 buildscript {
     repositories {
+        mavenCentral()
         google()
         jcenter()
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:${Vof.androidGradle}")
+        classpath("org.jetbrains.kotlin:kotlin-serialization:${Vof.kotlin}")
     }
 }
 
-subprojects {
-    buildscript {
-        repositories {
-            mavenCentral()
-            jcenter()
-            google()
+repositories {
+    mavenCentral()
+    jcenter()
+    google()
+    maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
+}
+
+plugins {
+    kotlin("multiplatform") version Vof.kotlin
+    id("org.jetbrains.kotlin.plugin.serialization") version Vof.kotlin
+    id("org.jetbrains.dokka") version Vof.dokka
+    id("maven-publish")
+    signing
+}
+
+val isRelease = isRelease()
+val properties = createPropertiesFromLocal()
+setSigningExtrasFromProperties(properties)
+
+kotlin {
+    jvm {
+        val main by compilations.getting {
+            kotlinOptions {
+                jvmTarget = "1.8"
+            }
         }
     }
 
-    repositories {
-        mavenCentral()
-        jcenter()
-        google()
-        maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
+    sourceSets {
+        /**
+         * commonMain == core-common artifact
+         */
+        val commonMain by getting {
+            dependencies {
+                implementation(kotlin("stdlib-common"))
+            }
+        }
+
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
+            }
+        }
+
+        /**
+         * jvmMain == core-jvm artifact
+         */
+
+        val jvmMain by getting {
+            dependencies {
+                implementation(kotlin("stdlib-jdk8", Vof.kotlin))
+
+                //General kotlin utilities
+                api("org.tenkiv.coral:coral-jvm:${Vof.coral}")
+                api("io.arrow-kt:arrow-core:${Vof.arrow}")
+                implementation(kotlin("reflect", Vof.kotlin))
+
+                //Coroutines
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Vof.coroutinesX}")
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Vof.coroutinesX}")
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:${Vof.coroutinesX}")
+
+                //Logging
+                implementation("io.github.microutils:kotlin-logging:${Vof.kotlinLogging}")
+
+                //Serialization
+                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Vof.serializationX}")
+
+                //Units of measurement
+                api("org.tenkiv.physikal:physikal-complete-units:${Vof.physikal}")
+
+                //ktor
+                implementation("io.ktor:ktor-server-core:${Vof.ktor}")
+                implementation("io.ktor:ktor-websockets:${Vof.ktor}")
+                implementation("io.ktor:ktor-server-sessions:${Vof.ktor}")
+
+                implementation("io.ktor:ktor-client-core-jvm:${Vof.ktor}")
+                implementation("io.ktor:ktor-client-websockets-jvm:${Vof.ktor}")
+            }
+        }
+
+        val jvmTest by getting {
+            dependencies {
+                implementation(kotlin("reflect"))
+                implementation(kotlin("test"))
+                implementation("org.spekframework.spek2:spek-dsl-jvm:${Vof.spek}")
+                implementation("io.mockk:mockk:${Vof.mockk}")
+                implementation("io.ktor:ktor-server-test-host:${Vof.ktor}")
+                implementation("io.ktor:ktor-client-cio:${Vof.ktor}")
+                runtimeOnly("org.spekframework.spek2:spek-runner-junit5:${Vof.spek}")
+                runtimeOnly("org.junit.platform:junit-platform-launcher:${Vof.junitPlatform}")
+            }
+        }
+
+        tasks {
+            registerCommonTasks()
+        }
+    }
+
+    publishing {
+        publications.withType<MavenPublication>().apply {
+            val jvm by getting {
+                artifactId = "core-jvm"
+                artifact(tasks.getByName("javadocJar"))
+            }
+
+            val metadata by getting {
+                artifactId = "core-common"
+            }
+        }.forEach {
+            it.configureMavenPom(isRelease, project)
+            signing { if (isRelease) sign(it) }
+        }
+
+        setMavenRepositories(isRelease, properties)
     }
 }
