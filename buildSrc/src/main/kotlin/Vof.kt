@@ -31,14 +31,6 @@ object Vof {
     const val coral = "2.4.2-SNAPSHOT"
     const val physikal = "2.3.0.2"
 
-    // Android
-    const val androidGradle = "3.5.2"
-    const val androidMaven = "3.6.2"
-    const val androidSupport = "28.0.0"
-    const val androidxConstraintLayout = "1.1.3"
-    const val androidLogger = "1.3.1"
-    const val androidxDatabinding = "3.4.0"
-
     // Other
     const val arrow = "0.8.2"
     const val statistics = "1.2.1"

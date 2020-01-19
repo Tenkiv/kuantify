@@ -29,7 +29,6 @@ buildscript {
 
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-serialization:${Vof.kotlin}")
-        classpath("com.android.tools.build:gradle:${Vof.androidGradle}")
     }
 }
 

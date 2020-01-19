@@ -1,8 +1,4 @@
 # Created by .ignore support plugin (hsz.mobi)
-
-android-local/build
-androidInterfaceCommon/build
-android-simple-host/build
 coreJvm/build
 
 ### Java template
