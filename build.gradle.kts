@@ -30,22 +30,10 @@ buildscript {
     }
 }
 
-val isRelease = isRelease()
-val properties = createPropertiesFromLocal()
-setSigningExtrasFromProperties(properties)
-
 repositories {
     mavenCentral()
     jcenter()
     google()
-    maven {
-        url = uri("https://maven.jetbrains.space/tenkiv/kuantify-snapshots/")
-
-        credentials {
-            username = properties.getProperty("spaceUser")
-            password = properties.getProperty("spacePw")
-        }
-    }
     maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
 }
 
@@ -56,6 +44,10 @@ plugins {
     id("maven-publish")
     signing
 }
+
+val isRelease = isRelease()
+val properties = createPropertiesFromLocal()
+setSigningExtrasFromProperties(properties)
 
 kotlin {
     jvm {
@@ -73,7 +65,6 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                implementation("org.tenkiv.physikal:physikal:${Vof.physikal}")
             }
         }
 
@@ -107,6 +98,9 @@ kotlin {
 
                 //Serialization
                 api("org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Vof.serializationX}")
+
+                //Units of measurement
+                api("org.tenkiv.physikal:physikal-complete-units:${Vof.physikal}")
 
                 //ktor
                 implementation("io.ktor:ktor-server-core:${Vof.ktor}")
