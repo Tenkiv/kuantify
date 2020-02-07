@@ -22,10 +22,9 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.gate.acquire.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.physikal.core.*
-import tec.units.indriya.*
-import javax.measure.quantity.*
+import physikal.*
 import kotlin.properties.*
 import kotlin.reflect.*
 
@@ -35,17 +34,14 @@ public fun FSRemoteAcquireGate<*, *>.configuredUpdateRateDelegate(): FSRemoteCon
 public class FSRemoteConfiguredUpdateRateDelegate internal constructor(acquireGate: FSRemoteAcquireGate<*, *>) :
     ReadOnlyProperty<FSRemoteAcquireGate<*, *>, UpdateRate.Configured> {
 
-    private val updatable = acquireGate.Updatable<ComparableQuantity<Frequency>>()
+    private val updatable = acquireGate.Updatable<Quantity<Frequency>>()
 
     private val updateRate = UpdateRate.Configured(updatable)
 
     public fun addToRoute(routing: SideNetworkRouting<String>) {
-        routing.bind<ComparableQuantity<Frequency>>(RC.UPDATE_RATE) {
+        routing.bind<Quantity<Frequency>>(RC.UPDATE_RATE) {
             receive {
-                val value = Json.parse(
-                    ComparableQuantitySerializer,
-                    it
-                ).asType<Frequency>()
+                val value = Serialization.json.parse(Quantity.serializer<Frequency>(), it)
                 updatable.set(value)
             }
         }

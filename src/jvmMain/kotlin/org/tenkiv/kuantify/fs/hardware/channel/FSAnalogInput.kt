@@ -18,27 +18,23 @@
 package org.tenkiv.kuantify.fs.hardware.channel
 
 import kotlinx.serialization.internal.*
-import kotlinx.serialization.json.*
-import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.gate.acquire.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.device.*
-import org.tenkiv.kuantify.lib.*
-import org.tenkiv.physikal.core.*
-import tec.units.indriya.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
 
 internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: AnalogInput<*>) {
-
     bind<Boolean>(RC.BUFFER, recursiveSynchronizer = true) {
         serializeMessage {
-            Json.stringify(BooleanSerializer, it)
+            Serialization.json.stringify(BooleanSerializer, it)
         } withSerializer {
             receiveMessageOnEither {
-                val setting = Json.parse(BooleanSerializer, it)
+                val setting = Serialization.json.parse(BooleanSerializer, it)
                 analogInput.buffer.set(setting)
             }
         }
@@ -49,12 +45,12 @@ internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: Anal
         }
     }
 
-    bind<ComparableQuantity<ElectricPotential>>(RC.MAX_ACCEPTABLE_ERROR, recursiveSynchronizer = true) {
+    bind<Quantity<Voltage>>(RC.MAX_ACCEPTABLE_ERROR, recursiveSynchronizer = true) {
         serializeMessage {
-            Json.stringify(ComparableQuantitySerializer, it)
+            Serialization.json.stringify(Quantity.serializer(), it)
         } withSerializer {
             receiveMessageOnEither {
-                val setting = Json.parse(ComparableQuantitySerializer, it).asType<ElectricPotential>().toDaqc()
+                val setting = Serialization.json.parse(Quantity.serializer<Voltage>(), it)
                 analogInput.maxAcceptableError.set(setting)
             }
         }
@@ -65,12 +61,12 @@ internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: Anal
         }
     }
 
-    bind<ComparableQuantity<ElectricPotential>>(RC.MAX_ELECTRIC_POTENTIAL, recursiveSynchronizer = true) {
+    bind<Quantity<Voltage>>(RC.MAX_ELECTRIC_POTENTIAL, recursiveSynchronizer = true) {
         serializeMessage {
-            Json.stringify(ComparableQuantitySerializer, it)
+            Serialization.json.stringify(Quantity.serializer(), it)
         } withSerializer {
             receiveMessageOnEither {
-                val setting = Json.parse(ComparableQuantitySerializer, it).asType<ElectricPotential>().toDaqc()
+                val setting = Serialization.json.parse(Quantity.serializer<Voltage>(), it)
                 analogInput.maxElectricPotential.set(setting)
             }
         }
@@ -80,9 +76,10 @@ internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: Anal
             sendFromHost()
         }
     }
+
 }
 
-public interface LocalAnalogInput<out D> : AnalogInput<D>, LocalQuantityInput<ElectricPotential, D>,
+public interface LocalAnalogInput<out D> : AnalogInput<D>, LocalQuantityInput<Voltage, D>,
     NetworkBoundCombined where D : LocalDevice, D : AnalogDaqDevice {
 
     public override fun combinedRouting(routing: CombinedNetworkRouting) {
@@ -94,7 +91,7 @@ public interface LocalAnalogInput<out D> : AnalogInput<D>, LocalQuantityInput<El
 }
 
 public abstract class FSRemoteAnalogInput<out D>(device: D, uid: String) :
-    FSRemoteQuantityInput<ElectricPotential, D>(device, uid),
+    FSRemoteQuantityInput<Voltage, D>(device, uid),
     AnalogInput<D>,
     NetworkBoundCombined where D : AnalogDaqDevice, D : FSRemoteDevice {
 

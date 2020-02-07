@@ -31,10 +31,11 @@ import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
-import tec.units.indriya.*
-import javax.measure.quantity.*
+import physikal.*
+import physikal.types.*
 
 private inline fun SideNetworkRouting<String>.startSamplingLocal(rc: String, crossinline start: () -> Unit) {
     bind<Ping>(rc) {
@@ -74,13 +75,13 @@ public abstract class LocalDigitalInput<out D> : DigitalInput<D>, NetworkBoundSi
 
     public override fun asBinaryStateSensor(): BinaryStateInput = thisAsBinaryStateSensor
 
-    public override fun asTransitionFrequencySensor(avgFrequency: ComparableQuantity<Frequency>):
+    public override fun asTransitionFrequencySensor(avgFrequency: Quantity<Frequency>):
             QuantityInput<Frequency> {
         this.avgFrequency.set(avgFrequency)
         return thisAsTransitionFrequencyInput
     }
 
-    public override fun asPwmSensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Dimensionless> {
+    public override fun asPwmSensor(avgFrequency: Quantity<Frequency>): QuantityInput<Dimensionless> {
         this.avgFrequency.set(avgFrequency)
         return thisAsPwmSensor
 
@@ -104,7 +105,7 @@ public abstract class LocalDigitalInput<out D> : DigitalInput<D>, NetworkBoundSi
 
             bind<ValueInstant<DigitalValue>>(RC.VALUE) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
+                    Serialization.json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
                 }
 
                 setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
@@ -187,13 +188,13 @@ public abstract class FSRemoteDigitalInput<out D> : DigitalInput<D>, NetworkBoun
 
     public override fun asBinaryStateSensor(): BinaryStateInput = thisAsBinaryStateSensor
 
-    public override fun asTransitionFrequencySensor(avgFrequency: ComparableQuantity<Frequency>):
+    public override fun asTransitionFrequencySensor(avgFrequency: Quantity<Frequency>):
             QuantityInput<Frequency> {
         this.avgFrequency.set(avgFrequency)
         return thisAsTransitionFrequencyInput
     }
 
-    public override fun asPwmSensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Dimensionless> {
+    public override fun asPwmSensor(avgFrequency: Quantity<Frequency>): QuantityInput<Dimensionless> {
         this.avgFrequency.set(avgFrequency)
         return thisAsPwmSensor
 
@@ -217,7 +218,7 @@ public abstract class FSRemoteDigitalInput<out D> : DigitalInput<D>, NetworkBoun
 
             bind<ValueInstant<DigitalValue>>(RC.VALUE) {
                 receive {
-                    val measurement = Json.parse(ValueInstantSerializer(DigitalValue.serializer()), it)
+                    val measurement = Serialization.json.parse(ValueInstantSerializer(DigitalValue.serializer()), it)
                     val (value, instant) = measurement
                     when (value) {
                         is DigitalValue.BinaryState -> _binaryStateBroadcaster.send(value.state at instant)

@@ -21,13 +21,12 @@ import arrow.core.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
-import tec.units.indriya.*
-import javax.measure.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
 
 /**
  * Abstract class for single channel analog sensorMap.
@@ -36,14 +35,14 @@ import javax.measure.quantity.*
  * @param maximumEp The maximum [ElectricPotential] for the sensor.
  * @param acceptableError The maximum acceptable error for the sensor in [ElectricPotential].
  */
-public abstract class ScAnalogSensor<Q : Quantity<Q>>(
+public abstract class ScAnalogSensor<QT : Quantity<QT>>(
     public val analogInput: AnalogInput<*>,
-    maximumEp: ComparableQuantity<ElectricPotential>,
-    acceptableError: ComparableQuantity<ElectricPotential>
-) : QuantityInput<Q> {
+    maximumEp: Quantity<Voltage>,
+    acceptableError: Quantity<Voltage>
+) : QuantityInput<QT> {
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<QT>>()
+    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<QT>>
         get() = _broadcastChannel
 
     private val _updateErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
@@ -73,10 +72,10 @@ public abstract class ScAnalogSensor<Q : Quantity<Q>>(
     /**
      * Function to convert the [ElectricPotential] of the analog input to a [DaqcQuantity] or return an error.
      *
-     * @param ep The [ElectricPotential] measured by the analog input.
+     * @param voltage The [ElectricPotential] measured by the analog input.
      * @return A [Try] of either a [DaqcQuantity] or an error.
      */
-    protected abstract fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Q>>
+    protected abstract fun convertInput(voltage: Quantity<Voltage>): Try<DaqcQuantity<QT>>
 
     public final override fun startSampling() {
         analogInput.startSampling()

@@ -21,11 +21,8 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.control.*
-import org.tenkiv.physikal.core.*
-import tec.units.indriya.*
-import tec.units.indriya.unit.Units.*
-import javax.measure.*
-import javax.measure.quantity.*
+import physikal.*
+import physikal.types.*
 
 /**
  * Interface defining classes which act as outputs and send controls or signals to devices.
@@ -37,9 +34,9 @@ public interface Output<T : DaqcValue> : IOStrand<T>, ControlGate<T>
 /**
  * An [Output] which sends signals in the form of a [DaqcQuantity].
  *
- * @param Q The type of signal sent by this Output.
+ * @param QT The type of signal sent by this Output.
  */
-public interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
+public interface QuantityOutput<QT : Quantity<QT>> : Output<DaqcQuantity<QT>> {
 
     /**
      * Adjust the output by applying a function to the current setting. For example double it or square it.
@@ -51,7 +48,8 @@ public interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
     ): SettingViability {
         val setting = valueOrNull
         return if (setting != null) {
-            setOutput(adjustment(setting.value.valueToDouble())(setting.value.unit))
+            val quantity = setting.value
+            setOutput(adjustment(quantity.inOwnUnit).toQuantity(quantity.unit))
         } else {
             SettingViability.Unviable(
                 UninitialisedSettingException(
@@ -67,7 +65,10 @@ public interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
      */
     public suspend fun adjustOutput(
         adjustment: (Double) -> Double
-    ): SettingViability = setOutput(adjustment(getValue().value.valueToDouble())(getValue().value.unit))
+    ): SettingViability {
+        val quantity = getValue().value
+        return setOutput(adjustment(quantity.inOwnUnit).toQuantity(quantity.unit))
+    }
 
 }
 
@@ -76,9 +77,9 @@ public interface QuantityOutput<Q : Quantity<Q>> : Output<DaqcQuantity<Q>> {
  *
  * @param setting The signal to set as the output.
  */
-public fun <Q : Quantity<Q>> QuantityOutput<Q>.setOutput(
-    setting: ComparableQuantity<Q>
-) = setOutput(setting.toDaqc())
+public fun <QT : Quantity<QT>> QuantityOutput<QT>.setOutput(
+    setting: Quantity<QT>
+): SettingViability = setOutput(setting.toDaqc())
 
 /**
  * An [Output] whose type extends both [DaqcValue] and [Comparable] so it can be used in the default learning module.
@@ -129,25 +130,23 @@ public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuanti
      * Increase the setting by a percentage of the allowable range for this output.
      */
     public fun increaseByPercentOfRange(
-        percentIncrease: ComparableQuantity<Dimensionless>
-    ): SettingViability = increaseByRatioOfRange(percentIncrease.toDoubleIn(PERCENT) / 100)
+        percentIncrease: Quantity<Dimensionless>
+    ): SettingViability = increaseByRatioOfRange(percentIncrease.toDoubleIn(Percent) / 100)
 
     /**
      * Decrease the setting by a percentage of the allowable range for this output.
      */
     public fun decreaseByPercentOfRange(
-        percentDecrease: ComparableQuantity<Dimensionless>
-    ): SettingViability = decreaseByRatioOfRange(percentDecrease.toDoubleIn(PERCENT) / 100)
+        percentDecrease: Quantity<Dimensionless>
+    ): SettingViability = decreaseByRatioOfRange(percentDecrease.toDoubleIn(Percent) / 100)
 
     public fun setOutputToPercentMaximum(
-        percent: ComparableQuantity<Dimensionless>
-    ): SettingViability =
-        setOutputToRatioMaximum(percent.toDoubleIn(PERCENT) / 100)
+        percent: Quantity<Dimensionless>
+    ): SettingViability = setOutputToRatioMaximum(percent.toDoubleIn(Percent) / 100)
 
     public fun setOutputToRatioMaximum(
         ratio: Double
-    ): SettingViability =
-        setOutput(ratioOfRange(ratio))
+    ): SettingViability = setOutput(ratioOfRange(ratio))
 
     /**
      * Sets this output to random setting within the allowable range.
@@ -160,11 +159,11 @@ public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuanti
         return setOutput(setting)
     }
 
-    private fun ratioOfRange(ratio: Double): ComparableQuantity<Q> {
-        val min = valueRange.start.toDoubleInSystemUnit()
-        val max = valueRange.endInclusive.toDoubleInSystemUnit()
+    private fun ratioOfRange(ratio: Double): Quantity<Q> {
+        val min = valueRange.start.toDoubleInDefaultUnit()
+        val max = valueRange.endInclusive.toDoubleInDefaultUnit()
 
-        return (ratio * (max - min) + min)(valueRange.start.unit.systemUnit)
+        return (ratio * (max - min) + min).toQuantity(valueRange.start.unit.default)
     }
 }
 

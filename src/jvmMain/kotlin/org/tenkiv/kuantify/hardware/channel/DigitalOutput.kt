@@ -22,8 +22,9 @@ import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.hardware.outputs.*
-import tec.units.indriya.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
+import physikal.types.*
 
 /**
  * Class defining the basic features of an output which sends binary signals.
@@ -40,7 +41,7 @@ public interface DigitalOutput<out D : DigitalOutputDevice> : DigitalChannel<D> 
      * @param percent The percentage of the time the output is supposed to be active.
      */
     public fun pulseWidthModulate(
-        percent: ComparableQuantity<Dimensionless>
+        percent: Quantity<Dimensionless>
     ): SettingViability
 
     /**
@@ -49,7 +50,7 @@ public interface DigitalOutput<out D : DigitalOutputDevice> : DigitalChannel<D> 
      * @param freq The frequency of state change.
      */
     public fun sustainTransitionFrequency(
-        freq: ComparableQuantity<Frequency>
+        freq: Quantity<Frequency>
     ): SettingViability
 
     public override fun stopTransceiving() {
@@ -69,12 +70,12 @@ public interface DigitalOutput<out D : DigitalOutputDevice> : DigitalChannel<D> 
      *
      * @return A [SimplePwmController] with this [DigitalOutput] as the controlled output.
      */
-    public fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Dimensionless>
+    public fun asPwmController(avgFrequency: Quantity<Frequency>): QuantityOutput<Dimensionless>
 
     /**
      * Ease of use function to create a [SimpleFrequencyController] from this [DigitalOutput].
      *
      * @return A [SimpleFrequencyController] with this [DigitalOutput] as the controlled output.
      */
-    public fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Frequency>
+    public fun asFrequencyController(avgFrequency: Quantity<Frequency>): QuantityOutput<Frequency>
 }

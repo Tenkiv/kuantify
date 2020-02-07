@@ -20,19 +20,20 @@ package org.tenkiv.kuantify.recording.quantity
 import kotlinx.coroutines.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.recording.*
-import javax.measure.*
+import physikal.*
 
 //TODO: This file shouldn't need to be in a separate package from recording pending changes to kotlin's method signature
 // conflict resolution
 
-public inline fun <reified Q : Quantity<Q>, U : Trackable<QuantityMeasurement<Q>>> CoroutineScope.Recorder(
+public inline fun <reified QT : Quantity<QT>, U : Trackable<QuantityMeasurement<QT>>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
     diskDuration: StorageDuration = StorageDuration.None,
-    noinline filterOnRecord: RecordingFilter<DaqcQuantity<Q>, U> = { true }
-): Recorder<DaqcQuantity<Q>, U> = Recorder(
+    noinline filterOnRecord: RecordingFilter<DaqcQuantity<QT>, U> = { true }
+): Recorder<DaqcQuantity<QT>, U> = Recorder(
     scope = this,
     updatable = updatable,
     storageFrequency = storageFrequency,

@@ -18,32 +18,21 @@
 package org.tenkiv.kuantify.fs.gate
 
 import kotlinx.serialization.internal.*
-import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.gate.*
-import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.physikal.core.*
-import tec.units.indriya.*
-import javax.measure.quantity.*
+import physikal.*
 
 internal fun CombinedNetworkRouting.digitalGateRouting(digitalChannel: DigitalGate) {
-
-    bind<ComparableQuantity<Frequency>>(RC.AVG_FREQUENCY, recursiveSynchronizer = true) {
+    bind<Quantity<Frequency>>(RC.AVG_FREQUENCY, recursiveSynchronizer = true) {
         serializeMessage {
-            Json.stringify(
-                ComparableQuantitySerializer,
-                it
-            )
+            Serialization.json.stringify(Quantity.serializer(), it)
         } withSerializer {
             receiveMessageOnEither {
-                val setting = Json.parse(
-                    ComparableQuantitySerializer,
-                    it
-                ).asType<Frequency>().toDaqc()
+                val setting = Serialization.json.parse(Quantity.serializer<Frequency>(), it)
                 digitalChannel.avgFrequency.set(setting)
             }
         }
@@ -67,8 +56,7 @@ internal fun SideNetworkRouting<String>.digitalGateIsTransceivingRemote(
 ) {
     bind<Boolean>(transceivingRC) {
         receive {
-            val value =
-                Json.parse(BooleanSerializer, it)
+            val value = Serialization.json.parse(BooleanSerializer, it)
             updatable.set(value)
         }
     }
@@ -80,7 +68,7 @@ internal fun SideNetworkRouting<String>.digitalGateIsTransceivingLocal(
 ) {
     bind<Boolean>(transceivingRC) {
         serializeMessage {
-            Json.stringify(BooleanSerializer, it)
+            Serialization.json.stringify(BooleanSerializer, it)
         }
 
         setLocalUpdateChannel(trackable.updateBroadcaster.openSubscription()) withUpdateChannel {

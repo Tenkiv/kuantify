@@ -22,7 +22,8 @@ import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.physikal.*
 
 /**
  * A simple simple implementation of a binary frequency sensor

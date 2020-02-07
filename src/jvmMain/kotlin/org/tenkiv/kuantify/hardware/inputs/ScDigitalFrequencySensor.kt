@@ -25,20 +25,20 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
-import tec.units.indriya.*
-import javax.measure.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
 
 /**
  * Abstract class for an input which takes frequency data from a single digital input.
  *
  * @param digitalInput The digital input
  */
-public abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput: DigitalInput<*>) :
-    QuantityInput<Q> {
+public abstract class ScDigitalFrequencySensor<QT : Quantity<QT>>(val digitalInput: DigitalInput<*>) :
+    QuantityInput<QT> {
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<QT>>()
+    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<QT>>
         get() = _broadcastChannel
 
     private val _updateErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
@@ -78,5 +78,5 @@ public abstract class ScDigitalFrequencySensor<Q : Quantity<Q>>(val digitalInput
      * @param frequency The [Frequency] measured by the digital input.
      * @return A [Try] of either a [DaqcQuantity] or an error.
      */
-    protected abstract fun convertInput(frequency: ComparableQuantity<Frequency>): Try<DaqcQuantity<Q>>
+    protected abstract fun convertInput(frequency: Quantity<Frequency>): Try<DaqcQuantity<QT>>
 }

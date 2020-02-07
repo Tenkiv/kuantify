@@ -23,11 +23,9 @@ import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
-import org.tenkiv.physikal.core.*
-import tec.units.indriya.*
-import tec.units.indriya.unit.MetricPrefix.*
-import tec.units.indriya.unit.Units.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
+import physikal.types.*
 import kotlin.coroutines.*
 import kotlin.math.*
 
@@ -37,11 +35,11 @@ import kotlin.math.*
 public class ThermocoupleK internal constructor(
     scope: CoroutineScope,
     channel: AnalogInput<*>,
-    acceptableError: ComparableQuantity<Temperature> = 1.celsius
+    acceptableError: Quantity<Temperature> = 1.0.degreesCelsius
 ) : ScAnalogSensor<Temperature>(
     channel,
-    maximumEp = 55.milli.volt,
-    acceptableError = 18.micro.volt * acceptableError.toDoubleIn(CELSIUS)
+    maximumEp = 55.0.millivolts,
+    acceptableError = 18.0.microvolts * acceptableError.toDoubleIn(Kelvin)
 ) {
     private val job = Job(scope.coroutineContext[Job])
 
@@ -52,10 +50,9 @@ public class ThermocoupleK internal constructor(
                 " ${analogInput.device} \n" +
                 "has not yet measured a temperature, thermocouples from this device cannot function until it does."
 
-    protected override fun convertInput(ep: ComparableQuantity<ElectricPotential>): Try<DaqcQuantity<Temperature>> {
-        val mv = ep toDoubleIn MILLI(VOLT)
-        val temperatureReferenceValue =
-            analogInput.device.temperatureReference.updateBroadcaster.valueOrNull?.value
+    protected override fun convertInput(voltage: Quantity<Voltage>): Try<DaqcQuantity<Temperature>> {
+        val mv = voltage toDoubleIn Millivolt
+        val temperatureReferenceValue = analogInput.device.temperatureReference.updateBroadcaster.valueOrNull?.value
 
         fun calculate(
             c0: Double,
@@ -77,7 +74,7 @@ public class ThermocoupleK internal constructor(
                 (c6 * mv.pow(6.0)) +
                 (c7 * mv.pow(7.0)) +
                 (c8 * mv.pow(8.0)) +
-                (c9 * mv.pow(9.0))).celsius +
+                (c9 * mv.pow(9.0))).degreesCelsius +
                 (temperatureReferenceValue ?: throw UninitializedPropertyAccessException(noTempRefValueMsg))
                 ).toDaqc()
 
@@ -91,7 +88,7 @@ public class ThermocoupleK internal constructor(
             } else {
                 throw ValueOutOfRangeException(
                     "Type K thermocouple cannot accurately produce a temperature from" +
-                            " voltage ${ep convertTo MILLI(VOLT)}"
+                            " voltage ${voltage convertTo Millivolt}"
                 )
             }
         }
@@ -135,5 +132,5 @@ public class ThermocoupleK internal constructor(
 
 public fun CoroutineScope.ThermocoupleK(
     channel: AnalogInput<*>,
-    acceptableError: ComparableQuantity<Temperature> = 1.celsius
+    acceptableError: Quantity<Temperature> = 1.0.degreesCelsius
 ) = ThermocoupleK(this, channel, acceptableError)

@@ -20,7 +20,7 @@ package org.tenkiv.kuantify.hardware.outputs
 import kotlinx.coroutines.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.hardware.channel.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.physikal.*
 
 /**
  * A simple implementation of a binary transition frequency controller.

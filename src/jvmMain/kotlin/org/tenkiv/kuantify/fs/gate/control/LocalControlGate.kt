@@ -28,7 +28,6 @@ public interface LocalControlGate<T : DaqcData, out D : LocalDevice> : ControlGa
     NetworkBoundSide<String> {
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
-
         routing.addToThisPath {
             bind<Ping>(RC.STOP_TRANSCEIVING) {
                 receive {
@@ -37,4 +36,5 @@ public interface LocalControlGate<T : DaqcData, out D : LocalDevice> : ControlGa
             }
         }
     }
+
 }

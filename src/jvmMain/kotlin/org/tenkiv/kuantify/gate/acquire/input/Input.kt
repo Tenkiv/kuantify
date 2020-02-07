@@ -20,7 +20,7 @@ package org.tenkiv.kuantify.gate.acquire.input
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.*
-import javax.measure.*
+import physikal.*
 
 public typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
 
@@ -48,17 +48,18 @@ public interface BinaryStateInput : RangedInput<BinaryState> {
 
 // Kotlin compiler is getting confused about generics star projections if RangedInput (or a typealias) is used directly
 // TODO: look into changing this to a typealias if generics compiler issue is fixed.
-public interface RangedQuantityInput<Q : Quantity<Q>> : RangedInput<DaqcQuantity<Q>>
+public interface RangedQuantityInput<QT : Quantity<QT>> : RangedInput<DaqcQuantity<QT>>
 
-public class RangedQuantityInputBox<Q : Quantity<Q>>(
-    private val input: QuantityInput<Q>,
-    override val valueRange: ClosedRange<DaqcQuantity<Q>>
-) : RangedQuantityInput<Q>, QuantityInput<Q> by input {
+private class RangedQuantityInputBox<QT : Quantity<QT>>(
+    private val input: QuantityInput<QT>,
+    override val valueRange: ClosedRange<DaqcQuantity<QT>>
+) : RangedQuantityInput<QT>, QuantityInput<QT> by input {
 
     override val daqcDataSize: Int
         get() = input.daqcDataSize
 
 }
 
-public fun <Q : Quantity<Q>> QuantityInput<Q>.toNewRangedInput(valueRange: ClosedRange<DaqcQuantity<Q>>) =
-    RangedQuantityInputBox(this, valueRange)
+public fun <QT : Quantity<QT>> QuantityInput<QT>.toNewRangedInput(
+    valueRange: ClosedRange<DaqcQuantity<QT>>
+): RangedQuantityInput<QT> = RangedQuantityInputBox(this, valueRange)

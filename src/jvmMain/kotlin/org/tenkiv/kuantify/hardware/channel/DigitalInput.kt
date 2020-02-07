@@ -23,8 +23,9 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.hardware.inputs.*
-import tec.units.indriya.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
+import physikal.types.*
 
 /**
  * Class defining the basic features of an input which reads binary signals.
@@ -64,7 +65,7 @@ public interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, Rat
      * @param avgFrequency The average period of time over which to average.
      * @return A [SimpleDigitalFrequencySensor] with the input as this channel.
      */
-    public fun asTransitionFrequencySensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Frequency>
+    public fun asTransitionFrequencySensor(avgFrequency: Quantity<Frequency>): QuantityInput<Frequency>
 
     /**
      * Creates a [SimplePwmSensor] with the input being this channel.
@@ -72,5 +73,5 @@ public interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, Rat
      * @param avgFrequency The average period of time over which to average.
      * @return A [SimplePwmSensor] with the input as this channel.
      */
-    public fun asPwmSensor(avgFrequency: ComparableQuantity<Frequency>): QuantityInput<Dimensionless>
+    public fun asPwmSensor(avgFrequency: Quantity<Frequency>): QuantityInput<Dimensionless>
 }

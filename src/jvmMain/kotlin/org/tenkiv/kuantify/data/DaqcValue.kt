@@ -20,20 +20,8 @@ package org.tenkiv.kuantify.data
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.*
 import org.tenkiv.kuantify.*
-import org.tenkiv.kuantify.lib.*
-import org.tenkiv.physikal.core.*
-import tec.units.indriya.*
-import tec.units.indriya.quantity.*
-import java.util.zip.*
-import javax.measure.*
-import org.tenkiv.physikal.core.toByteInSystemUnit as physikalToByteInSystemUnit
-import org.tenkiv.physikal.core.toDoubleInSystemUnit as physikalToDoubleInSystemUnit
-import org.tenkiv.physikal.core.toFloatInSystemUnit as physikalToFloatInSystemUnit
-import org.tenkiv.physikal.core.toIntInSystemUnit as physikalToIntInSystemUnit
-import org.tenkiv.physikal.core.toLongInSystemUnit as physikalToLongInSystemUnit
-import org.tenkiv.physikal.core.toShortInSystemUnit as physikalToShortInSystemUnit
+import physikal.*
 
-//TODO: Make serializable
 /**
  * The wrapper class representing the different types of data which can be returned from a basic [Updatable].
  * Either a [BinaryState] or a [DaqcQuantity].
@@ -47,9 +35,9 @@ public sealed class DaqcValue : DaqcData {
      *
      * @return The value of this [DaqcValue] as a [Short].
      */
-    public fun toShortInSystemUnit(): Short = when (this) {
+    public fun toShortInDefaultUnit(): Short = when (this) {
         is BinaryState -> this.toShort()
-        is DaqcQuantity<*> -> this.physikalToShortInSystemUnit()
+        is DaqcQuantity<*> -> this.inDefaultUnit.toShort()
     }
 
     /**
@@ -57,9 +45,9 @@ public sealed class DaqcValue : DaqcData {
      *
      * @return The value of this [DaqcValue] as a [Int].
      */
-    public fun toIntInSystemUnit(): Int = when (this) {
+    public fun toIntInDefaultUnit(): Int = when (this) {
         is BinaryState -> this.toInt()
-        is DaqcQuantity<*> -> this.physikalToIntInSystemUnit()
+        is DaqcQuantity<*> -> this.inDefaultUnit.toInt()
     }
 
     /**
@@ -67,9 +55,9 @@ public sealed class DaqcValue : DaqcData {
      *
      * @return The value of this [DaqcValue] as a [Short].
      */
-    public fun toLongInSystemUnit(): Long = when (this) {
+    public fun toLongInDefaultUnit(): Long = when (this) {
         is BinaryState -> this.toLong()
-        is DaqcQuantity<*> -> this.physikalToLongInSystemUnit()
+        is DaqcQuantity<*> -> this.inDefaultUnit.toLong()
     }
 
     /**
@@ -77,9 +65,9 @@ public sealed class DaqcValue : DaqcData {
      *
      * @return The value of this [DaqcValue] as a [Byte].
      */
-    public fun toByteInSystemUnit(): Byte = when (this) {
+    public fun toByteInDefaultUnit(): Byte = when (this) {
         is BinaryState -> this.toByte()
-        is DaqcQuantity<*> -> this.physikalToByteInSystemUnit()
+        is DaqcQuantity<*> -> this.inDefaultUnit.toByte()
     }
 
     /**
@@ -87,9 +75,9 @@ public sealed class DaqcValue : DaqcData {
      *
      * @return The value of this [DaqcValue] as a [Float].
      */
-    public fun toFloatInSystemUnit(): Float = when (this) {
+    public fun toFloatInDefaultUnit(): Float = when (this) {
         is BinaryState -> this.toFloat()
-        is DaqcQuantity<*> -> this.physikalToFloatInSystemUnit()
+        is DaqcQuantity<*> -> this.inDefaultUnit.toFloat()
     }
 
     /**
@@ -97,19 +85,19 @@ public sealed class DaqcValue : DaqcData {
      *
      * @return The value of this [DaqcValue] as a [Double].
      */
-    public fun toDoubleInSystemUnit(): Double = when (this) {
+    public fun toDoubleInDefaultUnit(): Double = when (this) {
         is BinaryState -> this.toDouble()
-        is DaqcQuantity<*> -> this.physikalToDoubleInSystemUnit()
+        is DaqcQuantity<*> -> this.inDefaultUnit
     }
 
     public override fun toDaqcValues(): List<DaqcValue> = listOf(this)
-
 }
 
 /**
  * A [DaqcValue] representing a value which is either on or off.
  */
 @Serializable
+@SerialName("BinaryState")
 public sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
     /**
@@ -175,6 +163,8 @@ public sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
     /**
      * The [BinaryState] representing the activated value or the 1 state.
      */
+    @Serializable
+    @SerialName("High")
     public object High : BinaryState() {
 
         public const val SHORT_REPRESENTATION: Short = 1
@@ -206,6 +196,8 @@ public sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
     /**
      * The [BinaryState] representing the deactivated value or the 0 state.
      */
+    @Serializable
+    @SerialName("Low")
     public object Low : BinaryState() {
 
         public const val SHORT_REPRESENTATION: Short = 0
@@ -235,45 +227,11 @@ public sealed class BinaryState : DaqcValue(), Comparable<BinaryState> {
 
     }
 
-    @Serializer(forClass = BinaryState::class)
-    public companion object : KSerializer<BinaryState> {
-
-        public override val descriptor: SerialDescriptor = ByteDescriptor.withName("BinaryState")
-
+    public companion object {
         /**
          * The [ClosedRange] of all [BinaryState]s.
          */
         public val range: ClosedRange<BinaryState> get() = FullBinaryStateRange
-
-        /**
-         * Gets a [BinaryState] value from a [String] or throws a [DataFormatException] if improperly formatted.
-         *
-         * @param input The string value to convert.
-         * @return The [BinaryState] value of the string.
-         * @throws [DataFormatException] if the [String] is malformed or not a 1 or 0.
-         */
-        public fun fromString(input: String): BinaryState {
-            if (input == High.toString()) {
-                return High
-            }
-            if (input == Low.toString()) {
-                return Low
-            }
-            throw DataFormatException("Data with BinaryState not found")
-        }
-
-        public override fun deserialize(decoder: Decoder): BinaryState {
-            return when (decoder.decodeByte()) {
-                High.BYTE_REPRESENTATION -> High
-                Low.BYTE_REPRESENTATION -> Low
-                else -> throw SerializationException("Data with BinaryState not found")
-            }
-        }
-
-        public override fun serialize(encoder: Encoder, obj: BinaryState) {
-            encoder.encodeByte(obj.toByte())
-        }
-
     }
 
 }
@@ -305,8 +263,9 @@ private object EmptyBinaryStateRange : ClosedRange<BinaryState> {
 /**
  * The [DaqcValue] representing a value which can be expressed as a [Quantity].
  */
-public class DaqcQuantity<Q : Quantity<Q>>(internal val wrappedQuantity: ComparableQuantity<Q>) : DaqcValue(),
-    ComparableQuantity<Q> by wrappedQuantity {
+@SerialName("DaqcQuantity")
+public class DaqcQuantity<QT : Quantity<QT>>(internal val wrappedQuantity: Quantity<QT>) : DaqcValue(),
+    Quantity<QT> by wrappedQuantity {
 
     public override fun toString(): String = wrappedQuantity.toString()
 
@@ -325,67 +284,21 @@ public class DaqcQuantity<Q : Quantity<Q>>(internal val wrappedQuantity: Compara
         return wrappedQuantity.hashCode()
     }
 
-
     public companion object {
+        public fun <QT : Quantity<QT>> serializer(): KSerializer<DaqcQuantity<QT>> = DaqcQuantitySerializer()
+    }
 
-        /**
-         * Function to create a [DaqcQuantity] from a [Number] and a [Quantity].
-         *
-         * @param value The value of this [DaqcQuantity].
-         * @param unit The [PhysicalUnit] representation of the [value]
-         * @return The [value] in the form of a [DaqcQuantity] in the type of [unit].
-         */
-        public fun <Q : Quantity<Q>> of(value: Number, unit: PhysicalUnit<Q>) =
-            DaqcQuantity(Quantities.getQuantity(value, unit))
+}
 
-        /**
-         * Function to convert a [ComparableQuantity] to a [DaqcQuantity].
-         *
-         * @param quantity The [Quantity] to be converted.
-         * @return The [DaqcQuantity] representation of the [quantity]
-         */
-        public fun <Q : Quantity<Q>> of(quantity: ComparableQuantity<Q>) =
-            DaqcQuantity(quantity)
+@Serializer(forClass = DaqcQuantity::class)
+public class DaqcQuantitySerializer<QT : Quantity<QT>> internal constructor() : KSerializer<DaqcQuantity<QT>> {
+    public override val descriptor: SerialDescriptor = StringDescriptor.withName("DaqcQuantitySerializer")
 
-        /**
-         * Function to create a [DaqcQuantity] from an existing [QuantityMeasurement].
-         *
-         * @param measurement The [QuantityMeasurement] to be converted.
-         * @return The [DaqcQuantity] value.
-         */
-        public fun <Q : Quantity<Q>> of(measurement: QuantityMeasurement<Q>) =
-            DaqcQuantity(measurement.value)
+    public override fun deserialize(decoder: Decoder): DaqcQuantity<QT> = decoder.decode(Quantity.serializer<QT>()).toDaqc()
 
-        /**
-         * Function to create a [DaqcQuantity] from a [String] representation.
-         *
-         * @param input The [String] representation of the [DaqcQuantity]
-         * @return The [DaqcQuantity] value of the [String].
-         * @throws DataFormatException If the [input] is malformed, invalid, or null.
-         */
-        public inline fun <reified Q : Quantity<Q>> fromString(input: String): DaqcQuantity<Q> {
-            val quantity: ComparableQuantity<Q>? = Quantities.getQuantity(
-                input
-            ).asTypeOrNull()
-            if (quantity != null) {
-                return of(quantity)
-            } else {
-                throw DataFormatException("Data with Quantity value not found")
-            }
-        }
+    public override fun serialize(encoder: Encoder, obj: DaqcQuantity<QT>) {
+        encoder.encode(Quantity.serializer(), obj.wrappedQuantity)
     }
 }
 
-public fun <Q : Quantity<Q>> ComparableQuantity<Q>.toDaqc(): DaqcQuantity<Q> =
-    DaqcQuantity(this)
-
-//TODO: This is a temporary workaround for serializing DaqcValue as we currently can't make DaqcQuantities of an unknown
-// type
-@Serializable
-public data class DaqcValueEnvelope(
-    //TODO: this star projection serializable breaks the entire build
-    @Serializable(with = ComparableQuantitySerializer::class)
-    public val quantity: ComparableQuantity<*>? = null,
-    @Serializable(with = BinaryState.Companion::class)
-    public val binaryState: BinaryState? = null
-)
+public fun <QT : Quantity<QT>> Quantity<QT>.toDaqc(): DaqcQuantity<QT> = DaqcQuantity(this)
