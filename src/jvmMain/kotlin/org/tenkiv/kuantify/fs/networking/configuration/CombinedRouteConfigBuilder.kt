@@ -22,6 +22,7 @@ import mu.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.NetworkingDsl
 
 public typealias PingReceiver = suspend () -> Unit
 
@@ -39,9 +40,6 @@ public fun formatPathStandard(path: Path): String {
     }
     return result
 }
-
-@DslMarker
-internal annotation class CombinedRouteMarker
 
 public class CombinedRouteConfig(@PublishedApi internal val networkCommunicator: NetworkCommunicator<String>) {
 
@@ -162,12 +160,13 @@ public class CombinedRouteConfig(@PublishedApi internal val networkCommunicator:
 }
 
 @Suppress("NAME_SHADOWING")
-@CombinedRouteMarker
+@NetworkingDsl
 public class CombinedNetworkRouting @PublishedApi internal constructor(
     @PublishedApi internal val config: CombinedRouteConfig,
     @PublishedApi internal val path: Path
 ) {
 
+    @NetworkingDsl
     public inline fun <T> bind(
         vararg path: String,
         recursiveSynchronizer: Boolean = false,
@@ -176,6 +175,7 @@ public class CombinedNetworkRouting @PublishedApi internal constructor(
         bind(path.toList(), recursiveSynchronizer, build)
     }
 
+    @NetworkingDsl
     public inline fun <T> bind(
         path: Path,
         recursiveSynchronizer: Boolean = false,
@@ -190,10 +190,12 @@ public class CombinedNetworkRouting @PublishedApi internal constructor(
         )
     }
 
+    @NetworkingDsl
     public inline fun route(vararg path: String, build: CombinedNetworkRouting.() -> Unit) {
         route(path.toList(), build)
     }
 
+    @NetworkingDsl
     public inline fun route(path: Path, build: CombinedNetworkRouting.() -> Unit) {
         val path = this.path + path
 
@@ -201,7 +203,7 @@ public class CombinedNetworkRouting @PublishedApi internal constructor(
     }
 }
 
-@CombinedRouteMarker
+@NetworkingDsl
 public class CombinedRouteBindingBuilder<MT> @PublishedApi internal constructor() {
 
     @PublishedApi
@@ -256,51 +258,60 @@ public class CombinedRouteBindingBuilder<MT> @PublishedApi internal constructor(
                 withSerializer?.receiveMessageOnEither != null ||
                 withSerializer?.receiveMessageOnRemote != null
 
+    @NetworkingDsl
     public fun serializeMessage(messageSerializer: FSMessageSerializer<MT>): SetSerializer<MT> {
         serializeMessage = messageSerializer
         return SetSerializer(messageSerializer)
     }
 
+    @NetworkingDsl
     public fun setLocalUpdateChannel(channel: ReceiveChannel<MT>): SetUpdateChannel {
         localUpdateChannel = channel
         return SetUpdateChannel()
     }
 
+    @NetworkingDsl
     public inline infix fun SetUpdateChannel.withUpdateChannel(build: WithUpdateChannel.() -> Unit) {
         val wuc = WithUpdateChannel().apply(build)
-        sendFromHost = wuc.sendFromHost
-        sendFromRemote = wuc.sendFromRemote
+        this@CombinedRouteBindingBuilder.sendFromHost = wuc.sendFromHost
+        this@CombinedRouteBindingBuilder.sendFromRemote = wuc.sendFromRemote
     }
 
+    @NetworkingDsl
     public fun receivePingOnEither(pingReceiver: PingReceiver) {
         receivePingOnEither = pingReceiver
     }
 
+    @NetworkingDsl
     public fun receivePingOnRemote(pingReceiver: PingReceiver) {
         receivePingOnRemote = pingReceiver
     }
 
+    @NetworkingDsl
     public fun receivePingOnHost(pingReceiver: PingReceiver) {
         receivePingOnHost = pingReceiver
     }
 
+    @NetworkingDsl
     public inline infix fun SetSerializer<MT>.withSerializer(build: WithSerializer.() -> Unit) {
         this@CombinedRouteBindingBuilder.withSerializer = WithSerializer().apply(build)
     }
 
+    @NetworkingDsl
     public inline fun onRemote(build: OnSide<MT>.() -> Unit) {
         val onSideBuilder = OnSide<MT>().apply(build)
         onRemote = onSideBuilder
         localUpdateChannel = onSideBuilder.localUpdateChannel
     }
 
+    @NetworkingDsl
     public inline fun onHost(build: OnSide<MT>.() -> Unit) {
         val onSideBuilder = OnSide<MT>().apply(build)
         onHost = onSideBuilder
         localUpdateChannel = onSideBuilder.localUpdateChannel
     }
 
-    @CombinedRouteMarker
+    @NetworkingDsl
     public class WithUpdateChannel {
 
         @PublishedApi
@@ -309,10 +320,12 @@ public class CombinedRouteBindingBuilder<MT> @PublishedApi internal constructor(
         @PublishedApi
         internal var sendFromRemote: Boolean = false
 
+        @NetworkingDsl
         public fun sendFromHost() {
             sendFromHost = true
         }
 
+        @NetworkingDsl
         public fun sendFromRemote() {
             sendFromRemote = true
         }
@@ -320,7 +333,7 @@ public class CombinedRouteBindingBuilder<MT> @PublishedApi internal constructor(
 
 }
 
-@CombinedRouteMarker
+@NetworkingDsl
 public class WithSerializer @PublishedApi internal constructor() {
 
     @PublishedApi
@@ -338,33 +351,39 @@ public class WithSerializer @PublishedApi internal constructor() {
     @PublishedApi
     internal var receiveMessageOnHost: FSMessageReceiver? = null
 
+    @NetworkingDsl
     public fun receiveMessageOnEither(messageReceiver: FSMessageReceiver) {
         receiveMessageOnEither = messageReceiver
     }
 
+    @NetworkingDsl
     public fun receiveMessageOnRemote(messageReceiver: FSMessageReceiver) {
         receiveMessageOnRemote = messageReceiver
     }
 
+    @NetworkingDsl
     public fun receiveMessageOnHost(messageReceiver: FSMessageReceiver) {
         receiveMessageOnHost = messageReceiver
     }
 
+    @NetworkingDsl
     public inline fun onRemote(build: OnSide.() -> Unit) {
         val onSideBuilder = OnSide().apply(build)
         onRemote = onSideBuilder
     }
 
+    @NetworkingDsl
     public inline fun onHost(build: OnSide.() -> Unit) {
         val onSideBuilder = OnSide().apply(build)
         onHost = onSideBuilder
     }
 
-    @CombinedRouteMarker
+    @NetworkingDsl
     public class OnSide @PublishedApi internal constructor() {
 
         internal var receiveMessage: FSMessageReceiver? = null
 
+        @NetworkingDsl
         public fun receiveMessag(messageReceiver: FSMessageReceiver) {
             receiveMessage = messageReceiver
         }
@@ -373,10 +392,10 @@ public class WithSerializer @PublishedApi internal constructor() {
 
 }
 
-@CombinedRouteMarker
+@NetworkingDsl
 public class SetSerializer<MT> internal constructor(internal val serializer: FSMessageSerializer<MT>)
 
-@CombinedRouteMarker
+@NetworkingDsl
 public class OnSide<MT> @PublishedApi internal constructor() {
 
     @PublishedApi
@@ -388,15 +407,18 @@ public class OnSide<MT> @PublishedApi internal constructor() {
     @PublishedApi
     internal var receivePing: PingReceiver? = null
 
+    @NetworkingDsl
     public fun receivePing(pingReceiver: PingReceiver) {
         receivePing = pingReceiver
     }
 
+    @NetworkingDsl
     public fun setLocalUpdateChannel(channel: ReceiveChannel<MT>): SetUpdateChannel {
         localUpdateChannel = channel
         return SetUpdateChannel()
     }
 
+    @NetworkingDsl
     public inline infix fun SetUpdateChannel.withUpdateChannel(build: SideWithUpdateChannel.() -> Unit) {
         this@OnSide.send = SideWithUpdateChannel().apply(build).send
     }

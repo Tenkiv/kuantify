@@ -52,7 +52,6 @@ public abstract class FSRemoteAcquireGate<T : DaqcData, out D : FSRemoteDevice>(
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
         routing.addToThisPath {
-
             bind<Ping>(RC.START_SAMPLING) {
                 setLocalUpdateChannel(startSamplingChannel) withUpdateChannel {
                     send()
@@ -64,9 +63,7 @@ public abstract class FSRemoteAcquireGate<T : DaqcData, out D : FSRemoteDevice>(
                     send()
                 }
             }
-
         }
-
     }
 
 }

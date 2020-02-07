@@ -28,9 +28,6 @@ public typealias Ping = Unit
 @PublishedApi
 internal val sideRouteConfigBuilderLogger = KotlinLogging.logger {}
 
-@DslMarker
-internal annotation class SideRouteMarker
-
 public class SideRouteConfig<ST>(
     @PublishedApi internal val networkCommunicator: NetworkCommunicator<ST>,
     @PublishedApi internal val serializedPing: ST,
@@ -105,12 +102,13 @@ public class SideRouteConfig<ST>(
 }
 
 @Suppress("NAME_SHADOWING")
-@SideRouteMarker
+@NetworkingDsl
 public class SideNetworkRouting<ST> @PublishedApi internal constructor(
     @PublishedApi internal val config: SideRouteConfig<ST>,
     @PublishedApi internal val path: Path
 ) {
 
+    @NetworkingDsl
     public inline fun <MT> bind(
         vararg path: String,
         recursiveSynchronizer: Boolean = false,
@@ -119,6 +117,7 @@ public class SideNetworkRouting<ST> @PublishedApi internal constructor(
         bind(path.toList(), recursiveSynchronizer, build)
     }
 
+    @NetworkingDsl
     public inline fun <MT> bind(
         path: Path,
         recursiveSynchronizer: Boolean = false,
@@ -133,11 +132,12 @@ public class SideNetworkRouting<ST> @PublishedApi internal constructor(
         )
     }
 
+    @NetworkingDsl
     public inline fun route(vararg path: String, build: SideNetworkRouting<ST>.() -> Unit) {
         route(path.toList(), build)
     }
 
-
+    @NetworkingDsl
     public inline fun route(path: Path, build: SideNetworkRouting<ST>.() -> Unit) {
         val path = this.path + path
 
@@ -145,7 +145,7 @@ public class SideNetworkRouting<ST> @PublishedApi internal constructor(
     }
 }
 
-@SideRouteMarker
+@NetworkingDsl
 public class SideRouteBindingBuilder<MT, ST> @PublishedApi internal constructor() {
 
     @PublishedApi
@@ -160,33 +160,37 @@ public class SideRouteBindingBuilder<MT, ST> @PublishedApi internal constructor(
     @PublishedApi
     internal var receive: UpdateReceiver<ST>? = null
 
+    @NetworkingDsl
     public fun serializeMessage(messageSerializer: MessageSerializer<MT, ST>) {
         serializeMessage = messageSerializer
     }
 
+    @NetworkingDsl
     public fun setLocalUpdateChannel(channel: ReceiveChannel<MT>): SetUpdateChannel {
         localUpdateChannel = channel
         return SetUpdateChannel()
     }
 
+    @NetworkingDsl
     public fun receive(receiver: UpdateReceiver<ST>) {
         receive = receiver
     }
 
+    @NetworkingDsl
     public inline infix fun SetUpdateChannel.withUpdateChannel(build: SideWithUpdateChannel.() -> Unit) {
         this@SideRouteBindingBuilder.send = SideWithUpdateChannel().apply(build).send
     }
 }
 
-@SideRouteMarker
+@NetworkingDsl
 public class SetUpdateChannel internal constructor()
 
-@CombinedRouteMarker
-@SideRouteMarker
+@NetworkingDsl
 public class SideWithUpdateChannel {
     @PublishedApi
     internal var send: Boolean = false
 
+    @NetworkingDsl
     public fun send() {
         send = true
     }
