@@ -19,7 +19,6 @@ package org.tenkiv.kuantify.fs.gate.acquire
 
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.internal.*
-import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
@@ -28,8 +27,7 @@ import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.configuration.*
-import tec.units.indriya.*
-import javax.measure.*
+import physikal.*
 import kotlin.reflect.*
 
 public sealed class FSRemoteInput<T : DaqcValue, out D : FSRemoteDevice>(device: D, uid: String) :
@@ -45,44 +43,35 @@ public sealed class FSRemoteInput<T : DaqcValue, out D : FSRemoteDevice>(device:
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
-
         routing.addToThisPath {
             bind<Boolean>(RC.IS_TRANSCEIVING) {
                 receive {
-                    val value = Json.parse(BooleanSerializer, it)
+                    val value = Serialization.json.parse(BooleanSerializer, it)
                     _isTransceiving.value = value
                 }
             }
         }
-
     }
+
 }
 
-public abstract class FSRemoteQuantityInput<Q : Quantity<Q>, out D : FSRemoteDevice>(
+public abstract class FSRemoteQuantityInput<QT : Quantity<QT>, out D : FSRemoteDevice>(
     device: D,
     uid: String
-) : FSRemoteInput<DaqcQuantity<Q>, D>(device, uid), QuantityInput<Q> {
+) : FSRemoteInput<DaqcQuantity<QT>, D>(device, uid), QuantityInput<QT> {
 
-    public abstract val quantityType: KClass<Q>
-
-    private fun unsafeUpdate(measurement: ValueInstant<ComparableQuantity<*>>) {
-        val (value, instant) = measurement
-
-        _updateBroadcaster.offer(value.asType(quantityType.java).toDaqc() at instant)
-    }
+    public abstract val quantityType: KClass<QT>
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
-
         routing.addToThisPath {
-            bind<QuantityMeasurement<Q>>(RC.VALUE) {
+            bind<QuantityMeasurement<QT>>(RC.VALUE) {
                 receive {
-                    val measurement = Json.parse(ValueInstantSerializer(ComparableQuantitySerializer), it)
-                    unsafeUpdate(measurement)
+                    val measurement = Serialization.json.parse(Measurement.quantitySerializer<QT>(), it)
+                    _updateBroadcaster.offer(measurement)
                 }
             }
         }
-
     }
 
 }
@@ -92,15 +81,14 @@ public abstract class FSRemoteBinaryStateInput<out D : FSRemoteDevice>(device: D
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
-
         routing.addToThisPath {
             bind<BinaryStateMeasurement>(RC.VALUE) {
                 receive {
-                    val measurement = Json.parse(ValueInstantSerializer(BinaryState.serializer()), it)
+                    val measurement = Serialization.json.parse(Measurement.binaryStateSerializer(), it)
                     _updateBroadcaster.offer(measurement)
                 }
             }
         }
-
     }
+
 }

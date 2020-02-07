@@ -20,6 +20,7 @@ package org.tenkiv.kuantify.recording.binary
 import kotlinx.coroutines.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.recording.*
 
 //TODO: This file shouldn't need to be in a separate package from recording pending changes to kotlin's method signature

@@ -25,19 +25,20 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
-import tec.units.indriya.*
-import javax.measure.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
+import physikal.types.*
 
 /**
  * Abstract class for an input which takes percentage PWM data from a single digital input.
  *
  * @param digitalInput The digital input
  */
-public abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInput<*>) : QuantityInput<Q> {
+public abstract class ScPwmSensor<QT : Quantity<QT>>(val digitalInput: DigitalInput<*>) : QuantityInput<QT> {
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<QT>>()
+    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<QT>>
         get() = _broadcastChannel
 
     private val _updateErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
@@ -73,5 +74,5 @@ public abstract class ScPwmSensor<Q : Quantity<Q>>(val digitalInput: DigitalInpu
      * @param percentOn The percent measured by the digital input.
      * @return A [Try] of either a [DaqcQuantity] or an error.
      */
-    protected abstract fun convertInput(percentOn: ComparableQuantity<Dimensionless>): Try<DaqcQuantity<Q>>
+    protected abstract fun convertInput(percentOn: Quantity<Dimensionless>): Try<DaqcQuantity<QT>>
 }

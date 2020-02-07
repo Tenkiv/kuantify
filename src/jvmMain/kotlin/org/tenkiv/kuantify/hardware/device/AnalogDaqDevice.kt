@@ -19,15 +19,16 @@ package org.tenkiv.kuantify.hardware.device
 
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
-import tec.units.indriya.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
+import physikal.types.*
 
 public interface AnalogDaqDevice : Device {
 
     /**
      * The line frequency of the local electrical.
      */
-    public val lineFrequency: ComparableQuantity<Frequency>
+    public val lineFrequency: Quantity<Frequency>
 
     /**
      * The temperature reference of the board for error correction on samples.

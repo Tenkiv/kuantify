@@ -19,11 +19,11 @@ package org.tenkiv.kuantify
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import tec.units.indriya.*
+import physikal.*
 import kotlin.coroutines.*
 
-public typealias UpdatableQuantity<Q> = Updatable<ComparableQuantity<Q>>
-public typealias InitializedUpdatableQuantity<Q> = InitializedUpdatable<ComparableQuantity<Q>>
+public typealias UpdatableQuantity<QT> = Updatable<Quantity<QT>>
+public typealias InitializedUpdatableQuantity<QT> = InitializedUpdatable<Quantity<QT>>
 
 /**
  * Same as [Trackable] but allows setting.

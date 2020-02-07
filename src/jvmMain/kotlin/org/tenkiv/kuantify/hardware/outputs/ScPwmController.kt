@@ -24,28 +24,30 @@ import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.channel.*
-import javax.measure.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
+import physikal.types.*
 
 /**
  * Abstract class for a controller which outputs a percent to a single digital output channel from a [Quantity].
  *
  * @param digitalOutput The digital output
  */
-public abstract class ScPwmController<Q : Quantity<Q>>(public val digitalOutput: DigitalOutput<*>) :
-    QuantityOutput<Q> {
+public abstract class ScPwmController<QT : Quantity<QT>>(public val digitalOutput: DigitalOutput<*>) :
+    QuantityOutput<QT> {
 
     public override val isTransceiving: InitializedTrackable<Boolean>
         get() = digitalOutput.isTransceivingPwm
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<QT>>()
+    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<QT>>
         get() = _broadcastChannel
 
     public val avgFrequency: UpdatableQuantity<Frequency>
         get() = digitalOutput.avgFrequency
 
-    public override fun setOutput(setting: DaqcQuantity<Q>): SettingViability {
+    public override fun setOutput(setting: DaqcQuantity<QT>): SettingViability {
         val result = digitalOutput.pulseWidthModulate(convertOutput(setting))
 
         if (result is SettingViability.Viable) _broadcastChannel.offer(setting.now())
@@ -60,7 +62,7 @@ public abstract class ScPwmController<Q : Quantity<Q>>(public val digitalOutput:
      * @param setting The [DaqcQuantity] to be converted into a pwm percentage.
      * @return The value converted into a pwm percentage.
      */
-    protected abstract fun convertOutput(setting: DaqcQuantity<Q>): DaqcQuantity<Dimensionless>
+    protected abstract fun convertOutput(setting: DaqcQuantity<QT>): DaqcQuantity<Dimensionless>
 
     public override fun stopTransceiving() {
         digitalOutput.stopTransceiving()

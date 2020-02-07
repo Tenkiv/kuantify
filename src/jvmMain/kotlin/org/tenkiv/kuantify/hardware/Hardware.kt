@@ -17,12 +17,12 @@
 
 package org.tenkiv.kuantify.hardware
 
-import tec.units.indriya.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
 
 public sealed class LineNoiseFrequency {
 
-    public data class AccountFor(public val frequency: ComparableQuantity<Frequency>) : LineNoiseFrequency()
+    public data class AccountFor(public val frequency: Quantity<Frequency>) : LineNoiseFrequency()
 
     public object Ignore : LineNoiseFrequency()
 

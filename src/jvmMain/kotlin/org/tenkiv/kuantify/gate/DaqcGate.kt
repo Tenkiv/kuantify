@@ -67,9 +67,9 @@ public fun RangedIOStrand<*>.getNormalisedDoubleOrNull(): Double? {
 
     if (value is BinaryState?) return value?.toDouble()
 
-    val min = valueRange.start.toDoubleInSystemUnit()
-    val max = valueRange.endInclusive.toDoubleInSystemUnit()
-    val valueDouble = value?.toDoubleInSystemUnit()
+    val min = valueRange.start.toDoubleInDefaultUnit()
+    val max = valueRange.endInclusive.toDoubleInDefaultUnit()
+    val valueDouble = value?.toDoubleInDefaultUnit()
 
     return valueDouble?.normalToOrNull(min..max)
 }

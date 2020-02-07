@@ -20,16 +20,15 @@ package org.tenkiv.kuantify
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
-import org.tenkiv.physikal.core.*
-import tec.units.indriya.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
 import java.time.*
-import javax.measure.quantity.*
 import kotlin.coroutines.*
 import kotlin.properties.*
 import kotlin.reflect.*
 
-public typealias TrackableQuantity<Q> = Trackable<ComparableQuantity<Q>>
-public typealias InitializedTrackableQuantity<Q> = InitializedTrackable<ComparableQuantity<Q>>
+public typealias TrackableQuantity<QT> = Trackable<Quantity<QT>>
+public typealias InitializedTrackableQuantity<Q> = InitializedTrackable<Quantity<Q>>
 
 /**
  * The base interface which defines objects which have the ability to update their status.
@@ -85,11 +84,11 @@ public class AverageUpdateRateDelegate internal constructor(
     trackable: RatedTrackable<*>,
     private val avgPeriod: Duration
 ) : ReadOnlyProperty<RatedTrackable<*>, UpdateRate.RunningAverage> {
-    private val updatable = trackable.Updatable(0.hertz)
+    private val updatable = trackable.Updatable(0.0.hertz)
 
     init {
         trackable.launch {
-            var updateRate: ComparableQuantity<Frequency>
+            var updateRate: Quantity<Frequency>
             val sampleInstants = ArrayList<Instant>()
 
             //TODO: This can give a null pointer exception if UpdateRate is initialized before updateBroadcaster.

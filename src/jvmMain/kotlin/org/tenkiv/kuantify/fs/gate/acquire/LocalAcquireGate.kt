@@ -28,7 +28,6 @@ public interface LocalAcquireGate<T : DaqcData, out D : LocalDevice> : AcquireGa
     NetworkBoundSide<String> {
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
-
         routing.addToThisPath {
             bind<Ping>(RC.START_SAMPLING) {
                 receive {
@@ -43,4 +42,5 @@ public interface LocalAcquireGate<T : DaqcData, out D : LocalDevice> : AcquireGa
             }
         }
     }
+
 }

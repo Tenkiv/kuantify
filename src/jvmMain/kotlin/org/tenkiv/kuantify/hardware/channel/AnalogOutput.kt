@@ -19,10 +19,9 @@ package org.tenkiv.kuantify.hardware.channel
 
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.device.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.physikal.*
 
 /**
  * Class defining the basic features of an output which sends analog signals.
  */
-public interface AnalogOutput<out D : Device> : QuantityOutput<ElectricPotential>,
-    QuantityDeviceGate<ElectricPotential, D>
+public interface AnalogOutput<out D : Device> : QuantityOutput<Voltage>, QuantityDeviceGate<Voltage, D>

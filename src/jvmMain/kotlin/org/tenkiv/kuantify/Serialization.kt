@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Tenkiv, Inc.
+ * Copyright 2020 Tenkiv, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -15,10 +15,28 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.data.vector
+package org.tenkiv.kuantify
 
-public enum class CircularDirection {
-    CLOCKWISE,
-    COUNTER_CLOCKWISE
+import kotlinx.serialization.json.*
+import kotlinx.serialization.modules.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
+
+internal typealias Serialization = KuantifySerialization
+
+public object KuantifySerialization {
+
+    public val module: SerialModule = SerializersModule {
+        include(physikalSerializationModule)
+
+        polymorphic(Quantity::class) {
+            HertzQuantity::class with HertzQuantity.serializer()
+        }
+
+        polymorphic(PhysicalUnit::class) {
+            Hertz::class with Hertz.serializer()
+        }
+    }
+
+    public val json: Json = Json(context = module)
 }
-

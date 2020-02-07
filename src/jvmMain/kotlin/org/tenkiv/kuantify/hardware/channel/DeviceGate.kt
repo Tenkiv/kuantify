@@ -23,7 +23,7 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.communication.*
 
-public typealias QuantityDeviceGate<Q, D> = DeviceGate<DaqcQuantity<Q>, D>
+public typealias QuantityDeviceGate<QT, D> = DeviceGate<DaqcQuantity<QT>, D>
 
 public interface DeviceGate<T : DaqcData, out D : Device> : DaqcGate<T> {
 

@@ -20,12 +20,18 @@ package org.tenkiv.kuantify.lib
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.*
 import org.tenkiv.coral.*
+import org.tenkiv.kuantify.data.*
+import physikal.*
 import java.time.*
+
+public typealias Measurement = ValueInstant<DaqcValue>
+public typealias BinaryStateMeasurement = ValueInstant<BinaryState>
+public typealias QuantityMeasurement<QT> = ValueInstant<DaqcQuantity<QT>>
 
 @Serializer(forClass = ValueInstant::class)
 public class ValueInstantSerializer<T : Any>(val valueSerializer: KSerializer<T>) : KSerializer<ValueInstant<T>> {
 
-    public override val descriptor: SerialDescriptor = object : SerialClassDescImpl("BinaryPayload") {
+    public override val descriptor: SerialDescriptor = object : SerialClassDescImpl("ValueInstantSerializer") {
         init {
             addElement("value")
             addElement("instant")
@@ -56,6 +62,16 @@ public class ValueInstantSerializer<T : Any>(val valueSerializer: KSerializer<T>
     }
 
 }
+
+private val binaryStateMeasurementSerializer: KSerializer<BinaryStateMeasurement> =
+    ValueInstantSerializer(BinaryState.serializer())
+
+public fun <T : Any> ValueInstant.Companion.serializer(valueSerializer: KSerializer<T>) =
+    ValueInstantSerializer(valueSerializer)
+
+public fun ValueInstant.Companion.binaryStateSerializer() = binaryStateMeasurementSerializer
+
+public fun <QT : Quantity<QT>> ValueInstant.Companion.quantitySerializer() = serializer(DaqcQuantity.serializer<QT>())
 
 @Serializer(forClass = Instant::class)
 public object InstantSerializer : KSerializer<Instant> {

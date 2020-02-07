@@ -20,13 +20,12 @@ package org.tenkiv.kuantify.hardware.channel
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.device.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.physikal.*
 
 /**
  * Class defining the basic features of an input which reads analog signals.
  */
-public interface AnalogInput<out D : AnalogDaqDevice> :
-    QuantityInput<ElectricPotential>, QuantityDeviceGate<ElectricPotential, D> {
+public interface AnalogInput<out D : AnalogDaqDevice> : QuantityInput<Voltage>, QuantityDeviceGate<Voltage, D> {
 
     /**
      * Denotes if the analog input's buffer is activated.
@@ -42,7 +41,7 @@ public interface AnalogInput<out D : AnalogDaqDevice> :
      * Implementing backing field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */
-    public val maxAcceptableError: UpdatableQuantity<ElectricPotential>
+    public val maxAcceptableError: UpdatableQuantity<Voltage>
 
     /**
      * Denotes the maximum [ElectricPotential] that the [AnalogInput] can read.
@@ -50,6 +49,6 @@ public interface AnalogInput<out D : AnalogDaqDevice> :
      * Implementing backing field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */
-    public val maxElectricPotential: UpdatableQuantity<ElectricPotential>
+    public val maxElectricPotential: UpdatableQuantity<Voltage>
 
 }

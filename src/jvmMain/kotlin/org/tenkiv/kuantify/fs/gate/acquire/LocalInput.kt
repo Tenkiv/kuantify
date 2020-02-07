@@ -26,13 +26,12 @@ import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.configuration.*
-import javax.measure.*
+import physikal.*
 
 public interface LocalInput<T : DaqcValue, out D : LocalDevice> : LocalAcquireGate<T, D>, Input<T> {
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
-
         routing.addToThisPath {
             bind<Boolean>(RC.IS_TRANSCEIVING) {
                 serializeMessage {
@@ -45,18 +44,18 @@ public interface LocalInput<T : DaqcValue, out D : LocalDevice> : LocalAcquireGa
             }
         }
     }
+
 }
 
-public interface LocalQuantityInput<Q : Quantity<Q>, out D : LocalDevice> : LocalInput<DaqcQuantity<Q>, D>,
-    QuantityInput<Q> {
+public interface LocalQuantityInput<QT : Quantity<QT>, out D : LocalDevice> : LocalInput<DaqcQuantity<QT>, D>,
+    QuantityInput<QT> {
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
-
         routing.addToThisPath {
-            bind<QuantityMeasurement<Q>>(RC.VALUE) {
+            bind<QuantityMeasurement<QT>>(RC.VALUE) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(ComparableQuantitySerializer), it)
+                    Serialization.json.stringify(QuantityMeasurement.quantitySerializer(), it)
                 }
 
                 setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
@@ -65,6 +64,7 @@ public interface LocalQuantityInput<Q : Quantity<Q>, out D : LocalDevice> : Loca
             }
         }
     }
+
 }
 
 public interface LocalBinaryStateInput<out D : LocalDevice> : LocalInput<BinaryState, D>,
@@ -72,11 +72,10 @@ public interface LocalBinaryStateInput<out D : LocalDevice> : LocalInput<BinaryS
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
-
         routing.addToThisPath {
             bind<BinaryStateMeasurement>(RC.VALUE) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(BinaryState.serializer()), it)
+                    Serialization.json.stringify(BinaryStateMeasurement.binaryStateSerializer(), it)
                 }
 
                 setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
@@ -85,4 +84,5 @@ public interface LocalBinaryStateInput<out D : LocalDevice> : LocalInput<BinaryS
             }
         }
     }
+
 }

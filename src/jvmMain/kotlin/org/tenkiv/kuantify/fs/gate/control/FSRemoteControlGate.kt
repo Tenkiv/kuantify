@@ -44,7 +44,6 @@ public abstract class FSRemoteControlGate<T : DaqcData, D : FSRemoteDevice>(
     }
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
-
         routing.addToThisPath {
 
             bind<Ping>(RC.STOP_TRANSCEIVING) {
@@ -54,4 +53,5 @@ public abstract class FSRemoteControlGate<T : DaqcData, D : FSRemoteDevice>(
             }
         }
     }
+
 }

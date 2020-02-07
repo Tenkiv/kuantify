@@ -26,7 +26,7 @@ import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.configuration.*
-import javax.measure.*
+import physikal.*
 import kotlin.reflect.*
 
 public interface LocalOutput<T : DaqcValue, out D : LocalDevice> : LocalControlGate<T, D>, Output<T> {
@@ -49,18 +49,17 @@ public interface LocalOutput<T : DaqcValue, out D : LocalDevice> : LocalControlG
     }
 }
 
-public interface LocalQuantityOutput<Q : Quantity<Q>, out D : LocalDevice> : LocalOutput<DaqcQuantity<Q>, D>,
-    QuantityOutput<Q> {
+public interface LocalQuantityOutput<QT : Quantity<QT>, out D : LocalDevice> : LocalOutput<DaqcQuantity<QT>, D>,
+    QuantityOutput<QT> {
 
-    public val quantityType: KClass<Q>
+    public val quantityType: KClass<QT>
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
-
         routing.addToThisPath {
-            bind<QuantityMeasurement<Q>>(RC.VALUE) {
+            bind<QuantityMeasurement<QT>>(RC.VALUE) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(ComparableQuantitySerializer), it)
+                    Serialization.json.stringify(Measurement.quantitySerializer(), it)
                 }
 
                 setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
@@ -68,14 +67,14 @@ public interface LocalQuantityOutput<Q : Quantity<Q>, out D : LocalDevice> : Loc
                 }
 
                 receive {
-                    val value = Json.parse(ComparableQuantitySerializer, it)
-                    val setting = value.asType<Q>(quantityType.java).toDaqc()
+                    val setting = Serialization.json.parse(Quantity.serializer<QT>(), it)
 
                     setOutput(setting)
                 }
             }
         }
     }
+
 }
 
 public interface LocalBinaryStateOutput<out D : LocalDevice> : LocalOutput<BinaryState, D>, BinaryStateOutput {
@@ -86,7 +85,7 @@ public interface LocalBinaryStateOutput<out D : LocalDevice> : LocalOutput<Binar
         routing.addToThisPath {
             bind<BinaryStateMeasurement>(RC.VALUE) {
                 serializeMessage {
-                    Json.stringify(ValueInstantSerializer(BinaryState.serializer()), it)
+                    Serialization.json.stringify(ValueInstantSerializer(BinaryState.serializer()), it)
                 }
 
                 setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
@@ -94,7 +93,7 @@ public interface LocalBinaryStateOutput<out D : LocalDevice> : LocalOutput<Binar
                 }
 
                 receive {
-                    val setting = Json.parse(BinaryState.serializer(), it)
+                    val setting = Serialization.json.parse(BinaryState.serializer(), it)
 
                     setOutput(setting)
                 }

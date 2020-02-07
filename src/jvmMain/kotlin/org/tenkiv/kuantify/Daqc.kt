@@ -20,14 +20,8 @@ package org.tenkiv.kuantify
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import mu.*
-import org.tenkiv.coral.*
-import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.hardware.device.*
 
-
-public typealias Measurement = ValueInstant<DaqcValue>
-public typealias BinaryStateMeasurement = ValueInstant<BinaryState>
-public typealias QuantityMeasurement<Q> = ValueInstant<DaqcQuantity<Q>>
 
 private val logger = KotlinLogging.logger {}
 

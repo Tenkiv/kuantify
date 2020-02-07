@@ -22,9 +22,8 @@ import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.physikal.core.*
-import tec.units.indriya.*
-import javax.measure.*
+import org.tenkiv.kuantify.lib.*
+import physikal.*
 import kotlin.coroutines.*
 
 /**
@@ -34,10 +33,10 @@ import kotlin.coroutines.*
  * @param inputs The inputs to be averaged together.
  *
  */
-public class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
+public class AverageQuantitySensor<QT : Quantity<QT>> internal constructor(
     scope: CoroutineScope,
-    private vararg val inputs: QuantityInput<Q>
-) : QuantityInput<Q> {
+    private vararg val inputs: QuantityInput<QT>
+) : QuantityInput<QT> {
 
     private val job = Job(scope.coroutineContext[Job])
 
@@ -47,15 +46,15 @@ public class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
     public override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<Q>>()
-    public override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Q>>
+    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<QT>>()
+    public override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<QT>>
         get() = _broadcastChannel
 
     public override val updateRate by runningAverage()
 
     init {
         launch(Dispatchers.Daqc) {
-            val transceivingStatuses = HashMap<QuantityInput<Q>, Boolean>().apply {
+            val transceivingStatuses = HashMap<QuantityInput<QT>, Boolean>().apply {
                 inputs.forEach { input ->
                     put(input, input.isTransceiving.value)
                 }
@@ -64,15 +63,18 @@ public class AverageQuantitySensor<Q : Quantity<Q>> internal constructor(
             inputs.forEach { changeWatchedInput ->
                 launch(Dispatchers.Default) {
                     changeWatchedInput.updateBroadcaster.consumeEach { measurement ->
-                        val currentValues = HashSet<ComparableQuantity<Q>>()
+                        val currentValues = HashSet<Quantity<QT>>()
+                        val defaultUnit = measurement.value.unit.default
 
                         inputs.forEach { input ->
                             input.updateBroadcaster.valueOrNull?.let { currentValues += it.value }
                         }
 
-                        currentValues.averageOrNull { it }?.let {
-                            _broadcastChannel.send(it.toDaqc() at measurement.instant)
-                        }
+                        val newAverage = currentValues.map { quantity ->
+                            quantity.inDefaultUnit
+                        }.average().toQuantity(defaultUnit).toDaqc()
+
+                        _broadcastChannel.send(newAverage at measurement.instant)
                     }
                 }
 

@@ -31,9 +31,10 @@ import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.hardware.outputs.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.networking.configuration.*
-import tec.units.indriya.*
-import javax.measure.quantity.*
+import physikal.*
+import physikal.types.*
 
 @Suppress("LeakingThis")
 public abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide<String>, NetworkBoundCombined
@@ -61,12 +62,12 @@ public abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBound
 
     public override fun asBinaryStateController(): BinaryStateOutput = thisAsBinaryStateController
 
-    public override fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Dimensionless> {
+    public override fun asPwmController(avgFrequency: Quantity<Frequency>): QuantityOutput<Dimensionless> {
         this.avgFrequency.set(avgFrequency)
         return thisAsPwmController
     }
 
-    public override fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Frequency> {
+    public override fun asFrequencyController(avgFrequency: Quantity<Frequency>): QuantityOutput<Frequency> {
         this.avgFrequency.set(avgFrequency)
         return thisAsFrequencyController
     }
@@ -158,12 +159,12 @@ public abstract class FSRemoteDigitalOutput<out D> : DigitalOutput<D>, NetworkBo
 
     public override fun asBinaryStateController(): BinaryStateOutput = thisAsBinaryStateController
 
-    public override fun asPwmController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Dimensionless> {
+    public override fun asPwmController(avgFrequency: Quantity<Frequency>): QuantityOutput<Dimensionless> {
         this.avgFrequency.set(avgFrequency)
         return thisAsPwmController
     }
 
-    public override fun asFrequencyController(avgFrequency: ComparableQuantity<Frequency>): QuantityOutput<Frequency> {
+    public override fun asFrequencyController(avgFrequency: Quantity<Frequency>): QuantityOutput<Frequency> {
         this.avgFrequency.set(avgFrequency)
         return thisAsFrequencyController
     }

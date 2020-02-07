@@ -1,32 +1,46 @@
-# Created by .ignore support plugin (hsz.mobi)
-coreJvm/build
+### IntelliJ ###
+# User-specific stuff:
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
 
-### Java template
-out
+# Generated files
+.idea/**/contentModel.xml
 
-# Log file
-*.log
+# Sensitive or high-churn files:
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/dbnavigator.xml
 
-# BlueJ files
-*.ctxt
+# Gradle:
+.idea/**/gradle.xml
+.idea/**/libraries
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+.idea/modules.xml
+.idea/compiler.xml
+.idea/jarRepositories.xml
+.idea/kotlinc.xml
+.idea/misc.xml
+.idea/*.iml
+.idea/artifacts
+.idea/modules
+.idea/caches
+*.iml
+*.ipr
 
-# Package Files #
-*.jar
-*.war
-*.ear
-*.zip
-*.tar.gz
-*.rar
+# IntelliJ
+out/
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-### Gradle template
-.gradle
-/build/
-/buildSrc/build/
+
+### Gradle ###
+*.gradle
+**/build/
 
 # Ignore Gradle GUI config
 gradle-app.setting
@@ -34,17 +48,28 @@ gradle-app.setting
 # Cache of project
 .gradletasknamecache
 
-# # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
-# gradle/wrapper/gradle-wrapper.properties
-
-.idea
-
-TestRecording.json
-
-*.iml
-
-coreJvm/recorders/
+# Local properties
 local.properties
+
+
+### Kotlin ###
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
+
+# JVM crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*

@@ -31,8 +31,7 @@ import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.configuration.*
-import tec.units.indriya.*
-import javax.measure.*
+import physikal.*
 import kotlin.reflect.*
 
 private val logger = KotlinLogging.logger {}
@@ -69,20 +68,17 @@ public sealed class FSRemoteOutput<T : DaqcValue, D : FSRemoteDevice>(device: D,
     }
 }
 
-public abstract class FSRemoteQuantityOutput<Q : Quantity<Q>, D : FSRemoteDevice>(
+public abstract class FSRemoteQuantityOutput<QT : Quantity<QT>, D : FSRemoteDevice>(
     device: D,
     uid: String
-) : FSRemoteOutput<DaqcQuantity<Q>, D>(device, uid), QuantityOutput<Q> {
-
-    public abstract val quantityType: KClass<Q>
+) : FSRemoteOutput<DaqcQuantity<QT>, D>(device, uid), QuantityOutput<QT> {
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
-
         routing.addToThisPath {
-            bind<ComparableQuantity<Q>>(RC.VALUE) {
+            bind<Quantity<QT>>(RC.VALUE) {
                 serializeMessage {
-                    Json.stringify(ComparableQuantitySerializer, it)
+                    Serialization.json.stringify(Quantity.serializer(), it)
                 }
 
                 setLocalUpdateChannel(settingChannel) withUpdateChannel {
@@ -90,14 +86,14 @@ public abstract class FSRemoteQuantityOutput<Q : Quantity<Q>, D : FSRemoteDevice
                 }
 
                 receive {
-                    val (value, instant) = Json.parse(ValueInstantSerializer(ComparableQuantitySerializer), it)
-                    val setting = value.asType<Q>(quantityType.java).toDaqc()
+                    val settingInstant = Serialization.json.parse(ValueInstant.quantitySerializer<QT>(), it)
 
-                    _updateBroadcaster.send(setting at instant)
+                    _updateBroadcaster.send(settingInstant)
                 }
             }
         }
     }
+
 }
 
 public abstract class FSRemoteBinaryStateOutput<D : FSRemoteDevice>(device: D, uid: String) :
@@ -105,11 +101,10 @@ public abstract class FSRemoteBinaryStateOutput<D : FSRemoteDevice>(device: D, u
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {
         super.sideRouting(routing)
-
         routing.addToThisPath {
             bind<BinaryState>(RC.VALUE) {
                 serializeMessage {
-                    Json.stringify(BinaryState.serializer(), it)
+                    Serialization.json.stringify(BinaryState.serializer(), it)
                 }
 
                 setLocalUpdateChannel(settingChannel) withUpdateChannel {
@@ -117,11 +112,12 @@ public abstract class FSRemoteBinaryStateOutput<D : FSRemoteDevice>(device: D, u
                 }
 
                 receive {
-                    val settingInstant = Json.parse(ValueInstantSerializer(BinaryState.serializer()), it)
+                    val settingInstant = Serialization.json.parse(ValueInstant.binaryStateSerializer(), it)
 
                     _updateBroadcaster.send(settingInstant)
                 }
             }
         }
     }
+
 }

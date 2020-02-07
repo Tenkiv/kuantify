@@ -29,12 +29,10 @@ object Vof {
 
     // Tenkiv
     const val coral = "2.4.2-SNAPSHOT"
-    const val physikal = "2.3.0.2"
+    const val physikal = "3.0.5.6-SNAPSHOT"
 
     // Other
     const val arrow = "0.8.2"
-    const val statistics = "1.2.1"
-    const val dl4j = "1.0.0-beta3"
 
     // Test
     const val spek = "2.0.9"

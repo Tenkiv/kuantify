@@ -20,10 +20,11 @@ package org.tenkiv.kuantify.gate
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.*
-import kotlinx.serialization.internal.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
-import javax.measure.quantity.*
+import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.types.*
 
 public interface DigitalGate : DaqcGate<DigitalValue> {
     /**
@@ -108,6 +109,7 @@ public sealed class DigitalValue : DaqcData {
     override val size: Int
         get() = 1
 
+    @Serializable
     public data class BinaryState(val state: org.tenkiv.kuantify.data.BinaryState) : DigitalValue() {
 
         override fun toDaqcValues(): List<DaqcValue> = listOf(state)
@@ -117,7 +119,11 @@ public sealed class DigitalValue : DaqcData {
         }
     }
 
-    public data class Frequency(val frequency: DaqcQuantity<javax.measure.quantity.Frequency>) : DigitalValue() {
+    @Serializable
+    public data class Frequency(
+        @Serializable(with = DaqcQuantitySerializer::class)
+        val frequency: DaqcQuantity<org.tenkiv.kuantify.lib.physikal.Frequency>
+    ) : DigitalValue() {
 
         override fun toDaqcValues(): List<DaqcValue> = listOf(frequency)
 
@@ -126,64 +132,16 @@ public sealed class DigitalValue : DaqcData {
         }
     }
 
-    public data class Percentage(val percent: DaqcQuantity<Dimensionless>) : DigitalValue() {
+    @Serializable
+    public data class Percentage(
+        @Serializable(with = DaqcQuantitySerializer::class)
+        val percent: DaqcQuantity<Dimensionless>
+    ) : DigitalValue() {
 
         override fun toDaqcValues(): List<DaqcValue> = listOf(percent)
 
         companion object {
             internal const val TYPE_BYTE: Byte = 2
-        }
-    }
-
-    //TODO: Redo this horrific abomination of a serialization hack
-    @Serializer(forClass = DigitalValue::class)
-    public companion object {
-        public override val descriptor: SerialDescriptor = object : SerialClassDescImpl("DigitalGateValue") {
-            init {
-                addElement("type")
-                addElement("value")
-            }
-        }
-
-        public override fun deserialize(decoder: Decoder): DigitalValue {
-            val inp: CompositeDecoder = decoder.beginStructure(descriptor)
-            var type: Byte = -1
-            lateinit var value: String
-            loop@ while (true) {
-                when (val i = inp.decodeElementIndex(descriptor)) {
-                    CompositeDecoder.READ_DONE -> break@loop
-                    0 -> type = inp.decodeByteElement(descriptor, i)
-                    1 -> value = inp.decodeStringElement(descriptor, i)
-                    else -> throw SerializationException("Unknown index $i")
-                }
-            }
-            inp.endStructure(descriptor)
-            return when (type) {
-                BinaryState.TYPE_BYTE -> BinaryState(org.tenkiv.kuantify.data.BinaryState.fromString(value))
-                Frequency.TYPE_BYTE -> Frequency(DaqcQuantity.fromString(value))
-                Percentage.TYPE_BYTE -> Percentage(DaqcQuantity.fromString(value))
-                else -> throw SerializationException("Invalid type representation")
-            }
-        }
-
-        public override fun serialize(encoder: Encoder, obj: DigitalValue) {
-            val compositeOutput: CompositeEncoder = encoder.beginStructure(descriptor)
-
-            val type = when (obj) {
-                is BinaryState -> BinaryState.TYPE_BYTE
-                is Frequency -> Frequency.TYPE_BYTE
-                is Percentage -> Percentage.TYPE_BYTE
-            }
-
-            val value = when (obj) {
-                is BinaryState -> obj.state.toString()
-                is Frequency -> obj.frequency.toString()
-                is Percentage -> obj.percent.toString()
-            }
-
-            compositeOutput.encodeByteElement(descriptor, 0, type)
-            compositeOutput.encodeStringElement(descriptor, 1, value)
-            compositeOutput.endStructure(descriptor)
         }
     }
 }
