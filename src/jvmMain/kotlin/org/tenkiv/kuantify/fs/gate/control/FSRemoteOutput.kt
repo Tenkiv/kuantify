@@ -60,7 +60,7 @@ public sealed class FSRemoteOutput<T : DaqcValue, D : FSRemoteDevice>(device: D,
         routing.addToThisPath {
             bind<Boolean>(RC.IS_TRANSCEIVING) {
                 receive {
-                    val value = Json.parse(BooleanSerializer, it)
+                    val value = Serialization.json.parse(BooleanSerializer, it)
                     _isTransceiving.value = value
                 }
             }
