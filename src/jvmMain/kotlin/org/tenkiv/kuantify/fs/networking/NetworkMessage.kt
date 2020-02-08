@@ -18,12 +18,12 @@
 package org.tenkiv.kuantify.fs.networking
 
 import kotlinx.serialization.*
-import kotlinx.serialization.json.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 
 @Serializable
-internal data class NetworkMessage(val route: String, @Optional val message: String = FSDevice.serializedPing) {
+internal data class NetworkMessage(val route: String, val message: String = FSDevice.serializedPing) {
 
-    fun serialize() = Json.stringify(NetworkMessage.serializer(), this)
+    fun serialize() = Serialization.json.stringify(serializer(), this)
 
 }
