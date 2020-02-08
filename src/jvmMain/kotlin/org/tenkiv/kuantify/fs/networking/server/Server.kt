@@ -30,6 +30,7 @@ import kotlinx.coroutines.sync.*
 import kotlinx.serialization.json.*
 import mu.*
 import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.lib.*
@@ -84,21 +85,21 @@ internal object KuantifyHost {
                     return@webSocket
                 }
 
-                ClientHandler.connectionOpened(clientID.id, this@webSocket)
+                ClientHandler.connectionOpened(clientID, this@webSocket)
 
                 logger.debug { "Starting websocket receive loop" }
 
                 try {
                     incoming.consumeEach { frame ->
                         if (frame is Frame.Text) {
-                            receiveMessage(clientID.id, frame.readText())
+                            receiveMessage(clientID, frame.readText())
                             logger.trace {
                                 "Received message - ${frame.readText()} - on local device ${hostedDevice?.uid}"
                             }
                         }
                     }
                 } finally {
-                    ClientHandler.connectionClosed(clientID.id, this@webSocket)
+                    ClientHandler.connectionClosed(clientID, this@webSocket)
                     logger.debug(
                         "Websocket connection closed for client ${clientID.id}, reason: ${closeReason.await()}."
                     )
@@ -121,13 +122,13 @@ internal object KuantifyHost {
     }
 
     @Suppress("NAME_SHADOWING")
-    private suspend fun receiveMessage(clientId: String, message: String) {
-        val (route, message) = Json.parse(NetworkMessage.serializer(), message)
+    private suspend fun receiveMessage(clientId: ClientId, message: String) {
+        val (route, message) = Serialization.json.parse(NetworkMessage.serializer(), message)
 
         hostedDevice?.receiveNetworkMessage(route, message) ?: deviceNotHosted(clientId, message)
     }
 
-    private fun deviceNotHosted(clientId: String, message: String) {
+    private fun deviceNotHosted(clientId: ClientId, message: String) {
         logger.debug { "Received message - $message - from client: $clientId but there is no device being hosted." }
     }
 
@@ -135,9 +136,9 @@ internal object KuantifyHost {
 
 internal object ClientHandler {
 
-    private val mutexClients: MutexValue<MutableMap<String, HostedClient>> = MutexValue(HashMap(), Mutex())
+    private val mutexClients: MutexValue<MutableMap<ClientId, HostedClient>> = MutexValue(HashMap(), Mutex())
 
-    suspend fun connectionOpened(clientId: String, session: WebSocketSession) {
+    suspend fun connectionOpened(clientId: ClientId, session: WebSocketSession) {
         mutexClients.withLock { clients ->
             if (clients.containsKey(clientId)) {
                 clients[clientId]?.addSession(session)
@@ -149,7 +150,7 @@ internal object ClientHandler {
         }
     }
 
-    suspend fun connectionClosed(clientId: String, session: WebSocketSession) {
+    suspend fun connectionClosed(clientId: ClientId, session: WebSocketSession) {
         mutexClients.withLock { clients ->
             clients[clientId]?.removeSession(session, clients)
         }
@@ -170,7 +171,7 @@ internal object ClientHandler {
         }
     }
 
-    private class HostedClient(val id: String) {
+    private class HostedClient(val id: ClientId) {
 
         private val websocketSessions: MutableList<WebSocketSession> = ArrayList()
 
@@ -178,7 +179,7 @@ internal object ClientHandler {
             websocketSessions += session
         }
 
-        fun removeSession(session: WebSocketSession, clients: MutableMap<String, HostedClient>) {
+        fun removeSession(session: WebSocketSession, clients: MutableMap<ClientId, HostedClient>) {
             websocketSessions -= session
             if (websocketSessions.isEmpty()) clients -= id
         }
