@@ -26,17 +26,21 @@ import io.ktor.sessions.*
 import io.ktor.util.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.sync.*
 import kotlinx.serialization.json.*
 import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
+import org.tenkiv.kuantify.lib.*
 
 private val logger = KotlinLogging.logger {}
 
 public fun Application.kuantifyHost() {
     KuantifyHost.apply { init() }
 }
+
+internal data class ClientId(val id: String)
 
 internal object KuantifyHost {
 
@@ -87,10 +91,7 @@ internal object KuantifyHost {
                 try {
                     incoming.consumeEach { frame ->
                         if (frame is Frame.Text) {
-                            receiveMessage(
-                                clientID.id,
-                                frame.readText()
-                            )
+                            receiveMessage(clientID.id, frame.readText())
                             logger.trace {
                                 "Received message - ${frame.readText()} - on local device ${hostedDevice?.uid}"
                             }
@@ -132,4 +133,64 @@ internal object KuantifyHost {
 
 }
 
-internal data class ClientId(val id: String)
+internal object ClientHandler {
+
+    private val mutexClients: MutexValue<MutableMap<String, HostedClient>> = MutexValue(HashMap(), Mutex())
+
+    suspend fun connectionOpened(clientId: String, session: WebSocketSession) {
+        mutexClients.withLock { clients ->
+            if (clients.containsKey(clientId)) {
+                clients[clientId]?.addSession(session)
+            } else {
+                clients[clientId] = HostedClient(clientId).apply {
+                    addSession(session)
+                }
+            }
+        }
+    }
+
+    suspend fun connectionClosed(clientId: String, session: WebSocketSession) {
+        mutexClients.withLock { clients ->
+            clients[clientId]?.removeSession(session, clients)
+        }
+    }
+
+    suspend fun sendToAll(message: String) {
+        mutexClients.withLock { clients ->
+            clients.values.forEach {
+                it.sendMessage(message)
+            }
+            logger.trace { "Sent message - $message - from local device" }
+        }
+    }
+
+    suspend fun closeAllSessions() {
+        mutexClients.withLock { clients ->
+            clients.values.forEach { it.closeAllSessions() }
+        }
+    }
+
+    private class HostedClient(val id: String) {
+
+        private val websocketSessions: MutableList<WebSocketSession> = ArrayList()
+
+        fun addSession(session: WebSocketSession) {
+            websocketSessions += session
+        }
+
+        fun removeSession(session: WebSocketSession, clients: MutableMap<String, HostedClient>) {
+            websocketSessions -= session
+            if (websocketSessions.isEmpty()) clients -= id
+        }
+
+        suspend fun sendMessage(serializedMsg: String) {
+            websocketSessions.forEach { it.send(Frame.Text(serializedMsg)) }
+        }
+
+        suspend fun closeAllSessions() {
+            websocketSessions.forEach { it.close() }
+        }
+
+    }
+
+}
