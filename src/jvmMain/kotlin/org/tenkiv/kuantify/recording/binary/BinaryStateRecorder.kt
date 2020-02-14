@@ -29,10 +29,10 @@ import org.tenkiv.kuantify.recording.*
 public fun <U : Trackable<BinaryStateMeasurement>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
-    memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
+    memoryDuration: StorageDuration = StorageDuration.For(GateRecorder.memoryDurationDefault),
     diskDuration: StorageDuration = StorageDuration.None,
     filterOnRecord: RecordingFilter<BinaryState, U> = { true }
-): Recorder<BinaryState, U> = Recorder(
+): GateRecorder<BinaryState, U> = GateRecorder(
     scope = this,
     updatable = updatable,
     storageFrequency = storageFrequency,
@@ -49,7 +49,7 @@ public fun <U : Trackable<BinaryStateMeasurement>> CoroutineScope.Recorder(
     numSamplesMemory: StorageSamples = StorageSamples.Number(100),
     numSamplesDisk: StorageSamples = StorageSamples.None,
     filterOnRecord: RecordingFilter<BinaryState, U> = { true }
-): Recorder<BinaryState, U> = Recorder(
+): GateRecorder<BinaryState, U> = GateRecorder(
     scope = this,
     updatable = updatable,
     storageFrequency = storageFrequency,

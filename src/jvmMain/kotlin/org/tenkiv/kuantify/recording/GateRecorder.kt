@@ -17,13 +17,18 @@
 
 package org.tenkiv.kuantify.recording
 
+import io.ktor.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.sync.*
 import kotlinx.coroutines.time.*
+import kotlinx.io.ByteArrayOutputStream
+import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.*
 import java.io.*
 import java.nio.*
@@ -35,21 +40,21 @@ import kotlin.coroutines.*
 
 public typealias ValueSerializer<T> = (T) -> String
 public typealias ValueDeserializer<T> = (String) -> T
-public typealias RecordingFilter<T, U> = Recorder<T, U>.(ValueInstant<T>) -> Boolean
+public typealias RecordingFilter<T, U> = GateRecorder<T, U>.(ValueInstant<T>) -> Boolean
 internal typealias StorageFilter<T> = (ValueInstant<T>) -> Boolean
 
 //TODO: Move default parameter values in recorder creation function to constants
 public fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
-    memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
+    memoryDuration: StorageDuration = StorageDuration.For(GateRecorder.memoryDurationDefault),
     diskDuration: StorageDuration = StorageDuration.None,
     filterOnRecord: RecordingFilter<T, U> = { true },
     valueSerializer: ValueSerializer<T>,
     valueDeserializer: ValueDeserializer<T>
-): Recorder<T, U> = Recorder(
+): GateRecorder<T, U> = GateRecorder(
     scope = this,
-    updatable = updatable,
+    gate = updatable,
     storageFrequency = storageFrequency,
     memoryDuration = memoryDuration,
     diskDuration = diskDuration,
@@ -66,9 +71,9 @@ public fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
     filterOnRecord: RecordingFilter<T, U> = { true },
     valueSerializer: ValueSerializer<T>,
     valueDeserializer: ValueDeserializer<T>
-): Recorder<T, U> = Recorder(
+): GateRecorder<T, U> = GateRecorder(
     scope = this,
-    updatable = updatable,
+    gate = updatable,
     storageFrequency = storageFrequency,
     numSamplesMemory = numSamplesMemory,
     numSamplesDisk = numSamplesDisk,
@@ -82,9 +87,9 @@ public fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
     storageFrequency: StorageFrequency = StorageFrequency.All,
     memoryStorageLength: StorageLength = StorageSamples.Number(100),
     filterOnRecord: RecordingFilter<T, U> = { true }
-): Recorder<T, U> = Recorder(
+): GateRecorder<T, U> = GateRecorder(
     scope = this,
-    updatable = updatable,
+    gate = updatable,
     storageFrequency = storageFrequency,
     memoryStorageLength = memoryStorageLength,
     filterOnRecord = filterOnRecord
@@ -220,26 +225,25 @@ public sealed class StorageDuration : StorageLength(), Comparable<StorageDuratio
 /**
  * Recorder to store data either in memory, on disk, or both depending on certain parameters.
  */
-public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScope {
+public class GateRecorder<out DT : DaqcData, out GT : DaqcGate<DT>> : CoroutineScope {
 
-    public val updatable: U
+    public val gate: GT
     public val storageFrequency: StorageFrequency
     public val memoryStorageLength: StorageLength
     public val diskStorageLength: StorageLength
-    private val filterOnRecord: RecordingFilter<T, U>
-    private val valueSerializer: ValueSerializer<T>?
-    private val valueDeserializer: ValueDeserializer<T>?
+    private val filterOnRecord: RecordingFilter<DT, GT>
+    private val valueSerializer: KSerializer<DT>?
 
     private val job: Job
     public override val coroutineContext: CoroutineContext
 
-    private val receiveChannel: ReceiveChannel<ValueInstant<T>>
+    private val receiveChannel: ReceiveChannel<ValueInstant<DT>>
 
     private val uid = GlobalScope.async(Dispatchers.Daqc) { getRecorderUid() }
     private val directoryPath = GlobalScope.async(Dispatchers.Daqc) { "$RECORDERS_PATH/${uid.await()}" }
     private val directoryFile = GlobalScope.async(Dispatchers.Daqc) { File(directoryPath.await()).apply { mkdir() } }
 
-    private val _dataInMemory = ArrayList<ValueInstant<T>>()
+    private val _dataInMemory = ArrayList<ValueInstant<DT>>()
 
     private val files = ArrayList<RecorderFile>()
 
@@ -248,8 +252,8 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
     /**
      * Recorder to store data either in memory or on disk depending on certain parameters.
      *
-     * @param updatable The [Trackable] to monitor for samples.
-     * @param storageFrequency Determines how frequently data is stored to the [Recorder].
+     * @param gate The [Trackable] to monitor for samples.
+     * @param storageFrequency Determines how frequently data is stored to the [GateRecorder].
      * @param memoryDuration Determines how long samples are stored in memory.
      * @param diskDuration Determines how long samples are stored on disk.
      * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
@@ -260,33 +264,31 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
     @PublishedApi
     internal constructor(
         scope: CoroutineScope,
-        updatable: U,
+        gate: GT,
         storageFrequency: StorageFrequency = StorageFrequency.All,
         memoryDuration: StorageDuration = StorageDuration.For(memoryDurationDefault),
         diskDuration: StorageDuration = StorageDuration.None,
-        filterOnRecord: RecordingFilter<T, U> = { true },
-        valueSerializer: ValueSerializer<T>,
-        valueDeserializer: ValueDeserializer<T>
+        filterOnRecord: RecordingFilter<DT, GT> = { true },
+        valueSerializer: KSerializer<DT>
     ) {
         this.job = Job(scope.coroutineContext[Job])
         this.coroutineContext = scope.coroutineContext + job
 
-        this.updatable = updatable
+        this.gate = gate
         this.storageFrequency = storageFrequency
         this.memoryStorageLength = memoryDuration
         this.diskStorageLength = diskDuration
         this.filterOnRecord = filterOnRecord
         this.valueSerializer = valueSerializer
-        this.valueDeserializer = valueDeserializer
 
-        this.receiveChannel = updatable.updateBroadcaster.openSubscription()
+        this.receiveChannel = gate.updateBroadcaster.openSubscription()
     }
 
     /**
      * Recorder to store data either in memory or on disk depending on certain parameters.
      *
-     * @param updatable The [Trackable] to monitor for samples.
-     * @param storageFrequency Determines how frequently data is stored to the [Recorder].
+     * @param gate The [Trackable] to monitor for samples.
+     * @param storageFrequency Determines how frequently data is stored to the [GateRecorder].
      * @param numSamplesMemory Determines how long samples are stored in memory.
      * @param numSamplesDisk Determines how long samples are stored on disk.
      * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
@@ -297,33 +299,31 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
     @PublishedApi
     internal constructor(
         scope: CoroutineScope,
-        updatable: U,
+        gate: GT,
         storageFrequency: StorageFrequency = StorageFrequency.All,
         numSamplesMemory: StorageSamples = StorageSamples.Number(100),
         numSamplesDisk: StorageSamples = StorageSamples.None,
-        filterOnRecord: RecordingFilter<T, U> = { true },
-        valueSerializer: ValueSerializer<T>,
-        valueDeserializer: ValueDeserializer<T>
+        filterOnRecord: RecordingFilter<DT, GT> = { true },
+        valueSerializer: KSerializer<DT>
     ) {
         this.job = Job(scope.coroutineContext[Job])
         this.coroutineContext = scope.coroutineContext + job
 
-        this.updatable = updatable
+        this.gate = gate
         this.storageFrequency = storageFrequency
         this.memoryStorageLength = numSamplesMemory
         this.diskStorageLength = numSamplesDisk
         this.filterOnRecord = filterOnRecord
         this.valueSerializer = valueSerializer
-        this.valueDeserializer = valueDeserializer
 
-        this.receiveChannel = updatable.updateBroadcaster.openSubscription()
+        this.receiveChannel = gate.updateBroadcaster.openSubscription()
     }
 
     /**
      * Recorder to store data either in memory or on disk depending on certain parameters.
      *
-     * @param updatable The [Trackable] to monitor for samples.
-     * @param storageFrequency Determines how frequently data is stored to the [Recorder].
+     * @param gate The [Trackable] to monitor for samples.
+     * @param storageFrequency Determines how frequently data is stored to the [GateRecorder].
      * @param memoryStorageLength Determines how long samples are stored in memory.
      * @param filterOnRecord filters the incoming [ValueInstant]s should return true if the recorder should store the
      * ValueInstant and false if it should not.
@@ -331,23 +331,22 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
     @PublishedApi
     internal constructor(
         scope: CoroutineScope,
-        updatable: U,
+        gate: GT,
         storageFrequency: StorageFrequency = StorageFrequency.All,
         memoryStorageLength: StorageLength = StorageSamples.Number(100),
-        filterOnRecord: RecordingFilter<T, U> = { true }
+        filterOnRecord: RecordingFilter<DT, GT> = { true }
     ) {
         this.job = Job(scope.coroutineContext[Job])
         this.coroutineContext = scope.coroutineContext + job
 
-        this.updatable = updatable
+        this.gate = gate
         this.storageFrequency = storageFrequency
         this.memoryStorageLength = memoryStorageLength
         this.diskStorageLength = StorageSamples.None
         this.filterOnRecord = filterOnRecord
         this.valueSerializer = null
-        this.valueDeserializer = null
 
-        this.receiveChannel = updatable.updateBroadcaster.openSubscription()
+        this.receiveChannel = gate.updateBroadcaster.openSubscription()
     }
 
     init {
@@ -361,7 +360,7 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
      * @return A [List] of [ValueInstant]s of the data in heap memory sent by the Recorder's [Trackable].
      */
     //TODO: Make this return truly immutable list.
-    public fun getDataInMemory(): List<ValueInstant<T>> = ArrayList(_dataInMemory)
+    public fun getDataInMemory(): List<ValueInstant<DT>> = ArrayList(_dataInMemory)
 
     /**
      * Gets all data both in heap memory and disk. If disk data exists the function will suspend until data is restored
@@ -369,7 +368,7 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
      *
      * @return A [List] of [ValueInstant]s of all the data sent by the Recorder's [Trackable].
      */
-    public suspend fun getAllData(): List<ValueInstant<T>> =
+    public suspend fun getAllData(): List<ValueInstant<DT>> =
         if (memoryStorageLength >= diskStorageLength) {
             getDataInMemory()
         } else {
@@ -383,11 +382,11 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
      * @param instantRange The range of time over which to get data.
      * @return A [List] of [ValueInstant]s stored by the recorder within the [ClosedRange].
      */
-    public suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
+    public suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<DT>> =
         withContext(coroutineContext + Dispatchers.Daqc) {
             val oldestRequested = instantRange.start
 
-            val filterFun: StorageFilter<T> = { it.instant in instantRange }
+            val filterFun: StorageFilter<DT> = { it.instant in instantRange }
 
             val oldestMemory = _dataInMemory.firstOrNull()
             return@withContext if (oldestMemory != null && oldestMemory.instant.isBefore(oldestRequested)) {
@@ -422,16 +421,16 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
     }
 
     // Can only be called from Contexts.Daqc
-    private suspend fun getDataFromDisk(filter: StorageFilter<T>): List<ValueInstant<T>> {
+    private suspend fun getDataFromDisk(filter: StorageFilter<DT>): List<ValueInstant<DT>> {
         //TODO: Change to immutable list using builder
-        val result = ArrayList<ValueInstant<T>>()
+        val result = ArrayList<ValueInstant<DT>>()
         val currentFiles: List<RecorderFile> = ArrayList(files)
 
-        val buffer = ArrayList<ValueInstant<T>>()
+        val buffer = ArrayList<ValueInstant<DT>>()
 
         val bufferJob = launch(Dispatchers.Daqc) {
             fileCreationBroadcaster.openSubscription().receive()
-            updatable.updateBroadcaster.consumeEach { value ->
+            gate.updateBroadcaster.consumeEach { value ->
                 buffer += value
             }
         }
@@ -447,7 +446,7 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
         return result
     }
 
-    private suspend fun recordUpdate(update: ValueInstant<T>) {
+    private suspend fun recordUpdate(update: ValueInstant<DT>) {
         if (filterOnRecord(update)) {
             if (memoryStorageLength !== StorageDuration.None) _dataInMemory += update
 
@@ -474,12 +473,9 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
     }
 
     // This has to be an extension function in order to keep out variance in Recorder class generic
-    private suspend fun RecorderFile.writeEntry(entry: ValueInstant<T>) {
+    private suspend fun RecorderFile.writeEntry(entry: ValueInstant<DT>) {
         if (valueSerializer != null) {
-            val jsonObjectString =
-                "{\"$INSTANT_KEY\":${entry.instant.toEpochMilli()}," +
-                        "\"$VALUE_KEY\":${valueSerializer.invoke(entry.value)}}"
-            writeJsonBuffer(jsonObjectString)
+            writeJsonBuffer("\"${entry.toBase64(valueSerializer)}\"")
         } else {
             throw IllegalStateException("valueSerializer cannot be null if Recorder is using disk for storage.")
         }
@@ -509,7 +505,7 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
                 val fileExpiresIn = (diskStorageLength.numSamples + diskStorageLength.numSamples / 9) + 1
 
                 files += RecorderFile(fileExpiresIn)
-                val receiveChannel = updatable.updateBroadcaster.openSubscription()
+                val receiveChannel = gate.updateBroadcaster.openSubscription()
                 while (isActive) {
                     val newRecorderFile = RecorderFile(fileExpiresIn)
                     if (files.last().samplesSinceCreation == fileCreationInterval) files += newRecorderFile
@@ -522,7 +518,7 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
         if (storageFrequency is StorageFrequency.Interval) {
             while (isActive) {
                 delay(storageFrequency.interval)
-                recordUpdate(updatable.getValue())
+                recordUpdate(gate.getValue())
                 cleanMemory()
             }
         } else {
@@ -545,6 +541,12 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
         }
     }
 
+    private fun ValueInstant<DT>.toBase64(valueSerializer: KSerializer<DT>): String =
+        Serialization.xdr.dump(ValueInstantSerializer(valueSerializer), this).encodeBase64()
+
+    private fun ByteArray.toValueInstant(valueSerializer: KSerializer<DT>): ValueInstant<DT> =
+        Serialization.xdr.load(ValueInstantSerializer(valueSerializer), this.decodeToString().decodeBase64Bytes())
+
     //TODO: Throw more specific exception if the class cannot be cast.
     private operator fun StorageLength.compareTo(other: StorageLength): Int = when (this) {
         is StorageDuration -> this.compareTo(other as StorageDuration)
@@ -559,7 +561,7 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
         internal val file = async {
             File("${directoryPath.await()}/${System.currentTimeMillis()}.json")
         }
-        internal val fileChannel = async {
+        internal val fileChannel = async(Dispatchers.IO) {
             AsynchronousFileChannel.open(
                 file.await().toPath(),
                 StandardOpenOption.CREATE,
@@ -592,7 +594,7 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
         internal constructor(expiresAfterNumSamples: Int?) {
             if (expiresAfterNumSamples != null) {
                 launch(Dispatchers.Daqc) {
-                    val receiveChannel = updatable.updateBroadcaster.openSubscription()
+                    val receiveChannel = gate.updateBroadcaster.openSubscription()
 
                     while (samplesSinceCreation < expiresAfterNumSamples) {
                         receiveChannel.receive()
@@ -603,24 +605,18 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
             }
         }
 
-        internal suspend fun writeJsonBuffer(jsonObjectString: String) {
-            val string: String
-            if (isFirstWrite) {
-                string = "$ARRAY_OPEN$jsonObjectString$ARRAY_CLOSE"
-                writeToFile(string)
-                isFirstWrite = false
-            } else {
-                string = ",$jsonObjectString$ARRAY_CLOSE"
-                writeToFile(string)
-            }
-            arrayLastPosition += string.length - ARRAY_CLOSE.length
+        internal suspend fun writeJsonBuffer(base64String: String) {
+            val string = "$base64String,$ARRAY_END"
+            writeToFile(string)
+
+            arrayLastPosition += string.length - 1
         }
 
         private suspend fun writeToFile(
             string: String,
             charset: Charset = Charset.defaultCharset()
         ) {
-            val buffer = ByteBuffer.wrap(string.toByteArray(charset))
+            val buffer = ByteBuffer.wrap(string.encodeToByteArray())
             mutex.withLock {
                 fileChannel.await().aWrite(buffer, arrayLastPosition)
             }
@@ -648,65 +644,34 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
             }
         }
 
-        internal suspend fun readFromDisk(filter: (ValueInstant<T>) -> Boolean): List<ValueInstant<T>> {
-            if (valueDeserializer != null) {
+        internal suspend fun readFromDisk(filter: (ValueInstant<DT>) -> Boolean): List<ValueInstant<DT>> {
+            if (valueSerializer != null) {
                 val channel = fileChannel.await()
-                var inString = false
-                var numUnclosedBraces = 0
-                var previousCharByte = ' '.toByte()
-                val complyingObjects = ArrayList<ValueInstant<T>>()
-                val currentObject = ArrayList<Byte>()
-                var buffer = ByteBuffer.allocate(100)
+                val currentObjectBytes = ByteArrayOutputStream()
+                val complyingObjects = ArrayList<ValueInstant<DT>>()
+                val buffer = ByteBuffer.allocate(100)
                 var position = 0L
 
                 while (channel.isOpen) {
                     mutex.withLock { channel.aRead(buffer, position) }
 
-                    val array = buffer.array()
-                    array.forEach { charByte ->
-                        if (charByte == STRING_DELIM && previousCharByte != BREAK) inString = !inString
-
-                        if (!inString && charByte == OPEN_BRACE) numUnclosedBraces++
-
-                        if (numUnclosedBraces > 1) currentObject += charByte
-
-
-                        if (!inString && charByte == CLOSE_BRACE) {
-                            numUnclosedBraces--
-                            if (numUnclosedBraces == 0) return@readFromDisk complyingObjects
-
-                            if (numUnclosedBraces == 1) {
-                                val valueInstant = deserializeValueInstant(currentObject, valueDeserializer)
-
-                                if (filter(valueInstant)) {
-                                    complyingObjects += valueInstant
-                                }
-                                currentObject.clear()
-                            }
+                    buffer.array().forEach { byte ->
+                        if (byte == ARRAY_END.toByte()) return@readFromDisk complyingObjects
+                        if (byte == VALUE_SEPERATOR.toByte()) {
+                            val valueInstant = currentObjectBytes.toByteArray().toValueInstant(valueSerializer)
+                            if (filter(valueInstant)) complyingObjects += valueInstant
+                            currentObjectBytes.reset()
+                        } else {
+                            currentObjectBytes.write(byte.toInt())
                         }
-
-                        previousCharByte = charByte
                     }
                     position += 100
-                    buffer = ByteBuffer.allocate(100)
-
+                    buffer.clear()
                 }
                 return complyingObjects
             } else {
                 throw IllegalStateException("valueDeserializer cannot be null if recorder is using disk for storage.")
             }
-        }
-
-        private fun deserializeValueInstant(
-            jsonObject: List<Byte>,
-            valueDeserializer: ValueDeserializer<T>
-        ): ValueInstant<T> {
-            val jsonTree = Json.plain.parseJson(jsonObject.toString()).jsonObject
-            val epochMilli = jsonTree[INSTANT_KEY].long
-            val valueTree = jsonTree[VALUE_KEY]
-            val valueString = valueTree.contentOrNull ?: valueTree.toString()
-
-            return PrimitiveValueInstant(epochMilli, valueString).toValueInstant(valueDeserializer)
         }
 
     }
@@ -724,8 +689,8 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
         private const val STRING_DELIM = '"'.toByte()
         private const val BREAK = '\\'.toByte()
         private const val ZERO_BYTE: Byte = 0
-        private const val ARRAY_OPEN = "{\"entries\":["
-        private const val ARRAY_CLOSE = "]}"
+        private const val ARRAY_END = '.'
+        private const val VALUE_SEPERATOR = ','
 
         private const val RECORDERS_PATH = "recorders"
 
@@ -745,9 +710,9 @@ public class Recorder<out T, out U : Trackable<ValueInstant<T>>> : CoroutineScop
                     recorderUid = thisUid
                 } else {
                     thisUid = recordersDirectory.listFiles()
-                        .map { it.name.toLongOrNull() }
-                        .requireNoNulls()
-                        .max()?.plus(1) ?: 1L
+                        ?.map { it.name.toLongOrNull() }
+                        ?.requireNoNulls()
+                        ?.max()?.plus(1) ?: 1L
                     recorderUid = thisUid
                 }
                 thisUid.toString()

@@ -66,6 +66,12 @@ kotlin {
     }
 
     sourceSets {
+        all {
+            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
+            languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
+            languageSettings.useExperimentalAnnotation("io.ktor.util.InternalAPI")
+        }
+
         /**
          * commonMain == core-common artifact
          */
@@ -73,6 +79,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.tenkiv.physikal:physikal:${Vof.physikal}")
+                implementation("org.tenkiv.kotlin-xdr:kotlin-xdr:${Vof.xdr}")
             }
         }
 

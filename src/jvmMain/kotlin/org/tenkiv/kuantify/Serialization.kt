@@ -21,6 +21,7 @@ import kotlinx.serialization.json.*
 import kotlinx.serialization.modules.*
 import org.tenkiv.kuantify.lib.physikal.*
 import physikal.*
+import tenkiv.xdr.*
 
 internal typealias Serialization = KuantifySerialization
 
@@ -39,4 +40,6 @@ public object KuantifySerialization {
     }
 
     public val json: Json = Json(context = module)
+
+    public val xdr: Xdr = Xdr(context = module)
 }

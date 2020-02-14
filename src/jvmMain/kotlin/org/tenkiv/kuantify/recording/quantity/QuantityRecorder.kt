@@ -30,10 +30,10 @@ import physikal.*
 public inline fun <reified QT : Quantity<QT>, U : Trackable<QuantityMeasurement<QT>>> CoroutineScope.Recorder(
     updatable: U,
     storageFrequency: StorageFrequency = StorageFrequency.All,
-    memoryDuration: StorageDuration = StorageDuration.For(Recorder.memoryDurationDefault),
+    memoryDuration: StorageDuration = StorageDuration.For(GateRecorder.memoryDurationDefault),
     diskDuration: StorageDuration = StorageDuration.None,
     noinline filterOnRecord: RecordingFilter<DaqcQuantity<QT>, U> = { true }
-): Recorder<DaqcQuantity<QT>, U> = Recorder(
+): GateRecorder<DaqcQuantity<QT>, U> = GateRecorder(
     scope = this,
     updatable = updatable,
     storageFrequency = storageFrequency,
@@ -50,7 +50,7 @@ public inline fun <reified Q : Quantity<Q>, U : Trackable<QuantityMeasurement<Q>
     numSamplesMemory: StorageSamples = StorageSamples.Number(100),
     numSamplesDisk: StorageSamples = StorageSamples.None,
     noinline filterOnRecord: RecordingFilter<DaqcQuantity<Q>, U> = { true }
-): Recorder<DaqcQuantity<Q>, U> = Recorder(
+): GateRecorder<DaqcQuantity<Q>, U> = GateRecorder(
     scope = this,
     updatable = updatable,
     storageFrequency = storageFrequency,
