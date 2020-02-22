@@ -24,12 +24,12 @@ import kotlinx.coroutines.sync.*
 import kotlinx.coroutines.time.*
 import kotlinx.io.ByteArrayOutputStream
 import kotlinx.serialization.*
-import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.recording.bigstorage.*
 import java.io.*
 import java.nio.*
 import java.nio.channels.*
@@ -40,7 +40,7 @@ import kotlin.coroutines.*
 
 public typealias ValueSerializer<T> = (T) -> String
 public typealias ValueDeserializer<T> = (String) -> T
-public typealias RecordingFilter<T, U> = GateRecorder<T, U>.(ValueInstant<T>) -> Boolean
+public typealias RecordingFilter<T, U> = Recorder<T, U>.(ValueInstant<T>) -> Boolean
 internal typealias StorageFilter<T> = (ValueInstant<T>) -> Boolean
 
 //TODO: Move default parameter values in recorder creation function to constants
@@ -222,6 +222,58 @@ public sealed class StorageDuration : StorageLength(), Comparable<StorageDuratio
     }
 }
 
+public interface Recorder<out DT : DaqcData, out GT : DaqcGate<DT>> : CoroutineScope {
+    public val gate: GT
+    public val storageFrequency: StorageFrequency
+    public val memoryStorageLength: StorageLength?
+    public val bigStorageLength: StorageLength?
+
+    public fun getDataInMemory(): List<ValueInstant<DT>>
+
+    public suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<DT>>
+
+    public suspend fun getAllData(): List<ValueInstant<DT>>
+
+    public fun cancel(deleteBigStorage: Boolean = false)
+}
+
+internal fun <DT : DaqcData, GT : DaqcGate<DT>> Recorder<DT, GT>.createRecordJob(
+    memoryHandler: MemoryHandler<DT>?,
+    bigStorageHandler: BigStorageHandler<DT, GT>?,
+    filterOnRecord: RecordingFilter<DT, GT>
+) = launch {
+    when(val storageFrequency = storageFrequency) {
+        StorageFrequency.All -> gate.updateBroadcaster.openSubscription().consumeEach { update ->
+            recordUpdate(update, memoryHandler, bigStorageHandler, filterOnRecord)
+        }
+        is StorageFrequency.Interval -> while (isActive) {
+                delay(storageFrequency.interval)
+                recordUpdate(gate.getValue(), memoryHandler, bigStorageHandler, filterOnRecord)
+            }
+        is StorageFrequency.PerNumMeasurements -> gate.updateBroadcaster.openSubscription().consumeEach { update ->
+                var numUnstoredMeasurements = 0
+                numUnstoredMeasurements++
+                if (numUnstoredMeasurements == storageFrequency.number) {
+                    recordUpdate(update, memoryHandler, bigStorageHandler, filterOnRecord)
+                    numUnstoredMeasurements = 0
+                }
+            }
+    }
+}
+
+private suspend fun <DT : DaqcData, GT : DaqcGate<DT>> Recorder<DT, GT>.recordUpdate(
+    update: ValueInstant<DT>,
+    memoryHandler: MemoryHandler<DT>?,
+    bigStorageHandler: BigStorageHandler<DT, GT>?,
+    filter: RecordingFilter<DT, GT>
+) {
+    if (filter(update)) {
+        memoryHandler?.recordUpdate(update)
+        bigStorageHandler?.recordUpdate(update)
+        memoryHandler?.cleanMemory()
+    }
+}
+
 /**
  * Recorder to store data either in memory, on disk, or both depending on certain parameters.
  */
@@ -231,6 +283,7 @@ public class GateRecorder<out DT : DaqcData, out GT : DaqcGate<DT>> : CoroutineS
     public val storageFrequency: StorageFrequency
     public val memoryStorageLength: StorageLength
     public val diskStorageLength: StorageLength
+    private val bigStorageHandler: BigStorageHandler<DT, GT>?
     private val filterOnRecord: RecordingFilter<DT, GT>
     private val valueSerializer: KSerializer<DT>?
 
@@ -372,7 +425,7 @@ public class GateRecorder<out DT : DaqcData, out GT : DaqcGate<DT>> : CoroutineS
         if (memoryStorageLength >= diskStorageLength) {
             getDataInMemory()
         } else {
-            withContext(coroutineContext + Dispatchers.Daqc) { getDataFromDisk { true } }
+            bigStorageHandler.getData { true }
         }
 
     /**
@@ -383,7 +436,7 @@ public class GateRecorder<out DT : DaqcData, out GT : DaqcGate<DT>> : CoroutineS
      * @return A [List] of [ValueInstant]s stored by the recorder within the [ClosedRange].
      */
     public suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<DT>> =
-        withContext(coroutineContext + Dispatchers.Daqc) {
+        withContext(Dispatchers.Daqc) {
             val oldestRequested = instantRange.start
 
             val filterFun: StorageFilter<DT> = { it.instant in instantRange }
@@ -399,7 +452,7 @@ public class GateRecorder<out DT : DaqcData, out GT : DaqcGate<DT>> : CoroutineS
         }
 
     /**
-     * Stops the recorder.
+     * Performs required cleanups and stops the recorder.
      *
      * @param shouldDeleteDiskData If the recorder should delete the data stored on disk.
      */
@@ -680,15 +733,6 @@ public class GateRecorder<out DT : DaqcData, out GT : DaqcGate<DT>> : CoroutineS
         @PublishedApi
         internal val memoryDurationDefault = 30L.secondsSpan
 
-        // The value of this must match the corresponding property name in PrimitiveValueInstant.
-        private const val VALUE_KEY = "value"
-        // The value of this must match the corresponding property name in PrimitiveValueInstant.
-        private const val INSTANT_KEY = "epochMilli"
-        private const val OPEN_BRACE = '{'.toByte()
-        private const val CLOSE_BRACE = '}'.toByte()
-        private const val STRING_DELIM = '"'.toByte()
-        private const val BREAK = '\\'.toByte()
-        private const val ZERO_BYTE: Byte = 0
         private const val ARRAY_END = '.'
         private const val VALUE_SEPERATOR = ','
 

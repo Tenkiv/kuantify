@@ -15,23 +15,32 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.lib
+package org.tenkiv.kuantify.recording.bigstorage
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.*
+import kotlinx.serialization.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.recording.*
 
-/**
- * Creates a new [CoroutineScope] which is identical to the current one but the [Job] of its context replaced with a
- * new [CompletableJob] that is a child of the current one.
- *
- * Generally used to make a scope that can be canceled independently of the parent scope.
- */
-public fun CoroutineScope.withNewChildJob(): CoroutineScope = this + Job(this.coroutineContext[Job])
+public typealias BigStorageHandlerCreator<DT, GT> = (GateRecorder<DT, GT>) -> BigStorageHandler<DT, GT>
 
-public class MutexValue<V : Any>(@PublishedApi internal val value: V, @PublishedApi internal val mutex: Mutex) {
+public abstract class BigStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
+    protected val recorder: GateRecorder<DT, GT>,
+    protected val serializer: KSerializer<DT>
+) : CoroutineScope by recorder {
+    protected val gate: DaqcGate<DT> get() = recorder.gate
+    protected val storageFrequency: StorageFrequency get() = recorder.storageFrequency
+    protected val storageLength: StorageLength get() = recorder.diskStorageLength
 
-    public suspend inline fun <R> withLock(block: (value: V) -> R): R = mutex.withLock {
-        block(value)
-    }
+    public abstract suspend fun getData(filter: StorageFilter<DT>): List<ValueInstant<DT>>
+
+    public abstract suspend fun recordUpdate(update: ValueInstant<DT>)
+
+    /**
+     * If there is any special shutdown code that needs to be run when the owning [Recorder] is canceled put it here.
+     */
+    public abstract suspend fun cancel(shouldDeleteData: Boolean)
 
 }

@@ -15,23 +15,5 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.lib
+package org.tenkiv.kuantify.recording
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.*
-
-/**
- * Creates a new [CoroutineScope] which is identical to the current one but the [Job] of its context replaced with a
- * new [CompletableJob] that is a child of the current one.
- *
- * Generally used to make a scope that can be canceled independently of the parent scope.
- */
-public fun CoroutineScope.withNewChildJob(): CoroutineScope = this + Job(this.coroutineContext[Job])
-
-public class MutexValue<V : Any>(@PublishedApi internal val value: V, @PublishedApi internal val mutex: Mutex) {
-
-    public suspend inline fun <R> withLock(block: (value: V) -> R): R = mutex.withLock {
-        block(value)
-    }
-
-}
