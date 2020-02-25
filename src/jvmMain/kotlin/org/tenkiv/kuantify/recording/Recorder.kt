@@ -234,7 +234,7 @@ public interface Recorder<out DT : DaqcData, out GT : DaqcGate<DT>> : CoroutineS
 
     public suspend fun getAllData(): List<ValueInstant<DT>>
 
-    public fun cancel(deleteBigStorage: Boolean = false)
+    public suspend fun cancel(deleteBigStorage: Boolean = false)
 }
 
 internal fun <DT : DaqcData, GT : DaqcGate<DT>> Recorder<DT, GT>.createRecordJob(

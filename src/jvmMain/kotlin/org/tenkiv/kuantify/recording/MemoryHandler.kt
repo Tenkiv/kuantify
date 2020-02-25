@@ -20,7 +20,6 @@ package org.tenkiv.kuantify.recording
 import kotlinx.coroutines.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.gate.*
 
 internal class MemoryHandler<DT : DaqcData>(
     scope: CoroutineScope,
@@ -35,7 +34,7 @@ internal class MemoryHandler<DT : DaqcData>(
     }
 
     //TODO: Make this return truly immutable list.
-    fun getDataInMemory(): List<ValueInstant<DT>> = ArrayList(_dataInMemory)
+    fun getData(): List<ValueInstant<DT>> = ArrayList(_dataInMemory)
 
     fun recordUpdate(update: ValueInstant<DT>) {
         _dataInMemory += update

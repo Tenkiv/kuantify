@@ -29,24 +29,24 @@ public class MemoryRecorder<DT : DaqcData, GT : DaqcGate<DT>> internal construct
     public override val gate: GT,
     public override val storageFrequency: StorageFrequency,
     public override val memoryStorageLength: StorageLength,
-   filterOnRecord: RecordingFilter<DT, GT>
+    filterOnRecord: RecordingFilter<DT, GT>
 ) : Recorder<DT, GT>, CoroutineScope by scope.withNewChildJob() {
     private val memoryHandler = MemoryHandler<DT>(this, memoryStorageLength)
+
+    public override val bigStorageLength: StorageLength? get() = null
 
     init {
         createRecordJob(memoryHandler = memoryHandler, bigStorageHandler = null, filterOnRecord = filterOnRecord)
     }
 
-    public override val bigStorageLength: StorageLength? get() = null
-
-    public override fun getDataInMemory(): List<ValueInstant<DT>> = memoryHandler.getDataInMemory()
+    public override fun getDataInMemory(): List<ValueInstant<DT>> = memoryHandler.getData()
 
     public override suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<DT>> =
-        memoryHandler.getDataInMemory().filter { it.instant in instantRange }
+        memoryHandler.getData().filter { it.instant in instantRange }
 
     public override suspend fun getAllData(): List<ValueInstant<DT>> = getDataInMemory()
 
-    public override fun cancel(deleteBigStorage: Boolean) = cancel()
+    public override suspend fun cancel(deleteBigStorage: Boolean) = cancel()
 
     public fun cancel() {
         coroutineContext.cancel()

@@ -24,7 +24,7 @@ import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.recording.*
 
-public typealias BigStorageHandlerCreator<DT, GT> = (GateRecorder<DT, GT>) -> BigStorageHandler<DT, GT>
+public typealias BigStorageHandlerCreator<DT, GT> = (Recorder<DT, GT>) -> BigStorageHandler<DT, GT>
 
 public abstract class BigStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
     protected val recorder: GateRecorder<DT, GT>,
