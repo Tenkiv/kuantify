@@ -58,8 +58,8 @@ plugins {
 
 kotlin {
     jvm {
-        val main by compilations.getting {
-            kotlinOptions {
+        compilations.forEach {
+            it.kotlinOptions {
                 jvmTarget = "1.8"
             }
         }
