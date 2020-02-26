@@ -27,12 +27,12 @@ import org.tenkiv.kuantify.recording.*
 public typealias BigStorageHandlerCreator<DT, GT> = (Recorder<DT, GT>) -> BigStorageHandler<DT, GT>
 
 public abstract class BigStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
-    protected val recorder: GateRecorder<DT, GT>,
+    protected val recorder: Recorder<DT, GT>,
     protected val serializer: KSerializer<DT>
 ) : CoroutineScope by recorder {
     protected val gate: DaqcGate<DT> get() = recorder.gate
     protected val storageFrequency: StorageFrequency get() = recorder.storageFrequency
-    protected val storageLength: StorageLength get() = recorder.diskStorageLength
+    protected val storageLength: StorageLength = requireNotNull(recorder.bigStorageLength)
 
     public abstract suspend fun getData(filter: StorageFilter<DT>): List<ValueInstant<DT>>
 

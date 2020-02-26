@@ -37,7 +37,7 @@ import java.nio.file.*
 import java.time.*
 
 public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
-    recorder: GateRecorder<DT, GT>,
+    recorder: Recorder<DT, GT>,
     serializer: KSerializer<DT>
 ) : BigStorageHandler<DT, GT>(recorder, serializer) {
     private val uid = GlobalScope.async(Dispatchers.Daqc) { getRecorderUid() }
