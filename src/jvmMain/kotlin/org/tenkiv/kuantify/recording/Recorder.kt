@@ -17,26 +17,15 @@
 
 package org.tenkiv.kuantify.recording
 
-import io.ktor.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.sync.*
 import kotlinx.coroutines.time.*
-import kotlinx.io.ByteArrayOutputStream
-import kotlinx.serialization.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
-import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.recording.bigstorage.*
-import java.io.*
-import java.nio.*
-import java.nio.channels.*
-import java.nio.charset.*
-import java.nio.file.*
 import java.time.*
-import kotlin.coroutines.*
 
 public typealias RecordingFilter<DT, GT> = Recorder<DT, GT>.(ValueInstant<DT>) -> Boolean
 internal typealias StorageFilter<DT> = (ValueInstant<DT>) -> Boolean
@@ -208,22 +197,22 @@ internal fun <DT : DaqcData, GT : DaqcGate<DT>> Recorder<DT, GT>.createRecordJob
     bigStorageHandler: BigStorageHandler<DT, GT>?,
     filterOnRecord: RecordingFilter<DT, GT>
 ) = launch {
-    when(val storageFrequency = storageFrequency) {
+    when (val storageFrequency = storageFrequency) {
         StorageFrequency.All -> gate.updateBroadcaster.openSubscription().consumeEach { update ->
             recordUpdate(update, memoryHandler, bigStorageHandler, filterOnRecord)
         }
         is StorageFrequency.Interval -> while (isActive) {
-                delay(storageFrequency.interval)
-                recordUpdate(gate.getValue(), memoryHandler, bigStorageHandler, filterOnRecord)
-            }
+            delay(storageFrequency.interval)
+            recordUpdate(gate.getValue(), memoryHandler, bigStorageHandler, filterOnRecord)
+        }
         is StorageFrequency.PerNumMeasurements -> gate.updateBroadcaster.openSubscription().consumeEach { update ->
-                var numUnstoredMeasurements = 0
-                numUnstoredMeasurements++
-                if (numUnstoredMeasurements == storageFrequency.number) {
-                    recordUpdate(update, memoryHandler, bigStorageHandler, filterOnRecord)
-                    numUnstoredMeasurements = 0
-                }
+            var numUnstoredMeasurements = 0
+            numUnstoredMeasurements++
+            if (numUnstoredMeasurements == storageFrequency.number) {
+                recordUpdate(update, memoryHandler, bigStorageHandler, filterOnRecord)
+                numUnstoredMeasurements = 0
             }
+        }
     }
 }
 

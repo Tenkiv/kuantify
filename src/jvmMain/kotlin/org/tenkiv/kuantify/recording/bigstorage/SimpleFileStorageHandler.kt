@@ -52,29 +52,28 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
 
     public override suspend fun getData(filter: StorageFilter<DT>): List<ValueInstant<DT>> =
         withContext(Dispatchers.Daqc) {
-        //TODO: Change to immutable list using builder
-        val result = ArrayList<ValueInstant<DT>>()
-        val currentFiles: List<RecorderFile> = ArrayList(files)
+            //TODO: Change to immutable list using builder
+            val result = ArrayList<ValueInstant<DT>>()
+            val currentFiles: List<RecorderFile> = ArrayList(files)
+            val buffer = ArrayList<ValueInstant<DT>>()
 
-        val buffer = ArrayList<ValueInstant<DT>>()
-
-        val bufferJob = launch(Dispatchers.Daqc) {
-            fileCreationBroadcaster.openSubscription().receive()
-            gate.updateBroadcaster.consumeEach { value ->
-                buffer += value
+            val bufferJob = launch(Dispatchers.Daqc) {
+                fileCreationBroadcaster.openSubscription().receive()
+                gate.updateBroadcaster.consumeEach { value ->
+                    buffer += value
+                }
             }
+
+            currentFiles.forEach {
+                if (it.isOpen.await()) result.addAll(it.readFromDisk(filter))
+            }
+
+            result.addAll(buffer.filter(filter))
+
+
+            bufferJob.cancel()
+            result
         }
-
-        currentFiles.forEach {
-            if (it.isOpen.await()) result.addAll(it.readFromDisk(filter))
-        }
-
-        result.addAll(buffer.filter(filter))
-
-
-        bufferJob.cancel()
-        result
-    }
 
     public override suspend fun recordUpdate(update: ValueInstant<DT>) {
         files.lastOrNull()?.writeEntry(update) ?: TODO("throw exception")
@@ -116,12 +115,12 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
     }
 
     private fun createRecordJob() = launch(Dispatchers.Daqc) {
-        when(val storageLength = storageLength) {
-            is StorageDuration -> when(storageLength) {
+        when (val storageLength = storageLength) {
+            is StorageDuration -> when (storageLength) {
                 is StorageDuration.For -> storeForDurationInit(storageLength.duration)
                 StorageDuration.Forever -> storeEverythingInit()
             }
-            is StorageSamples -> when(storageLength) {
+            is StorageSamples -> when (storageLength) {
                 is StorageSamples.Number -> storeForNumSamplesInit(storageLength.numSamples)
                 StorageSamples.All -> storeEverythingInit()
             }
