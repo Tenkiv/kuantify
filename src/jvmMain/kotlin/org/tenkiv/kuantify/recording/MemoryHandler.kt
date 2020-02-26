@@ -28,11 +28,6 @@ internal class MemoryHandler<DT : DaqcData>(
 
     private val _dataInMemory = ArrayList<ValueInstant<DT>>()
 
-    init {
-        require(storageLength !== StorageSamples.None)
-        require(storageLength !== StorageDuration.None)
-    }
-
     //TODO: Make this return truly immutable list.
     fun getData(): List<ValueInstant<DT>> = ArrayList(_dataInMemory)
 

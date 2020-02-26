@@ -38,66 +38,58 @@ import java.nio.file.*
 import java.time.*
 import kotlin.coroutines.*
 
-public typealias ValueSerializer<T> = (T) -> String
-public typealias ValueDeserializer<T> = (String) -> T
-public typealias RecordingFilter<T, U> = Recorder<T, U>.(ValueInstant<T>) -> Boolean
-internal typealias StorageFilter<T> = (ValueInstant<T>) -> Boolean
+public typealias RecordingFilter<DT, GT> = Recorder<DT, GT>.(ValueInstant<DT>) -> Boolean
+internal typealias StorageFilter<DT> = (ValueInstant<DT>) -> Boolean
 
-//TODO: Move default parameter values in recorder creation function to constants
-public fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
-    updatable: U,
-    storageFrequency: StorageFrequency = StorageFrequency.All,
-    memoryDuration: StorageDuration = StorageDuration.For(GateRecorder.memoryDurationDefault),
-    diskDuration: StorageDuration = StorageDuration.None,
-    filterOnRecord: RecordingFilter<T, U> = { true },
-    valueSerializer: ValueSerializer<T>,
-    valueDeserializer: ValueDeserializer<T>
-): GateRecorder<T, U> = GateRecorder(
-    scope = this,
-    gate = updatable,
-    storageFrequency = storageFrequency,
-    memoryDuration = memoryDuration,
-    diskDuration = diskDuration,
-    filterOnRecord = filterOnRecord,
-    valueSerializer = valueSerializer,
-    valueDeserializer = valueDeserializer
+public fun <DT : DaqcData, GT : DaqcGate<DT>> CoroutineScope.Recorder(
+    gate: GT,
+    storageFrequency: StorageFrequency,
+    memoryStorageLength: StorageLength,
+    filterOnRecord: RecordingFilter<DT, GT> = { true }
+): MemoryRecorder<DT, GT> = MemoryRecorder(this, gate, storageFrequency, memoryStorageLength, filterOnRecord)
+
+public fun <DT : DaqcData, GT : DaqcGate<DT>> CoroutineScope.Recorder(
+    gate: GT,
+    storageFrequency: StorageFrequency,
+    bigStorageLength: StorageLength,
+    bigStorageHandlerCreator: BigStorageHandlerCreator<DT, GT>,
+    filterOnRecord: RecordingFilter<DT, GT> = { true }
+): BigStorageRecorder<DT, GT> =
+    BigStorageRecorder(this, gate, storageFrequency, bigStorageLength, bigStorageHandlerCreator, filterOnRecord)
+
+public fun <DT : DaqcData, GT : DaqcGate<DT>> CoroutineScope.Recorder(
+    gate: GT,
+    storageFrequency: StorageFrequency,
+    memoryStorageLength: StorageSamples,
+    bigStorageLength: StorageSamples,
+    bigStorageHandlerCreator: BigStorageHandlerCreator<DT, GT>,
+    filterOnRecord: RecordingFilter<DT, GT> = { true }
+): CombinedRecorder<DT, GT> = CombinedRecorder(
+    this,
+    gate,
+    storageFrequency,
+    memoryStorageLength,
+    bigStorageLength,
+    bigStorageHandlerCreator,
+    filterOnRecord
 )
 
-public fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
-    updatable: U,
-    storageFrequency: StorageFrequency = StorageFrequency.All,
-    numSamplesMemory: StorageSamples = StorageSamples.Number(100),
-    numSamplesDisk: StorageSamples = StorageSamples.None,
-    filterOnRecord: RecordingFilter<T, U> = { true },
-    valueSerializer: ValueSerializer<T>,
-    valueDeserializer: ValueDeserializer<T>
-): GateRecorder<T, U> = GateRecorder(
-    scope = this,
-    gate = updatable,
-    storageFrequency = storageFrequency,
-    numSamplesMemory = numSamplesMemory,
-    numSamplesDisk = numSamplesDisk,
-    filterOnRecord = filterOnRecord,
-    valueSerializer = valueSerializer,
-    valueDeserializer = valueDeserializer
+public fun <DT : DaqcData, GT : DaqcGate<DT>> CoroutineScope.Recorder(
+    gate: GT,
+    storageFrequency: StorageFrequency,
+    memoryStorageLength: StorageDuration,
+    bigStorageLength: StorageDuration,
+    bigStorageHandlerCreator: BigStorageHandlerCreator<DT, GT>,
+    filterOnRecord: RecordingFilter<DT, GT> = { true }
+): CombinedRecorder<DT, GT> = CombinedRecorder(
+    this,
+    gate,
+    storageFrequency,
+    memoryStorageLength,
+    bigStorageLength,
+    bigStorageHandlerCreator,
+    filterOnRecord
 )
-
-public fun <T, U : Trackable<ValueInstant<T>>> CoroutineScope.Recorder(
-    updatable: U,
-    storageFrequency: StorageFrequency = StorageFrequency.All,
-    memoryStorageLength: StorageLength = StorageSamples.Number(100),
-    filterOnRecord: RecordingFilter<T, U> = { true }
-): GateRecorder<T, U> = GateRecorder(
-    scope = this,
-    gate = updatable,
-    storageFrequency = storageFrequency,
-    memoryStorageLength = memoryStorageLength,
-    filterOnRecord = filterOnRecord
-)
-
-// TODO: Use this from coral
-public fun <T> Iterable<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
-    this.filter { it.instant in instantRange }
 
 /**
  * Sealed class denoting the frequency at which samples should be stored.
@@ -148,18 +140,6 @@ public sealed class StorageSamples : StorageLength(), Comparable<StorageSamples>
     }
 
     /**
-     * Keep no data
-     */
-    public object None : StorageSamples() {
-
-        public override fun compareTo(other: StorageSamples): Int =
-            when (other) {
-                is None -> 0
-                else -> -1
-            }
-    }
-
-    /**
      * Keep a specific number of samples in memory or on disk.
      *
      * @param numSamples The number of samples to keep in memory or on disk.
@@ -169,7 +149,6 @@ public sealed class StorageSamples : StorageLength(), Comparable<StorageSamples>
         public override fun compareTo(other: StorageSamples): Int =
             when (other) {
                 is All -> -1
-                is None -> 1
                 is Number -> numSamples.compareTo(other.numSamples)
             }
     }
@@ -195,18 +174,6 @@ public sealed class StorageDuration : StorageLength(), Comparable<StorageDuratio
     }
 
     /**
-     * Keep none of the data.
-     */
-    public object None : StorageDuration() {
-
-        public override fun compareTo(other: StorageDuration): Int =
-            when (other) {
-                is None -> 0
-                else -> -1
-            }
-    }
-
-    /**
      * Keep the data for a specified duration.
      *
      * @param duration The [Duration] with which to keep the data.
@@ -216,7 +183,6 @@ public sealed class StorageDuration : StorageLength(), Comparable<StorageDuratio
         public override fun compareTo(other: StorageDuration): Int =
             when (other) {
                 is Forever -> -1
-                is None -> 1
                 is For -> duration.compareTo(other.duration)
             }
     }

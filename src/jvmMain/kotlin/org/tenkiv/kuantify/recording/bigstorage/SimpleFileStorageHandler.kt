@@ -82,10 +82,6 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
         if (storageLength is StorageSamples.Number) files.forEach { it.samplesSinceCreation++ }
     }
 
-    private fun noBigStorageInit(): Nothing {
-        throw IllegalStateException("BigStorageHandler cannot exist with recorder big storage length set to none.")
-    }
-
     private fun storeEverythingInit() {
         files += RecorderFile(expiresIn = null)
     }
@@ -124,12 +120,10 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
             is StorageDuration -> when(storageLength) {
                 is StorageDuration.For -> storeForDurationInit(storageLength.duration)
                 StorageDuration.Forever -> storeEverythingInit()
-                StorageDuration.None -> noBigStorageInit()
             }
             is StorageSamples -> when(storageLength) {
                 is StorageSamples.Number -> storeForNumSamplesInit(storageLength.numSamples)
                 StorageSamples.All -> storeEverythingInit()
-                StorageSamples.None -> noBigStorageInit()
             }
         }
     }
