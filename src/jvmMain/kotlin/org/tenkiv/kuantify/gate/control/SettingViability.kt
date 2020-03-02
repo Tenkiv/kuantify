@@ -33,8 +33,8 @@ private val logger = KotlinLogging.logger {}
  */
 public sealed class SettingViability {
 
-    public fun panicIfUnviable() {
-        if (this is Unviable) panic()
+    public fun throwIfUnviable() {
+        if (this is Unviable) throwException()
     }
 
     public object Viable : SettingViability()
@@ -47,9 +47,7 @@ public sealed class SettingViability {
             }
         }
 
-        public fun panic() {
-            throw exception
-        }
+        public fun throwException(): Nothing = throw exception
 
     }
 
