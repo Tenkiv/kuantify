@@ -37,14 +37,6 @@ repositories {
     mavenCentral()
     jcenter()
     google()
-    maven {
-        url = uri("https://maven.jetbrains.space/tenkiv/kuantify-snapshots/")
-
-        credentials {
-            username = properties.getProperty("spaceUser")
-            password = properties.getProperty("spacePw")
-        }
-    }
     maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
 }
 
