@@ -30,7 +30,7 @@ object Vof {
 
     // Tenkiv
     const val coral = "2.4.2-SNAPSHOT"
-    const val physikal = "3.0.5.6-SNAPSHOT"
+    const val physikal = "3.0.5.8-SNAPSHOT"
 
     // Other
     const val arrow = "0.8.2"
