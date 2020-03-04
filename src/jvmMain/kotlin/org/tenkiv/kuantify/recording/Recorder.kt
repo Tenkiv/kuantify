@@ -205,12 +205,14 @@ internal fun <DT : DaqcData, GT : DaqcGate<DT>> Recorder<DT, GT>.createRecordJob
             delay(storageFrequency.interval)
             recordUpdate(gate.getValue(), memoryHandler, bigStorageHandler, filterOnRecord)
         }
-        is StorageFrequency.PerNumMeasurements -> gate.updateBroadcaster.openSubscription().consumeEach { update ->
+        is StorageFrequency.PerNumMeasurements -> {
             var numUnstoredMeasurements = 0
-            numUnstoredMeasurements++
-            if (numUnstoredMeasurements == storageFrequency.number) {
-                recordUpdate(update, memoryHandler, bigStorageHandler, filterOnRecord)
-                numUnstoredMeasurements = 0
+            gate.updateBroadcaster.openSubscription().consumeEach { update ->
+                numUnstoredMeasurements++
+                if (numUnstoredMeasurements == storageFrequency.number) {
+                    recordUpdate(update, memoryHandler, bigStorageHandler, filterOnRecord)
+                    numUnstoredMeasurements = 0
+                }
             }
         }
     }
