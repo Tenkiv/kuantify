@@ -57,6 +57,17 @@ public abstract class NetworkRouteBinding<MT, ST>(
 
     }
 
+
+    public data class Properties<MT, ST>(
+        public val networkCommunicator: NetworkCommunicator<ST>,
+        public val route: String,
+        public val localUpdateChannel: ReceiveChannel<MT>?,
+        public val networkUpdateChannel: Channel<ST>?,
+        public val serializeMessage: MessageSerializer<MT, ST>?,
+        public val sendUpdates: Boolean,
+        public val receiveUpdate: UpdateReceiver<ST>?,
+        public val serializedPing: ST
+    )
 }
 
 public class RecursionPreventingRouteBinding<MT, ST>(
@@ -69,6 +80,18 @@ public class RecursionPreventingRouteBinding<MT, ST>(
     private val receiveUpdate: UpdateReceiver<ST>?,
     private val serializedPing: ST
 ) : NetworkRouteBinding<MT, ST>(networkCommunicator, networkUpdateChannel) {
+
+    public constructor(props: Properties<MT, ST>) :
+            this(
+                props.networkCommunicator,
+                props.route,
+                props.localUpdateChannel,
+                props.networkUpdateChannel,
+                props.serializeMessage,
+                props.sendUpdates,
+                props.receiveUpdate,
+                props.serializedPing
+            )
 
     private val ignoreNextUpdate = AtomicBoolean(false)
 
@@ -113,6 +136,18 @@ public class StandardRouteBinding<MT, ST>(
     private val receiveUpdate: UpdateReceiver<ST>?,
     private val serializedPing: ST
 ) : NetworkRouteBinding<MT, ST>(networkCommunicator, networkUpdateChannel) {
+
+    public constructor(props: Properties<MT, ST>) :
+            this(
+                props.networkCommunicator,
+                props.route,
+                props.localUpdateChannel,
+                props.networkUpdateChannel,
+                props.serializeMessage,
+                props.sendUpdates,
+                props.receiveUpdate,
+                props.serializedPing
+            )
 
     public override fun start() {
         // Send

@@ -142,10 +142,10 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
     }
 
     private fun ValueInstant<DT>.toBase64(valueSerializer: KSerializer<DT>): String =
-        Serialization.xdr.dump(ValueInstantSerializer(valueSerializer), this).encodeBase64()
+        Serialization.cbor.dump(ValueInstantSerializer(valueSerializer), this).encodeBase64()
 
     private fun ByteArray.toValueInstant(valueSerializer: KSerializer<DT>): ValueInstant<DT> =
-        Serialization.xdr.load(ValueInstantSerializer(valueSerializer), this.decodeToString().decodeBase64Bytes())
+        Serialization.cbor.load(ValueInstantSerializer(valueSerializer), this.decodeToString().decodeBase64Bytes())
 
     //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
     //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Inner class ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //

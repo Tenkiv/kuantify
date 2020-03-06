@@ -17,11 +17,11 @@
 
 package org.tenkiv.kuantify
 
+import kotlinx.serialization.cbor.*
 import kotlinx.serialization.json.*
 import kotlinx.serialization.modules.*
 import org.tenkiv.kuantify.lib.physikal.*
 import physikal.*
-import tenkiv.xdr.*
 
 internal typealias Serialization = KuantifySerialization
 
@@ -41,5 +41,5 @@ public object KuantifySerialization {
 
     public val json: Json = Json(context = module)
 
-    public val xdr: Xdr = Xdr(context = module)
+    public val cbor: Cbor = Cbor(context = module)
 }

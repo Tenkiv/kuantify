@@ -19,7 +19,6 @@ package org.tenkiv.kuantify.networking.configuration
 
 import kotlinx.coroutines.channels.*
 import mu.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.networking.communication.*
 
 public typealias Path = List<String>
@@ -66,36 +65,21 @@ public class SideRouteConfig<ST>(
             sideRouteConfigBuilderLogger.warn { "Overriding side route binding for route $path." }
         }
 
-        val standardRouteBinding by lazy(LazyThreadSafetyMode.NONE) {
-            StandardRouteBinding(
-                networkCommunicator,
-                path,
-                routeBindingBuilder.localUpdateChannel,
-                networkUpdateChannel,
-                routeBindingBuilder.serializeMessage,
-                routeBindingBuilder.send,
-                routeBindingBuilder.receive,
-                serializedPing
-            )
-        }
-
-        val recursionPreventingRouteBinding by lazy(LazyThreadSafetyMode.NONE) {
-            RecursionPreventingRouteBinding(
-                networkCommunicator,
-                path,
-                routeBindingBuilder.localUpdateChannel,
-                networkUpdateChannel,
-                routeBindingBuilder.serializeMessage,
-                routeBindingBuilder.send,
-                routeBindingBuilder.receive,
-                serializedPing
-            )
-        }
+        val bindingProperties = NetworkRouteBinding.Properties(
+            networkCommunicator,
+            path,
+            routeBindingBuilder.localUpdateChannel,
+            networkUpdateChannel,
+            routeBindingBuilder.serializeMessage,
+            routeBindingBuilder.send,
+            routeBindingBuilder.receive,
+            serializedPing
+        )
 
         networkRouteBindingMap[path] = if (remoteConnectionCommunicator && recursiveSynchronizer) {
-            recursionPreventingRouteBinding
+            RecursionPreventingRouteBinding(bindingProperties)
         } else {
-            standardRouteBinding
+            StandardRouteBinding(bindingProperties)
         }
     }
 

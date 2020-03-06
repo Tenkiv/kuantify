@@ -18,8 +18,10 @@
 package org.tenkiv.kuantify.fs.hardware.device
 
 import io.ktor.client.request.*
+import io.ktor.utils.io.errors.IOException
 import kotlinx.coroutines.*
 import kotlinx.io.*
+import kotlinx.serialization.builtins.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import mu.*
@@ -42,7 +44,7 @@ public interface FSDevice : Device, NetworkBoundCombined {
 
     public companion object {
         @PublishedApi
-        internal val serializedPing = Json.stringify(UnitSerializer, Unit)
+        internal val serializedPing = Json.stringify(UnitSerializer(), Unit)
     }
 }
 

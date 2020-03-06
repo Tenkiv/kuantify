@@ -15,7 +15,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("KDocMissingDocumentation", "PublicApiImplicitType", "UNUSED_VARIABLE")
+@file:Suppress("UNUSED_VARIABLE")
 
 buildscript {
     repositories {
@@ -71,7 +71,6 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.tenkiv.physikal:physikal:${Vof.physikal}")
-                implementation("org.tenkiv.kotlin-xdr:kotlin-xdr:${Vof.xdr}")
             }
         }
 
@@ -105,6 +104,7 @@ kotlin {
 
                 //Serialization
                 api("org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Vof.serializationX}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:${Vof.serializationX}")
 
                 //ktor
                 implementation("io.ktor:ktor-server-core:${Vof.ktor}")

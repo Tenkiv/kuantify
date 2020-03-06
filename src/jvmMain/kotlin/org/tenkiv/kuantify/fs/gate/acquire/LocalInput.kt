@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.fs.gate.acquire
 
+import kotlinx.serialization.builtins.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import org.tenkiv.kuantify.*
@@ -25,6 +26,7 @@ import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.serializer
 import org.tenkiv.kuantify.networking.configuration.*
 import physikal.*
 
@@ -35,7 +37,7 @@ public interface LocalInput<T : DaqcValue, out D : LocalDevice> : LocalAcquireGa
         routing.addToThisPath {
             bind<Boolean>(RC.IS_TRANSCEIVING) {
                 serializeMessage {
-                    Json.stringify(BooleanSerializer, it)
+                    Serialization.json.stringify(Boolean.serializer(), it)
                 }
 
                 setLocalUpdateChannel(isTransceiving.updateBroadcaster.openSubscription()) withUpdateChannel {

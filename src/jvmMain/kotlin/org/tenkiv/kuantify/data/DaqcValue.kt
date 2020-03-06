@@ -292,13 +292,15 @@ public class DaqcQuantity<QT : Quantity<QT>>(internal val wrappedQuantity: Quant
 
 @Serializer(forClass = DaqcQuantity::class)
 public class DaqcQuantitySerializer<QT : Quantity<QT>> internal constructor() : KSerializer<DaqcQuantity<QT>> {
-    public override val descriptor: SerialDescriptor = StringDescriptor.withName("DaqcQuantitySerializer")
+    public override val descriptor: SerialDescriptor = SerialDescriptor("DaqcQuantity") {
+        element("wrappedQuantity", Quantity.serializer<QT>().descriptor)
+    }
 
     public override fun deserialize(decoder: Decoder): DaqcQuantity<QT> =
         decoder.decode(Quantity.serializer<QT>()).toDaqc()
 
-    public override fun serialize(encoder: Encoder, obj: DaqcQuantity<QT>) {
-        encoder.encode(Quantity.serializer(), obj.wrappedQuantity)
+    public override fun serialize(encoder: Encoder, value: DaqcQuantity<QT>) {
+        encoder.encode(Quantity.serializer(), value.wrappedQuantity)
     }
 }
 

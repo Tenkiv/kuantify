@@ -22,7 +22,6 @@ import mu.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.kuantify.networking.configuration.NetworkingDsl
 
 public typealias PingReceiver = suspend () -> Unit
 
@@ -78,36 +77,37 @@ public class CombinedRouteConfig(@PublishedApi internal val networkCommunicator:
         if (currentBinding != null) {
             combinedRouteConfigBuilderLogger.warn { "Overriding combined route binding for route $path." }
         }
-        val standardRouteBinding by lazy(LazyThreadSafetyMode.NONE) {
-            StandardRouteBinding(
-                networkCommunicator,
-                path,
-                routeBindingBuilder.localUpdateChannel,
-                networkUpdateChannel,
-                routeBindingBuilder.serializeMessage,
-                routeBindingBuilder.sendFromHost,
-                buildHostUpdateReceiver(routeBindingBuilder),
-                FSDevice.serializedPing
-            )
-        }
 
-        val recursionPreventingRouteBinding by lazy(LazyThreadSafetyMode.NONE) {
-            RecursionPreventingRouteBinding(
-                networkCommunicator,
-                path,
-                routeBindingBuilder.localUpdateChannel,
-                networkUpdateChannel,
-                routeBindingBuilder.serializeMessage,
-                routeBindingBuilder.sendFromRemote,
-                buildRemoteUpdateReceiver(routeBindingBuilder),
-                FSDevice.serializedPing
-            )
-        }
+        val remoteBindingProperties = NetworkRouteBinding.Properties(
+            networkCommunicator,
+            path,
+            routeBindingBuilder.localUpdateChannel,
+            networkUpdateChannel,
+            routeBindingBuilder.serializeMessage,
+            routeBindingBuilder.sendFromRemote,
+            buildRemoteUpdateReceiver(routeBindingBuilder),
+            FSDevice.serializedPing
+        )
 
-        networkRouteBindingMap[path] = if (remoteConnectionCommunicator && recursiveSynchronizer) {
-            recursionPreventingRouteBinding
+        val hostBindingProperties = NetworkRouteBinding.Properties(
+            networkCommunicator,
+            path,
+            routeBindingBuilder.localUpdateChannel,
+            networkUpdateChannel,
+            routeBindingBuilder.serializeMessage,
+            routeBindingBuilder.sendFromHost,
+            buildHostUpdateReceiver(routeBindingBuilder),
+            FSDevice.serializedPing
+        )
+
+        networkRouteBindingMap[path] = if (remoteConnectionCommunicator) {
+            if (recursiveSynchronizer) {
+                RecursionPreventingRouteBinding(remoteBindingProperties)
+            } else {
+                StandardRouteBinding(remoteBindingProperties)
+            }
         } else {
-            standardRouteBinding
+            StandardRouteBinding(hostBindingProperties)
         }
 
     }
@@ -157,6 +157,7 @@ public class CombinedRouteConfig(@PublishedApi internal val networkCommunicator:
             }
         }
     }
+
 }
 
 @Suppress("NAME_SHADOWING")

@@ -20,11 +20,13 @@ package org.tenkiv.kuantify.fs.networking.communication
 import io.ktor.client.features.websocket.*
 import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
+import io.ktor.utils.io.errors.IOException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.io.*
 import kotlinx.serialization.json.*
 import mu.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.client.*
@@ -147,7 +149,7 @@ internal class FSRemoteWebsocketCommunicator(
 
     @Suppress("NAME_SHADOWING")
     private suspend fun receiveRawMessage(message: String) {
-        val (route, message) = Json.parse(NetworkMessage.serializer(), message)
+        val (route, message) = Serialization.json.parse(NetworkMessage.serializer(), message)
 
         receiveMessage(route, message)
     }

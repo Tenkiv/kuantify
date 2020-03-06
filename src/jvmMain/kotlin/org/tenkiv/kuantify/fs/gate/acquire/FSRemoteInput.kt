@@ -18,6 +18,7 @@
 package org.tenkiv.kuantify.fs.gate.acquire
 
 import kotlinx.coroutines.channels.*
+import kotlinx.serialization.builtins.*
 import kotlinx.serialization.internal.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
@@ -26,6 +27,7 @@ import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.serializer
 import org.tenkiv.kuantify.networking.configuration.*
 import physikal.*
 import kotlin.reflect.*
@@ -46,7 +48,7 @@ public sealed class FSRemoteInput<T : DaqcValue, out D : FSRemoteDevice>(device:
         routing.addToThisPath {
             bind<Boolean>(RC.IS_TRANSCEIVING) {
                 receive {
-                    val value = Serialization.json.parse(BooleanSerializer, it)
+                    val value = Serialization.json.parse(Boolean.serializer(), it)
                     _isTransceiving.value = value
                 }
             }

@@ -18,6 +18,7 @@
 package org.tenkiv.kuantify.fs.gate.control
 
 import kotlinx.coroutines.channels.*
+import kotlinx.serialization.builtins.*
 import kotlinx.serialization.internal.*
 import kotlinx.serialization.json.*
 import mu.*
@@ -30,6 +31,7 @@ import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.lib.*
+import org.tenkiv.kuantify.lib.serializer
 import org.tenkiv.kuantify.networking.configuration.*
 import physikal.*
 import kotlin.reflect.*
@@ -60,7 +62,7 @@ public sealed class FSRemoteOutput<T : DaqcValue, D : FSRemoteDevice>(device: D,
         routing.addToThisPath {
             bind<Boolean>(RC.IS_TRANSCEIVING) {
                 receive {
-                    val value = Serialization.json.parse(BooleanSerializer, it)
+                    val value = Serialization.json.parse(Boolean.serializer(), it)
                     _isTransceiving.value = value
                 }
             }

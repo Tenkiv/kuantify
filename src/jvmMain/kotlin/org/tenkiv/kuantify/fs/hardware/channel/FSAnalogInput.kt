@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.fs.hardware.channel
 
+import kotlinx.serialization.builtins.*
 import kotlinx.serialization.internal.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.gate.acquire.*
@@ -31,10 +32,10 @@ import physikal.*
 internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: AnalogInput<*>) {
     bind<Boolean>(RC.BUFFER, recursiveSynchronizer = true) {
         serializeMessage {
-            Serialization.json.stringify(BooleanSerializer, it)
+            Serialization.json.stringify(Boolean.serializer(), it)
         } withSerializer {
             receiveMessageOnEither {
-                val setting = Serialization.json.parse(BooleanSerializer, it)
+                val setting = Serialization.json.parse(Boolean.serializer(), it)
                 analogInput.buffer.set(setting)
             }
         }

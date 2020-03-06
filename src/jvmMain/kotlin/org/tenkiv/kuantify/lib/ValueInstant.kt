@@ -18,7 +18,6 @@
 package org.tenkiv.kuantify.lib
 
 import kotlinx.serialization.*
-import kotlinx.serialization.internal.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import physikal.*
@@ -31,17 +30,15 @@ public typealias QuantityMeasurement<QT> = ValueInstant<DaqcQuantity<QT>>
 @Serializer(forClass = ValueInstant::class)
 public class ValueInstantSerializer<T : Any>(val valueSerializer: KSerializer<T>) : KSerializer<ValueInstant<T>> {
 
-    public override val descriptor: SerialDescriptor = object : SerialClassDescImpl("ValueInstantSerializer") {
-        init {
-            addElement("value")
-            addElement("instant")
-        }
+    public override val descriptor: SerialDescriptor = SerialDescriptor("ValueInstantSerializer") {
+            element("value", valueSerializer.descriptor)
+            element("instant", InstantSerializer.descriptor)
     }
 
-    public override fun serialize(encoder: Encoder, obj: ValueInstant<T>) {
+    public override fun serialize(encoder: Encoder, value: ValueInstant<T>) {
         val out = encoder.beginStructure(descriptor)
-        out.encodeSerializableElement(descriptor, 0, valueSerializer, obj.value)
-        out.encodeSerializableElement(descriptor, 1, InstantSerializer, obj.instant)
+        out.encodeSerializableElement(descriptor, 0, valueSerializer, value.value)
+        out.encodeSerializableElement(descriptor, 1, InstantSerializer, value.instant)
         out.endStructure(descriptor)
     }
 
@@ -76,14 +73,14 @@ public fun <QT : Quantity<QT>> ValueInstant.Companion.quantitySerializer() = ser
 @Serializer(forClass = Instant::class)
 public object InstantSerializer : KSerializer<Instant> {
 
-    public override val descriptor: SerialDescriptor = LongDescriptor.withName("Instant")
+    public override val descriptor: SerialDescriptor = PrimitiveDescriptor("Instant", PrimitiveKind.LONG)
 
     public override fun deserialize(decoder: Decoder): Instant {
         return Instant.ofEpochMilli(decoder.decodeLong())
     }
 
-    public override fun serialize(encoder: Encoder, obj: Instant) {
-        encoder.encodeLong(obj.toEpochMilli())
+    public override fun serialize(encoder: Encoder, value: Instant) {
+        encoder.encodeLong(value.toEpochMilli())
     }
 
 }

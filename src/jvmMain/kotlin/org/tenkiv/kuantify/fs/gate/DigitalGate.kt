@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.fs.gate
 
+import kotlinx.serialization.builtins.*
 import kotlinx.serialization.internal.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.networking.*
@@ -56,7 +57,7 @@ internal fun SideNetworkRouting<String>.digitalGateIsTransceivingRemote(
 ) {
     bind<Boolean>(transceivingRC) {
         receive {
-            val value = Serialization.json.parse(BooleanSerializer, it)
+            val value = Serialization.json.parse(Boolean.serializer(), it)
             updatable.set(value)
         }
     }
@@ -68,7 +69,7 @@ internal fun SideNetworkRouting<String>.digitalGateIsTransceivingLocal(
 ) {
     bind<Boolean>(transceivingRC) {
         serializeMessage {
-            Serialization.json.stringify(BooleanSerializer, it)
+            Serialization.json.stringify(Boolean.serializer(), it)
         }
 
         setLocalUpdateChannel(trackable.updateBroadcaster.openSubscription()) withUpdateChannel {
