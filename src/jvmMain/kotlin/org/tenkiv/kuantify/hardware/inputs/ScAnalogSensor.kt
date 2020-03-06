@@ -17,7 +17,6 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
-import arrow.core.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
@@ -45,9 +44,9 @@ public abstract class ScAnalogSensor<QT : Quantity<QT>>(
     public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<QT>>
         get() = _broadcastChannel
 
-    private val _updateErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    public val updateErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = _updateErrorBroadcaster
+    private val _transformErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
+    public val transformErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        get() = _transformErrorBroadcaster
 
     public final override val isTransceiving get() = analogInput.isTransceiving
 
@@ -59,11 +58,11 @@ public abstract class ScAnalogSensor<QT : Quantity<QT>>(
 
         launch {
             analogInput.updateBroadcaster.consumeEach { measurement ->
-                val convertedResult = convertInput(measurement.value)
+                val convertedResult = transformInput(measurement.value)
 
                 when (convertedResult) {
-                    is Success -> _broadcastChannel.send(convertedResult.value at measurement.instant)
-                    is Failure -> _updateErrorBroadcaster.send(convertedResult.exception at measurement.instant)
+                    is Result.Success -> _broadcastChannel.send(convertedResult.value at measurement.instant)
+                    is Result.Failure -> _transformErrorBroadcaster.send(convertedResult.error at measurement.instant)
                 }
             }
         }
@@ -73,9 +72,9 @@ public abstract class ScAnalogSensor<QT : Quantity<QT>>(
      * Function to convert the [ElectricPotential] of the analog input to a [DaqcQuantity] or return an error.
      *
      * @param voltage The [ElectricPotential] measured by the analog input.
-     * @return A [Try] of either a [DaqcQuantity] or an error.
+     * @return A [Result] of either a [DaqcQuantity] or an error.
      */
-    protected abstract fun convertInput(voltage: Quantity<Voltage>): Try<DaqcQuantity<QT>>
+    protected abstract fun transformInput(voltage: Quantity<Voltage>): Result<DaqcQuantity<QT>, Throwable>
 
     public final override fun startSampling() {
         analogInput.startSampling()

@@ -17,8 +17,8 @@
 
 package org.tenkiv.kuantify.hardware.inputs.thermocouples
 
-import arrow.core.*
 import kotlinx.coroutines.*
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.inputs.*
@@ -50,7 +50,7 @@ public class ThermocoupleK internal constructor(
                 " ${analogInput.device} \n" +
                 "has not yet measured a temperature, thermocouples from this device cannot function until it does."
 
-    protected override fun convertInput(voltage: Quantity<Voltage>): Try<DaqcQuantity<Temperature>> {
+    protected override fun transformInput(voltage: Quantity<Voltage>): Result<DaqcQuantity<Temperature>, Throwable> {
         val mv = voltage toDoubleIn Millivolt
         val temperatureReferenceValue = analogInput.device.temperatureReference.updateBroadcaster.valueOrNull?.value
 
@@ -78,7 +78,7 @@ public class ThermocoupleK internal constructor(
                 (temperatureReferenceValue ?: throw UninitializedPropertyAccessException(noTempRefValueMsg))
                 ).toDaqc()
 
-        return Try {
+        return runCatching {
             if (mv >= -5.891 && mv < 0) {
                 calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0)
             } else if (mv >= 0 && mv < 20.644) {
@@ -91,7 +91,7 @@ public class ThermocoupleK internal constructor(
                             " voltage ${voltage convertTo Millivolt}"
                 )
             }
-        }
+        }.toCoralResult()
 
     }
 

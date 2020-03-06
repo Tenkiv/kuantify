@@ -61,6 +61,7 @@ kotlin {
         all {
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
             languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
+            languageSettings.useExperimentalAnnotation("org.tenkiv.coral.ExperimentalCoralApi")
             languageSettings.useExperimentalAnnotation("io.ktor.util.InternalAPI")
         }
 
@@ -91,7 +92,6 @@ kotlin {
 
                 //General kotlin utilities
                 api("org.tenkiv.coral:coral-jvm:${Vof.coral}")
-                api("io.arrow-kt:arrow-core:${Vof.arrow}")
                 implementation(kotlin("reflect", Vof.kotlin))
 
                 //Coroutines

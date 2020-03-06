@@ -31,9 +31,6 @@ object Vof {
     const val coral = "2.4.2-SNAPSHOT"
     const val physikal = "3.0.5.8-SNAPSHOT"
 
-    // Other
-    const val arrow = "0.8.2"
-
     // Test
     const val spek = "2.0.9"
     const val mockk = "1.9.3"
