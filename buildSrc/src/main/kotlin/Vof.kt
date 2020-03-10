@@ -19,16 +19,16 @@ object Vof {
     const val kotlin = "1.3.70"
 
     // Kotlin extensions
-    const val coroutinesX = "1.3.3"
+    const val coroutinesX = "1.3.4"
     const val serializationX = "0.20.0"
 
     // Jetbrains
     const val ktor = "1.3.1"
-    const val dokka = "0.10.0"
+    const val dokka = "0.10.1"
     const val kotlinLogging = "1.7.8"
 
     // Tenkiv
-    const val coral = "2.4.2-SNAPSHOT"
+    const val coral = "2.5.1.0-SNAPSHOT"
     const val physikal = "3.0.5.8-SNAPSHOT"
 
     // Test
