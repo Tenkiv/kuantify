@@ -31,8 +31,8 @@ import physikal.*
  * Abstract class for single channel analog sensorMap.
  *
  * @param analogInput The analog input.
- * @param maximumEp The maximum [ElectricPotential] for the sensor.
- * @param acceptableError The maximum acceptable error for the sensor in [ElectricPotential].
+ * @param maximumEp The maximum [Voltage] for the sensor.
+ * @param acceptableError The maximum acceptable error for the sensor in [Voltage].
  */
 public abstract class ScAnalogSensor<QT : Quantity<QT>>(
     public val analogInput: AnalogInput<*>,
@@ -58,11 +58,12 @@ public abstract class ScAnalogSensor<QT : Quantity<QT>>(
 
         launch {
             analogInput.updateBroadcaster.consumeEach { measurement ->
-                val convertedResult = transformInput(measurement.value)
 
-                when (convertedResult) {
+                when (val convertedResult = transformInput(measurement.value)) {
                     is Result.Success -> _broadcastChannel.send(convertedResult.value at measurement.instant)
-                    is Result.Failure -> _transformErrorBroadcaster.send(convertedResult.error at measurement.instant)
+                    is Result.Failure -> {
+                        _transformErrorBroadcaster.send(convertedResult.error at measurement.instant)
+                    }
                 }
             }
         }

@@ -17,7 +17,6 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
-import arrow.core.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
@@ -41,9 +40,9 @@ public abstract class ScDigitalFrequencySensor<QT : Quantity<QT>>(val digitalInp
     public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<QT>>
         get() = _broadcastChannel
 
-    private val _updateErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    public val updateErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = _updateErrorBroadcaster
+    private val _transformErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
+    public val transformErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
+        get() = _transformErrorBroadcaster
 
     public final override val isTransceiving get() = digitalInput.isTransceivingFrequency
 
@@ -54,11 +53,12 @@ public abstract class ScDigitalFrequencySensor<QT : Quantity<QT>>(val digitalInp
     init {
         launch {
             digitalInput.transitionFrequencyBroadcaster.consumeEach { measurement ->
-                val convertedInput = convertInput(measurement.value)
 
-                when (convertedInput) {
-                    is Success -> _broadcastChannel.send(convertedInput.value at measurement.instant)
-                    is Failure -> _updateErrorBroadcaster.send(convertedInput.exception at measurement.instant)
+                when (val convertedInput = transformInput(measurement.value)) {
+                    is Result.Success -> _broadcastChannel.send(convertedInput.value at measurement.instant)
+                    is Result.Failure -> {
+                        _transformErrorBroadcaster.send(convertedInput.error at measurement.instant)
+                    }
                 }
             }
         }
@@ -76,7 +76,7 @@ public abstract class ScDigitalFrequencySensor<QT : Quantity<QT>>(val digitalInp
      * Function to convert the [Frequency] of the digital input to a [DaqcQuantity] or return an error.
      *
      * @param frequency The [Frequency] measured by the digital input.
-     * @return A [Try] of either a [DaqcQuantity] or an error.
+     * @return A [Result] of either a [DaqcQuantity] or an error.
      */
-    protected abstract fun convertInput(frequency: Quantity<Frequency>): Try<DaqcQuantity<QT>>
+    protected abstract fun transformInput(frequency: Quantity<Frequency>): Result<DaqcQuantity<QT>, Throwable>
 }
