@@ -50,8 +50,8 @@ public interface IOStrand<out T : DaqcValue> : DaqcGate<T> {
 public interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Comparable<T> {
 
     /**
-     * The range of values that this IOStrand is likely to handle. There is not necessarily a guarantee that there will
-     * never be a value outside this range.
+     * The range of values that this IOStrand is expected to handle. There is not an enforced guarantee that there will
+     * never be a value outside this range but implementations should make their own guarantees.
      */
     public val valueRange: ClosedRange<T>
 

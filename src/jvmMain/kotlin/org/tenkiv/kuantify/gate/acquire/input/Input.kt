@@ -22,7 +22,7 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.*
 import physikal.*
 
-public typealias QuantityInput<Q> = Input<DaqcQuantity<Q>>
+public typealias QuantityInput<QT> = Input<DaqcQuantity<QT>>
 
 /**
  * Interface defining classes which act as inputs and measure or gather data.
@@ -46,13 +46,14 @@ public interface BinaryStateInput : RangedInput<BinaryState> {
 
 }
 
-// Kotlin compiler is getting confused about generics star projections if RangedInput (or a typealias) is used directly
-// TODO: look into changing this to a typealias if generics compiler issue is fixed.
-public interface RangedQuantityInput<QT : Quantity<QT>> : RangedInput<DaqcQuantity<QT>>
+public interface RangedQuantityInput<QT : Quantity<QT>> : RangedInput<DaqcQuantity<QT>> {
+    public override val valueRange: ClosedFloatingPointRange<DaqcQuantity<QT>>
+}
 
+//TODO: Consider handling out of range updates
 private class RangedQuantityInputBox<QT : Quantity<QT>>(
     private val input: QuantityInput<QT>,
-    override val valueRange: ClosedRange<DaqcQuantity<QT>>
+    override val valueRange: ClosedFloatingPointRange<DaqcQuantity<QT>>
 ) : RangedQuantityInput<QT>, QuantityInput<QT> by input {
 
     override val daqcDataSize: Int
@@ -61,5 +62,18 @@ private class RangedQuantityInputBox<QT : Quantity<QT>>(
 }
 
 public fun <QT : Quantity<QT>> QuantityInput<QT>.toNewRangedInput(
-    valueRange: ClosedRange<DaqcQuantity<QT>>
+    valueRange: ClosedFloatingPointRange<DaqcQuantity<QT>>
 ): RangedQuantityInput<QT> = RangedQuantityInputBox(this, valueRange)
+
+public enum class TransformationFailureHandling {
+    /**
+     * @throws an exception if this [Input] has a source value at the time of an update that cannot be
+     * accurately transformed into the type of this [Input].
+     */
+    THROW,
+
+    /**
+     * Ignores the update from the underlying source if it cannot be accurately transformed to the type of this [Input].
+     */
+    IGNORE
+}

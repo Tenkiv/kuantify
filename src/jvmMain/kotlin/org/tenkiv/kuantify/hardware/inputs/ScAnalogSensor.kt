@@ -19,6 +19,7 @@ package org.tenkiv.kuantify.hardware.inputs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
@@ -27,17 +28,20 @@ import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
 import physikal.*
 
+private val logger = KotlinLogging.logger {}
+
 /**
  * Abstract class for single channel analog sensorMap.
  *
  * @param analogInput The analog input.
- * @param maximumEp The maximum [Voltage] for the sensor.
+ * @param maximumVoltage The maximum [Voltage] for the sensor.
  * @param acceptableError The maximum acceptable error for the sensor in [Voltage].
  */
 public abstract class ScAnalogSensor<QT : Quantity<QT>>(
     public val analogInput: AnalogInput<*>,
-    maximumEp: Quantity<Voltage>,
-    acceptableError: Quantity<Voltage>
+    maximumVoltage: Quantity<Voltage>,
+    acceptableError: Quantity<Voltage>,
+    private val throwOnTransformFailure: Boolean = false
 ) : QuantityInput<QT> {
 
     private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<QT>>()
@@ -53,7 +57,7 @@ public abstract class ScAnalogSensor<QT : Quantity<QT>>(
     public final override val updateRate get() = analogInput.updateRate
 
     init {
-        analogInput.maxElectricPotential.set(maximumEp)
+        analogInput.maxElectricPotential.set(maximumVoltage)
         analogInput.maxAcceptableError.set(acceptableError)
 
         launch {
@@ -62,17 +66,21 @@ public abstract class ScAnalogSensor<QT : Quantity<QT>>(
                 when (val convertedResult = transformInput(measurement.value)) {
                     is Result.Success -> _broadcastChannel.send(convertedResult.value at measurement.instant)
                     is Result.Failure -> {
-                        _transformErrorBroadcaster.send(convertedResult.error at measurement.instant)
+                        if (throwOnTransformFailure) throw convertedResult.error
+
+                        logger.error(convertedResult.error, ::transformFailureMsg)
                     }
                 }
             }
         }
     }
 
+    private fun transformFailureMsg() = "Analog sensor based on analog input $analogInput failed to transform input."
+
     /**
-     * Function to convert the [ElectricPotential] of the analog input to a [DaqcQuantity] or return an error.
+     * Function to convert the [Voltage] of the analog input to a [DaqcQuantity] or return an error.
      *
-     * @param voltage The [ElectricPotential] measured by the analog input.
+     * @param voltage The [Voltage] measured by the analog input.
      * @return A [Result] of either a [DaqcQuantity] or an error.
      */
     protected abstract fun transformInput(voltage: Quantity<Voltage>): Result<DaqcQuantity<QT>, Throwable>

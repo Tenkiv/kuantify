@@ -18,8 +18,10 @@
 package org.tenkiv.kuantify.hardware.inputs.thermocouples
 
 import kotlinx.coroutines.*
+import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
@@ -28,6 +30,8 @@ import physikal.*
 import physikal.types.*
 import kotlin.coroutines.*
 import kotlin.math.*
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * A common sensor which measures [Temperature] from [ElectricPotential].
@@ -38,9 +42,9 @@ public class ThermocoupleK internal constructor(
     acceptableError: Quantity<Temperature> = 1.0.degreesCelsius
 ) : ScAnalogSensor<Temperature>(
     channel,
-    maximumEp = 55.0.millivolts,
+    maximumVoltage = 55.0.millivolts,
     acceptableError = 18.0.microvolts * acceptableError.toDoubleIn(Kelvin)
-) {
+), RangedQuantityInput<Temperature> {
     private val job = Job(scope.coroutineContext[Job])
 
     public override val coroutineContext: CoroutineContext = scope.coroutineContext + job
@@ -49,6 +53,9 @@ public class ThermocoupleK internal constructor(
         "The temperature reference for device:\n" +
                 " ${analogInput.device} \n" +
                 "has not yet measured a temperature, thermocouples from this device cannot function until it does."
+
+    public override val valueRange: ClosedFloatingPointRange<DaqcQuantity<Temperature>> =
+        ((-200.0).degreesCelsius..1350.0.degreesCelsius).toDaqc()
 
     protected override fun transformInput(voltage: Quantity<Voltage>): Result<DaqcQuantity<Temperature>, Throwable> {
         val mv = voltage toDoubleIn Millivolt
@@ -79,7 +86,10 @@ public class ThermocoupleK internal constructor(
                 ).toDaqc()
 
         return runCatching {
-            if (mv >= -5.891 && mv < 0) {
+            if (mv < -5.891) {
+                logger.warn {  }
+                calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0)
+            } else if (mv >= -5.891 && mv < 0) {
                 calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0)
             } else if (mv >= 0 && mv < 20.644) {
                 calculate(0.0, mid1, mid2, mid3, mid4, mid5, mid6, mid7, mid8, mid9)

@@ -290,6 +290,15 @@ public class DaqcQuantity<QT : Quantity<QT>>(internal val wrappedQuantity: Quant
 
 }
 
+private class DaqcQuantityRange<QT : Quantity<QT>>(
+    override val start: DaqcQuantity<QT>,
+    override val endInclusive: DaqcQuantity<QT>
+) : ClosedFloatingPointRange<DaqcQuantity<QT>> {
+
+    override fun lessThanOrEquals(a: DaqcQuantity<QT>, b: DaqcQuantity<QT>): Boolean = a <= b
+
+}
+
 @Serializer(forClass = DaqcQuantity::class)
 public class DaqcQuantitySerializer<QT : Quantity<QT>> internal constructor() : KSerializer<DaqcQuantity<QT>> {
     public override val descriptor: SerialDescriptor = SerialDescriptor("DaqcQuantity") {
@@ -305,3 +314,6 @@ public class DaqcQuantitySerializer<QT : Quantity<QT>> internal constructor() : 
 }
 
 public fun <QT : Quantity<QT>> Quantity<QT>.toDaqc(): DaqcQuantity<QT> = DaqcQuantity(this)
+
+public fun <QT : Quantity<QT>> ClosedRange<Quantity<QT>>.toDaqc():
+        ClosedFloatingPointRange<DaqcQuantity<QT>> = DaqcQuantityRange(start.toDaqc(), endInclusive.toDaqc())
