@@ -20,6 +20,7 @@ package org.tenkiv.kuantify.hardware.inputs.thermocouples
 import kotlinx.coroutines.*
 import mu.*
 import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
@@ -28,38 +29,54 @@ import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
 import physikal.*
 import physikal.types.*
-import kotlin.coroutines.*
 import kotlin.math.*
+import kotlin.time.*
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * A common sensor which measures [Temperature] from [ElectricPotential].
+ * A common sensor which measures [Temperature] from [Voltage].
  */
 public class ThermocoupleK internal constructor(
     scope: CoroutineScope,
     channel: AnalogInput<*>,
-    acceptableError: Quantity<Temperature> = 1.0.degreesCelsius
+    acceptableError: Quantity<Temperature> = 1.0.degreesCelsius,
+    private val waitForTRefValue: Boolean = false,
+    private val oldestTRefValueAge: Duration = 5.minutes
 ) : ScAnalogSensor<Temperature>(
     channel,
     maximumVoltage = 55.0.millivolts,
     acceptableError = 18.0.microvolts * acceptableError.toDoubleIn(Kelvin)
-), RangedQuantityInput<Temperature> {
-    private val job = Job(scope.coroutineContext[Job])
-
-    public override val coroutineContext: CoroutineContext = scope.coroutineContext + job
-
-    private val noTempRefValueMsg =
-        "The temperature reference for device:\n" +
-                " ${analogInput.device} \n" +
-                "has not yet measured a temperature, thermocouples from this device cannot function until it does."
-
+), RangedQuantityInput<Temperature>, CoroutineScope by scope.withNewChildJob() {
     public override val valueRange: ClosedFloatingPointRange<DaqcQuantity<Temperature>> =
         ((-200.0).degreesCelsius..1350.0.degreesCelsius).toDaqc()
 
-    protected override fun transformInput(voltage: Quantity<Voltage>): Result<DaqcQuantity<Temperature>, Throwable> {
+    private val tRefValueTooOldMsg =
+        "The most recent update from the temperature reference is older than the oldest acceptable age."
+
+    private val noTempRefValueMsg = """
+            The temperature reference for device:
+                ${analogInput.device}
+            has not yet measured a temperature, thermocouples from this device cannot function until it does.
+            """.trimIndent()
+
+    private fun valueOutOfRangeMsg(voltage: Quantity<Voltage>) =
+        "The voltage: $voltage is out the range where a type K thermocouple can accurately measure a temperature."
+
+    protected override suspend fun transformInput(voltage: Quantity<Voltage>):
+            Result<DaqcQuantity<Temperature>, Throwable> {
         val mv = voltage toDoubleIn Millivolt
-        val temperatureReferenceValue = analogInput.device.temperatureReference.updateBroadcaster.valueOrNull?.value
+        val temperatureReferenceMeasurement = if (waitForTRefValue) {
+                analogInput.device.temperatureReference.getValue()
+            } else {
+                analogInput.device.temperatureReference.updateBroadcaster.valueOrNull ?:
+                    return Result.Failure(UninitializedPropertyAccessException(noTempRefValueMsg))
+            }
+        val temperatureReferenceValue = temperatureReferenceMeasurement.value
+
+        if (temperatureReferenceMeasurement.instant.isOlderThan(oldestTRefValueAge.toJavaDuration())) {
+            return Result.Failure(OutOfRangeException(tRefValueTooOldMsg))
+        }
 
         fun calculate(
             c0: Double,
@@ -82,31 +99,21 @@ public class ThermocoupleK internal constructor(
                 (c7 * mv.pow(7.0)) +
                 (c8 * mv.pow(8.0)) +
                 (c9 * mv.pow(9.0))).degreesCelsius +
-                (temperatureReferenceValue ?: throw UninitializedPropertyAccessException(noTempRefValueMsg))
+                temperatureReferenceValue
                 ).toDaqc()
 
         return runCatching {
-            if (mv < -5.891) {
-                logger.warn {  }
-                calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0)
-            } else if (mv >= -5.891 && mv < 0) {
+            if (mv >= -5.891 && mv < 0) {
                 calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0)
             } else if (mv >= 0 && mv < 20.644) {
                 calculate(0.0, mid1, mid2, mid3, mid4, mid5, mid6, mid7, mid8, mid9)
             } else if (mv >= 20.644 && mv < 54.886) {
                 calculate(hi0, hi1, hi2, hi3, hi4, hi5, hi6, 0.0, 0.0, 0.0)
             } else {
-                throw ValueOutOfRangeException(
-                    "Type K thermocouple cannot accurately produce a temperature from" +
-                            " voltage ${voltage convertTo Millivolt}"
-                )
+                throw OutOfRangeException(valueOutOfRangeMsg(voltage))
             }
         }.toCoralResult()
 
-    }
-
-    public fun cancel() {
-        job.cancel()
     }
 
     public companion object {

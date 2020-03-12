@@ -67,15 +67,15 @@ public abstract class ScAnalogSensor<QT : Quantity<QT>>(
                     is Result.Success -> _broadcastChannel.send(convertedResult.value at measurement.instant)
                     is Result.Failure -> {
                         if (throwOnTransformFailure) throw convertedResult.error
-
-                        logger.error(convertedResult.error, ::transformFailureMsg)
+                        logger.warn(convertedResult.error, ::transformFailureMsg)
                     }
                 }
             }
         }
     }
 
-    private fun transformFailureMsg() = "Analog sensor based on analog input $analogInput failed to transform input."
+    private fun transformFailureMsg() = """Analog sensor based on analog input $analogInput failed to transform input.
+        |The value of this input will not be updated.""".trimMargin()
 
     /**
      * Function to convert the [Voltage] of the analog input to a [DaqcQuantity] or return an error.
@@ -83,7 +83,7 @@ public abstract class ScAnalogSensor<QT : Quantity<QT>>(
      * @param voltage The [Voltage] measured by the analog input.
      * @return A [Result] of either a [DaqcQuantity] or an error.
      */
-    protected abstract fun transformInput(voltage: Quantity<Voltage>): Result<DaqcQuantity<QT>, Throwable>
+    protected abstract suspend fun transformInput(voltage: Quantity<Voltage>): Result<DaqcQuantity<QT>, Throwable>
 
     public final override fun startSampling() {
         analogInput.startSampling()

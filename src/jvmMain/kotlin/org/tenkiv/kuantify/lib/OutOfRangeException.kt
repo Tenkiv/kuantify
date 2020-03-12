@@ -23,5 +23,5 @@ package org.tenkiv.kuantify.lib
  * @param message The message specifying the exact issue.
  * @param cause The [Throwable] which caused the issue.
  */
-public class ValueOutOfRangeException(message: String? = null, cause: Throwable? = null) :
+public class OutOfRangeException(message: String? = null, cause: Throwable? = null) :
     IllegalStateException(message, cause)

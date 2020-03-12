@@ -42,7 +42,7 @@ public interface RangedInput<T> : Input<T>, RangedIOStrand<T> where T : DaqcValu
  */
 public interface BinaryStateInput : RangedInput<BinaryState> {
 
-    override val valueRange get() = BinaryState.range
+    public override val valueRange get() = BinaryState.range
 
 }
 
@@ -64,16 +64,3 @@ private class RangedQuantityInputBox<QT : Quantity<QT>>(
 public fun <QT : Quantity<QT>> QuantityInput<QT>.toNewRangedInput(
     valueRange: ClosedFloatingPointRange<DaqcQuantity<QT>>
 ): RangedQuantityInput<QT> = RangedQuantityInputBox(this, valueRange)
-
-public enum class TransformationFailureHandling {
-    /**
-     * @throws an exception if this [Input] has a source value at the time of an update that cannot be
-     * accurately transformed into the type of this [Input].
-     */
-    THROW,
-
-    /**
-     * Ignores the update from the underlying source if it cannot be accurately transformed to the type of this [Input].
-     */
-    IGNORE
-}

@@ -19,6 +19,7 @@ object Vof {
     const val kotlin = "1.3.70"
 
     // Kotlin extensions
+    const val atomicX = "0.14.2"
     const val coroutinesX = "1.3.4"
     const val serializationX = "0.20.0"
 
@@ -28,7 +29,7 @@ object Vof {
     const val kotlinLogging = "1.7.8"
 
     // Tenkiv
-    const val coral = "2.5.1.0-SNAPSHOT"
+    const val coral = "2.5.2.0-SNAPSHOT"
     const val physikal = "3.0.6.1-SNAPSHOT"
 
     // Test

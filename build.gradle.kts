@@ -60,7 +60,9 @@ kotlin {
     sourceSets {
         all {
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
+            languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
             languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
+            languageSettings.useExperimentalAnnotation("kotlinx.coroutines.FlowPreview")
             languageSettings.useExperimentalAnnotation("org.tenkiv.coral.ExperimentalCoralApi")
             languageSettings.useExperimentalAnnotation("io.ktor.util.InternalAPI")
         }

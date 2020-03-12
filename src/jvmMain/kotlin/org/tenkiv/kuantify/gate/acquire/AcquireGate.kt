@@ -17,15 +17,91 @@
 
 package org.tenkiv.kuantify.gate.acquire
 
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
+import java.util.concurrent.atomic.*
+import kotlin.properties.*
+import kotlin.reflect.*
+
+public typealias SuccesfulMeasurement<T> = ValueInstant<T>
+public typealias FailedMeasurement = ValueInstant<ProcessFailure>
+public typealias ProcessResult<ST> = Result<SuccesfulMeasurement<ST>, FailedMeasurement>
 
 public interface AcquireGate<out T : DaqcData> : DaqcGate<T>, RatedTrackable<T> {
+
+    /**
+     * Broadcasts failures to process updates from an underlying data source resulting in an inability to produce an
+     * updated value for this gate.
+     * This will not indicate critical errors in the underlying DAQC system, for that see
+     * [criticalDaqcErrorBroadcaster].
+     * This is a hot [Flow] backed by a [kotlinx.coroutines.channels.BroadcastChannel] and
+     * as such can be consumed an unlimited number of times and continue to provide updates to all consumers.
+     *
+     * If it is null it means this gate either does no processing to the underlying data the update is based on or the
+     * processing cannot fail.
+     */
+    public val processFailureBroadcaster: Flow<FailedMeasurement>? get() = null
+
+    /**
+     * Broadcasts the result of processing an underlying data source for this gate. The latest [Result.Success] value
+     * will be identical to the latest [updateBroadcaster] value and [Result.Failure] value will be identical to the
+     * latest [processFailureBroadcaster] value.
+     * This will not indicate critical errors in the underlying DAQC system, for that see
+     * [criticalDaqcErrorBroadcaster].
+     * This is a hot [Flow] backed by a [kotlinx.coroutines.channels.BroadcastChannel] and
+     * as such can be consumed an unlimited number of times and continue to provide updates to all consumers.
+     *
+     * This could be null for the same reason as [processFailureBroadcaster]. If [processFailureBroadcaster] is
+     * null this will be null.
+     */
+    public val processResultBroadcaster: Flow<ProcessResult<T>>? get() = null
 
     /**
      * Activates the input alerting it to begin collecting and sending data.
      */
     public fun startSampling()
+
+}
+
+/**
+ * Creates a delegate that will rebroadcast updates as [Result.Success] and processing failures as [Result.Failure]
+ * if this gate has processing that can fail.
+ */
+public fun <T : DaqcData> AcquireGate<T>.relay(): ResultRelay<T> = ResultRelay()
+
+public interface ProcessFailure {
+    public val cause: Throwable
+}
+
+public class ResultRelay<ST : DaqcData> : ReadOnlyProperty<AcquireGate<ST>, Flow<ProcessResult<ST>>> {
+    private var initialized = AtomicBoolean(false)
+    private val broadcaster = BroadcastChannel<ProcessResult<ST>>(Channel.Factory.BUFFERED)
+
+    public override fun getValue(
+        thisRef: AcquireGate<ST>,
+        property: KProperty<*>
+    ): Flow<ProcessResult<ST>> {
+        if (!initialized.get()) init(thisRef)
+        return broadcaster.asFlow()
+    }
+
+    private fun init(gate: AcquireGate<ST>) {
+        initialized.set(true)
+        gate.launch {
+            gate.updateBroadcaster.consumeEach { success ->
+                broadcaster.send(Result.Success(success))
+            }
+        }
+        gate.launch {
+            gate.processFailureBroadcaster?.collect { failure ->
+                broadcaster.send(Result.Failure(failure))
+            }
+        }
+    }
 
 }
