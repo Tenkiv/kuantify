@@ -56,10 +56,11 @@ public interface AcquireGate<out T : DaqcData> : DaqcGate<T>, RatedTrackable<T> 
      * This is a hot [Flow] backed by a [kotlinx.coroutines.channels.BroadcastChannel] and
      * as such can be consumed an unlimited number of times and continue to provide updates to all consumers.
      *
-     * This could be null for the same reason as [processFailureBroadcaster]. If [processFailureBroadcaster] is
-     * null this will be null.
+     * If [processFailureBroadcaster] is null this will be identical to [updateBroadcaster] but with all the updates
+     * wrapped in [Result.Success].
      */
-    public val processResultBroadcaster: Flow<ProcessResult<T>>? get() = null
+    public val processResultBroadcaster: Flow<ProcessResult<T>>
+        get() = updateBroadcaster.asFlow().map { Result.Success(it) }
 
     /**
      * Activates the input alerting it to begin collecting and sending data.
@@ -69,16 +70,18 @@ public interface AcquireGate<out T : DaqcData> : DaqcGate<T>, RatedTrackable<T> 
 }
 
 /**
- * Creates a delegate that will rebroadcast updates as [Result.Success] and processing failures as [Result.Failure]
- * if this gate has processing that can fail.
+ * Creates a delegate that will broadcast updates as [Result.Success] and process failures as [Result.Failure].
+ * i.e. it combines [AcquireGate.updateBroadcaster] and [AcquireGate.processFailureBroadcaster] into a single [Flow]
+ * representing the [Result] of each update for you.
  */
-public fun <T : DaqcData> AcquireGate<T>.relay(): ResultRelay<T> = ResultRelay()
+public fun <T : DaqcData> AcquireGate<T>.combineBroadcasters(): CombinedBroadcaster<T> = CombinedBroadcaster()
 
 public interface ProcessFailure {
     public val cause: Throwable
 }
 
-public class ResultRelay<ST : DaqcData> : ReadOnlyProperty<AcquireGate<ST>, Flow<ProcessResult<ST>>> {
+//TODO: There should be a better way to do this with some kind of Flow combining operation.
+public class CombinedBroadcaster<ST : DaqcData> : ReadOnlyProperty<AcquireGate<ST>, Flow<ProcessResult<ST>>> {
     private var initialized = AtomicBoolean(false)
     private val broadcaster = BroadcastChannel<ProcessResult<ST>>(Channel.Factory.BUFFERED)
 
