@@ -15,25 +15,34 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.hardware.device
+package org.tenkiv.kuantify.gate.acquire
 
-import org.tenkiv.kuantify.trackable.*
-
-/**
- * Interface defining the basic features of a device that can be connected to. This is in most cases a device located
- * across a network or serial connection.
- */
-public interface RemoteDevice : Device {
-
-    public val hostIp: String
-
-    /**
-     * Value representing if the Device is connected.
-     */
-    public val isConnected: InitializedTrackable<Boolean>
-
-    public suspend fun connect()
-
-    public suspend fun disconnect()
-
-}
+//import kotlinx.coroutines.*
+//import kotlinx.coroutines.flow.*
+//import org.tenkiv.coral.*
+//import org.tenkiv.kuantify.data.*
+//import kotlin.properties.*
+//import kotlin.reflect.*
+//
+//public fun <T : DaqcData> AcquireGate<T>.valueUpdater(): ReceiveGateValueDelegate<T> =
+//    ReceiveGateValueDelegate(this)
+//
+//public class ReceiveGateValueDelegate<T: DaqcData> internal constructor(gate: AcquireGate<T>) :
+//    ReadOnlyProperty<AcquireGate<T>, ValueInstant<T>?>, CoroutineScope by gate {
+//    @Volatile
+//    private var value: ValueInstant<T>? = null
+//
+//    private val updaterJob = launch(start = CoroutineStart.LAZY) {
+//        gate.updateBroadcaster.collect {
+//            value = it
+//        }
+//    }
+//
+//    public override fun getValue(thisRef: AcquireGate<T>, property: KProperty<*>): ValueInstant<T>? =
+//        if (value != null) {
+//            value
+//        } else {
+//            updaterJob.start()
+//            value
+//        }
+//}

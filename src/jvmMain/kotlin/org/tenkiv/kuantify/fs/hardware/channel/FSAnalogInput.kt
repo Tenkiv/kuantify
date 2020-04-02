@@ -18,7 +18,6 @@
 package org.tenkiv.kuantify.fs.hardware.channel
 
 import kotlinx.serialization.builtins.*
-import kotlinx.serialization.internal.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.gate.acquire.*
 import org.tenkiv.kuantify.fs.hardware.device.*

@@ -18,13 +18,13 @@
 package org.tenkiv.kuantify.fs.gate
 
 import kotlinx.serialization.builtins.*
-import kotlinx.serialization.internal.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.trackable.*
 import physikal.*
 
 internal fun CombinedNetworkRouting.digitalGateRouting(digitalChannel: DigitalGate) {

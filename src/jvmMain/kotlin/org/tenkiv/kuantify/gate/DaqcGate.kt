@@ -17,22 +17,41 @@
 
 package org.tenkiv.kuantify.gate
 
+import kotlinx.coroutines.*
 import org.tenkiv.coral.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.trackable.*
 
-/**
- * A general interface for an updatable that returns data.
- */
-public interface DaqcGate<out T : DaqcData> : Trackable<ValueInstant<T>> {
+
+public interface DaqcGate<out T : DaqcData> : Trackable<ValueInstant<T>>, CoroutineScope {
     /**
      * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcGate]
      */
     public val daqcDataSize: Int
-
     public val isTransceiving: InitializedTrackable<Boolean>
+    public val isFinalized: InitializedTrackable<Boolean>
 
     public fun stopTransceiving()
+
+    /**
+     * Finalize the configuration of this [DaqcGate] so nothing can be changed for the remainder of its existence.
+     * This will also finalize any [DaqcGate]s this [DaqcGate]s data is derived from.
+     *
+     * Attempts to modify the configuration of a [DaqcGate] after [finalize] will fail.
+     *
+     * This is an idempotent operation - subsequent calls to this function have no effect.
+     */
+    public fun finalize()
+}
+
+/**
+ * Convenience function to wrap [DaqcGate] configuration modification calls in for automatic handling of
+ * [DaqcGate.isFinalized]. This function should only be use when creating a new type of [DaqcGate].
+ */
+public inline fun <R> DaqcGate<*>.modifyConfiguration(block: () -> R): R = if (!isFinalized.value) {
+    block()
+} else {
+    throw IllegalStateException("Cannot modify configuration of DaqcGate that has been finalized.")
 }
 
 /**
@@ -48,13 +67,11 @@ public interface IOStrand<out T : DaqcValue> : DaqcGate<T> {
 }
 
 public interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Comparable<T> {
-
     /**
      * The range of values that this IOStrand is expected to handle. There is not an enforced guarantee that there will
-     * never be a value outside this range but implementations should make their own guarantees.
+     * never be a value outside this range.
      */
     public val valueRange: ClosedRange<T>
-
 }
 
 //TODO: Add more versions of this function, like one that suspends until it has a value.

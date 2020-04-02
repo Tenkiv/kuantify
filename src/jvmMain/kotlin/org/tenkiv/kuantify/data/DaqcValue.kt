@@ -18,8 +18,6 @@
 package org.tenkiv.kuantify.data
 
 import kotlinx.serialization.*
-import kotlinx.serialization.internal.*
-import org.tenkiv.kuantify.*
 import physikal.*
 
 /**

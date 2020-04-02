@@ -19,7 +19,7 @@ package org.tenkiv.kuantify.networking.location
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.trackable.*
 
 /**
  * Class to wrap multiple locators into a single broadcast channel.

@@ -15,53 +15,21 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify
+package org.tenkiv.kuantify.gate
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import org.tenkiv.coral.*
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.lib.physikal.*
+import org.tenkiv.kuantify.trackable.*
 import physikal.*
 import java.time.*
-import kotlin.coroutines.*
 import kotlin.properties.*
 import kotlin.reflect.*
 
-public typealias TrackableQuantity<QT> = Trackable<Quantity<QT>>
-public typealias InitializedTrackableQuantity<Q> = InitializedTrackable<Quantity<Q>>
-
-/**
- * The base interface which defines objects which have the ability to update their status.
- */
-public interface Trackable<out T> : CoroutineScope {
-
-    /**
-     * The [ConflatedBroadcastChannel] over which updates are broadcast.
-     */
-    public val updateBroadcaster: ConflatedBroadcastChannel<out T>
-
-}
-
-public interface InitializedTrackable<out T> : Trackable<T> {
-    val value: T
-}
-
-/**
- * Gets the current value or returns Null.
- *
- * @return The value or null.
- */
-public val <T> Trackable<T>.valueOrNull get() = updateBroadcaster.valueOrNull
-
-/**
- * Gets the current value or suspends and waits for one to exist.
- *
- * @return The current value.
- */
-public suspend fun <T> Trackable<T>.getValue(): T =
-    updateBroadcaster.valueOrNull ?: updateBroadcaster.openSubscription().receive()
-
-public interface RatedTrackable<out T> : Trackable<ValueInstant<T>> {
+public interface UpdateRatedGate<out T : DaqcData> :
+    DaqcGate<T> {
     public val updateRate: UpdateRate
 }
 
@@ -77,22 +45,22 @@ public sealed class UpdateRate(rate: TrackableQuantity<Frequency>) : TrackableQu
 
 }
 
-public fun RatedTrackable<*>.runningAverage(avgPeriod: Duration = 1.minutesSpan): AverageUpdateRateDelegate =
+public fun UpdateRatedGate<*>.runningAverage(avgPeriod: Duration = 1.minutesSpan): AverageUpdateRateDelegate =
     AverageUpdateRateDelegate(this, avgPeriod)
 
 public class AverageUpdateRateDelegate internal constructor(
-    trackable: RatedTrackable<*>,
+    gate: UpdateRatedGate<*>,
     private val avgPeriod: Duration
-) : ReadOnlyProperty<RatedTrackable<*>, UpdateRate.RunningAverage> {
-    private val updatable = trackable.Updatable(0.0.hertz)
+) : ReadOnlyProperty<UpdateRatedGate<*>, UpdateRate.RunningAverage> {
+    private val updatable = gate.Updatable(0.0.hertz)
 
     init {
-        trackable.launch {
+        gate.launch {
             var updateRate: Quantity<Frequency>
             val sampleInstants = ArrayList<Instant>()
 
             //TODO: This can give a null pointer exception if UpdateRate is initialized before updateBroadcaster.
-            trackable.updateBroadcaster.consumeEach {
+            gate.updateBroadcaster.collect {
                 sampleInstants += it.instant
                 clean(sampleInstants)
 
@@ -115,33 +83,6 @@ public class AverageUpdateRateDelegate internal constructor(
         }
     }
 
-    public override fun getValue(thisRef: RatedTrackable<*>, property: KProperty<*>): UpdateRate.RunningAverage =
+    public override fun getValue(thisRef: UpdateRatedGate<*>, property: KProperty<*>): UpdateRate.RunningAverage =
         UpdateRate.RunningAverage(updatable)
 }
-
-private class CombinedTrackable<out T>(scope: CoroutineScope, trackables: Array<out Trackable<T>>) :
-    Trackable<T> {
-
-    private val job = Job(scope.coroutineContext[Job])
-
-    override val coroutineContext: CoroutineContext = scope.coroutineContext + job
-
-    private val _broadcastChannel = ConflatedBroadcastChannel<T>()
-
-    override val updateBroadcaster: ConflatedBroadcastChannel<out T> get() = _broadcastChannel
-
-    init {
-        trackables.forEach { updatable ->
-            launch {
-                updatable.updateBroadcaster.consumeEach { update ->
-                    _broadcastChannel.send(update)
-                }
-            }
-        }
-    }
-
-    fun cancel() = job.cancel()
-}
-
-public fun <T> CoroutineScope.CombinedTrackable(vararg trackables: Trackable<T>): Trackable<T> =
-    CombinedTrackable(this, trackables)

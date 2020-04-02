@@ -20,7 +20,6 @@ package org.tenkiv.kuantify.fs.hardware.channel
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.json.*
 import org.tenkiv.coral.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.gate.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
@@ -33,6 +32,7 @@ import org.tenkiv.kuantify.hardware.outputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.trackable.*
 import physikal.*
 import physikal.types.*
 

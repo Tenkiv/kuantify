@@ -20,10 +20,10 @@ package org.tenkiv.kuantify.gate
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
+import org.tenkiv.kuantify.trackable.*
 import physikal.types.*
 
 public interface DigitalGate : DaqcGate<DigitalValue> {

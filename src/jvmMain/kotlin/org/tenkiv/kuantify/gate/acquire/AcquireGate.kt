@@ -29,7 +29,8 @@ public typealias FailedMeasurement = ValueInstant<ProcessFailure>
 public typealias SuccesfulProcessResult<T> = Result.Success<ValueInstant<T>>
 public typealias ProcessResult<ST> = Result<ValueInstant<ST>, FailedMeasurement>
 
-public interface AcquireGate<out T : DaqcData> : DaqcGate<T>, RatedTrackable<T> {
+public interface AcquireGate<out T : DaqcData> : DaqcGate<T>,
+    UpdateRatedGate<T> {
 
     /**
      * Broadcasts the result of processing an underlying data source for this gate. The latest [Result.Success] value

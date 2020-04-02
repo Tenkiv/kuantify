@@ -15,62 +15,59 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify
+package org.tenkiv.kuantify.trackable
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import physikal.*
-import kotlin.coroutines.*
 
 public typealias UpdatableQuantity<QT> = Updatable<Quantity<QT>>
 public typealias InitializedUpdatableQuantity<QT> = InitializedUpdatable<Quantity<QT>>
 
 /**
  * Same as [Trackable] but allows setting.
+ * Buffer is always [Channel.CONFLATED].
  */
 public interface Updatable<T> : Trackable<T> {
-
-    public override val updateBroadcaster: ConflatedBroadcastChannel<out T>
-
     public fun set(value: T)
-
 }
 
-public interface InitializedUpdatable<T> : Updatable<T>, InitializedTrackable<T> {
-
+public interface InitializedUpdatable<T> : Updatable<T>,
+    InitializedTrackable<T> {
     public override var value: T
-
 }
 
-private class SimpleUpdatable<T>(scope: CoroutineScope) : Updatable<T> {
-
-    override val coroutineContext: CoroutineContext = scope.coroutineContext
-
-    private val _updateBroadcaster = ConflatedBroadcastChannel<T>()
-    override val updateBroadcaster: ConflatedBroadcastChannel<out T> get() = _updateBroadcaster
+private class UpdatableImpl<T>(scope: CoroutineScope) : Updatable<T>, CoroutineScope by scope {
+    private val broadcastChannel = ConflatedBroadcastChannel<T>()
+    override val updateBroadcaster: Flow<T> = broadcastChannel.asFlow()
+    override val valueOrNull: T?
+        get() = broadcastChannel.valueOrNull
 
     override fun set(value: T) {
-        _updateBroadcaster.offer(value)
+        broadcastChannel.offer(value)
     }
 }
 
-private class SimpleInitializedUpdatable<T>(scope: CoroutineScope, initialValue: T) : InitializedUpdatable<T> {
-
-    override val coroutineContext: CoroutineContext = scope.coroutineContext
-
-    private val _updateBroadcaster = ConflatedBroadcastChannel(initialValue)
-    override val updateBroadcaster: ConflatedBroadcastChannel<out T> get() = _updateBroadcaster
+private class InitializedUpdatableImpl<T>(
+    scope: CoroutineScope,
+    initialValue: T
+) : InitializedUpdatable<T>, CoroutineScope by scope {
+    private val broadcastChannel = ConflatedBroadcastChannel(initialValue)
+    override val updateBroadcaster: Flow<T> = broadcastChannel.asFlow()
 
     override var value: T
-        get() = updateBroadcaster.value
+        get() = broadcastChannel.value
         set(value) = set(value)
+    override val valueOrNull: T? get() = value
 
     override fun set(value: T) {
-        _updateBroadcaster.offer(value)
+        broadcastChannel.offer(value)
     }
 }
 
-public fun <T> CoroutineScope.Updatable(): Updatable<T> = SimpleUpdatable(this)
+public fun <T> CoroutineScope.Updatable(): Updatable<T> =
+    UpdatableImpl(this)
 
 public fun <T> CoroutineScope.Updatable(initialValue: T): InitializedUpdatable<T> =
-    SimpleInitializedUpdatable(this, initialValue)
+    InitializedUpdatableImpl(this, initialValue)

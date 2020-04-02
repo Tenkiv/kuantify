@@ -17,10 +17,10 @@
 
 package org.tenkiv.kuantify.hardware.channel
 
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.lib.physikal.*
+import org.tenkiv.kuantify.trackable.*
 
 /**
  * Class defining the basic features of an input which reads analog signals.

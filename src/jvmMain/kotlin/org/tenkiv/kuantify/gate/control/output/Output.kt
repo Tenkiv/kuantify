@@ -17,10 +17,10 @@
 
 package org.tenkiv.kuantify.gate.control.output
 
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.control.*
+import org.tenkiv.kuantify.trackable.*
 import physikal.*
 import physikal.types.*
 

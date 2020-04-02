@@ -20,13 +20,13 @@ package org.tenkiv.kuantify.hardware.inputs.thermocouples
 import kotlinx.coroutines.*
 import mu.*
 import org.tenkiv.coral.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
+import org.tenkiv.kuantify.trackable.*
 import physikal.*
 import physikal.types.*
 import kotlin.math.*

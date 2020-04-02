@@ -15,25 +15,35 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.hardware.device
+package org.tenkiv.kuantify.trackable
 
-import org.tenkiv.kuantify.trackable.*
+import kotlinx.coroutines.flow.*
+import physikal.*
+
+public typealias TrackableQuantity<QT> = Trackable<Quantity<QT>>
+public typealias InitializedTrackableQuantity<Q> = InitializedTrackable<Quantity<Q>>
 
 /**
- * Interface defining the basic features of a device that can be connected to. This is in most cases a device located
- * across a network or serial connection.
+ * The base interface which defines objects which have the ability to update their status.
  */
-public interface RemoteDevice : Device {
-
-    public val hostIp: String
-
+public interface Trackable<out T> {
     /**
-     * Value representing if the Device is connected.
+     * Gets the current value or returns Null.
+     *
+     * @return The value or null.
      */
-    public val isConnected: InitializedTrackable<Boolean>
-
-    public suspend fun connect()
-
-    public suspend fun disconnect()
-
+    public val valueOrNull: T?
+    public val updateBroadcaster: Flow<T>
 }
+
+public interface InitializedTrackable<out T> : Trackable<T> {
+    val value: T
+}
+
+/**
+ * Gets the current value or suspends and waits for one to exist.
+ *
+ * @return The current value.
+ */
+public suspend fun <T> Trackable<T>.getValue(): T =
+    valueOrNull ?: updateBroadcaster.first()

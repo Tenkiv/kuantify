@@ -20,14 +20,15 @@ package org.tenkiv.kuantify.networking.location
 import arrow.core.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.hardware.device.*
+import org.tenkiv.kuantify.trackable.*
 import java.time.*
 
 /**
  * Class defining functions expected from Device Locators.
  */
-public abstract class DeviceLocator<T : Device> : Trackable<LocatorUpdate<T>> {
+public abstract class DeviceLocator<T : Device> :
+    Trackable<LocatorUpdate<T>> {
 
     /**
      * The list of active devices that are both found and able to be connected to.

@@ -17,7 +17,6 @@
 
 package org.tenkiv.kuantify.hardware.channel
 
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.input.*
@@ -30,7 +29,8 @@ import physikal.types.*
 /**
  * Class defining the basic features of an input which reads binary signals.
  */
-public interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, RatedTrackable<DigitalValue> {
+public interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>,
+    UpdateRatedGate<DigitalValue> {
 
     /**
      * Activates this channel to gather data for transition frequency averaged over a certain period of time.

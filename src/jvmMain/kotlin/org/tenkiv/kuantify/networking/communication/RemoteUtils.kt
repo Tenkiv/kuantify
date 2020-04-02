@@ -21,6 +21,7 @@ import kotlinx.coroutines.channels.*
 import mu.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.hardware.device.*
+import org.tenkiv.kuantify.trackable.*
 import kotlin.coroutines.*
 
 @PublishedApi
@@ -46,7 +47,8 @@ public fun <T> RemoteDevice.RemoteUpdatable(): Updatable<T> = RemoteUpdatable(de
 public fun <T> RemoteDevice.RemoteUpdatable(initialValue: T): InitializedUpdatable<T> =
     InitializedRemoteUpdatable(this, initialValue)
 
-private class RemoteUpdatable<T>(private val device: RemoteDevice) : Updatable<T> {
+private class RemoteUpdatable<T>(private val device: RemoteDevice) :
+    Updatable<T> {
 
     override val coroutineContext: CoroutineContext get() = device.coroutineContext
 
