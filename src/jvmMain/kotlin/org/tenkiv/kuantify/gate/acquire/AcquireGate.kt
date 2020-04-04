@@ -22,8 +22,6 @@ import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
-import kotlin.properties.*
-import kotlin.reflect.*
 
 public typealias FailedMeasurement = ValueInstant<ProcessFailure>
 public typealias SuccesfulProcessResult<T> = Result.Success<ValueInstant<T>>
@@ -31,21 +29,6 @@ public typealias ProcessResult<ST> = Result<ValueInstant<ST>, FailedMeasurement>
 
 public interface AcquireGate<out T : DaqcData> : DaqcGate<T>,
     UpdateRatedGate<T> {
-
-    /**
-     * Broadcasts the result of processing an underlying data source for this gate. The latest [Result.Success] value
-     * will be identical to the latest [updateBroadcaster] value and [Result.Failure] value will be identical to the
-     * latest [processFailureBroadcaster] value.
-     * This will not indicate critical errors in the underlying DAQC system, for that see
-     * [criticalDaqcErrorBroadcaster].
-     * This is a hot [Flow] backed by a [kotlinx.coroutines.channels.BroadcastChannel], each call to [Flow.collect]
-     * means there will be a new subscription made.
-     *
-     * If [processFailureBroadcaster] is null this will be identical to [updateBroadcaster] but with all the updates
-     * wrapped in [Result.Success].
-     */
-    public val processResultBroadcaster: Flow<ProcessResult<T>>
-
     /**
      * Broadcasts failures to process updates from an underlying data source resulting in an inability to produce an
      * updated value for this gate.
@@ -66,18 +49,6 @@ public interface AcquireGate<out T : DaqcData> : DaqcGate<T>,
 
 }
 
-public fun <T : DaqcData> AcquireGate<T>.succesfulResultBroadcaster(): SuccesfulResultBroadcaster<T> =
-    SuccesfulResultBroadcaster(this)
-
 public interface ProcessFailure {
     public val cause: Throwable
-}
-
-public class SuccesfulResultBroadcaster<ST : DaqcData>(gate: AcquireGate<ST>) :
-    ReadOnlyProperty<AcquireGate<ST>, Flow<SuccesfulProcessResult<ST>>> {
-    private val broadcastFlow = gate.updateBroadcaster.asFlow().map { Result.Success(it) }
-
-    public override fun getValue(thisRef: AcquireGate<ST>, property: KProperty<*>): Flow<SuccesfulProcessResult<ST>> =
-        broadcastFlow
-
 }

@@ -19,7 +19,6 @@ package org.tenkiv.kuantify.trackable
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.*
 import physikal.*
 
 public typealias UpdatableQuantity<QT> = Updatable<Quantity<QT>>
@@ -29,45 +28,45 @@ public typealias InitializedUpdatableQuantity<QT> = InitializedUpdatable<Quantit
  * Same as [Trackable] but allows setting.
  * Buffer is always [Channel.CONFLATED].
  */
-public interface Updatable<T> : Trackable<T> {
+public interface Updatable<T : Any> : Trackable<T> {
     public fun set(value: T)
 }
 
-public interface InitializedUpdatable<T> : Updatable<T>,
-    InitializedTrackable<T> {
+public interface InitializedUpdatable<T : Any> : Updatable<T>, InitializedTrackable<T> {
     public override var value: T
 }
 
-private class UpdatableImpl<T>(scope: CoroutineScope) : Updatable<T>, CoroutineScope by scope {
+private class UpdatableImpl<T : Any>(scope: CoroutineScope) : Updatable<T>, CoroutineScope by scope {
     private val broadcastChannel = ConflatedBroadcastChannel<T>()
-    override val updateBroadcaster: Flow<T> = broadcastChannel.asFlow()
     override val valueOrNull: T?
         get() = broadcastChannel.valueOrNull
+
+    override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
 
     override fun set(value: T) {
         broadcastChannel.offer(value)
     }
 }
 
-private class InitializedUpdatableImpl<T>(
+private class InitializedUpdatableImpl<T : Any>(
     scope: CoroutineScope,
     initialValue: T
 ) : InitializedUpdatable<T>, CoroutineScope by scope {
     private val broadcastChannel = ConflatedBroadcastChannel(initialValue)
-    override val updateBroadcaster: Flow<T> = broadcastChannel.asFlow()
-
     override var value: T
         get() = broadcastChannel.value
         set(value) = set(value)
     override val valueOrNull: T? get() = value
 
+    override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
+
     override fun set(value: T) {
         broadcastChannel.offer(value)
     }
 }
 
-public fun <T> CoroutineScope.Updatable(): Updatable<T> =
+public fun <T : Any> CoroutineScope.Updatable(): Updatable<T> =
     UpdatableImpl(this)
 
-public fun <T> CoroutineScope.Updatable(initialValue: T): InitializedUpdatable<T> =
+public fun <T : Any> CoroutineScope.Updatable(initialValue: T): InitializedUpdatable<T> =
     InitializedUpdatableImpl(this, initialValue)

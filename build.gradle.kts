@@ -59,6 +59,8 @@ kotlin {
 
     sourceSets {
         all {
+            languageSettings.enableLanguageFeature("InlineClasses")
+
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
             languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
             languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")

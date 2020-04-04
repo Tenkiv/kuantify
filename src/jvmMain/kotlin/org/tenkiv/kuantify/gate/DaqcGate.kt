@@ -54,6 +54,14 @@ public inline fun <R> DaqcGate<*>.modifyConfiguration(block: () -> R): R = if (!
     throw IllegalStateException("Cannot modify configuration of DaqcGate that has been finalized.")
 }
 
+public fun Iterable<DaqcGate<*>>.finalizeAll() {
+    forEach { it.finalize() }
+}
+
+public fun Array<out DaqcGate<*>>.finalizeAll() {
+    forEach { it.finalize() }
+}
+
 /**
  * A [DaqcGate] which only has a single data parameter.
  */

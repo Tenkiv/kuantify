@@ -26,6 +26,7 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.trackable.*
 import physikal.*
+import java.time.*
 import kotlin.coroutines.*
 
 /**
@@ -39,18 +40,36 @@ public class AverageQuantitySensor<QT : Quantity<QT>> internal constructor(
     scope: CoroutineScope,
     private vararg val inputs: QuantityInput<QT>
 ) : QuantityInput<QT> {
-
     private val job = Job(scope.coroutineContext[Job])
-
     public override val coroutineContext: CoroutineContext = scope.coroutineContext + job
+
+    @Volatile
+    private var _valueOrNull: QuantityMeasurement<QT>? = run {
+        val currentMeasurements = inputs.asSequence().map { it.valueOrNull }.requireNoNulls().toList()
+
+        return@run if (currentMeasurements.isNotEmpty()) {
+            // currentValues is not empty so maxBy cannot return null.
+            val mostRecentMeasurement = currentMeasurements.maxBy { it.instant }!!
+            val defaultUnit = mostRecentMeasurement.value.unit.default
+            currentMeasurements.map { measurement ->
+                measurement.value.inDefaultUnit
+            }.average().toQuantity(defaultUnit).toDaqc() at mostRecentMeasurement.instant
+        } else {
+            null
+        }
+    }
+    override val valueOrNull: ValueInstant<DaqcQuantity<QT>>?
+        get() = _valueOrNull
 
     private val _isTransceiving = Updatable(false)
     public override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<QT>>()
-    public override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<QT>>
-        get() = _broadcastChannel
+    private val broadcastChannel = BroadcastChannel<QuantityMeasurement<QT>>(capacity = Channel.BUFFERED)
+
+    private val _isFinalized = Updatable(initialValue = false)
+    public override val isFinalized: InitializedTrackable<Boolean>
+        get() = _isFinalized
 
     public override val updateRate by runningAverage()
 
@@ -64,25 +83,25 @@ public class AverageQuantitySensor<QT : Quantity<QT>> internal constructor(
 
             inputs.forEach { changeWatchedInput ->
                 launch(Dispatchers.Default) {
-                    changeWatchedInput.updateBroadcaster.consumeEach { measurement ->
-                        val currentValues = HashSet<Quantity<QT>>()
+                    changeWatchedInput.onEachUpdate { measurement ->
                         val defaultUnit = measurement.value.unit.default
 
+                        val currentValues = HashSet<Quantity<QT>>()
                         inputs.forEach { input ->
-                            input.updateBroadcaster.valueOrNull?.let { currentValues += it.value }
+                            input.valueOrNull?.let { currentValues += it.value }
                         }
 
                         val newAverage = currentValues.map { quantity ->
                             quantity.inDefaultUnit
                         }.average().toQuantity(defaultUnit).toDaqc()
 
-                        _broadcastChannel.send(newAverage at measurement.instant)
+                        update(newAverage at measurement.instant)
                     }
                 }
 
                 //TODO: Consider moving this to reusable function
                 launch(Dispatchers.Daqc) {
-                    changeWatchedInput.isTransceiving.updateBroadcaster.consumeEach { newStatus ->
+                    changeWatchedInput.isTransceiving.onEachUpdate { newStatus ->
                         transceivingStatuses += changeWatchedInput to newStatus
                         if (_isTransceiving.value && !transceivingStatuses.values.contains(true)) {
                             _isTransceiving.value = false
@@ -92,6 +111,7 @@ public class AverageQuantitySensor<QT : Quantity<QT>> internal constructor(
                     }
                 }
             }
+
         }
         job.invokeOnCompletion {
             _isTransceiving.value = false
@@ -107,8 +127,21 @@ public class AverageQuantitySensor<QT : Quantity<QT>> internal constructor(
         inputs.forEach { it.stopTransceiving() }
     }
 
-    fun cancel() {
-        job.cancel()
+    override fun openSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<QT>>> =
+        broadcastChannel.openSubscription()
+
+    public fun cancel() {
+        coroutineContext.cancel()
+    }
+
+    public override fun finalize() {
+        inputs.finalizeAll()
+        _isFinalized.value = true
+    }
+
+    private suspend fun update(newValue: QuantityMeasurement<QT>) {
+        _valueOrNull = newValue
+        broadcastChannel.send(newValue)
     }
 }
 
@@ -130,18 +163,36 @@ public class BinaryThresholdSensor internal constructor(
     state: BinaryState = BinaryState.High,
     private vararg val inputs: BinaryStateInput
 ) : BinaryStateInput {
-
     private val job = Job(scope.coroutineContext[Job])
-
     public override val coroutineContext: CoroutineContext = scope.coroutineContext + job
 
-    private val _isTransceiving = Updatable(false)
+    @Volatile
+    private var _valueOrNull: BinaryStateMeasurement? = run {
+        val currentMeasurements = inputs.asSequence().map { it.valueOrNull }.requireNoNulls().toList()
+        val mostRecentInstant = currentMeasurements.maxBy { it.instant }?.instant
+        val currentValues = currentMeasurements.map { it.value }
+
+        val value = if (currentValues.filter { it == state }.size >= threshold) {
+            BinaryState.High
+        } else {
+            BinaryState.Low
+        }
+
+        // Only way mostRecentInstant is null is if there are no measurements so we should return null instead of Low.
+        if (mostRecentInstant != null) value at mostRecentInstant else null
+    }
+    public override val valueOrNull: BinaryStateMeasurement?
+        get() = _valueOrNull
+
+    private val broadcastChannel = BroadcastChannel<BinaryStateMeasurement>(capacity = Channel.BUFFERED)
+
+    private val _isTransceiving = Updatable(initialValue = false)
     public override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
-    public override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
-        get() = _broadcastChannel
+    private val _isFinalized = Updatable(initialValue = false)
+    public override val isFinalized: InitializedTrackable<Boolean>
+        get() = _isFinalized
 
     public override val updateRate by runningAverage()
 
@@ -155,14 +206,14 @@ public class BinaryThresholdSensor internal constructor(
 
             inputs.forEach { changeWatchedInput ->
                 launch(Dispatchers.Default) {
-                    changeWatchedInput.updateBroadcaster.consumeEach { measurement ->
+                    changeWatchedInput.onEachUpdate { measurement ->
                         val currentValues = HashSet<BinaryState>()
 
                         inputs.forEach { input ->
-                            input.updateBroadcaster.valueOrNull?.let { currentValues += it.value }
+                            input.valueOrNull?.let { currentValues += it.value }
                         }
 
-                        _broadcastChannel.send(
+                        update(
                             if (currentValues.filter { it == state }.size >= threshold) {
                                 BinaryState.High
                             } else {
@@ -174,7 +225,7 @@ public class BinaryThresholdSensor internal constructor(
 
                 //TODO: Consider moving this to reusable function
                 launch(Dispatchers.Daqc) {
-                    changeWatchedInput.isTransceiving.updateBroadcaster.consumeEach { newStatus ->
+                    changeWatchedInput.isTransceiving.onEachUpdate { newStatus ->
                         transceivingStatuses += changeWatchedInput to newStatus
                         if (_isTransceiving.value && !transceivingStatuses.values.contains(true)) {
                             _isTransceiving.value = false
@@ -191,6 +242,9 @@ public class BinaryThresholdSensor internal constructor(
         }
     }
 
+    public override fun openSubscription(): ReceiveChannel<BinaryStateMeasurement> =
+        broadcastChannel.openSubscription()
+
     public override fun startSampling() {
         inputs.forEach { it.startSampling() }
     }
@@ -198,6 +252,16 @@ public class BinaryThresholdSensor internal constructor(
     //TODO: We might not want to actually cancel the underlying inputs
     public override fun stopTransceiving() {
         inputs.forEach { it.stopTransceiving() }
+    }
+
+    public override fun finalize() {
+        inputs.finalizeAll()
+        _isFinalized.value = true
+    }
+
+    private suspend fun update(newValue: BinaryStateMeasurement) {
+        _valueOrNull = newValue
+        broadcastChannel.send(newValue)
     }
 
 

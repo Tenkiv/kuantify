@@ -18,7 +18,20 @@
 package org.tenkiv.kuantify.lib
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.*
+
+/**
+ * [consume] channel and execute [action] on each element. While chains of operators should be implemented using [Flow]
+ * many situation can be handled by simply taking an action on every element of a channel and this function provides
+ * a convenient, safe way to do that.
+ */
+public suspend inline fun <E> ReceiveChannel<E>.consumingOnEach(action: (element: E) -> Unit) = consume {
+    for (element in this) {
+        action(element)
+    }
+}
 
 /**
  * Creates a new [CoroutineScope] which is identical to the current one but the [Job] of its context replaced with a
@@ -34,4 +47,26 @@ public class MutexValue<V : Any>(@PublishedApi internal val value: V, @Published
         block(value)
     }
 
+}
+
+/**
+ * Combines two flows of any type by transforming all values from either flow to the same type and putting them into a
+ * new [Flow].
+ */
+public fun <A, B, R> Flow<A>.transformEitherIn(
+    scope: CoroutineScope,
+    other: Flow<B>,
+    transformThis: (A) -> R,
+    transformOther: (B) -> R
+): Flow<R> = channelFlow {
+    scope.launch {
+        this@transformEitherIn.collect {
+            send(transformThis(it))
+        }
+    }
+    scope.launch {
+        other.collect {
+            send(transformOther(it))
+        }
+    }
 }

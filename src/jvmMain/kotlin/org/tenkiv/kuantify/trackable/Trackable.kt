@@ -17,26 +17,34 @@
 
 package org.tenkiv.kuantify.trackable
 
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.kuantify.lib.*
 import physikal.*
 
 public typealias TrackableQuantity<QT> = Trackable<Quantity<QT>>
 public typealias InitializedTrackableQuantity<Q> = InitializedTrackable<Quantity<Q>>
 
 /**
- * The base interface which defines objects which have the ability to update their status.
+ * The base interface which defines objects which have the ability to update their value.
  */
-public interface Trackable<out T> {
+public interface Trackable<out T : Any> {
     /**
      * Gets the current value or returns Null.
      *
      * @return The value or null.
      */
     public val valueOrNull: T?
-    public val updateBroadcaster: Flow<T>
+
+    /**
+     * Creates a subscription to updates to this [Trackable].
+     */
+    public fun openSubscription(): ReceiveChannel<T>
 }
 
-public interface InitializedTrackable<out T> : Trackable<T> {
+public suspend inline fun <T : Any> Trackable<T>.onEachUpdate(action: (update: T) -> Unit) =
+    openSubscription().consumingOnEach(action)
+
+public interface InitializedTrackable<out T : Any> : Trackable<T> {
     val value: T
 }
 
@@ -45,5 +53,4 @@ public interface InitializedTrackable<out T> : Trackable<T> {
  *
  * @return The current value.
  */
-public suspend fun <T> Trackable<T>.getValue(): T =
-    valueOrNull ?: updateBroadcaster.first()
+public suspend fun <T : Any> Trackable<T>.getValue(): T = valueOrNull ?: openSubscription().consume { receive() }
