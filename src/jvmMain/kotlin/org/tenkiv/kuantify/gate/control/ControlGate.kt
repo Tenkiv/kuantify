@@ -22,6 +22,14 @@ import org.tenkiv.kuantify.gate.*
 
 public interface ControlGate<T : DaqcData> : DaqcGate<T> {
 
-    public fun setOutput(setting: T): SettingViability
+    /**
+     * Sets the output if the function does not encounter a [SettingProblem]. Returns [SettingViability.Unviable] if
+     * it does.
+     */
+    public fun setOutputIfViable(setting: T): SettingViability
 
+}
+
+public fun <T : DaqcData> ControlGate<T>.setOutput(setting: T) {
+    setOutputIfViable(setting).throwIfUnviable()
 }

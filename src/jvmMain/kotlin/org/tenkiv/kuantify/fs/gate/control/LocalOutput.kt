@@ -68,7 +68,7 @@ public interface LocalQuantityOutput<QT : Quantity<QT>, out D : LocalDevice> : L
                 receive {
                     val setting = Serialization.json.parse(Quantity.serializer<QT>(), it)
 
-                    setOutput(setting)
+                    setOutputIfViable(setting)
                 }
             }
         }
@@ -94,7 +94,7 @@ public interface LocalBinaryStateOutput<out D : LocalDevice> : LocalOutput<Binar
                 receive {
                     val setting = Serialization.json.parse(BinaryState.serializer(), it)
 
-                    setOutput(setting)
+                    setOutputIfViable(setting)
                 }
             }
         }

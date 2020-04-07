@@ -75,7 +75,7 @@ public inline fun DigitalGate.onAnyTransceivingChange(
     crossinline block: (anyTransceiving: Boolean) -> Unit
 ) {
     launch {
-        isTransceivingBinaryState.updateBroadcaster.consumeEach {
+        isTransceivingBinaryState.onEachUpdate {
             block(
                 isTransceivingBinaryState.value ||
                         isTransceivingFrequency.value ||
@@ -84,7 +84,7 @@ public inline fun DigitalGate.onAnyTransceivingChange(
         }
     }
     launch {
-        isTransceivingPwm.updateBroadcaster.consumeEach {
+        isTransceivingPwm.onEachUpdate {
             block(
                 isTransceivingBinaryState.value ||
                         isTransceivingFrequency.value ||
@@ -93,7 +93,7 @@ public inline fun DigitalGate.onAnyTransceivingChange(
         }
     }
     launch {
-        isTransceivingFrequency.updateBroadcaster.consumeEach {
+        isTransceivingFrequency.onEachUpdate {
             block(
                 isTransceivingBinaryState.value ||
                         isTransceivingFrequency.value ||

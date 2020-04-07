@@ -17,13 +17,23 @@
 
 package org.tenkiv.kuantify
 
+import kotlinx.atomicfu.locks.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import mu.*
 import org.tenkiv.kuantify.hardware.device.*
+import org.tenkiv.kuantify.lib.*
+import java.util.concurrent.locks.ReentrantLock
 
-
-private val logger = KotlinLogging.logger {}
+/**
+ * Should only be used when building components for Kuantify such as bindings for a type of data acquisition device.
+ * Not safe for general use of Kuantify.
+ */
+@RequiresOptIn(
+     "Should only be used when building components for Kuantify such as bindings for a type of " +
+             "data acquisition device. Not safe for general end use."
+)
+public annotation class KuantifyComponentBuilder
 
 private val daqcDispatcherThread: CoroutineDispatcher = newSingleThreadContext("DaqcSingleThreadDispatcher")
 
@@ -41,11 +51,60 @@ private val daqcDispatcherThread: CoroutineDispatcher = newSingleThreadContext("
 public val Dispatchers.Daqc: CoroutineDispatcher get() = daqcDispatcherThread
 
 /**
- * The [ConflatedBroadcastChannel] which sends [CriticalDaqcError] messages notifying of potentially critical issues.
- * This channel should be monitored closely.
+ * **WARNING!!!**
+ * Holds inlined fields for [handleCriticalDaqcErrors]/[alertCriticalError] and should only be accessed from inside
+ * those functions.
+ *
+ * Name is intentionally verbose to make you think twice if for some reason anyone gets the idea to try to use this.
  */
-public val criticalDaqcErrorBroadcaster: ConflatedBroadcastChannel<CriticalDaqcError> =
-    ConflatedBroadcastChannel<CriticalDaqcError>()
+@Suppress("ClassName")
+@PublishedApi
+internal object _CriticalErrorHandlerPrivateGlobals {
+    val criticalErrorChannel = Channel<CriticalDaqcError>(capacity = Channel.BUFFERED)
+
+    val handlerLock = ReentrantLock()
+    var handlerSet = false
+}
+
+/**
+ * Critical errors are errors
+ * that stop commands from being carried out or measurements from being taken. Before a critical error is reported
+ * appropriate steps will have been taken to recover (e.g. retrying to resend a command across the network multiple
+ * times) and those recovery attempts have failed.
+ *
+ * @param scope Critical error handler can only be set once and should run for the entire duration of the program. Thus in the vast
+ * majority of cases it is recommended to use the default [GlobalScope].
+ *
+ * @return true if the handler was set, false if there was already a handler and this invocation was ignored.
+ */
+public inline fun handleCriticalDaqcErrors(
+    scope: CoroutineScope = GlobalScope,
+    crossinline onError: suspend (error: CriticalDaqcError) -> Unit
+): Boolean = _CriticalErrorHandlerPrivateGlobals.handlerLock.withLock {
+    if (_CriticalErrorHandlerPrivateGlobals.handlerSet) {
+        false
+    } else {
+        scope.launch(NonCancellable) {
+            _CriticalErrorHandlerPrivateGlobals.criticalErrorChannel.consumingOnEach {
+                onError(it)
+            }
+        }
+        _CriticalErrorHandlerPrivateGlobals.handlerSet = true
+        true
+    }
+}
+
+/**
+ * Alerts the handler set by [handleCriticalDaqcErrors] that there is a [CriticalDaqcError]. Critical errors are errors
+ * that stop commands from being carried out or measurements from being taken. Before a critical error is reported
+ * appropriate steps should have been taken to recover (e.g. retrying to resend a command across the network multiple
+ * times) and those recovery attempts should have failed. A critical error means at least the [Device] the error
+ * occurred for needs to be restarts, likely the whole program, and there may need to be human intervention.
+ */
+@KuantifyComponentBuilder
+public suspend fun alertCriticalError(error: CriticalDaqcError) {
+    _CriticalErrorHandlerPrivateGlobals.criticalErrorChannel.send(error)
+}
 
 /**
  * Class handling a set of errors which are extremely serious and represent major issues to be handled.

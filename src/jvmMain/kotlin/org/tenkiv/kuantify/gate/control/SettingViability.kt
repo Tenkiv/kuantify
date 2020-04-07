@@ -27,9 +27,6 @@ private val logger = KotlinLogging.logger {}
  * the daqc device. So Viable is not a 100% guarantee that the output was actually set to this. However, if [Viable]
  * is returned and there is a failure to set the output in the communication process, the error will be propagated
  * through the daqcCriticalErrorChannel.
- *
- * setOutput() can still throw exceptions separately from the [SettingViability] pipeline in the event of unexpected
- * catastrophic problems in the setting process.
  */
 public sealed class SettingViability {
 
@@ -39,43 +36,45 @@ public sealed class SettingViability {
 
     public object Viable : SettingViability()
 
-    public class Unviable(val exception: SettingException) : SettingViability() {
+    public class Unviable(val problem: SettingProblem) : SettingViability() {
 
         init {
-            logger.debug {
-                "Attempted unviable setting for ControlGate: ${exception.controlGate}. ${exception.message}"
+            logger.warn {
+                "Attempted unviable setting for ControlGate: ${problem.controlGate}. ${problem.message}"
             }
         }
 
-        public fun throwException(): Nothing = throw exception
+        public fun throwException(): Nothing = throw UnviableSettingException(problem)
 
     }
 
 }
 
-public open class SettingException(val controlGate: ControlGate<*>, message: String, cause: Throwable? = null) :
-    Throwable("$controlGate: $message", cause)
+public sealed class SettingProblem {
+    public abstract val controlGate: ControlGate<*>
+    public abstract val message: String
+    public abstract val cause: Throwable?
 
-public class UninitialisedSettingException(controlGate: ControlGate<*>, cause: Throwable? = null) :
-    SettingException(controlGate, message, cause) {
-
-    public companion object {
-        private const val message = "Attempted to modify uninitialised setting."
+    public class UninitialisedSetting internal constructor(
+        public override val controlGate: ControlGate<*>,
+        public override val cause: Throwable? = null
+    ) : SettingProblem() {
+        public override val message: String = "Attempted to modify uninitialised setting."
     }
+
+    public class OutOfRange internal constructor(
+        public override val controlGate: ControlGate<*>,
+        public override val cause: Throwable? = null
+    ) : SettingProblem() {
+        public override val message: String = "Attempted setting is out of the allowable range."
+    }
+
 }
 
-public class SettingOutOfRangeException(controlGate: ControlGate<*>, cause: Throwable? = null) :
-    SettingException(controlGate, message, cause) {
+public fun ControlGate<*>.UninitialisedSetting(cause: Throwable? = null): Unviable =
+    Unviable(SettingProblem.UninitialisedSetting(this, cause))
 
-    public companion object {
-        private const val message = "Attempted setting is out of the allowable range."
-    }
-}
+public fun ControlGate<*>.SettingOutOfRange(cause: Throwable? = null): Unviable =
+    Unviable(SettingProblem.OutOfRange(this, cause))
 
-public class ConnectionException(controlGate: ControlGate<*>, cause: Throwable? = null) :
-    SettingException(controlGate, message, cause) {
-
-    public companion object {
-        private const val message = "There is no connection to the device to which this control gate belongs."
-    }
-}
+public class UnviableSettingException(problem: SettingProblem) : Exception(problem.message, problem.cause)

@@ -18,7 +18,9 @@
 package org.tenkiv.kuantify.gate
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.trackable.*
 
@@ -37,7 +39,7 @@ public interface DaqcGate<out T : DaqcData> : Trackable<ValueInstant<T>>, Corout
      * Finalize the configuration of this [DaqcGate] so nothing can be changed for the remainder of its existence.
      * This will also finalize any [DaqcGate]s this [DaqcGate]s data is derived from.
      *
-     * Attempts to modify the configuration of a [DaqcGate] after [finalize] will fail.
+     * Attempts to modify the configuration of a [DaqcGate] after [finalize] is called will fail.
      *
      * This is an idempotent operation - subsequent calls to this function have no effect.
      */
@@ -48,6 +50,7 @@ public interface DaqcGate<out T : DaqcData> : Trackable<ValueInstant<T>>, Corout
  * Convenience function to wrap [DaqcGate] configuration modification calls in for automatic handling of
  * [DaqcGate.isFinalized]. This function should only be use when creating a new type of [DaqcGate].
  */
+@KuantifyComponentBuilder
 public inline fun <R> DaqcGate<*>.modifyConfiguration(block: () -> R): R = if (!isFinalized.value) {
     block()
 } else {

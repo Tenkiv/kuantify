@@ -22,10 +22,12 @@ import kotlinx.coroutines.channels.*
 import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
+import org.tenkiv.kuantify.trackable.*
 import physikal.*
 
 private val logger = KotlinLogging.logger {}
@@ -40,19 +42,20 @@ private val logger = KotlinLogging.logger {}
 public abstract class ScAnalogSensor<QT : Quantity<QT>>(
     public val analogInput: AnalogInput<*>,
     maximumVoltage: Quantity<Voltage>,
-    acceptableError: Quantity<Voltage>,
-    private val throwOnTransformFailure: Boolean = false
-) : QuantityInput<QT> {
+    acceptableError: Quantity<Voltage>
+) : QuantityInput<QT>, CoroutineScope by analogInput.withNewChildJob() {
+    @Volatile
+    private var _valueOrNull: QuantityMeasurement<QT>? = null
+    override val valueOrNull: QuantityMeasurement<QT>?
+        get() = _valueOrNull
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<QT>>()
-    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<QT>>
-        get() = _broadcastChannel
-
-    private val _transformErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    public val transformErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = _transformErrorBroadcaster
+    private val broadcastChannel = BroadcastChannel<QuantityMeasurement<QT>>(capacity = Channel.BUFFERED)
+    private val failureBroadcastChannel = BroadcastChannel<FailedMeasurement>(capacity = 5)
 
     public final override val isTransceiving get() = analogInput.isTransceiving
+
+    public override val isFinalized: InitializedTrackable<Boolean>
+        get() = analogInput.isFinalized
 
     public final override val updateRate get() = analogInput.updateRate
 
@@ -61,14 +64,10 @@ public abstract class ScAnalogSensor<QT : Quantity<QT>>(
         analogInput.maxAcceptableError.set(acceptableError)
 
         launch {
-            analogInput.updateBroadcaster.consumeEach { measurement ->
-
+            analogInput.onEachUpdate { measurement ->
                 when (val convertedResult = transformInput(measurement.value)) {
-                    is Result.Success -> _broadcastChannel.send(convertedResult.value at measurement.instant)
-                    is Result.Failure -> {
-                        if (throwOnTransformFailure) throw convertedResult.error
-                        logger.warn(convertedResult.error, ::transformFailureMsg)
-                    }
+                    is Result.Success -> update(convertedResult.value at measurement.instant)
+                    is Result.Failure -> processFailure(convertedResult.error at measurement.instant)
                 }
             }
         }
@@ -83,7 +82,7 @@ public abstract class ScAnalogSensor<QT : Quantity<QT>>(
      * @param voltage The [Voltage] measured by the analog input.
      * @return A [Result] of either a [DaqcQuantity] or an error.
      */
-    protected abstract suspend fun transformInput(voltage: Quantity<Voltage>): Result<DaqcQuantity<QT>, Throwable>
+    protected abstract suspend fun transformInput(voltage: Quantity<Voltage>): Result<DaqcQuantity<QT>, ProcessFailure>
 
     public final override fun startSampling() {
         analogInput.startSampling()
@@ -92,4 +91,29 @@ public abstract class ScAnalogSensor<QT : Quantity<QT>>(
     public final override fun stopTransceiving() {
         analogInput.stopTransceiving()
     }
+
+    public final override fun finalize() {
+        analogInput.finalize()
+    }
+
+    public override fun openSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<QT>>> =
+        broadcastChannel.openSubscription()
+
+    public override fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>? =
+        failureBroadcastChannel.openSubscription()
+
+    public fun cancel() {
+        coroutineContext.cancel()
+    }
+
+    private suspend fun update(updated: QuantityMeasurement<QT>) {
+        _valueOrNull = updated
+        broadcastChannel.send(updated)
+    }
+
+    private suspend fun processFailure(failure: FailedMeasurement) {
+        failureBroadcastChannel.send(failure)
+        logger.warn(::transformFailureMsg)
+    }
+
 }

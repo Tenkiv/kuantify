@@ -21,6 +21,7 @@ import kotlinx.coroutines.*
 import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.inputs.*
@@ -47,7 +48,7 @@ public class ThermocoupleK internal constructor(
     channel,
     maximumVoltage = 55.0.millivolts,
     acceptableError = 18.0.microvolts * acceptableError.toDoubleIn(Kelvin)
-), RangedQuantityInput<Temperature>, CoroutineScope by scope.withNewChildJob() {
+), RangedQuantityInput<Temperature> {
     public override val valueRange: ClosedFloatingPointRange<DaqcQuantity<Temperature>> =
         ((-200.0).degreesCelsius..1350.0.degreesCelsius).toDaqc()
 
@@ -64,18 +65,18 @@ public class ThermocoupleK internal constructor(
         "The voltage: $voltage is out the range where a type K thermocouple can accurately measure a temperature."
 
     protected override suspend fun transformInput(voltage: Quantity<Voltage>):
-            Result<DaqcQuantity<Temperature>, Throwable> {
+            Result<DaqcQuantity<Temperature>, ProcessFailure> {
         val mv = voltage toDoubleIn Millivolt
         val temperatureReferenceMeasurement = if (waitForTRefValue) {
                 analogInput.device.temperatureReference.getValue()
             } else {
-                analogInput.device.temperatureReference.updateBroadcaster.valueOrNull ?:
-                    return Result.Failure(UninitializedPropertyAccessException(noTempRefValueMsg))
+                analogInput.device.temperatureReference.valueOrNull ?:
+                    return Result.Failure(IllegalDependencyState(noTempRefValueMsg))
             }
         val temperatureReferenceValue = temperatureReferenceMeasurement.value
 
         if (temperatureReferenceMeasurement.instant.isOlderThan(oldestTRefValueAge.toJavaDuration())) {
-            return Result.Failure(OutOfRangeException(tRefValueTooOldMsg))
+            return Result.Failure(IllegalDependencyState(tRefValueTooOldMsg))
         }
 
         fun calculate(
@@ -102,18 +103,15 @@ public class ThermocoupleK internal constructor(
                 temperatureReferenceValue
                 ).toDaqc()
 
-        return runCatching {
-            if (mv >= -5.891 && mv < 0) {
-                calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0)
+        return if (mv >= -5.891 && mv < 0) {
+                Result.Success(calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0))
             } else if (mv >= 0 && mv < 20.644) {
-                calculate(0.0, mid1, mid2, mid3, mid4, mid5, mid6, mid7, mid8, mid9)
+                Result.Success(calculate(0.0, mid1, mid2, mid3, mid4, mid5, mid6, mid7, mid8, mid9))
             } else if (mv >= 20.644 && mv < 54.886) {
-                calculate(hi0, hi1, hi2, hi3, hi4, hi5, hi6, 0.0, 0.0, 0.0)
+                Result.Success(calculate(hi0, hi1, hi2, hi3, hi4, hi5, hi6, 0.0, 0.0, 0.0))
             } else {
-                throw OutOfRangeException(valueOutOfRangeMsg(voltage))
+                Result.Failure(OutOfRange(valueOutOfRangeMsg(voltage)))
             }
-        }.toCoralResult()
-
     }
 
     public companion object {

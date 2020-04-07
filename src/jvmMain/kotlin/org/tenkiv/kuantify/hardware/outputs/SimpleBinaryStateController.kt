@@ -46,7 +46,7 @@ public class SimpleBinaryStateController internal constructor(val digitalOutput:
         digitalOutput.stopTransceiving()
     }
 
-    public override fun setOutput(setting: BinaryState): SettingViability =
+    public override fun setOutputIfViable(setting: BinaryState): SettingViability =
         digitalOutput.setOutputState(setting)
 
 }

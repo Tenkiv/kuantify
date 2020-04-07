@@ -61,6 +61,8 @@ kotlin {
         all {
             languageSettings.enableLanguageFeature("InlineClasses")
 
+            languageSettings.useExperimentalAnnotation("org.tenkiv.kuantify.KuantifyComponentBuilder")
+
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
             languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
             languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")

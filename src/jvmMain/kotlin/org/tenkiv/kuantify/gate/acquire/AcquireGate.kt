@@ -17,38 +17,41 @@
 
 package org.tenkiv.kuantify.gate.acquire
 
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.lib.*
 
 public typealias FailedMeasurement = ValueInstant<ProcessFailure>
 public typealias SuccesfulProcessResult<T> = Result.Success<ValueInstant<T>>
 public typealias ProcessResult<ST> = Result<ValueInstant<ST>, FailedMeasurement>
 
-public interface AcquireGate<out T : DaqcData> : DaqcGate<T>,
-    UpdateRatedGate<T> {
-    /**
-     * Broadcasts failures to process updates from an underlying data source resulting in an inability to produce an
-     * updated value for this gate.
-     * This will not indicate critical errors in the underlying DAQC system, for that see
-     * [criticalDaqcErrorBroadcaster].
-     * This is a hot [Flow] backed by a [kotlinx.coroutines.channels.BroadcastChannel], each call to [Flow.collect]
-     * means there will be a new subscription made.
-     *
-     * If this is null it means this gate either does no processing to the underlying data the update is based on or the
-     * processing cannot fail.
-     */
-    public val processFailureBroadcaster: Flow<FailedMeasurement>? get() = null
-
+public interface AcquireGate<out T : DaqcData> : DaqcGate<T>, UpdateRatedGate<T> {
     /**
      * Activates the input alerting it to begin collecting and sending data.
      */
     public fun startSampling()
 
+    /**
+     * Opens a subscription to a broadcast that reports failures in processing the underlying data for this
+     * [AcquireGate].
+     *
+     * @return The subscription to the broadcast or null if this [AcquireGate] does no processing that can fail.
+     */
+    public fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>?
+
 }
 
-public interface ProcessFailure {
-    public val cause: Throwable
+public inline fun AcquireGate<*>.processFailureHandler(
+    scope: CoroutineScope = this,
+    crossinline onFailure: suspend (FailedMeasurement) -> Unit
+) {
+    val channel = openProcessFailureSubscription()
+    if (channel != null) {
+        scope.launch {
+            channel.consumingOnEach { onFailure(it) }
+        }
+    }
 }

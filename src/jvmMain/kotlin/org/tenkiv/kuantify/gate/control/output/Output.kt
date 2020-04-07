@@ -43,19 +43,15 @@ public interface QuantityOutput<QT : Quantity<QT>> : Output<DaqcQuantity<QT>> {
      * This will fail with a return [AdjustmentAttempt.UninitialisedSetting] if there hasn't yet been a setting provided
      * for this [Output]
      */
-    public fun adjustOutputOrFail(
+    public fun adjustOutputIfInitialized(
         adjustment: (Double) -> Double
     ): SettingViability {
         val setting = valueOrNull
         return if (setting != null) {
             val quantity = setting.value
-            setOutput(adjustment(quantity.inOwnUnit).toQuantity(quantity.unit))
+            setOutputIfViable(adjustment(quantity.inOwnUnit).toQuantity(quantity.unit))
         } else {
-            SettingViability.Unviable(
-                UninitialisedSettingException(
-                    this
-                )
-            )
+            UninitialisedSetting()
         }
     }
 
@@ -67,7 +63,7 @@ public interface QuantityOutput<QT : Quantity<QT>> : Output<DaqcQuantity<QT>> {
         adjustment: (Double) -> Double
     ): SettingViability {
         val quantity = getValue().value
-        return setOutput(adjustment(quantity.inOwnUnit).toQuantity(quantity.unit))
+        return setOutputIfViable(adjustment(quantity.inOwnUnit).toQuantity(quantity.unit))
     }
 
 }
@@ -77,9 +73,13 @@ public interface QuantityOutput<QT : Quantity<QT>> : Output<DaqcQuantity<QT>> {
  *
  * @param setting The signal to set as the output.
  */
-public fun <QT : Quantity<QT>> QuantityOutput<QT>.setOutput(
+public fun <QT : Quantity<QT>> QuantityOutput<QT>.setOutputIfViable(
     setting: Quantity<QT>
-): SettingViability = setOutput(setting.toDaqc())
+): SettingViability = setOutputIfViable(setting.toDaqc())
+
+public fun <QT : Quantity<QT>> QuantityOutput<QT>.setOutput(setting: Quantity<QT>) {
+    setOutputIfViable(setting).throwIfUnviable()
+}
 
 /**
  * An [Output] whose type extends both [DaqcValue] and [Comparable] so it can be used in the default learning module.
@@ -105,20 +105,12 @@ public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuanti
         return if (setting != null) {
             val newSetting = setting.value * ratioIncrease
             if (newSetting.toDaqc() in valueRange) {
-                setOutput(setting.value * ratioIncrease)
+                setOutputIfViable(setting.value * ratioIncrease)
             } else {
-                SettingViability.Unviable(
-                    SettingOutOfRangeException(
-                        this
-                    )
-                )
+                SettingOutOfRange()
             }
         } else {
-            SettingViability.Unviable(
-                UninitialisedSettingException(
-                    this
-                )
-            )
+            UninitialisedSetting()
         }
     }
 
@@ -146,7 +138,7 @@ public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuanti
 
     public fun setOutputToRatioMaximum(
         ratio: Double
-    ): SettingViability = setOutput(ratioOfRange(ratio))
+    ): SettingViability = setOutputIfViable(ratioOfRange(ratio))
 
     /**
      * Sets this output to random setting within the allowable range.
@@ -156,7 +148,7 @@ public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuanti
 
         val setting = ratioOfRange(random)
 
-        return setOutput(setting)
+        return setOutputIfViable(setting)
     }
 
     private fun ratioOfRange(ratio: Double): Quantity<Q> {
@@ -172,16 +164,12 @@ public class RqoAdapter<Q : Quantity<Q>> internal constructor(
     public override val valueRange: ClosedRange<DaqcQuantity<Q>>
 ) : RangedQuantityOutput<Q>, QuantityOutput<Q> by output {
 
-    public override fun setOutput(setting: DaqcQuantity<Q>): SettingViability {
+    public override fun setOutputIfViable(setting: DaqcQuantity<Q>): SettingViability {
         val inRange = setting in valueRange
         return if (!inRange) {
-            SettingViability.Unviable(
-                SettingOutOfRangeException(
-                    this
-                )
-            )
+            SettingOutOfRange()
         } else {
-            output.setOutput(setting)
+            output.setOutputIfViable(setting)
         }
     }
     //TODO: ToString, equals, hashcode

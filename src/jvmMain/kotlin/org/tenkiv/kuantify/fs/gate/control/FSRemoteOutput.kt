@@ -48,9 +48,9 @@ public sealed class FSRemoteOutput<T : DaqcValue, D : FSRemoteDevice>(device: D,
     public final override val isTransceiving: InitializedTrackable<Boolean>
         get() = _isTransceiving
 
-    public override fun setOutput(setting: T): SettingViability {
+    public override fun setOutputIfViable(setting: T): SettingViability {
         val connected = command { settingChannel.offer(setting) }
-        return if (connected) SettingViability.Viable else SettingViability.Unviable(ConnectionException(this))
+        return if (connected) SettingViability.Viable else SettingViability.Unviable(NoConnection(this))
     }
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {

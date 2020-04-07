@@ -60,7 +60,7 @@ public class AverageUpdateRateDelegate internal constructor(
             val sampleInstants = ArrayList<Instant>()
 
             //TODO: This can give a null pointer exception if UpdateRate is initialized before updateBroadcaster.
-            gate.updateBroadcaster.collect {
+            gate.onEachUpdate {
                 sampleInstants += it.instant
                 clean(sampleInstants)
 
