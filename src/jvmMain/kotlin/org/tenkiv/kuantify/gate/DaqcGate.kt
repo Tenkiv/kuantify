@@ -33,7 +33,7 @@ public interface DaqcGate<out T : DaqcData> : Trackable<ValueInstant<T>>, Corout
     public val isTransceiving: InitializedTrackable<Boolean>
     public val isFinalized: InitializedTrackable<Boolean>
 
-    public fun stopTransceiving()
+    public suspend fun stopTransceiving()
 
     /**
      * Finalize the configuration of this [DaqcGate] so nothing can be changed for the remainder of its existence.

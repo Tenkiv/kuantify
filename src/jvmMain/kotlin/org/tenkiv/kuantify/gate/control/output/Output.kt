@@ -43,7 +43,7 @@ public interface QuantityOutput<QT : Quantity<QT>> : Output<DaqcQuantity<QT>> {
      * This will fail with a return [AdjustmentAttempt.UninitialisedSetting] if there hasn't yet been a setting provided
      * for this [Output]
      */
-    public fun adjustOutputIfInitialized(
+    public suspend fun adjustOutputIfInitialized(
         adjustment: (Double) -> Double
     ): SettingViability {
         val setting = valueOrNull
@@ -73,11 +73,11 @@ public interface QuantityOutput<QT : Quantity<QT>> : Output<DaqcQuantity<QT>> {
  *
  * @param setting The signal to set as the output.
  */
-public fun <QT : Quantity<QT>> QuantityOutput<QT>.setOutputIfViable(
+public suspend fun <QT : Quantity<QT>> QuantityOutput<QT>.setOutputIfViable(
     setting: Quantity<QT>
 ): SettingViability = setOutputIfViable(setting.toDaqc())
 
-public fun <QT : Quantity<QT>> QuantityOutput<QT>.setOutput(setting: Quantity<QT>) {
+public suspend fun <QT : Quantity<QT>> QuantityOutput<QT>.setOutput(setting: Quantity<QT>) {
     setOutputIfViable(setting).throwIfUnviable()
 }
 
@@ -97,7 +97,7 @@ public interface BinaryStateOutput : RangedOutput<BinaryState> {
 
 public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>, QuantityOutput<Q> {
 
-    public fun increaseByRatioOfRange(
+    public suspend fun increaseByRatioOfRange(
         ratioIncrease: Double
     ): SettingViability {
         val setting = valueOrNull
@@ -114,36 +114,36 @@ public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuanti
         }
     }
 
-    public fun decreaseByRatioOfRange(
+    public suspend fun decreaseByRatioOfRange(
         ratioDecrease: Double
     ): SettingViability = increaseByRatioOfRange(-ratioDecrease)
 
     /**
      * Increase the setting by a percentage of the allowable range for this output.
      */
-    public fun increaseByPercentOfRange(
+    public suspend fun increaseByPercentOfRange(
         percentIncrease: Quantity<Dimensionless>
     ): SettingViability = increaseByRatioOfRange(percentIncrease.toDoubleIn(Percent) / 100)
 
     /**
      * Decrease the setting by a percentage of the allowable range for this output.
      */
-    public fun decreaseByPercentOfRange(
+    public suspend fun decreaseByPercentOfRange(
         percentDecrease: Quantity<Dimensionless>
     ): SettingViability = decreaseByRatioOfRange(percentDecrease.toDoubleIn(Percent) / 100)
 
-    public fun setOutputToPercentMaximum(
+    public suspend fun setOutputToPercentMaximum(
         percent: Quantity<Dimensionless>
     ): SettingViability = setOutputToRatioMaximum(percent.toDoubleIn(Percent) / 100)
 
-    public fun setOutputToRatioMaximum(
+    public suspend fun setOutputToRatioMaximum(
         ratio: Double
     ): SettingViability = setOutputIfViable(ratioOfRange(ratio))
 
     /**
      * Sets this output to random setting within the allowable range.
      */
-    public fun setOutputToRandom(): SettingViability {
+    public suspend fun setOutputToRandom(): SettingViability {
         val random = Math.random()
 
         val setting = ratioOfRange(random)
@@ -164,7 +164,7 @@ public class RqoAdapter<Q : Quantity<Q>> internal constructor(
     public override val valueRange: ClosedRange<DaqcQuantity<Q>>
 ) : RangedQuantityOutput<Q>, QuantityOutput<Q> by output {
 
-    public override fun setOutputIfViable(setting: DaqcQuantity<Q>): SettingViability {
+    public override suspend fun setOutputIfViable(setting: DaqcQuantity<Q>): SettingViability {
         val inRange = setting in valueRange
         return if (!inRange) {
             SettingOutOfRange()

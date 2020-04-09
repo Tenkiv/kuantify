@@ -20,7 +20,9 @@ package org.tenkiv.kuantify.networking.communication
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import mu.*
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.hardware.device.*
+import org.tenkiv.kuantify.lib.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
@@ -43,15 +45,15 @@ public abstract class NetworkRouteBinding<MT, ST>(
 
         internal fun throwIllegalStateSend(route: String, device: Device): Nothing {
             throw IllegalStateException(
-                "Network binding for route: $route on device${device.uid}" +
-                        " is configured to send but has no local update channel."
+                """Network binding for route: $route on device${device.uid} 
+                |is configured to send but has no local update channel.""".trimToSingleLine()
             )
         }
 
         internal fun throwIllegalStateReceive(route: String, device: Device): Nothing {
             throw IllegalStateException(
-                "Network binding for route: $route on device${device.uid}" +
-                        " is configured to receive but has no network update channel."
+                """Network binding for route: $route on device${device.uid} 
+                |is configured to receive but has no network update channel.""".trimToSingleLine()
             )
         }
 
@@ -99,7 +101,7 @@ public class RecursionPreventingRouteBinding<MT, ST>(
         // Send
         if (sendUpdates) {
             launch {
-                localUpdateChannel?.consumeEach {
+                localUpdateChannel?.consumingOnEach {
                     if (!ignoreNextUpdate.get()) {
                         val message = serializeMessage?.invoke(it) ?: serializedPing
                         networkCommunicator._sendMessage(route, message)
@@ -113,7 +115,7 @@ public class RecursionPreventingRouteBinding<MT, ST>(
         // Receive
         if (receiveUpdate != null) {
             launch {
-                networkUpdateChannel?.consumeEach {
+                networkUpdateChannel?.consumingOnEach {
                     ignoreNextUpdate.set(true)
                     receiveUpdate.invoke(it)
                 } ?: throwIllegalStateReceive(route, networkCommunicator.device)

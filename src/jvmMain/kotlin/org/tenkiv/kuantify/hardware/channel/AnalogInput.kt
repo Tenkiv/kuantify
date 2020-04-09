@@ -49,6 +49,6 @@ public interface AnalogInput<out D : AnalogDaqDevice> : QuantityInput<Voltage>, 
      * Implementing backing field must be marked with [Volatile] annotation or otherwise provide safety for
      * reads from multiple threads.
      */
-    public val maxElectricPotential: UpdatableQuantity<Voltage>
+    public val maxVoltage: UpdatableQuantity<Voltage>
 
 }

@@ -18,6 +18,7 @@
 package org.tenkiv.kuantify.hardware.channel
 
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.device.*
@@ -29,9 +30,9 @@ import physikal.types.*
 /**
  * Class defining the basic features of an output which sends binary signals.
  */
-public interface DigitalOutput<out D : DigitalOutputDevice> : DigitalChannel<D> {
+public interface DigitalOutput<out D : DigitalOutputDevice> : ControlGate<DigitalValue>, DigitalChannel<D> {
 
-    public fun setOutputState(
+    public suspend fun setOutputState(
         state: BinaryState
     ): SettingViability
 
@@ -40,7 +41,7 @@ public interface DigitalOutput<out D : DigitalOutputDevice> : DigitalChannel<D> 
      *
      * @param percent The percentage of the time the output is supposed to be active.
      */
-    public fun pulseWidthModulate(
+    public suspend fun pulseWidthModulate(
         percent: Quantity<Dimensionless>
     ): SettingViability
 
@@ -49,11 +50,11 @@ public interface DigitalOutput<out D : DigitalOutputDevice> : DigitalChannel<D> 
      *
      * @param freq The frequency of state change.
      */
-    public fun sustainTransitionFrequency(
+    public suspend fun sustainTransitionFrequency(
         freq: Quantity<Frequency>
     ): SettingViability
 
-    public override fun stopTransceiving() {
+    public override suspend fun stopTransceiving() {
         setOutputState(BinaryState.Low)
     }
 

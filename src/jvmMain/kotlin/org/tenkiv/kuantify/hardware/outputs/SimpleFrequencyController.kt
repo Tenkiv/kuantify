@@ -28,8 +28,8 @@ import org.tenkiv.kuantify.lib.physikal.*
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
 public class SimpleFrequencyController internal constructor(digitalOutput: DigitalOutput<*>) :
-    ScDigitalFrequencyController<Frequency>(digitalOutput), CoroutineScope by digitalOutput {
+    DigitalFrequencyController<Frequency>(digitalOutput), CoroutineScope by digitalOutput {
 
-    public override fun convertOutput(setting: DaqcQuantity<Frequency>) = setting
+    public override fun convertToFrequency(setting: DaqcQuantity<Frequency>) = setting
 
 }

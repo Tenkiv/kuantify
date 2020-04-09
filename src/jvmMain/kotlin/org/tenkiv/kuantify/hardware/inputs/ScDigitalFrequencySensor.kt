@@ -19,14 +19,18 @@ package org.tenkiv.kuantify.hardware.inputs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.trackable.*
 import physikal.*
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Abstract class for an input which takes frequency data from a single digital input.
@@ -35,14 +39,14 @@ import physikal.*
  */
 public abstract class ScDigitalFrequencySensor<QT : Quantity<QT>>(val digitalInput: DigitalInput<*>) :
     QuantityInput<QT> {
+    @Volatile
+    private var _valueOrNull: ValueInstant<DaqcQuantity<QT>>? = null
+    override val valueOrNull: ValueInstant<DaqcQuantity<QT>>?
+        get() = _valueOrNull
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<QT>>()
-    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<QT>>
-        get() = _broadcastChannel
+    private val broadcastChannel = BroadcastChannel<QuantityMeasurement<QT>>(capacity = Channel.BUFFERED)
 
-    private val _transformErrorBroadcaster = ConflatedBroadcastChannel<ValueInstant<Throwable>>()
-    public val transformErrorBroadcaster: ConflatedBroadcastChannel<out ValueInstant<Throwable>>
-        get() = _transformErrorBroadcaster
+    private val processFailureBroadcaster = BroadcastChannel<FailedMeasurement>(capacity = 5)
 
     public final override val isTransceiving get() = digitalInput.isTransceivingFrequency
 
@@ -50,26 +54,19 @@ public abstract class ScDigitalFrequencySensor<QT : Quantity<QT>>(val digitalInp
 
     public val avgFrequency: UpdatableQuantity<Frequency> get() = digitalInput.avgFrequency
 
+    public override val isFinalized: InitializedTrackable<Boolean>
+        get() = digitalInput.isFinalized
+
     init {
         launch {
-            digitalInput.transitionFrequencyBroadcaster.consumeEach { measurement ->
+            digitalInput.openTransitionFrequencySubscription().consumingOnEach { measurement ->
 
                 when (val convertedInput = transformInput(measurement.value)) {
-                    is Result.Success -> _broadcastChannel.send(convertedInput.value at measurement.instant)
-                    is Result.Failure -> {
-                        _transformErrorBroadcaster.send(convertedInput.error at measurement.instant)
-                    }
+                    is Result.Success -> update(convertedInput.value at measurement.instant)
+                    is Result.Failure -> processFailure(convertedInput.error at measurement.instant)
                 }
             }
         }
-    }
-
-    public final override fun startSampling() {
-        digitalInput.startSamplingTransitionFrequency()
-    }
-
-    public final override fun stopTransceiving() {
-        digitalInput.stopTransceiving()
     }
 
     /**
@@ -78,5 +75,36 @@ public abstract class ScDigitalFrequencySensor<QT : Quantity<QT>>(val digitalInp
      * @param frequency The [Frequency] measured by the digital input.
      * @return A [Result] of either a [DaqcQuantity] or an error.
      */
-    protected abstract fun transformInput(frequency: Quantity<Frequency>): Result<DaqcQuantity<QT>, Throwable>
+    protected abstract fun transformInput(frequency: Quantity<Frequency>): Result<DaqcQuantity<QT>, ProcessFailure>
+
+    public final override fun startSampling() {
+        digitalInput.startSamplingTransitionFrequency()
+    }
+
+    public final override suspend fun stopTransceiving() {
+        digitalInput.stopTransceiving()
+    }
+
+    public override fun openSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<QT>>> =
+        broadcastChannel.openSubscription()
+
+    public override fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>? =
+        processFailureBroadcaster.openSubscription()
+
+    public override fun finalize() {
+        digitalInput.finalize()
+    }
+
+    private suspend fun update(updated: QuantityMeasurement<QT>) {
+        _valueOrNull = updated
+        broadcastChannel.send(updated)
+    }
+
+    private suspend fun processFailure(failure: FailedMeasurement) {
+        logger.warn { transformFailureMsg() }
+        processFailureBroadcaster.send(failure)
+    }
+
+    private fun transformFailureMsg() = """Frequency sensor based on analog input $digitalInput failed to transform 
+        |input.The value of this input will not be updated.""".trimToSingleLine()
 }

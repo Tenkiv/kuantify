@@ -44,11 +44,11 @@ public class ThermocoupleK internal constructor(
     acceptableError: Quantity<Temperature> = 1.0.degreesCelsius,
     private val waitForTRefValue: Boolean = false,
     private val oldestTRefValueAge: Duration = 5.minutes
-) : ScAnalogSensor<Temperature>(
+) : AnalogSensor<Temperature>(
     channel,
-    maximumVoltage = 55.0.millivolts,
+    maxVoltage = 55.0.millivolts,
     acceptableError = 18.0.microvolts * acceptableError.toDoubleIn(Kelvin)
-), RangedQuantityInput<Temperature> {
+), RangedQuantityInput<Temperature>, CoroutineScope by scope.withNewChildJob() {
     public override val valueRange: ClosedFloatingPointRange<DaqcQuantity<Temperature>> =
         ((-200.0).degreesCelsius..1350.0.degreesCelsius).toDaqc()
 
@@ -64,9 +64,9 @@ public class ThermocoupleK internal constructor(
     private fun valueOutOfRangeMsg(voltage: Quantity<Voltage>) =
         "The voltage: $voltage is out the range where a type K thermocouple can accurately measure a temperature."
 
-    protected override suspend fun transformInput(voltage: Quantity<Voltage>):
+    protected override suspend fun transformInput(input: DaqcQuantity<Voltage>):
             Result<DaqcQuantity<Temperature>, ProcessFailure> {
-        val mv = voltage toDoubleIn Millivolt
+        val mv = input toDoubleIn Millivolt
         val temperatureReferenceMeasurement = if (waitForTRefValue) {
                 analogInput.device.temperatureReference.getValue()
             } else {
@@ -110,7 +110,7 @@ public class ThermocoupleK internal constructor(
             } else if (mv >= 20.644 && mv < 54.886) {
                 Result.Success(calculate(hi0, hi1, hi2, hi3, hi4, hi5, hi6, 0.0, 0.0, 0.0))
             } else {
-                Result.Failure(OutOfRange(valueOutOfRangeMsg(voltage)))
+                Result.Failure(OutOfRange(valueOutOfRangeMsg(input)))
             }
     }
 

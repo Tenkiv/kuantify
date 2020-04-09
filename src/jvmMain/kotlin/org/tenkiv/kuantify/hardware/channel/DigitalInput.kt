@@ -22,6 +22,7 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.hardware.inputs.*
+import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
 import physikal.*
 import physikal.types.*
@@ -29,8 +30,13 @@ import physikal.types.*
 /**
  * Class defining the basic features of an input which reads binary signals.
  */
-public interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>,
-    UpdateRatedGate<DigitalValue> {
+public interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, UpdateRatedGate<DigitalValue> {
+
+    public val lastStateMeasurement: BinaryStateMeasurement?
+
+    public val lastPwmMeasurement: QuantityMeasurement<Dimensionless>?
+
+    public val lastTransitionFrequencyMeasurement: QuantityMeasurement<Frequency>?
 
     /**
      * Activates this channel to gather data for transition frequency averaged over a certain period of time.

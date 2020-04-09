@@ -23,6 +23,7 @@ import kotlinx.coroutines.*
 import kotlinx.serialization.builtins.*
 import kotlinx.serialization.json.*
 import mu.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.client.*
 import org.tenkiv.kuantify.fs.networking.communication.*
@@ -42,7 +43,7 @@ public interface FSDevice : Device, NetworkBoundCombined {
 
     public companion object {
         @PublishedApi
-        internal val serializedPing = Json.stringify(UnitSerializer(), Unit)
+        internal val serializedPing = Serialization.json.stringify(UnitSerializer(), Unit)
     }
 }
 

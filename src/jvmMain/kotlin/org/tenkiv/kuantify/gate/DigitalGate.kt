@@ -33,42 +33,15 @@ public interface DigitalGate : DaqcGate<DigitalValue> {
      * after 2 seconds, 1 second, 0.5 seconds, etc.
      */
     public val avgFrequency: UpdatableQuantity<Frequency>
-
-    /**
-     * Gets if the channel is active for binary state.
-     *
-     * Implementing backing  field must be atomic or otherwise provide safety for
-     * reads from multiple threads.
-     */
     public val isTransceivingBinaryState: InitializedTrackable<Boolean>
-
-    /**
-     * Gets if the channel is active for pulse width modulation.
-     *
-     * Implementing backing  field must be atomic or otherwise provide safety for
-     * reads from multiple threads.
-     */
     public val isTransceivingPwm: InitializedTrackable<Boolean>
-
-    /**
-     * Gets if the channel is active for state transitions.
-     *
-     * Implementing backing  field must be atomic or otherwise provide safety for
-     * reads from multiple threads.
-     */
     public val isTransceivingFrequency: InitializedTrackable<Boolean>
 
-    public val binaryStateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
+    public fun openBinaryStateSubscription(): ReceiveChannel<BinaryStateMeasurement>
 
-    /**
-     * [ConflatedBroadcastChannel] for receiving pulse width modulation data.
-     */
-    public val pwmBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Dimensionless>>
+    public fun openPwmSubscription(): ReceiveChannel<QuantityMeasurement<Dimensionless>>
 
-    /**
-     * [ConflatedBroadcastChannel] for receiving transition frequency data.
-     */
-    public val transitionFrequencyBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Frequency>>
+    public fun openTransitionFrequencySubscription(): ReceiveChannel<QuantityMeasurement<Frequency>>
 }
 
 public inline fun DigitalGate.onAnyTransceivingChange(
@@ -114,9 +87,6 @@ public sealed class DigitalValue : DaqcData {
 
         override fun toDaqcValues(): List<DaqcValue> = listOf(state)
 
-        companion object {
-            internal const val TYPE_BYTE: Byte = 0
-        }
     }
 
     @Serializable
@@ -127,9 +97,6 @@ public sealed class DigitalValue : DaqcData {
 
         override fun toDaqcValues(): List<DaqcValue> = listOf(frequency)
 
-        companion object {
-            internal const val TYPE_BYTE: Byte = 1
-        }
     }
 
     @Serializable
@@ -140,8 +107,5 @@ public sealed class DigitalValue : DaqcData {
 
         override fun toDaqcValues(): List<DaqcValue> = listOf(percent)
 
-        companion object {
-            internal const val TYPE_BYTE: Byte = 2
-        }
     }
 }

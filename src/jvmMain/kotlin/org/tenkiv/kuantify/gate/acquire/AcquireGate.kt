@@ -46,7 +46,7 @@ public interface AcquireGate<out T : DaqcData> : DaqcGate<T>, UpdateRatedGate<T>
 
 public inline fun AcquireGate<*>.processFailureHandler(
     scope: CoroutineScope = this,
-    crossinline onFailure: suspend (FailedMeasurement) -> Unit
+    crossinline onFailure: suspend (failure: FailedMeasurement) -> Unit
 ) {
     val channel = openProcessFailureSubscription()
     if (channel != null) {

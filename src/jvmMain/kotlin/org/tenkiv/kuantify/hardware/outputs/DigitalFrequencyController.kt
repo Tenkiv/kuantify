@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.hardware.outputs
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
@@ -33,38 +34,21 @@ import physikal.*
  *
  * @param digitalOutput The digital output
  */
-public abstract class ScDigitalFrequencyController<QT : Quantity<QT>>(public val digitalOutput: DigitalOutput<*>) :
-    QuantityOutput<QT> {
+public abstract class DigitalFrequencyController<QT : Quantity<QT>>(
+    public val digitalOutput: DigitalOutput<*>
+) : ProcessedControlGate<DaqcQuantity<QT>, DaqcQuantity<Frequency>>(), QuantityOutput<QT> {
+    public final override val parentGate: ControlGate<*>
+        get() = digitalOutput
 
-    public override val isTransceiving: InitializedTrackable<Boolean>
-        get() = digitalOutput.isTransceivingFrequency
-
-    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<QT>>()
-
-    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<QT>>
-        get() = _broadcastChannel
-
-    public val avgFrequency: UpdatableQuantity<Frequency>
-        get() = digitalOutput.avgFrequency
-
-    public override fun setOutputIfViable(setting: DaqcQuantity<QT>): SettingViability {
-        val result = digitalOutput.sustainTransitionFrequency(convertOutput(setting))
-
-        if (result is SettingViability.Viable) _broadcastChannel.offer(setting.now())
-
-        return result
+    init {
+        initCoroutines()
     }
 
-    //TODO: Consider changing this to return SettingViability
-    /**
-     * Converts a [DaqcQuantity] to a usable [Frequency] for a digital output.
-     *
-     * @param setting The [DaqcQuantity] to be converted into a [Frequency].
-     * @return The value converted into a [Frequency].
-     */
-    protected abstract fun convertOutput(setting: DaqcQuantity<QT>): DaqcQuantity<Frequency>
+    public final override suspend fun setParentOutput(setting: DaqcQuantity<Frequency>): SettingViability =
+        digitalOutput.sustainTransitionFrequency(setting)
 
-    public override fun stopTransceiving() {
-        digitalOutput.stopTransceiving()
-    }
+    protected final override fun openParentSubscription():
+            ReceiveChannel<ValueInstant<DaqcQuantity<Frequency>>> =
+        digitalOutput.openTransitionFrequencySubscription()
+
 }

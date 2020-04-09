@@ -20,6 +20,7 @@ package org.tenkiv.kuantify.hardware.inputs
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.lib.*
@@ -31,17 +32,14 @@ import physikal.types.*
  *
  * @param digitalInput The [DigitalInput] that is being read from.
  */
-class SimplePwmSensor internal constructor(val digitalInput: DigitalInput<*>) :
+internal class SimplePwmSensor(val digitalInput: DigitalInput<*>) :
     QuantityInput<Dimensionless>, CoroutineScope by digitalInput {
+    override val valueOrNull: QuantityMeasurement<Dimensionless>?
+        get() = digitalInput.lastPwmMeasurement
 
-    override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Dimensionless>>
-        get() = digitalInput.pwmBroadcaster
-
-    override val isTransceiving: InitializedTrackable<Boolean>
-        get() = digitalInput.isTransceivingPwm
-
-    override val updateRate: UpdateRate
-        get() = digitalInput.updateRate
+    override val isTransceiving: InitializedTrackable<Boolean> get() = digitalInput.isTransceivingBinaryState
+    override val updateRate: UpdateRate get() = digitalInput.updateRate
+    override val isFinalized: InitializedTrackable<Boolean> get() = digitalInput.isFinalized
 
     override fun startSampling() {
         digitalInput.startSamplingPwm()
@@ -49,6 +47,15 @@ class SimplePwmSensor internal constructor(val digitalInput: DigitalInput<*>) :
 
     override fun stopTransceiving() {
         digitalInput.stopTransceiving()
+    }
+
+    override fun openSubscription(): ReceiveChannel<QuantityMeasurement<Dimensionless>> =
+        digitalInput.openPwmSubscription()
+
+    override fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>? = null
+
+    override fun finalize() {
+        digitalInput.finalize()
     }
 
 }

@@ -17,47 +17,53 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
-import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
-import org.tenkiv.kuantify.trackable.*
+import physikal.*
+
+private val logger = KotlinLogging.logger {}
 
 /**
- * A simple simple implementation of a binary frequency sensor
+ * Abstract class for single channel analog sensorMap.
  *
- * @param digitalInput The [DigitalInput] that is being read from.
+ * @param analogInput The analog input.
+ * @param maxVoltage The maximum [Voltage] for the sensor.
+ * @param acceptableError The maximum acceptable error for the sensor in [Voltage].
  */
-internal class SimpleDigitalFrequencySensor(val digitalInput: DigitalInput<*>) :
-    QuantityInput<Frequency>, CoroutineScope by digitalInput {
-    override val valueOrNull: QuantityMeasurement<Frequency>?
-        get() = digitalInput.lastTransitionFrequencyMeasurement
+public abstract class AnalogSensor<QT : Quantity<QT>>(
+    public val analogInput: AnalogInput<*>,
+    maxVoltage: Quantity<Voltage>,
+    acceptableError: Quantity<Voltage>
+) : ProcessedAcquireGate<DaqcQuantity<QT>, DaqcQuantity<Voltage>>(), QuantityInput<QT> {
+    public final override val parentGate: AcquireGate<*>
+        get() = analogInput
 
-    override val isTransceiving: InitializedTrackable<Boolean> get() = digitalInput.isTransceivingBinaryState
-    override val updateRate: UpdateRate get() = digitalInput.updateRate
-    override val isFinalized: InitializedTrackable<Boolean> get() = digitalInput.isFinalized
+    public override val updateRate: UpdateRate
+        get() = analogInput.updateRate
 
-    override fun startSampling() {
-        digitalInput.startSamplingTransitionFrequency()
+    init {
+        analogInput.maxVoltage.set(maxVoltage)
+        analogInput.maxAcceptableError.set(acceptableError)
+
+        initCoroutines()
     }
 
-    override fun stopTransceiving() {
-        digitalInput.stopTransceiving()
+    public override fun openParentSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<Voltage>>> =
+        analogInput.openSubscription()
+
+    protected override suspend fun processFailure(failure: FailedMeasurement) {
+        logger.warn(::transformFailureMsg)
+        super.processFailure(failure)
     }
 
-    override fun openSubscription(): ReceiveChannel<QuantityMeasurement<Frequency>> =
-        digitalInput.openTransitionFrequencySubscription()
-
-    override fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>? = null
-
-    override fun finalize() {
-        digitalInput.finalize()
-    }
+    private fun transformFailureMsg() = """Analog sensor based on analog input $analogInput failed to transform input.
+        |The value of this input will not be updated.""".trimToSingleLine()
 
 }

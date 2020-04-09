@@ -67,11 +67,11 @@ internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: Anal
         } withSerializer {
             receiveMessageOnEither {
                 val setting = Serialization.json.parse(Quantity.serializer<Voltage>(), it)
-                analogInput.maxElectricPotential.set(setting)
+                analogInput.maxVoltage.set(setting)
             }
         }
 
-        setLocalUpdateChannel(analogInput.maxElectricPotential.updateBroadcaster.openSubscription()) withUpdateChannel {
+        setLocalUpdateChannel(analogInput.maxVoltage.updateBroadcaster.openSubscription()) withUpdateChannel {
             sendFromRemote()
             sendFromHost()
         }

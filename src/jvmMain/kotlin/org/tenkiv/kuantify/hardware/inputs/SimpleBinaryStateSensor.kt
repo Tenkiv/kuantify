@@ -19,7 +19,10 @@ package org.tenkiv.kuantify.hardware.inputs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.lib.*
@@ -30,21 +33,29 @@ import org.tenkiv.kuantify.trackable.*
  *
  * @param digitalInput The [DigitalInput] that is being read from.
  */
-public class SimpleBinaryStateSensor internal constructor(val digitalInput: DigitalInput<*>) :
+internal class SimpleBinaryStateSensor(val digitalInput: DigitalInput<*>) :
     BinaryStateInput, CoroutineScope by digitalInput {
+    override val valueOrNull: BinaryStateMeasurement?
+        get() = digitalInput.lastStateMeasurement
 
-    public override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
-        get() = digitalInput.binaryStateBroadcaster
+    override val isTransceiving: InitializedTrackable<Boolean> get() = digitalInput.isTransceivingBinaryState
+    override val updateRate: UpdateRate get() = digitalInput.updateRate
+    override val isFinalized: InitializedTrackable<Boolean> get() = digitalInput.isFinalized
 
-    public override val isTransceiving: InitializedTrackable<Boolean> get() = digitalInput.isTransceivingBinaryState
-
-    public override val updateRate: UpdateRate get() = digitalInput.updateRate
-
-    public override fun startSampling() {
+    override fun startSampling() {
         digitalInput.startSamplingBinaryState()
     }
 
-    public override fun stopTransceiving() {
+    override fun stopTransceiving() {
         digitalInput.stopTransceiving()
+    }
+
+    override fun openSubscription(): ReceiveChannel<ValueInstant<BinaryState>> =
+        digitalInput.openBinaryStateSubscription()
+
+    override fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>? = null
+
+    override fun finalize() {
+        digitalInput.finalize()
     }
 }
