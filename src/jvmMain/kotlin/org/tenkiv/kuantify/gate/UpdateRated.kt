@@ -18,7 +18,6 @@
 package org.tenkiv.kuantify.gate
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.lib.physikal.*
@@ -29,7 +28,7 @@ import kotlin.properties.*
 import kotlin.reflect.*
 
 public interface UpdateRatedGate<out T : DaqcData> :
-    DaqcGate<T> {
+    DaqcChannel<T> {
     public val updateRate: UpdateRate
 }
 

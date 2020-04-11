@@ -20,7 +20,6 @@ package org.tenkiv.kuantify.gate.control.output
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.control.*
-import org.tenkiv.kuantify.trackable.*
 import physikal.*
 import physikal.types.*
 
@@ -29,7 +28,7 @@ import physikal.types.*
  *
  * @param T The type of signal given by this output.
  */
-public interface Output<T : DaqcValue> : IOStrand<T>, ControlGate<T>
+public interface Output<T : DaqcValue> : IOStrand<T>, ControlChannel<T>
 
 /**
  * An [Output] which sends signals in the form of a [DaqcQuantity].

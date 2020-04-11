@@ -21,13 +21,14 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.trackable.*
 
-public abstract class ProcessedControlGate<T : DaqcData, PT: DaqcData>(
+public abstract class ProcessedControlGate<T : DaqcData, ParentT: DaqcData>(
     initialSetting: ValueInstant<T>? = null
-) : ControlGate<T> {
-    protected abstract val parentGate: ControlGate<*>
+) : ControlChannel<T> {
+    protected abstract val parentGate: DaqcGate
 
     @Volatile
     private var _valueOrNull: ValueInstant<T>? = initialSetting
@@ -58,13 +59,13 @@ public abstract class ProcessedControlGate<T : DaqcData, PT: DaqcData>(
         parentGate.finalize()
     }
 
-    protected abstract suspend fun setParentOutput(setting: PT): SettingViability
+    protected abstract suspend fun setParentOutput(setting: ParentT): SettingViability
 
-    protected abstract fun transformToParentType(setting: T): Result<PT, SettingProblem>
+    protected abstract fun transformToParentType(setting: T): Result<ParentT, SettingProblem>
 
-    protected abstract fun transformFromParentType(value: PT): T
+    protected abstract fun transformFromParentType(value: ParentT): T
 
-    protected abstract fun openParentSubscription(): ReceiveChannel<ValueInstant<PT>>
+    protected abstract fun openParentSubscription(): ReceiveChannel<ValueInstant<ParentT>>
 
     protected open fun unviableSetting(settingProblem: SettingProblem): SettingViability.Unviable =
         SettingViability.Unviable(settingProblem)
@@ -81,4 +82,16 @@ public abstract class ProcessedControlGate<T : DaqcData, PT: DaqcData>(
         _valueOrNull = updated
         broadcastChannel.send(updated)
     }
+}
+
+public abstract class ProcessedControlChannel<T : DaqcData, ParentT: DaqcData>(
+    initialSetting: ValueInstant<T>? = null
+): ProcessedControlGate<T, ParentT>(initialSetting) {
+    protected abstract override val parentGate: ControlChannel<ParentT>
+
+    protected final override suspend fun setParentOutput(setting: ParentT): SettingViability =
+        parentGate.setOutputIfViable(setting)
+
+    protected final override fun openParentSubscription(): ReceiveChannel<ValueInstant<ParentT>> =
+        parentGate.openSubscription()
 }

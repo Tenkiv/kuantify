@@ -17,17 +17,16 @@
 
 package org.tenkiv.kuantify.hardware.outputs
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.channel.*
-import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.trackable.*
 import physikal.*
+import physikal.types.*
 
 /**
  * Abstract class for a controller which outputs a [Frequency] to a single digital output channel from a [Quantity].
@@ -35,10 +34,16 @@ import physikal.*
  * @param digitalOutput The digital output
  */
 public abstract class DigitalFrequencyController<QT : Quantity<QT>>(
-    public val digitalOutput: DigitalOutput<*>
+    public val digitalOutput: DigitalOutput
 ) : ProcessedControlGate<DaqcQuantity<QT>, DaqcQuantity<Frequency>>(), QuantityOutput<QT> {
-    public final override val parentGate: ControlGate<*>
+    protected final override val parentGate: DigitalOutput
         get() = digitalOutput
+
+    public val avgPeriod: UpdatableQuantity<Time>
+        get() = digitalOutput.avgPeriod
+
+    public final override val isTransceiving: InitializedTrackable<Boolean>
+        get() = digitalOutput.isTransceivingFrequency
 
     init {
         initCoroutines()

@@ -28,16 +28,20 @@ import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.trackable.*
+import physikal.types.*
 
+//TODO: inline
 /**
  * A simple simple implementation of a binary frequency sensor
  *
  * @param digitalInput The [DigitalInput] that is being read from.
  */
-internal class SimpleDigitalFrequencySensor(val digitalInput: DigitalInput<*>) :
+internal class SimpleDigitalFrequencySensor(val digitalInput: DigitalInput) :
     QuantityInput<Frequency>, CoroutineScope by digitalInput {
     override val valueOrNull: QuantityMeasurement<Frequency>?
         get() = digitalInput.lastTransitionFrequencyMeasurement
+
+    public val avgPeriod: UpdatableQuantity<Time> get() = digitalInput.avgPeriod
 
     override val isTransceiving: InitializedTrackable<Boolean> get() = digitalInput.isTransceivingBinaryState
     override val updateRate: UpdateRate get() = digitalInput.updateRate
@@ -47,7 +51,7 @@ internal class SimpleDigitalFrequencySensor(val digitalInput: DigitalInput<*>) :
         digitalInput.startSamplingTransitionFrequency()
     }
 
-    override fun stopTransceiving() {
+    override suspend fun stopTransceiving() {
         digitalInput.stopTransceiving()
     }
 

@@ -27,15 +27,18 @@ import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.trackable.*
 import physikal.types.*
 
+//TODO: inline
 /**
  * A simple simple implementation of a binary pulse width modulation sensor
  *
  * @param digitalInput The [DigitalInput] that is being read from.
  */
-internal class SimplePwmSensor(val digitalInput: DigitalInput<*>) :
+internal class SimplePwmSensor(val digitalInput: DigitalInput) :
     QuantityInput<Dimensionless>, CoroutineScope by digitalInput {
     override val valueOrNull: QuantityMeasurement<Dimensionless>?
         get() = digitalInput.lastPwmMeasurement
+
+    public val avgPeriod: UpdatableQuantity<Time> get() = digitalInput.avgPeriod
 
     override val isTransceiving: InitializedTrackable<Boolean> get() = digitalInput.isTransceivingBinaryState
     override val updateRate: UpdateRate get() = digitalInput.updateRate
@@ -45,7 +48,7 @@ internal class SimplePwmSensor(val digitalInput: DigitalInput<*>) :
         digitalInput.startSamplingPwm()
     }
 
-    override fun stopTransceiving() {
+    override suspend fun stopTransceiving() {
         digitalInput.stopTransceiving()
     }
 

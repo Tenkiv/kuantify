@@ -23,20 +23,19 @@ import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.recording.bigstorage.*
-import org.tenkiv.kuantify.trackable.*
 import java.time.*
 
 public typealias RecordingFilter<DT, GT> = Recorder<DT, GT>.(ValueInstant<DT>) -> Boolean
 internal typealias StorageFilter<DT> = (ValueInstant<DT>) -> Boolean
 
-public fun <DT : DaqcData, GT : DaqcGate<DT>> CoroutineScope.Recorder(
+public fun <DT : DaqcData, GT : DaqcChannel<DT>> CoroutineScope.Recorder(
     gate: GT,
     storageFrequency: StorageFrequency,
     memoryStorageLength: StorageLength,
     filterOnRecord: RecordingFilter<DT, GT> = { true }
 ): MemoryRecorder<DT, GT> = MemoryRecorder(this, gate, storageFrequency, memoryStorageLength, filterOnRecord)
 
-public fun <DT : DaqcData, GT : DaqcGate<DT>> CoroutineScope.Recorder(
+public fun <DT : DaqcData, GT : DaqcChannel<DT>> CoroutineScope.Recorder(
     gate: GT,
     storageFrequency: StorageFrequency,
     bigStorageLength: StorageLength,
@@ -45,7 +44,7 @@ public fun <DT : DaqcData, GT : DaqcGate<DT>> CoroutineScope.Recorder(
 ): BigStorageRecorder<DT, GT> =
     BigStorageRecorder(this, gate, storageFrequency, bigStorageLength, bigStorageHandlerCreator, filterOnRecord)
 
-public fun <DT : DaqcData, GT : DaqcGate<DT>> CoroutineScope.Recorder(
+public fun <DT : DaqcData, GT : DaqcChannel<DT>> CoroutineScope.Recorder(
     gate: GT,
     storageFrequency: StorageFrequency,
     memoryStorageLength: StorageSamples,
@@ -62,7 +61,7 @@ public fun <DT : DaqcData, GT : DaqcGate<DT>> CoroutineScope.Recorder(
     filterOnRecord
 )
 
-public fun <DT : DaqcData, GT : DaqcGate<DT>> CoroutineScope.Recorder(
+public fun <DT : DaqcData, GT : DaqcChannel<DT>> CoroutineScope.Recorder(
     gate: GT,
     storageFrequency: StorageFrequency,
     memoryStorageLength: StorageDuration,
@@ -176,7 +175,7 @@ public sealed class StorageDuration : StorageLength(), Comparable<StorageDuratio
     }
 }
 
-public interface Recorder<out DT : DaqcData, out GT : DaqcGate<DT>> : CoroutineScope {
+public interface Recorder<out DT : DaqcData, out GT : DaqcChannel<DT>> : CoroutineScope {
     public val gate: GT
     public val storageFrequency: StorageFrequency
     public val memoryStorageLength: StorageLength?
@@ -191,7 +190,7 @@ public interface Recorder<out DT : DaqcData, out GT : DaqcGate<DT>> : CoroutineS
     public suspend fun cancel(deleteBigStorage: Boolean = false)
 }
 
-internal fun <DT : DaqcData, GT : DaqcGate<DT>> Recorder<DT, GT>.createRecordJob(
+internal fun <DT : DaqcData, GT : DaqcChannel<DT>> Recorder<DT, GT>.createRecordJob(
     memoryHandler: MemoryHandler<DT>?,
     bigStorageHandler: BigStorageHandler<DT, GT>?,
     filterOnRecord: RecordingFilter<DT, GT>
@@ -217,7 +216,7 @@ internal fun <DT : DaqcData, GT : DaqcGate<DT>> Recorder<DT, GT>.createRecordJob
     }
 }
 
-private suspend fun <DT : DaqcData, GT : DaqcGate<DT>> Recorder<DT, GT>.recordUpdate(
+private suspend fun <DT : DaqcData, GT : DaqcChannel<DT>> Recorder<DT, GT>.recordUpdate(
     update: ValueInstant<DT>,
     memoryHandler: MemoryHandler<DT>?,
     bigStorageHandler: BigStorageHandler<DT, GT>?,

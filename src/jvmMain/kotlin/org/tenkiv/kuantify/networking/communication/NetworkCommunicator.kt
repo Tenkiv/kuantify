@@ -62,14 +62,12 @@ public abstract class NetworkCommunicator<ST>(
 
     internal suspend fun _sendMessage(route: String, message: ST) = sendMessage(route, message)
 
-    private fun unboundRouteMessage(route: String, message: ST) {
-        criticalDaqcErrorBroadcaster.offer(
-            CriticalDaqcError.FailedMajorCommand(
-                device,
-                "Route not defined for received message."
-            )
-        )
+    private suspend fun unboundRouteMessage(route: String, message: ST) {
         logger.error { "Received message - $message - for unbound route: $route." }
+        alertCriticalError( CriticalDaqcError.FailedMajorCommand(
+            device,
+            "Route not defined for received message."
+        ))
     }
 
     public override fun toString(): String =

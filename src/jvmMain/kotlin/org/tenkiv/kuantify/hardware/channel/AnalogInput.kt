@@ -25,7 +25,9 @@ import org.tenkiv.kuantify.trackable.*
 /**
  * Class defining the basic features of an input which reads analog signals.
  */
-public interface AnalogInput<out D : AnalogDaqDevice> : QuantityInput<Voltage>, QuantityDeviceGate<Voltage, D> {
+public interface AnalogInput : QuantityInput<Voltage>, DeviceGate {
+
+    public override val device: AnalogDaqDevice
 
     /**
      * Denotes if the analog input's buffer is activated.

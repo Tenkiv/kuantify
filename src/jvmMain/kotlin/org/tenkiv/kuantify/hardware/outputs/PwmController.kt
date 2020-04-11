@@ -34,37 +34,27 @@ import physikal.types.*
  *
  * @param digitalOutput The digital output
  */
-public abstract class ScPwmController<QT : Quantity<QT>>(public val digitalOutput: DigitalOutput<*>) :
-    QuantityOutput<QT> {
+public abstract class PwmController<QT : Quantity<QT>>(
+    public val digitalOutput: DigitalOutput
+) : ProcessedControlGate<DaqcQuantity<QT>, DaqcQuantity<Dimensionless>>(), QuantityOutput<QT> {
+    protected final override val parentGate: DigitalOutput
+        get() = digitalOutput
 
-    public override val isTransceiving: InitializedTrackable<Boolean>
-        get() = digitalOutput.isTransceivingPwm
+    public val avgPeriod: UpdatableQuantity<Time>
+        get() = digitalOutput.avgPeriod
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<QuantityMeasurement<QT>>()
-    public final override val updateBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<QT>>
-        get() = _broadcastChannel
+    public final override val isTransceiving: InitializedTrackable<Boolean>
+        get() = digitalOutput.isTransceivingFrequency
 
-    public val avgFrequency: UpdatableQuantity<Frequency>
-        get() = digitalOutput.avgFrequency
-
-    public override fun setOutputIfViable(setting: DaqcQuantity<QT>): SettingViability {
-        val result = digitalOutput.pulseWidthModulate(convertOutput(setting))
-
-        if (result is SettingViability.Viable) _broadcastChannel.offer(setting.now())
-
-        return result
+    init {
+        initCoroutines()
     }
 
-    //TODO: Consider changing this to return SettingViability
-    /**
-     * Converts a [DaqcQuantity] to a usable percent for a pwm digital output.
-     *
-     * @param setting The [DaqcQuantity] to be converted into a pwm percentage.
-     * @return The value converted into a pwm percentage.
-     */
-    protected abstract fun convertOutput(setting: DaqcQuantity<QT>): DaqcQuantity<Dimensionless>
+    public final override suspend fun setParentOutput(setting: DaqcQuantity<Dimensionless>): SettingViability =
+        digitalOutput.pulseWidthModulate(setting)
 
-    public override fun stopTransceiving() {
-        digitalOutput.stopTransceiving()
-    }
+    protected final override fun openParentSubscription():
+            ReceiveChannel<ValueInstant<DaqcQuantity<Dimensionless>>> =
+        digitalOutput.openPwmSubscription()
+
 }

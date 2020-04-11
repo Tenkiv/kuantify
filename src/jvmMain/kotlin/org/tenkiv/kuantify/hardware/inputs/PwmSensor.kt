@@ -17,46 +17,45 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
-import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.trackable.*
+import physikal.*
+import physikal.types.*
 
-//TODO: inline
+private val logger = KotlinLogging.logger {}
+
 /**
- * A simple simple implementation of a binary sensor
+ * Abstract class for an input which takes percentage PWM data from a single digital input.
  *
- * @param digitalInput The [DigitalInput] that is being read from.
+ * @param digitalInput The digital input
  */
-internal class SimpleBinaryStateSensor(val digitalInput: DigitalInput) :
-    BinaryStateInput, CoroutineScope by digitalInput {
-    override val valueOrNull: BinaryStateMeasurement?
-        get() = digitalInput.lastStateMeasurement
+public abstract class PwmSensor<QT : Quantity<QT>>(
+    public val digitalInput: DigitalInput
+) : ProcessedAcquireGate<DaqcQuantity<QT>, DaqcQuantity<Dimensionless>>(), QuantityInput<QT> {
+    protected override val parentGate: DigitalInput
+        get() = digitalInput
 
-    override val isTransceiving: InitializedTrackable<Boolean> get() = digitalInput.isTransceivingBinaryState
-    override val updateRate: UpdateRate get() = digitalInput.updateRate
-    override val isFinalized: InitializedTrackable<Boolean> get() = digitalInput.isFinalized
+    public val avgPeriod: UpdatableQuantity<Time> get() = digitalInput.avgPeriod
 
-    override fun startSampling() {
-        digitalInput.startSamplingBinaryState()
+    protected override fun openParentSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<Dimensionless>>> =
+        digitalInput.openPwmSubscription()
+
+    public override fun startSampling() {
+        digitalInput.startSamplingPwm()
     }
 
-    override suspend fun stopTransceiving() {
-        digitalInput.stopTransceiving()
+    override suspend fun transformationFailure(failure: FailedMeasurement) {
+        logger.warn { transformFailureMsg() }
+        super.transformationFailure(failure)
     }
 
-    override fun openSubscription(): ReceiveChannel<ValueInstant<BinaryState>> =
-        digitalInput.openBinaryStateSubscription()
+    private fun transformFailureMsg() = """Frequency sensor based on analog input $digitalInput failed to transform 
+        |input.The value of this input will not be updated.""".trimToSingleLine()
 
-    override fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>? = null
-
-    override fun finalize() {
-        digitalInput.finalize()
-    }
 }

@@ -23,11 +23,9 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.communication.*
 
-public typealias QuantityDeviceGate<QT, D> = DeviceGate<DaqcQuantity<QT>, D>
+public interface DeviceGate : DaqcGate {
 
-public interface DeviceGate<T : DaqcData, out D : Device> : DaqcGate<T> {
-
-    public val device: D
+    public val device: Device
 
     public val uid: String
 
@@ -35,8 +33,12 @@ public interface DeviceGate<T : DaqcData, out D : Device> : DaqcGate<T> {
 
 }
 
+public interface RemoteDeviceGate : DeviceGate {
+    public override val device: RemoteDevice
+}
+
 /**
  * @return [true] if the gate is connected and the command can be carried out, [false] if not.
  */
-public inline fun <D : RemoteDevice> DeviceGate<*, D>.command(op: () -> Unit): Boolean =
-    remoteDeviceCommand(this.device, DeviceGate.logger, op)
+public inline fun RemoteDeviceGate.command(op: () -> Unit): Boolean =
+    remoteDeviceCommand(this.device, op)

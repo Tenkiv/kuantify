@@ -84,10 +84,3 @@ public object InstantSerializer : KSerializer<Instant> {
     }
 
 }
-
-public data class PrimitiveValueInstant(public val epochMilli: Long, public val value: String) {
-
-    public inline fun <T> toValueInstant(deserializeValue: (String) -> T): ValueInstant<T> =
-        deserializeValue(value) at Instant.ofEpochMilli(epochMilli)
-
-}

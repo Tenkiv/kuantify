@@ -51,19 +51,19 @@ public sealed class SettingViability {
 }
 
 public sealed class SettingProblem {
-    public abstract val controlGate: ControlGate<*>
+    public abstract val controlGate: ControlChannel<*>
     public abstract val message: String
     public abstract val cause: Throwable?
 
     public class UninitialisedSetting internal constructor(
-        public override val controlGate: ControlGate<*>,
+        public override val controlGate: ControlChannel<*>,
         public override val cause: Throwable? = null
     ) : SettingProblem() {
         public override val message: String = "Attempted to modify uninitialised setting."
     }
 
     public class OutOfRange internal constructor(
-        public override val controlGate: ControlGate<*>,
+        public override val controlGate: ControlChannel<*>,
         public override val cause: Throwable? = null
     ) : SettingProblem() {
         public override val message: String = "Attempted setting is out of the allowable range."
@@ -71,10 +71,10 @@ public sealed class SettingProblem {
 
 }
 
-public fun ControlGate<*>.UninitialisedSetting(cause: Throwable? = null): Unviable =
+public fun ControlChannel<*>.UninitialisedSetting(cause: Throwable? = null): Unviable =
     Unviable(SettingProblem.UninitialisedSetting(this, cause))
 
-public fun ControlGate<*>.SettingOutOfRange(cause: Throwable? = null): Unviable =
+public fun ControlChannel<*>.SettingOutOfRange(cause: Throwable? = null): Unviable =
     Unviable(SettingProblem.OutOfRange(this, cause))
 
 public class UnviableSettingException(problem: SettingProblem) : Exception(problem.message, problem.cause)

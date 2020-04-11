@@ -34,6 +34,8 @@ public interface Updatable<T : Any> : Trackable<T> {
 
 public interface InitializedUpdatable<T : Any> : Updatable<T>, InitializedTrackable<T> {
     public override var value: T
+
+    public override val valueOrNull: T? get() = value
 }
 
 private class UpdatableImpl<T : Any>(scope: CoroutineScope) : Updatable<T>, CoroutineScope by scope {
@@ -56,7 +58,6 @@ private class InitializedUpdatableImpl<T : Any>(
     override var value: T
         get() = broadcastChannel.value
         set(value) = set(value)
-    override val valueOrNull: T? get() = value
 
     override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
 

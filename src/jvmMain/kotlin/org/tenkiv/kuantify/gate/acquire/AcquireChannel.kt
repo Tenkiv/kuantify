@@ -28,7 +28,7 @@ public typealias FailedMeasurement = ValueInstant<ProcessFailure>
 public typealias SuccesfulProcessResult<T> = Result.Success<ValueInstant<T>>
 public typealias ProcessResult<ST> = Result<ValueInstant<ST>, FailedMeasurement>
 
-public interface AcquireGate<out T : DaqcData> : DaqcGate<T>, UpdateRatedGate<T> {
+public interface AcquireChannel<out T : DaqcData> : DaqcChannel<T>, UpdateRatedGate<T> {
     /**
      * Activates the input alerting it to begin collecting and sending data.
      */
@@ -36,15 +36,15 @@ public interface AcquireGate<out T : DaqcData> : DaqcGate<T>, UpdateRatedGate<T>
 
     /**
      * Opens a subscription to a broadcast that reports failures in processing the underlying data for this
-     * [AcquireGate].
+     * [AcquireChannel].
      *
-     * @return The subscription to the broadcast or null if this [AcquireGate] does no processing that can fail.
+     * @return The subscription to the broadcast or null if this [AcquireChannel] does no processing that can fail.
      */
     public fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>?
 
 }
 
-public inline fun AcquireGate<*>.processFailureHandler(
+public inline fun AcquireChannel<*>.processFailureHandler(
     scope: CoroutineScope = this,
     crossinline onFailure: suspend (failure: FailedMeasurement) -> Unit
 ) {

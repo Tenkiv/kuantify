@@ -36,7 +36,7 @@ import java.nio.charset.*
 import java.nio.file.*
 import java.time.*
 
-public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
+public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcChannel<DT>>(
     recorder: Recorder<DT, GT>,
     serializer: KSerializer<DT>
 ) : BigStorageHandler<DT, GT>(recorder, serializer) {
@@ -59,7 +59,7 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
 
             val bufferJob = launch(Dispatchers.Daqc) {
                 fileCreationBroadcaster.openSubscription().receive()
-                gate.updateBroadcaster.consumeEach { value ->
+                channel.updateBroadcaster.consumeEach { value ->
                     buffer += value
                 }
             }
@@ -104,7 +104,7 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
             val fileExpiresIn = (numSamples + numSamples / 9) + 1
 
             files += RecorderFile(fileExpiresIn)
-            val receiveChannel = gate.updateBroadcaster.openSubscription()
+            val receiveChannel = channel.updateBroadcaster.openSubscription()
             while (isActive) {
                 val newRecorderFile = RecorderFile(fileExpiresIn)
                 if (files.last().samplesSinceCreation == fileCreationInterval) files += newRecorderFile
@@ -188,7 +188,7 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcGate<DT>>(
         internal constructor(expiresAfterNumSamples: Int?) {
             if (expiresAfterNumSamples != null) {
                 launch(Dispatchers.Daqc) {
-                    val receiveChannel = gate.updateBroadcaster.openSubscription()
+                    val receiveChannel = channel.updateBroadcaster.openSubscription()
 
                     while (samplesSinceCreation < expiresAfterNumSamples) {
                         receiveChannel.receive()

@@ -24,7 +24,7 @@ import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.networking.configuration.*
 
-public interface LocalAcquireGate<T : DaqcData, out D : LocalDevice> : AcquireGate<T>, DeviceGate<T, D>,
+public interface LocalAcquireGate<T : DaqcData, out D : LocalDevice> : AcquireChannel<T>, DeviceGate<T, D>,
     NetworkBoundSide<String> {
 
     public override fun sideRouting(routing: SideNetworkRouting<String>) {

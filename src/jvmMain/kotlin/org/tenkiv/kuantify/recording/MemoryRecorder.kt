@@ -24,7 +24,7 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.*
 import java.time.*
 
-public class MemoryRecorder<DT : DaqcData, GT : DaqcGate<DT>> internal constructor(
+public class MemoryRecorder<DT : DaqcData, GT : DaqcChannel<DT>> internal constructor(
     scope: CoroutineScope,
     public override val gate: GT,
     public override val storageFrequency: StorageFrequency,

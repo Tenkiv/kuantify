@@ -26,13 +26,13 @@ import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.trackable.*
 import physikal.types.*
 
-public interface DigitalGate : DaqcGate<DigitalValue> {
+public interface DigitalGate : DaqcChannel<DigitalValue> {
     /**
-     * The frequency with which pwm and transition frequency input and output will be averaged.
+     * The period with which pwm and transition frequency input and output will be averaged.
      * e.g. you want an output to be [BinaryState.High] 60% of the time. This will set if it's high 60% of the time
      * after 2 seconds, 1 second, 0.5 seconds, etc.
      */
-    public val avgFrequency: UpdatableQuantity<Frequency>
+    public val avgPeriod: UpdatableQuantity<Time>
     public val isTransceivingBinaryState: InitializedTrackable<Boolean>
     public val isTransceivingPwm: InitializedTrackable<Boolean>
     public val isTransceivingFrequency: InitializedTrackable<Boolean>

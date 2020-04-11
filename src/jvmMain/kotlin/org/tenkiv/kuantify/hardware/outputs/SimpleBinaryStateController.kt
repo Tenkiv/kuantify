@@ -19,34 +19,47 @@ package org.tenkiv.kuantify.hardware.outputs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.trackable.*
+import physikal.types.*
 
+//TODO: inline
 /**
  * A simple implementation of a binary state controller.
  *
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
-public class SimpleBinaryStateController internal constructor(val digitalOutput: DigitalOutput<*>) :
+internal class SimpleBinaryStateController(val digitalOutput: DigitalOutput) :
     BinaryStateOutput, CoroutineScope by digitalOutput {
+    override val valueOrNull: ValueInstant<BinaryState>?
+        get() = digitalOutput.lastStateSetting
 
-    public override val isTransceiving: InitializedTrackable<Boolean>
-        get() = digitalOutput.isTransceiving
+    val avgPeriod: UpdatableQuantity<Time>
+        get() = digitalOutput.avgPeriod
 
-    private val _broadcastChannel = ConflatedBroadcastChannel<BinaryStateMeasurement>()
+    override val isTransceiving: InitializedTrackable<Boolean>
+        get() = digitalOutput.isTransceivingBinaryState
 
-    public override val updateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
-        get() = _broadcastChannel
+    override val isFinalized: InitializedTrackable<Boolean>
+        get() = digitalOutput.isFinalized
 
-    public override fun stopTransceiving() {
+    override fun openSubscription(): ReceiveChannel<ValueInstant<BinaryState>> =
+        digitalOutput.openBinaryStateSubscription()
+
+    override suspend fun stopTransceiving() {
         digitalOutput.stopTransceiving()
     }
 
-    public override fun setOutputIfViable(setting: BinaryState): SettingViability =
+    override suspend fun setOutputIfViable(setting: BinaryState): SettingViability =
         digitalOutput.setOutputState(setting)
 
+
+    override fun finalize() {
+        digitalOutput.finalize()
+    }
 }

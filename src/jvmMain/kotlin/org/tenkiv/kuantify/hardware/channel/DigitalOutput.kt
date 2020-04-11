@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.hardware.channel
 
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.control.*
@@ -30,7 +31,11 @@ import physikal.types.*
 /**
  * Class defining the basic features of an output which sends binary signals.
  */
-public interface DigitalOutput<out D : DigitalOutputDevice> : ControlGate<DigitalValue>, DigitalChannel<D> {
+public interface DigitalOutput : DeviceDigitalGate {
+    public val lastStateSetting: ValueInstant<BinaryState>?
+    public val lastPwmSetting: ValueInstant<DaqcQuantity<Dimensionless>>?
+    public val lastTransitionFrequencySetting: ValueInstant<DaqcQuantity<Frequency>>?
+
 
     public suspend fun setOutputState(
         state: BinaryState

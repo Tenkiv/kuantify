@@ -17,7 +17,6 @@
 
 package org.tenkiv.kuantify.hardware.inputs
 
-import kotlinx.coroutines.channels.*
 import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
@@ -38,15 +37,15 @@ private val logger = KotlinLogging.logger {}
  * @param acceptableError The maximum acceptable error for the sensor in [Voltage].
  */
 public abstract class AnalogSensor<QT : Quantity<QT>>(
-    public val analogInput: AnalogInput<*>,
+    public val analogInput: AnalogInput,
     maxVoltage: Quantity<Voltage>,
     acceptableError: Quantity<Voltage>
-) : ProcessedAcquireGate<DaqcQuantity<QT>, DaqcQuantity<Voltage>>(), QuantityInput<QT> {
-    public final override val parentGate: AcquireGate<*>
-        get() = analogInput
-
+) : ProcessedAcquireChannel<DaqcQuantity<QT>, DaqcQuantity<Voltage>>(), QuantityInput<QT> {
     public override val updateRate: UpdateRate
         get() = analogInput.updateRate
+
+    protected final override val parentGate: AcquireChannel<DaqcQuantity<Voltage>>
+        get() = analogInput
 
     init {
         analogInput.maxVoltage.set(maxVoltage)
@@ -55,12 +54,9 @@ public abstract class AnalogSensor<QT : Quantity<QT>>(
         initCoroutines()
     }
 
-    public override fun openParentSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<Voltage>>> =
-        analogInput.openSubscription()
-
-    protected override suspend fun processFailure(failure: FailedMeasurement) {
+    protected override suspend fun transformationFailure(failure: FailedMeasurement) {
         logger.warn(::transformFailureMsg)
-        super.processFailure(failure)
+        super.transformationFailure(failure)
     }
 
     private fun transformFailureMsg() = """Analog sensor based on analog input $analogInput failed to transform input.

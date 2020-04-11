@@ -18,18 +18,49 @@
 package org.tenkiv.kuantify.hardware.outputs
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.acquire.input.*
+import org.tenkiv.kuantify.gate.control.*
+import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.channel.*
+import org.tenkiv.kuantify.trackable.*
 import physikal.types.*
 
+//TODO: inline
 /**
  * A simple implementation of a binary pulse width modulation controller.
  *
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
-public class SimplePwmController internal constructor(digitalOutput: DigitalOutput<*>) :
-    ScPwmController<Dimensionless>(digitalOutput), CoroutineScope by digitalOutput {
+internal class SimplePwmController(val digitalOutput: DigitalOutput) :
+    QuantityOutput<Dimensionless>, CoroutineScope by digitalOutput {
+    override val valueOrNull: ValueInstant<DaqcQuantity<Dimensionless>>?
+        get() = digitalOutput.lastPwmSetting
 
-    public override fun convertOutput(setting: DaqcQuantity<Dimensionless>) = setting
+    val avgPeriod: UpdatableQuantity<Time>
+        get() = digitalOutput.avgPeriod
+
+    override val isTransceiving: InitializedTrackable<Boolean>
+        get() = digitalOutput.isTransceivingBinaryState
+
+    override val isFinalized: InitializedTrackable<Boolean>
+        get() = digitalOutput.isFinalized
+
+    override fun openSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<Dimensionless>>> =
+        digitalOutput.openPwmSubscription()
+
+    override suspend fun stopTransceiving() {
+        digitalOutput.stopTransceiving()
+    }
+
+    override suspend fun setOutputIfViable(setting: DaqcQuantity<Dimensionless>): SettingViability =
+        digitalOutput.pulseWidthModulate(setting)
+
+
+    override fun finalize() {
+        digitalOutput.finalize()
+    }
 
 }

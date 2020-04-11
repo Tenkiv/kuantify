@@ -34,11 +34,11 @@ internal fun CombinedNetworkRouting.digitalGateRouting(digitalChannel: DigitalGa
         } withSerializer {
             receiveMessageOnEither {
                 val setting = Serialization.json.parse(Quantity.serializer<Frequency>(), it)
-                digitalChannel.avgFrequency.set(setting)
+                digitalChannel.avgPeriod.set(setting)
             }
         }
 
-        setLocalUpdateChannel(digitalChannel.avgFrequency.updateBroadcaster.openSubscription()) withUpdateChannel {
+        setLocalUpdateChannel(digitalChannel.avgPeriod.updateBroadcaster.openSubscription()) withUpdateChannel {
             sendFromRemote()
             sendFromHost()
         }

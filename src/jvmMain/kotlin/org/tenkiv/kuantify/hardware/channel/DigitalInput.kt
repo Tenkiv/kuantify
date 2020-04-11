@@ -30,7 +30,8 @@ import physikal.types.*
 /**
  * Class defining the basic features of an input which reads binary signals.
  */
-public interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, UpdateRatedGate<DigitalValue> {
+public interface DigitalInput: DeviceDigitalGate, UpdateRatedGate<DigitalValue> {
+    public override val device: DigitalDaqDevice
 
     public val lastStateMeasurement: BinaryStateMeasurement?
 
@@ -40,15 +41,11 @@ public interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, Upd
 
     /**
      * Activates this channel to gather data for transition frequency averaged over a certain period of time.
-     *
-     * @param avgFrequency The period of time to average the transition frequency.
      */
     public fun startSamplingTransitionFrequency()
 
     /**
      * Activates this channel to gather data for PWM averaged over a certain period of time.
-     *
-     * @param avgFrequency The period of time to average the PWM frequency.
      */
     public fun startSamplingPwm()
 
@@ -57,27 +54,33 @@ public interface DigitalInput<out D : DigitalDaqDevice> : DigitalChannel<D>, Upd
      */
     public fun startSamplingBinaryState()
 
-    /**
-     * Creates a [SimpleBinaryStateSensor] with the input being this channel.
-     *
-     * @param inverted If the channel has inverted values, ie Low == [BinaryState.High]. Default is false.
-     * @return A [SimpleBinaryStateSensor] with the input as this channel.
-     */
-    public fun asBinaryStateSensor(): BinaryStateInput
+}
 
-    /**
-     * Creates a [SimpleDigitalFrequencySensor] with the input being this channel.
-     *
-     * @param avgFrequency The average period of time over which to average.
-     * @return A [SimpleDigitalFrequencySensor] with the input as this channel.
-     */
-    public fun asTransitionFrequencySensor(avgFrequency: Quantity<Frequency>): QuantityInput<Frequency>
+/**
+ * Creates a [SimpleBinaryStateSensor] with the input being this channel.
+ *
+ * @return A [SimpleBinaryStateSensor] with the input as this channel.
+ */
+public fun DigitalInput.asBinaryStateSensor(): BinaryStateInput = SimpleBinaryStateSensor(this)
 
-    /**
-     * Creates a [SimplePwmSensor] with the input being this channel.
-     *
-     * @param avgFrequency The average period of time over which to average.
-     * @return A [SimplePwmSensor] with the input as this channel.
-     */
-    public fun asPwmSensor(avgFrequency: Quantity<Frequency>): QuantityInput<Dimensionless>
+/**
+ * Creates a [SimplePwmSensor] with the input being this channel.
+ *
+ * @param avgPeriod The average period of time over which to average.
+ * @return A [SimplePwmSensor] with the input as this channel.
+ */
+public fun DigitalInput.asPwmSensor(avgPeriod: Quantity<Time>): QuantityInput<Dimensionless> {
+    this.avgPeriod.set(avgPeriod)
+    return SimplePwmSensor(this)
+}
+
+/**
+ * Creates a [SimpleDigitalFrequencySensor] with the input being this channel.
+ *
+ * @param avgPeriod The average period of time over which to average.
+ * @return A [SimpleDigitalFrequencySensor] with the input as this channel.
+ */
+public fun DigitalInput.asTransitionFrequencySensor(avgPeriod: Quantity<Time>): QuantityInput<Frequency> {
+    this.avgPeriod.set(avgPeriod)
+    return SimpleDigitalFrequencySensor(this)
 }

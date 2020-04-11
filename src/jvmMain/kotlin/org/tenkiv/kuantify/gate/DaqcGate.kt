@@ -22,55 +22,83 @@ import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.trackable.*
 
 
-public interface DaqcGate<out T : DaqcData> : Trackable<ValueInstant<T>>, CoroutineScope {
-    /**
-     * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcGate]
-     */
-    public val daqcDataSize: Int
+public interface DaqcGate : CoroutineScope {
     public val isTransceiving: InitializedTrackable<Boolean>
     public val isFinalized: InitializedTrackable<Boolean>
 
     public suspend fun stopTransceiving()
 
     /**
-     * Finalize the configuration of this [DaqcGate] so nothing can be changed for the remainder of its existence.
-     * This will also finalize any [DaqcGate]s this [DaqcGate]s data is derived from.
+     * Finalize the configuration of this [DaqcChannel] so nothing can be changed for the remainder of its existence.
+     * This will also finalize any [DaqcChannel]s this [DaqcChannel]s data is derived from.
      *
-     * Attempts to modify the configuration of a [DaqcGate] after [finalize] is called will fail.
+     * Attempts to modify the configuration of a [DaqcChannel] after [finalize] is called will fail.
      *
      * This is an idempotent operation - subsequent calls to this function have no effect.
      */
     public fun finalize()
 }
 
+public interface DaqcChannel<out T : DaqcData> : DaqcGate {
+    /**
+     * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcChannel]
+     */
+    public val daqcDataSize: Int
+
+    /**
+     * Gets the current value or returns null.
+     *
+     * @return The value or null.
+     */
+    public val valueOrNull: ValueInstant<T>?
+
+    /**
+     * Creates a subscription to updates to this [DaqcChannel]. This [Channel] will receive all future updates but will
+     * not immediately receive the current value of this [DaqcChannel]
+     */
+    public fun openSubscription(): ReceiveChannel<ValueInstant<T>>
+}
+
+public suspend inline fun <T : DaqcData> DaqcChannel<T>.onEachUpdate(action: (update: ValueInstant<T>) -> Unit) =
+    openSubscription().consumingOnEach(action)
+
 /**
- * Convenience function to wrap [DaqcGate] configuration modification calls in for automatic handling of
- * [DaqcGate.isFinalized]. This function should only be use when creating a new type of [DaqcGate].
+ * Gets the current value or suspends and waits for one to exist.
+ *
+ * @return The current value.
+ */
+public suspend fun <T : DaqcData> DaqcChannel<T>.getValue(): ValueInstant<T> =
+    valueOrNull ?: openSubscription().consume { receive() }
+
+/**
+ * Convenience function to wrap [DaqcChannel] configuration modification calls in for automatic handling of
+ * [DaqcChannel.isFinalized]. This function should only be use when creating a new type of [DaqcChannel].
  */
 @KuantifyComponentBuilder
-public inline fun <R> DaqcGate<*>.modifyConfiguration(block: () -> R): R = if (!isFinalized.value) {
+public inline fun <R> DaqcChannel<*>.modifyConfiguration(block: () -> R): R = if (!isFinalized.value) {
     block()
 } else {
     throw IllegalStateException("Cannot modify configuration of DaqcGate that has been finalized.")
 }
 
-public fun Iterable<DaqcGate<*>>.finalizeAll() {
+public fun Iterable<DaqcChannel<*>>.finalizeAll() {
     forEach { it.finalize() }
 }
 
-public fun Array<out DaqcGate<*>>.finalizeAll() {
+public fun Array<out DaqcChannel<*>>.finalizeAll() {
     forEach { it.finalize() }
 }
 
 /**
- * A [DaqcGate] which only has a single data parameter.
+ * A [DaqcChannel] which only has a single data parameter.
  */
-public interface IOStrand<out T : DaqcValue> : DaqcGate<T> {
+public interface IOStrand<out T : DaqcValue> : DaqcChannel<T> {
     /**
-     * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcGate]
+     * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcChannel]
      *
      * [IOStrand]s only work with [DaqcValue] so this is always 1 in all [IOStrand]s
      */

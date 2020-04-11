@@ -29,7 +29,7 @@ public typealias QuantityInput<QT> = Input<DaqcQuantity<QT>>
  *
  * @param T The type of data given by this Input.
  */
-public interface Input<out T : DaqcValue> : AcquireGate<T>, IOStrand<T>
+public interface Input<out T : DaqcValue> : AcquireChannel<T>, IOStrand<T>
 
 /**
  * An Input whose type is both a [DaqcValue] and [Comparable] allowing it to be used in the default learning module

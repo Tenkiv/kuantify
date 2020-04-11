@@ -15,24 +15,21 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.hardware.channel
+package org.tenkiv.kuantify.gate.control
 
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
-import org.tenkiv.kuantify.hardware.device.*
 
-/**
- * Class defining the basic aspects that define both [DigitalOutput]s, [DigitalInput]s, and other digital channels.
- */
-public interface DigitalChannel<out D : Device> : DigitalGate, DeviceGate<DigitalValue, D> {
+public interface ControlChannel<T : DaqcData> : DaqcChannel<T> {
 
     /**
-     * Gets if the pulse width modulation state for this channel is simulated using software.
+     * Sets the output if the function does not encounter a [SettingProblem]. Returns [SettingViability.Unviable] if
+     * it does.
      */
-    public val pwmIsSimulated: Boolean
+    public suspend fun setOutputIfViable(setting: T): SettingViability
 
-    /**
-     * Gets if the transition frequency state for this channel is simulated using software.
-     */
-    public val transitionFrequencyIsSimulated: Boolean
 }
 
+public suspend fun <T : DaqcData> ControlChannel<T>.setOutput(setting: T) {
+    setOutputIfViable(setting).throwIfUnviable()
+}

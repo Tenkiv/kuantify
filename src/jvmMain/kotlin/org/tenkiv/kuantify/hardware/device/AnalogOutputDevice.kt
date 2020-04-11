@@ -24,6 +24,6 @@ public interface AnalogOutputDevice : Device {
     /**
      * List of all [AnalogOutput]s that this device has.
      */
-    public val analogOutputMap: Map<String, AnalogOutput<*>>
+    public val analogOutputMap: Map<String, AnalogOutput>
 
 }

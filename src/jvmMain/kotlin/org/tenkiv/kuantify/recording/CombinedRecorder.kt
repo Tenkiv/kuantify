@@ -25,7 +25,7 @@ import org.tenkiv.kuantify.recording.bigstorage.*
 import java.time.*
 import kotlin.coroutines.*
 
-public class CombinedRecorder<DT : DaqcData, GT : DaqcGate<DT>> : Recorder<DT, GT> {
+public class CombinedRecorder<DT : DaqcData, GT : DaqcChannel<DT>> : Recorder<DT, GT> {
     public override val coroutineContext: CoroutineContext
     public override val gate: GT
     public override val storageFrequency: StorageFrequency

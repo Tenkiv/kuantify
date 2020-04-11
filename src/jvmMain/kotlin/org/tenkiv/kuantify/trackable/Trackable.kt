@@ -29,14 +29,15 @@ public typealias InitializedTrackableQuantity<Q> = InitializedTrackable<Quantity
  */
 public interface Trackable<out T : Any> {
     /**
-     * Gets the current value or returns Null.
+     * Gets the current value or returns null.
      *
      * @return The value or null.
      */
     public val valueOrNull: T?
 
     /**
-     * Creates a subscription to updates to this [Trackable].
+     * Creates a subscription to updates to this [Trackable]. This [Channel] is always [Channel.CONFLATED] so
+     * the current will will be received immediately upon subscription.
      */
     public fun openSubscription(): ReceiveChannel<T>
 }

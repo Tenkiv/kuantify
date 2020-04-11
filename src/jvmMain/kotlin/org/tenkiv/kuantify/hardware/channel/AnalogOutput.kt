@@ -24,4 +24,6 @@ import org.tenkiv.kuantify.lib.physikal.*
 /**
  * Class defining the basic features of an output which sends analog signals.
  */
-public interface AnalogOutput<out D : Device> : QuantityOutput<Voltage>, QuantityDeviceGate<Voltage, D>
+public interface AnalogOutput : QuantityOutput<Voltage>, DeviceGate {
+    public override val device: AnalogOutputDevice
+}

@@ -21,13 +21,14 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.trackable.*
 
-public abstract class ProcessedAcquireGate<T : DaqcData, PT : DaqcData>(
+public abstract class ProcessedAcquireGate<T : DaqcData, ParentT : DaqcData>(
     initialMeasurement: ValueInstant<T>? = null
-): AcquireGate<T> {
-    protected abstract val parentGate: AcquireGate<*>
+) : AcquireChannel<T> {
+    protected abstract val parentGate: DaqcGate
 
     @Volatile
     private var _valueOrNull: ValueInstant<T>? = initialMeasurement
@@ -48,10 +49,6 @@ public abstract class ProcessedAcquireGate<T : DaqcData, PT : DaqcData>(
     public override fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>? =
         failureBroadcastChannel?.openSubscription()
 
-    public override fun startSampling() {
-        parentGate.startSampling()
-    }
-
     public override suspend fun stopTransceiving() {
         parentGate.stopTransceiving()
     }
@@ -60,34 +57,53 @@ public abstract class ProcessedAcquireGate<T : DaqcData, PT : DaqcData>(
         parentGate.finalize()
     }
 
-    protected abstract suspend fun transformInput(input: PT): Result<T, ProcessFailure>
+    protected abstract suspend fun transformInput(input: ParentT): Result<T, ProcessFailure>
 
-    protected abstract fun openParentSubscription(): ReceiveChannel<ValueInstant<PT>>
+    protected abstract fun openParentSubscription(): ReceiveChannel<ValueInstant<ParentT>>
 
-    protected open suspend fun processFailure(failure: FailedMeasurement) {
+    protected open suspend fun transformationFailure(failure: FailedMeasurement) {
         failureBroadcastChannel?.send(failure)
     }
 
+    /**
+     * This isn't called in init because it is possible that parentGate could be uninitialized at the time it's used
+     * in this function. It should be called in the constructor of the first class in the chain that has a
+     * final parentGate.
+     */
     protected fun initCoroutines() {
         launch {
             openParentSubscription().consumingOnEach { measurement ->
                 when (val convertedResult = transformInput(measurement.value)) {
                     is Result.Success -> update(convertedResult.value at measurement.instant)
-                    is Result.Failure -> processFailure(convertedResult.error at measurement.instant)
+                    is Result.Failure -> transformationFailure(convertedResult.error at measurement.instant)
                 }
             }
         }
-
-        parentGate.processFailureHandler {
-            failureBroadcastChannel?.send(it) ?: throw IllegalStateException(
-                "If parent gate can have a process failures, child process gate must propagate|those failures."
-            )
+        if (parentGate is AcquireChannel<*>) {
+            parentGate.processFailureHandler {
+                failureBroadcastChannel?.send(it) ?: throw IllegalStateException(
+                    "If parent gate can have a process failures, child process gate must propagate those failures."
+                )
+            }
         }
-
     }
 
     private suspend fun update(updated: ValueInstant<T>) {
         _valueOrNull = updated
         broadcastChannel.send(updated)
     }
+}
+
+public abstract class ProcessedAcquireChannel<T : DaqcData, ParentT : DaqcData>(
+    initialMeasurement: ValueInstant<T>? = null
+) : ProcessedAcquireGate<T, ParentT>(initialMeasurement) {
+    protected abstract override val parentGate: AcquireChannel<ParentT>
+
+    protected final override fun openParentSubscription(): ReceiveChannel<ValueInstant<ParentT>> =
+        parentGate.openSubscription()
+
+    public final override fun startSampling() {
+        parentGate.startSampling()
+    }
+
 }

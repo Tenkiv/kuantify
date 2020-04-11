@@ -18,31 +18,31 @@
 package org.tenkiv.kuantify.gate.acquire
 
 public sealed class ProcessFailure {
-    public abstract val acquireGate: AcquireGate<*>
+    public abstract val acquireGate: AcquireChannel<*>
     public abstract val message: String
     public abstract val cause: Throwable?
 
     public class IllegalDependencyState internal constructor(
-        public override val acquireGate: AcquireGate<*>,
+        public override val acquireGate: AcquireChannel<*>,
         public override val message: String,
         public override val cause: Throwable?
     ) : ProcessFailure()
 
     public class OutOfRange(
-        public override val acquireGate: AcquireGate<*>,
+        public override val acquireGate: AcquireChannel<*>,
         public override val message: String,
         public override val cause: Throwable?
     ) : ProcessFailure()
 
 }
 
-public fun AcquireGate<*>.IllegalDependencyState(
+public fun AcquireChannel<*>.IllegalDependencyState(
     message: String,
     cause: Throwable? = null
 ): ProcessFailure.IllegalDependencyState =
     ProcessFailure.IllegalDependencyState(this, message, cause)
 
-public fun AcquireGate<*>.OutOfRange(
+public fun AcquireChannel<*>.OutOfRange(
     message: String,
     cause: Throwable? = null
 ): ProcessFailure.OutOfRange =

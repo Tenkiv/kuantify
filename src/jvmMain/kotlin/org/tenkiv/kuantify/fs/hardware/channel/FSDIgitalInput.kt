@@ -31,7 +31,6 @@ import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
-import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.kuantify.trackable.*
 import physikal.*
@@ -164,7 +163,7 @@ public abstract class FSRemoteDigitalInput<out D> : DigitalInput<D>, NetworkBoun
         }
     }
 
-    public override val avgFrequency: UpdatableQuantity<Frequency> = device.RemoteUpdatable()
+    public val avgPeriod: UpdatableQuantity<Frequency> = device.RemoteUpdatable()
 
     private val startSamplingTransitionFrequencyChannel = Channel<Ping>(Channel.CONFLATED)
     public override fun startSamplingTransitionFrequency() {
@@ -190,12 +189,12 @@ public abstract class FSRemoteDigitalInput<out D> : DigitalInput<D>, NetworkBoun
 
     public override fun asTransitionFrequencySensor(avgFrequency: Quantity<Frequency>):
             QuantityInput<Frequency> {
-        this.avgFrequency.set(avgFrequency)
+        this.avgPeriod.set(avgFrequency)
         return thisAsTransitionFrequencyInput
     }
 
     public override fun asPwmSensor(avgFrequency: Quantity<Frequency>): QuantityInput<Dimensionless> {
-        this.avgFrequency.set(avgFrequency)
+        this.avgPeriod.set(avgFrequency)
         return thisAsPwmSensor
 
     }

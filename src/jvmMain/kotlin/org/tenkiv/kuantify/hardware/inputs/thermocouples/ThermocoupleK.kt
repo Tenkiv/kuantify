@@ -21,6 +21,7 @@ import kotlinx.coroutines.*
 import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
@@ -28,6 +29,7 @@ import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.trackable.*
+import org.tenkiv.kuantify.trackable.getValue
 import physikal.*
 import physikal.types.*
 import kotlin.math.*
@@ -40,7 +42,7 @@ private val logger = KotlinLogging.logger {}
  */
 public class ThermocoupleK internal constructor(
     scope: CoroutineScope,
-    channel: AnalogInput<*>,
+    channel: AnalogInput,
     acceptableError: Quantity<Temperature> = 1.0.degreesCelsius,
     private val waitForTRefValue: Boolean = false,
     private val oldestTRefValueAge: Duration = 5.minutes
@@ -146,6 +148,6 @@ public class ThermocoupleK internal constructor(
 }
 
 public fun CoroutineScope.ThermocoupleK(
-    channel: AnalogInput<*>,
+    channel: AnalogInput,
     acceptableError: Quantity<Temperature> = 1.0.degreesCelsius
 ) = ThermocoupleK(this, channel, acceptableError)
