@@ -17,8 +17,13 @@
 
 package org.tenkiv.kuantify.gate.control
 
+import kotlinx.coroutines.*
+import kotlinx.coroutines.time.*
+import kotlinx.coroutines.withTimeout
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.lib.*
+import kotlin.time.*
 
 public interface ControlChannel<T : DaqcData> : DaqcChannel<T> {
 
@@ -26,10 +31,42 @@ public interface ControlChannel<T : DaqcData> : DaqcChannel<T> {
      * Sets the output if the function does not encounter a [SettingProblem]. Returns [SettingViability.Unviable] if
      * it does.
      */
-    public suspend fun setOutputIfViable(setting: T): SettingViability
+    public fun setOutputIfViable(setting: T): SettingViability
 
 }
 
-public suspend fun <T : DaqcData> ControlChannel<T>.setOutput(setting: T) {
+/**
+ * Throws exception if not viable.
+ */
+public fun <T : DaqcData> ControlChannel<T>.setOutput(setting: T) {
     setOutputIfViable(setting).throwIfUnviable()
+}
+
+// Possible other name confirmSetOutputIfViable.
+/**
+ * Sets the output to the specified setting and suspends until the setting is set by the system.
+ * If the channel is already set to this setting this function will return immediately.
+ *
+ * Since output settings are conflated it's possible the target setting will never be reached if a different setting
+ * is set immediately following this one.
+ */
+public suspend fun <T : DaqcData> ControlChannel<T>.awaitSetOutputIfViable(
+    setting: T,
+    timeout: Duration = 1.minutes
+): SettingViability = withTimeout(timeout.toLongMilliseconds()) {
+    val subscription = openSubscription()
+    val viability =  async { setOutputIfViable(setting) }
+    subscription.consumingOnEach {
+        if (it.value == setting) {
+            return@withTimeout viability.await()
+        }
+    }
+    throw IllegalStateException("Should be unreachable due to timeout exception being thrown.")
+}
+
+public suspend fun <T : DaqcData> ControlChannel<T>.awaitSetOutput(
+    setting: T,
+    timeout: Duration = 1.minutes
+) {
+    awaitSetOutputIfViable(setting, timeout).throwIfUnviable()
 }

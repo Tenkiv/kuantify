@@ -37,7 +37,7 @@ import physikal.*
 import physikal.types.*
 
 @Suppress("LeakingThis")
-public abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide<String>, NetworkBoundCombined
+public abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBound<String>, NetworkBoundCombined
         where D : LocalDevice, D : DigitalOutputDevice {
 
     private val thisAsBinaryStateController = SimpleBinaryStateController(this)
@@ -78,8 +78,8 @@ public abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBound
         }
     }
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        routing.addToThisPath {
+    public override fun routing(route: NetworkRoute<String>) {
+        route.add {
             digitalGateIsTransceivingLocal(isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingLocal(isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
             digitalGateIsTransceivingLocal(isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
@@ -109,7 +109,7 @@ public abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBound
 }
 
 @Suppress("LeakingThis")
-public abstract class FSRemoteDigitalOutput<out D> : DigitalOutput<D>, NetworkBoundSide<String>, NetworkBoundCombined
+public abstract class FSRemoteDigitalOutput<out D> : DigitalOutput<D>, NetworkBound<String>, NetworkBoundCombined
         where D : DigitalOutputDevice, D : FSRemoteDevice {
 
     private val thisAsBinaryStateController = SimpleBinaryStateController(this)
@@ -175,8 +175,8 @@ public abstract class FSRemoteDigitalOutput<out D> : DigitalOutput<D>, NetworkBo
         }
     }
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        routing.addToThisPath {
+    public override fun routing(route: NetworkRoute<String>) {
+        route.add {
             digitalGateIsTransceivingRemote(_isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingRemote(_isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
             digitalGateIsTransceivingRemote(_isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)

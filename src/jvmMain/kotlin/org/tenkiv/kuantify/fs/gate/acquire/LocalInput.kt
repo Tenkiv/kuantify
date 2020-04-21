@@ -17,48 +17,25 @@
 
 package org.tenkiv.kuantify.fs.gate.acquire
 
-import kotlinx.serialization.builtins.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.configuration.*
 import physikal.*
 
-public interface LocalInput<T : DaqcValue, out D : LocalDevice> : LocalAcquireGate<T, D>, Input<T> {
+public abstract class LocalInput<T : DaqcValue>(uid: String) : LocalAcquireChannel<T>(uid), Input<T>
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        super.sideRouting(routing)
-        routing.addToThisPath {
-            bind<Boolean>(RC.IS_TRANSCEIVING) {
-                serializeMessage {
-                    Serialization.json.stringify(Boolean.serializer(), it)
-                }
-
-                setLocalUpdateChannel(isTransceiving.updateBroadcaster.openSubscription()) withUpdateChannel {
-                    send()
-                }
-            }
-        }
-    }
-
-}
-
-public interface LocalQuantityInput<QT : Quantity<QT>, out D : LocalDevice> : LocalInput<DaqcQuantity<QT>, D>,
+public abstract class LocalQuantityInput<QT : Quantity<QT>>(uid: String) : LocalInput<DaqcQuantity<QT>>(uid),
     QuantityInput<QT> {
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        super.sideRouting(routing)
-        routing.addToThisPath {
+    public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
+        route.add {
             bind<QuantityMeasurement<QT>>(RC.VALUE) {
-                serializeMessage {
+                send(source = openSubscription()) {
                     Serialization.json.stringify(QuantityMeasurement.quantitySerializer(), it)
-                }
-
-                setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
-                    send()
                 }
             }
         }
@@ -66,19 +43,14 @@ public interface LocalQuantityInput<QT : Quantity<QT>, out D : LocalDevice> : Lo
 
 }
 
-public interface LocalBinaryStateInput<out D : LocalDevice> : LocalInput<BinaryState, D>,
-    BinaryStateInput {
+public abstract class LocalBinaryStateInput(uid: String) : LocalInput<BinaryState>(uid), BinaryStateInput {
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        super.sideRouting(routing)
-        routing.addToThisPath {
+    public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
+        route.add {
             bind<BinaryStateMeasurement>(RC.VALUE) {
-                serializeMessage {
+                send(source = openSubscription()) {
                     Serialization.json.stringify(BinaryStateMeasurement.binaryStateSerializer(), it)
-                }
-
-                setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
-                    send()
                 }
             }
         }

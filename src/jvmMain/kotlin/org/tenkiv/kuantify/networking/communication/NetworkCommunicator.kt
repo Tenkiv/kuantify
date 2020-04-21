@@ -26,21 +26,21 @@ import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
 
-public abstract class NetworkCommunicator<ST>(
+public abstract class NetworkCommunicator<SerialT>(
     device: Device
 ) : CoroutineScope {
-
     protected val job = Job(device.coroutineContext[Job])
 
     public final override val coroutineContext: CoroutineContext = device.coroutineContext + job
 
     private val bindingsInitialized = AtomicBoolean(false)
 
-    protected abstract val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, ST>>
+    protected abstract val networkRouteBindingMap: Map<String, NetworkRouteBinding<SerialT>>
 
     public abstract val device: Device
 
     protected fun initBindings() {
+        //TODO: This needs to use compareAndSet
         if (!bindingsInitialized.get()) {
             networkRouteBindingMap.values.forEach { it.start() }
             bindingsInitialized.set(true)
@@ -54,15 +54,15 @@ public abstract class NetworkCommunicator<ST>(
         job.cancel()
     }
 
-    internal suspend fun receiveMessage(route: String, message: ST) {
-        networkRouteBindingMap[route]?.networkUpdateChannel?.send(message) ?: unboundRouteMessage(route, message)
+    internal suspend fun receiveMessage(route: String, message: SerialT) {
+        networkRouteBindingMap[route]?.messageFromNetwork(message) ?: unboundRouteError(route, message)
     }
 
-    protected abstract suspend fun sendMessage(route: String, message: ST)
+    protected abstract suspend fun sendMessage(route: String, message: SerialT)
 
-    internal suspend fun _sendMessage(route: String, message: ST) = sendMessage(route, message)
+    internal suspend fun _sendMessage(route: String, message: SerialT) = sendMessage(route, message)
 
-    private suspend fun unboundRouteMessage(route: String, message: ST) {
+    private suspend fun unboundRouteError(route: String, message: SerialT) {
         logger.error { "Received message - $message - for unbound route: $route." }
         alertCriticalError( CriticalDaqcError.FailedMajorCommand(
             device,
@@ -77,7 +77,7 @@ public abstract class NetworkCommunicator<ST>(
 
 }
 
-public abstract class RemoteNetworkCommunicator<ST>(device: Device) : NetworkCommunicator<ST>(device) {
+public abstract class RemoteNetworkCommunicator<SerialT>(device: Device) : NetworkCommunicator<SerialT>(device) {
 
     public abstract val communicationMode: CommunicationMode
 

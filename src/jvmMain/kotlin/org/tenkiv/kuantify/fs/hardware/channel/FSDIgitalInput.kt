@@ -36,7 +36,7 @@ import org.tenkiv.kuantify.trackable.*
 import physikal.*
 import physikal.types.*
 
-private inline fun SideNetworkRouting<String>.startSamplingLocal(rc: String, crossinline start: () -> Unit) {
+private inline fun NetworkRoute<String>.startSamplingLocal(rc: String, crossinline start: () -> Unit) {
     bind<Ping>(rc) {
         receive {
             start()
@@ -44,7 +44,7 @@ private inline fun SideNetworkRouting<String>.startSamplingLocal(rc: String, cro
     }
 }
 
-private fun SideNetworkRouting<String>.startSamplingRemote(rc: String, channel: ReceiveChannel<Ping>) {
+private fun NetworkRoute<String>.startSamplingRemote(rc: String, channel: ReceiveChannel<Ping>) {
     bind<Ping>(rc) {
         setLocalUpdateChannel(channel) withUpdateChannel {
             send()
@@ -53,7 +53,7 @@ private fun SideNetworkRouting<String>.startSamplingRemote(rc: String, channel: 
 }
 
 @Suppress("LeakingThis")
-public abstract class LocalDigitalInput<out D> : DigitalInput<D>, NetworkBoundSide<String>, NetworkBoundCombined
+public abstract class LocalDigitalInput<out D> : DigitalInput<D>, NetworkBound<String>, NetworkBoundCombined
         where D : LocalDevice, D : DigitalDaqDevice {
 
     private val thisAsBinaryStateSensor = SimpleBinaryStateSensor(this)
@@ -92,8 +92,8 @@ public abstract class LocalDigitalInput<out D> : DigitalInput<D>, NetworkBoundSi
         }
     }
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        routing.addToThisPath {
+    public override fun routing(route: NetworkRoute<String>) {
+        route.add {
             digitalGateIsTransceivingLocal(isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingLocal(isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
             digitalGateIsTransceivingLocal(isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
@@ -116,7 +116,7 @@ public abstract class LocalDigitalInput<out D> : DigitalInput<D>, NetworkBoundSi
 }
 
 @Suppress("LeakingThis")
-public abstract class FSRemoteDigitalInput<out D> : DigitalInput<D>, NetworkBoundSide<String>, NetworkBoundCombined
+public abstract class FSRemoteDigitalInput<out D> : DigitalInput<D>, NetworkBound<String>, NetworkBoundCombined
         where D : DigitalDaqDevice, D : FSRemoteDevice {
 
     private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalValue>>()
@@ -136,19 +136,19 @@ public abstract class FSRemoteDigitalInput<out D> : DigitalInput<D>, NetworkBoun
         get() = _transitionFrequencyBroadcaster
 
     private val _isTransceiving = Updatable(false)
-    public override val isTransceiving: InitializedTrackable<Boolean>
+    public override val isTransceiving: Trackable<Boolean>
         get() = _isTransceiving
 
     private val _isTransceivingBinaryState = Updatable(false)
-    public override val isTransceivingBinaryState: InitializedTrackable<Boolean>
+    public override val isTransceivingBinaryState: Trackable<Boolean>
         get() = _isTransceivingBinaryState
 
     private val _isTransceivingPwm = Updatable(false)
-    public override val isTransceivingPwm: InitializedTrackable<Boolean>
+    public override val isTransceivingPwm: Trackable<Boolean>
         get() = _isTransceivingPwm
 
     private val _isTransceivingFrequency = Updatable(false)
-    public override val isTransceivingFrequency: InitializedTrackable<Boolean>
+    public override val isTransceivingFrequency: Trackable<Boolean>
         get() = _isTransceivingFrequency
 
     private val thisAsBinaryStateSensor = SimpleBinaryStateSensor(this)
@@ -205,8 +205,8 @@ public abstract class FSRemoteDigitalInput<out D> : DigitalInput<D>, NetworkBoun
         }
     }
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        routing.addToThisPath {
+    public override fun routing(route: NetworkRoute<String>) {
+        route.add {
             digitalGateIsTransceivingRemote(_isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
             digitalGateIsTransceivingRemote(_isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
             digitalGateIsTransceivingRemote(_isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)

@@ -17,8 +17,6 @@
 
 package org.tenkiv.kuantify.hardware.channel
 
-import mu.*
-import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.communication.*
@@ -28,8 +26,6 @@ public interface DeviceGate : DaqcGate {
     public val device: Device
 
     public val uid: String
-
-    public companion object : KLogging()
 
 }
 

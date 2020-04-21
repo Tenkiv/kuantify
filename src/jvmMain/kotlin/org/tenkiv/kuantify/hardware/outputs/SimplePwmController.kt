@@ -42,20 +42,20 @@ internal class SimplePwmController(val digitalOutput: DigitalOutput) :
     val avgPeriod: UpdatableQuantity<Time>
         get() = digitalOutput.avgPeriod
 
-    override val isTransceiving: InitializedTrackable<Boolean>
+    override val isTransceiving: Trackable<Boolean>
         get() = digitalOutput.isTransceivingBinaryState
 
-    override val isFinalized: InitializedTrackable<Boolean>
+    override val isFinalized: Boolean
         get() = digitalOutput.isFinalized
 
     override fun openSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<Dimensionless>>> =
         digitalOutput.openPwmSubscription()
 
-    override suspend fun stopTransceiving() {
+    override fun stopTransceiving() {
         digitalOutput.stopTransceiving()
     }
 
-    override suspend fun setOutputIfViable(setting: DaqcQuantity<Dimensionless>): SettingViability =
+    override fun setOutputIfViable(setting: DaqcQuantity<Dimensionless>): SettingViability =
         digitalOutput.pulseWidthModulate(setting)
 
 

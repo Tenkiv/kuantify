@@ -17,7 +17,6 @@
 
 package org.tenkiv.kuantify.hardware.channel
 
-import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.device.*
@@ -30,7 +29,7 @@ import physikal.types.*
 /**
  * Class defining the basic features of an input which reads binary signals.
  */
-public interface DigitalInput: DeviceDigitalGate, UpdateRatedGate<DigitalValue> {
+public interface DigitalInput : DeviceDigitalGate, UpdateRatedGate<DigitalValue> {
     public override val device: DigitalDaqDevice
 
     public val lastStateMeasurement: BinaryStateMeasurement?

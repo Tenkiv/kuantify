@@ -42,20 +42,20 @@ internal class SimpleBinaryStateController(val digitalOutput: DigitalOutput) :
     val avgPeriod: UpdatableQuantity<Time>
         get() = digitalOutput.avgPeriod
 
-    override val isTransceiving: InitializedTrackable<Boolean>
+    override val isTransceiving: Trackable<Boolean>
         get() = digitalOutput.isTransceivingBinaryState
 
-    override val isFinalized: InitializedTrackable<Boolean>
+    override val isFinalized: Boolean
         get() = digitalOutput.isFinalized
 
     override fun openSubscription(): ReceiveChannel<ValueInstant<BinaryState>> =
         digitalOutput.openBinaryStateSubscription()
 
-    override suspend fun stopTransceiving() {
+    override fun stopTransceiving() {
         digitalOutput.stopTransceiving()
     }
 
-    override suspend fun setOutputIfViable(setting: BinaryState): SettingViability =
+    override fun setOutputIfViable(setting: BinaryState): SettingViability =
         digitalOutput.setOutputState(setting)
 
 

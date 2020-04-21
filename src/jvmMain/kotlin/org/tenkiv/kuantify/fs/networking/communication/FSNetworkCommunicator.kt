@@ -23,8 +23,6 @@ import io.ktor.http.cio.websocket.*
 import io.ktor.utils.io.errors.IOException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.io.*
-import kotlinx.serialization.json.*
 import mu.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.hardware.device.*
@@ -39,16 +37,16 @@ private val logger = KotlinLogging.logger {}
 
 private fun NetworkCommunicator<String>.buildFSRouteBindingMap(
     device: FSBaseDevice
-): Map<String, NetworkRouteBinding<*, String>> {
+): Map<String, NetworkMessageBinding<*, String>> {
     val combinedNetworkConfig = CombinedRouteConfig(this)
     device.combinedRouting(combinedNetworkConfig.baseRoute)
 
-    val sideRouteConfig = SideRouteConfig(
+    val sideRouteConfig = RouteConfig(
         networkCommunicator = this,
         serializedPing = FSDevice.serializedPing,
         formatPath = ::formatPathStandard
     )
-    device.sideRouting(sideRouteConfig.baseRoute)
+    device.routing(sideRouteConfig.baseRoute)
 
     val resultRouteBindingMap = combinedNetworkConfig.networkRouteBindingMap
 
@@ -67,7 +65,7 @@ public class LocalNetworkCommunicator internal constructor(
     override val device: LocalDevice
 ) : NetworkCommunicator<String>(device) {
 
-    protected override val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>> =
+    protected override val networkRouteBindingMap: Map<String, NetworkMessageBinding<*, String>> =
         buildFSRouteBindingMap(device)
 
     protected override suspend fun sendMessage(route: String, message: String) {
@@ -88,7 +86,7 @@ public class LocalNetworkCommunicator internal constructor(
 public abstract class FSRemoteNetworkCommunictor(final override val device: FSRemoteDevice) :
     RemoteNetworkCommunicator<String>(device) {
 
-    protected final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<*, String>> =
+    protected final override val networkRouteBindingMap: Map<String, NetworkMessageBinding<*, String>> =
         buildFSRouteBindingMap(device)
 
     internal abstract suspend fun cancel()

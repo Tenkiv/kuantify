@@ -27,10 +27,14 @@ import org.tenkiv.kuantify.trackable.*
 
 
 public interface DaqcGate : CoroutineScope {
-    public val isTransceiving: InitializedTrackable<Boolean>
-    public val isFinalized: InitializedTrackable<Boolean>
+    public val isTransceiving: Trackable<Boolean>
 
-    public suspend fun stopTransceiving()
+    /**
+     * Backed by atomic.
+     */
+    public val isFinalized: Boolean
+
+    public fun stopTransceiving()
 
     /**
      * Finalize the configuration of this [DaqcChannel] so nothing can be changed for the remainder of its existence.
@@ -79,7 +83,7 @@ public suspend fun <T : DaqcData> DaqcChannel<T>.getValue(): ValueInstant<T> =
  * [DaqcChannel.isFinalized]. This function should only be use when creating a new type of [DaqcChannel].
  */
 @KuantifyComponentBuilder
-public inline fun <R> DaqcChannel<*>.modifyConfiguration(block: () -> R): R = if (!isFinalized.value) {
+public inline fun <R> DaqcGate.modifyConfiguration(block: () -> R): R = if (!isFinalized) {
     block()
 } else {
     throw IllegalStateException("Cannot modify configuration of DaqcGate that has been finalized.")

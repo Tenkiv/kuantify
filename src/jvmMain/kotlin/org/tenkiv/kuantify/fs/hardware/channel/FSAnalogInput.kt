@@ -22,7 +22,6 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.gate.acquire.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.lib.physikal.*
@@ -79,25 +78,14 @@ internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: Anal
 
 }
 
-public interface LocalAnalogInput<out D> : AnalogInput<D>, LocalQuantityInput<Voltage, D>,
-    NetworkBoundCombined where D : LocalDevice, D : AnalogDaqDevice {
-
-    public override fun combinedRouting(routing: CombinedNetworkRouting) {
-        routing.addToThisPath {
-            combinedAnalogInputRouting(this@LocalAnalogInput)
-        }
-    }
+public abstract class LocalAnalogInput<DeviceT>(uid: String) : LocalQuantityInput<Voltage>(uid), AnalogInput
+        where DeviceT : LocalDevice, DeviceT : AnalogDaqDevice {
+    public abstract override val device: DeviceT
 
 }
 
-public abstract class FSRemoteAnalogInput<out D>(device: D, uid: String) :
-    FSRemoteQuantityInput<Voltage, D>(device, uid),
-    AnalogInput<D>,
-    NetworkBoundCombined where D : AnalogDaqDevice, D : FSRemoteDevice {
+public abstract class FSRemoteAnalogInput<DeviceT>(uid: String) : FSRemoteQuantityInput<Voltage>(uid), AnalogInput
+        where DeviceT : AnalogDaqDevice, DeviceT : FSRemoteDevice {
+    public abstract override val device: DeviceT
 
-    public override fun combinedRouting(routing: CombinedNetworkRouting) {
-        routing.addToThisPath {
-            combinedAnalogInputRouting(this@FSRemoteAnalogInput)
-        }
-    }
 }

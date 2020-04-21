@@ -39,15 +39,15 @@ internal class SimpleBinaryStateSensor(val digitalInput: DigitalInput) :
     override val valueOrNull: BinaryStateMeasurement?
         get() = digitalInput.lastStateMeasurement
 
-    override val isTransceiving: InitializedTrackable<Boolean> get() = digitalInput.isTransceivingBinaryState
+    override val isTransceiving: Trackable<Boolean> get() = digitalInput.isTransceivingBinaryState
     override val updateRate: UpdateRate get() = digitalInput.updateRate
-    override val isFinalized: InitializedTrackable<Boolean> get() = digitalInput.isFinalized
+    override val isFinalized: Boolean get() = digitalInput.isFinalized
 
     override fun startSampling() {
         digitalInput.startSamplingBinaryState()
     }
 
-    override suspend fun stopTransceiving() {
+    override fun stopTransceiving() {
         digitalInput.stopTransceiving()
     }
 

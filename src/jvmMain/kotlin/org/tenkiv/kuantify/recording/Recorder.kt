@@ -196,7 +196,7 @@ internal fun <DT : DaqcData, GT : DaqcChannel<DT>> Recorder<DT, GT>.createRecord
     filterOnRecord: RecordingFilter<DT, GT>
 ) = launch {
     when (val storageFrequency = storageFrequency) {
-        StorageFrequency.All -> gate.updateBroadcaster.openSubscription().consumeEach { update ->
+        StorageFrequency.All -> gate.onEachUpdate { update ->
             recordUpdate(update, memoryHandler, bigStorageHandler, filterOnRecord)
         }
         is StorageFrequency.Interval -> while (isActive) {
@@ -205,7 +205,7 @@ internal fun <DT : DaqcData, GT : DaqcChannel<DT>> Recorder<DT, GT>.createRecord
         }
         is StorageFrequency.PerNumMeasurements -> {
             var numUnstoredMeasurements = 0
-            gate.updateBroadcaster.openSubscription().consumeEach { update ->
+            gate.onEachUpdate { update ->
                 numUnstoredMeasurements++
                 if (numUnstoredMeasurements == storageFrequency.number) {
                     recordUpdate(update, memoryHandler, bigStorageHandler, filterOnRecord)

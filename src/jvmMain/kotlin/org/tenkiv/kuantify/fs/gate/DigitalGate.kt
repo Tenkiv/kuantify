@@ -17,63 +17,99 @@
 
 package org.tenkiv.kuantify.fs.gate
 
+import kotlinx.coroutines.channels.*
 import kotlinx.serialization.builtins.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.gate.*
-import org.tenkiv.kuantify.lib.physikal.*
+import org.tenkiv.kuantify.networking.*
 import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.kuantify.trackable.*
 import physikal.*
+import physikal.types.*
 
-internal fun CombinedNetworkRouting.digitalGateRouting(digitalChannel: DigitalGate) {
-    bind<Quantity<Frequency>>(RC.AVG_FREQUENCY, recursiveSynchronizer = true) {
-        serializeMessage {
-            Serialization.json.stringify(Quantity.serializer(), it)
-        } withSerializer {
-            receiveMessageOnEither {
-                val setting = Serialization.json.parse(Quantity.serializer<Frequency>(), it)
-                digitalChannel.avgPeriod.set(setting)
+public abstract class LocalDigitalGate(uid: String) : LocalDaqcGate(uid), DigitalGate {
+    public override val avgPeriod: UpdatableQuantity<Time> = Updatable()
+
+    public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
+        route.add {
+            bind<Quantity<Time>>(RC.AVG_PERIOD) {
+                send(source = avgPeriod.openSubscription()) {
+                    Serialization.json.stringify(Quantity.serializer(), it)
+                }
+                receive(networkChannelCapacity = Channel.CONFLATED) {
+                    val value = Serialization.json.parse(Quantity.serializer<Time>(), it)
+                    avgPeriod.set(value)
+                }
+            }
+            bind<Boolean>(RC.IS_TRANSCEIVING_BIN_STATE) {
+                send(source = isTransceivingBinaryState.openSubscription()) {
+                    Serialization.json.stringify(Boolean.serializer(), it)
+                }
+            }
+            bind<Boolean>(RC.IS_TRANSCEIVING_FREQUENCY) {
+                send(source = isTransceivingFrequency.openSubscription()) {
+                    Serialization.json.stringify(Boolean.serializer(), it)
+                }
+            }
+            bind<Boolean>(RC.IS_TRANSCEIVING_PWM) {
+                send(source = isTransceivingPwm.openSubscription()) {
+                    Serialization.json.stringify(Boolean.serializer(), it)
+                }
             }
         }
-
-        setLocalUpdateChannel(digitalChannel.avgPeriod.updateBroadcaster.openSubscription()) withUpdateChannel {
-            sendFromRemote()
-            sendFromHost()
-        }
     }
 
-    bind<Ping>(RC.STOP_TRANSCEIVING, recursiveSynchronizer = false) {
-        receivePingOnEither {
-            digitalChannel.stopTransceiving()
-        }
-    }
 }
 
-internal fun SideNetworkRouting<String>.digitalGateIsTransceivingRemote(
-    updatable: Updatable<Boolean>,
-    transceivingRC: String
-) {
-    bind<Boolean>(transceivingRC) {
-        receive {
-            val value = Serialization.json.parse(Boolean.serializer(), it)
-            updatable.set(value)
+public abstract class FSRemoteDigitalGate(uid: String) : FSRemoteDaqcGate(uid), DigitalGate {
+    private val _avgPeriod = RemoteSyncUpdatable<Quantity<Time>>()
+    public override val avgPeriod: UpdatableQuantity<Time> get() = _avgPeriod
+    
+    private val _isTransceivingBinaryState = Updatable<Boolean>()
+    public override val isTransceivingBinaryState: Trackable<Boolean>
+        get() = _isTransceivingBinaryState
+
+    private val _isTransceivingPwm = Updatable<Boolean>()
+    public override val isTransceivingPwm: Trackable<Boolean>
+        get() = _isTransceivingPwm
+
+    private val _isTransceivingFrequency = Updatable<Boolean>()
+    override val isTransceivingFrequency: Trackable<Boolean>
+        get() = _isTransceivingFrequency
+
+    public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
+        route.add {
+            bind<Quantity<Time>>(RC.AVG_PERIOD) {
+                send(source = _avgPeriod.localSetChannel) {
+                    Serialization.json.stringify(Quantity.serializer(), it)
+                }
+                receive(networkChannelCapacity = Channel.CONFLATED) {
+                    val value = Serialization.json.parse(Quantity.serializer<Time>(), it)
+                    avgPeriod.set(value)
+                }
+            }
+            bind<Boolean>(RC.IS_TRANSCEIVING_BIN_STATE) {
+                receive {
+                    val value = Serialization.json.parse(Boolean.serializer(), it)
+                    _isTransceivingBinaryState.set(value)
+                }
+            }
+            bind<Boolean>(RC.IS_TRANSCEIVING_FREQUENCY) {
+                receive {
+                    val value = Serialization.json.parse(Boolean.serializer(), it)
+                    _isTransceivingFrequency.set(value)
+                }
+            }
+            bind<Boolean>(RC.IS_TRANSCEIVING_PWM) {
+                receive {
+                    val value = Serialization.json.parse(Boolean.serializer(), it)
+                    _isTransceivingPwm.set(value)
+                }
+            }
         }
     }
-}
 
-internal fun SideNetworkRouting<String>.digitalGateIsTransceivingLocal(
-    trackable: Trackable<Boolean>,
-    transceivingRC: String
-) {
-    bind<Boolean>(transceivingRC) {
-        serializeMessage {
-            Serialization.json.stringify(Boolean.serializer(), it)
-        }
-
-        setLocalUpdateChannel(trackable.updateBroadcaster.openSubscription()) withUpdateChannel {
-            send()
-        }
-    }
 }

@@ -34,6 +34,7 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.lib.*
+import kotlin.time.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -55,7 +56,7 @@ internal object KuantifyHost {
         install(DefaultHeaders)
 
         install(WebSockets) {
-            pingPeriod = 1.minutesSpan
+            pingPeriod = 30.seconds.toJavaDuration()
         }
 
         install(Sessions) {
@@ -75,6 +76,7 @@ internal object KuantifyHost {
             }
 
             webSocket(RC.WEBSOCKET) {
+                timeout = 15.seconds.toJavaDuration()
 
                 val clientID = call.sessions.get<ClientId>()
 

@@ -43,15 +43,15 @@ internal class SimpleDigitalFrequencySensor(val digitalInput: DigitalInput) :
 
     public val avgPeriod: UpdatableQuantity<Time> get() = digitalInput.avgPeriod
 
-    override val isTransceiving: InitializedTrackable<Boolean> get() = digitalInput.isTransceivingBinaryState
+    override val isTransceiving: Trackable<Boolean> get() = digitalInput.isTransceivingBinaryState
     override val updateRate: UpdateRate get() = digitalInput.updateRate
-    override val isFinalized: InitializedTrackable<Boolean> get() = digitalInput.isFinalized
+    override val isFinalized: Boolean get() = digitalInput.isFinalized
 
     override fun startSampling() {
         digitalInput.startSamplingTransitionFrequency()
     }
 
-    override suspend fun stopTransceiving() {
+    override fun stopTransceiving() {
         digitalInput.stopTransceiving()
     }
 

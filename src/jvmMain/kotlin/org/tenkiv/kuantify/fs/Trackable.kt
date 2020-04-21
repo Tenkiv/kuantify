@@ -23,23 +23,22 @@ import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.kuantify.trackable.*
 import physikal.*
 import kotlin.properties.*
 import kotlin.reflect.*
 
-public fun FSRemoteAcquireGate<*, *>.configuredUpdateRateDelegate(): FSRemoteConfiguredUpdateRateDelegate =
+public fun FSRemoteAcquireChannel<*, *>.configuredUpdateRateDelegate(): FSRemoteConfiguredUpdateRateDelegate =
     FSRemoteConfiguredUpdateRateDelegate(this)
 
-public class FSRemoteConfiguredUpdateRateDelegate internal constructor(acquireGate: FSRemoteAcquireGate<*, *>) :
-    ReadOnlyProperty<FSRemoteAcquireGate<*, *>, UpdateRate.Configured> {
+public class FSRemoteConfiguredUpdateRateDelegate internal constructor(acquireChannel: FSRemoteAcquireChannel<*, *>) :
+    ReadOnlyProperty<FSRemoteAcquireChannel<*, *>, UpdateRate.Configured> {
 
-    private val updatable = acquireGate.Updatable<Quantity<Frequency>>()
+    private val updatable = acquireChannel.Updatable<Quantity<Frequency>>()
 
     private val updateRate = UpdateRate.Configured(updatable)
 
-    public fun addToRoute(routing: SideNetworkRouting<String>) {
-        routing.bind<Quantity<Frequency>>(RC.UPDATE_RATE) {
+    public fun addToRoute(route: NetworkRoute<String>) {
+        route.bind<Quantity<Frequency>>(RC.UPDATE_RATE) {
             receive {
                 val value = Serialization.json.parse(Quantity.serializer<Frequency>(), it)
                 updatable.set(value)
@@ -47,7 +46,7 @@ public class FSRemoteConfiguredUpdateRateDelegate internal constructor(acquireGa
         }
     }
 
-    public override fun getValue(thisRef: FSRemoteAcquireGate<*, *>, property: KProperty<*>): UpdateRate.Configured =
+    public override fun getValue(thisRef: FSRemoteAcquireChannel<*, *>, property: KProperty<*>): UpdateRate.Configured =
         updateRate
 
 }

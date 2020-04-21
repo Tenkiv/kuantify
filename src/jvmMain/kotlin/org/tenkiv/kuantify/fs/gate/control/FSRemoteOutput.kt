@@ -18,102 +18,81 @@
 package org.tenkiv.kuantify.fs.gate.control
 
 import kotlinx.coroutines.channels.*
-import kotlinx.serialization.builtins.*
 import mu.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.fs.hardware.device.*
+import org.tenkiv.kuantify.fs.gate.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.kuantify.trackable.*
 import physikal.*
 
 private val logger = KotlinLogging.logger {}
 
-public sealed class FSRemoteOutput<T : DaqcValue, D : FSRemoteDevice>(device: D, uid: String) :
-    FSRemoteControlGate<T, D>(device, uid), Output<T> {
-
-    internal val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<T>>()
-    public final override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<T>>
-        get() = _updateBroadcaster
-
-    internal val settingChannel = Channel<T>(Channel.UNLIMITED)
-
-    internal val _isTransceiving = Updatable(false)
-    public final override val isTransceiving: InitializedTrackable<Boolean>
-        get() = _isTransceiving
+public sealed class FSRemoteOutput<T : DaqcValue>(uid: String) : FSRemoteDaqcGate(uid), Output<T> {
+    internal val broadcastChannel =
+        BroadcastChannel<ValueInstant<T>>(capacity = Channel.BUFFERED)
+    internal val settingChannel = Channel<T>(capacity = Channel.CONFLATED)
 
     public override fun setOutputIfViable(setting: T): SettingViability {
-        val connected = command { settingChannel.offer(setting) }
-        return if (connected) SettingViability.Viable else SettingViability.Unviable(NoConnection(this))
+        command { settingChannel.offer(setting) }
+        return SettingViability.Viable
     }
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        super.sideRouting(routing)
-
-        routing.addToThisPath {
-            bind<Boolean>(RC.IS_TRANSCEIVING) {
-                receive {
-                    val value = Serialization.json.parse(Boolean.serializer(), it)
-                    _isTransceiving.value = value
-                }
-            }
-        }
-    }
 }
 
-public abstract class FSRemoteQuantityOutput<QT : Quantity<QT>, D : FSRemoteDevice>(
-    device: D,
+public abstract class FSRemoteQuantityOutput<QT : Quantity<QT>>(
     uid: String
-) : FSRemoteOutput<DaqcQuantity<QT>, D>(device, uid), QuantityOutput<QT> {
+) : FSRemoteOutput<DaqcQuantity<QT>>(uid), QuantityOutput<QT> {
+    @Volatile
+    private var _valueOrNull: ValueInstant<DaqcQuantity<QT>>? = null
+    public override val valueOrNull: ValueInstant<DaqcQuantity<QT>>?
+        get() = _valueOrNull
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        super.sideRouting(routing)
-        routing.addToThisPath {
-            bind<Quantity<QT>>(RC.VALUE) {
-                serializeMessage {
+    public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
+        route.add {
+            bind<QuantityMeasurement<QT>>(RC.VALUE) {
+                receive {
+                    val value = Serialization.json.parse(QuantityMeasurement.quantitySerializer<QT>(), it)
+                    _valueOrNull = value
+                    broadcastChannel.send(value)
+                }
+            }
+            bind<Quantity<QT>>(RC.CONTROL_SETTING) {
+                send(source = settingChannel) {
                     Serialization.json.stringify(Quantity.serializer(), it)
                 }
-
-                setLocalUpdateChannel(settingChannel) withUpdateChannel {
-                    send()
-                }
-
-                receive {
-                    val settingInstant = Serialization.json.parse(ValueInstant.quantitySerializer<QT>(), it)
-
-                    _updateBroadcaster.send(settingInstant)
-                }
             }
         }
     }
 
 }
 
-public abstract class FSRemoteBinaryStateOutput<D : FSRemoteDevice>(device: D, uid: String) :
-    FSRemoteOutput<BinaryState, D>(device, uid), BinaryStateOutput {
+public abstract class FSRemoteBinaryStateOutput(uid: String) :
+    FSRemoteOutput<BinaryState>(uid), BinaryStateOutput {
+    @Volatile
+    private var _valueOrNull: ValueInstant<BinaryState>? = null
+    public override val valueOrNull: ValueInstant<BinaryState>?
+        get() = _valueOrNull
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        super.sideRouting(routing)
-        routing.addToThisPath {
-            bind<BinaryState>(RC.VALUE) {
-                serializeMessage {
-                    Serialization.json.stringify(BinaryState.serializer(), it)
-                }
-
-                setLocalUpdateChannel(settingChannel) withUpdateChannel {
-                    send()
-                }
-
+    public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
+        route.add {
+            bind<BinaryStateMeasurement>(RC.VALUE) {
                 receive {
-                    val settingInstant = Serialization.json.parse(ValueInstant.binaryStateSerializer(), it)
-
-                    _updateBroadcaster.send(settingInstant)
+                    val value = Serialization.json.parse(BinaryStateMeasurement.binaryStateSerializer(), it)
+                    _valueOrNull = value
+                    broadcastChannel.send(value)
+                }
+            }
+            bind<BinaryState>(RC.CONTROL_SETTING) {
+                send(source = settingChannel) {
+                    Serialization.json.stringify(BinaryState.serializer(), it)
                 }
             }
         }

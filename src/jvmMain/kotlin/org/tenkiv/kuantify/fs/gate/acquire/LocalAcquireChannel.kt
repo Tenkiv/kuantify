@@ -15,7 +15,25 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.networking.configuration
+package org.tenkiv.kuantify.fs.gate.acquire
 
-@DslMarker
-internal annotation class NetworkingDsl
+import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.fs.gate.*
+import org.tenkiv.kuantify.fs.networking.*
+import org.tenkiv.kuantify.gate.acquire.*
+import org.tenkiv.kuantify.networking.configuration.*
+
+public abstract class LocalAcquireChannel<T : DaqcData>(uid: String) : LocalDaqcGate(uid), AcquireChannel<T> {
+
+    public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
+        route.add {
+            bindPing(RC.START_SAMPLING) {
+                receive {
+                    startSampling()
+                }
+            }
+        }
+    }
+
+}

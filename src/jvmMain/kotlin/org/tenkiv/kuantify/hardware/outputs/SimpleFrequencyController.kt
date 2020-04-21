@@ -42,20 +42,20 @@ public class SimpleFrequencyController internal constructor(val digitalOutput: D
     val avgPeriod: UpdatableQuantity<Time>
         get() = digitalOutput.avgPeriod
 
-    override val isTransceiving: InitializedTrackable<Boolean>
+    override val isTransceiving: Trackable<Boolean>
         get() = digitalOutput.isTransceivingBinaryState
 
-    override val isFinalized: InitializedTrackable<Boolean>
+    override val isFinalized: Boolean
         get() = digitalOutput.isFinalized
 
     override fun openSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<Frequency>>> =
         digitalOutput.openTransitionFrequencySubscription()
 
-    override suspend fun stopTransceiving() {
+    override fun stopTransceiving() {
         digitalOutput.stopTransceiving()
     }
 
-    override suspend fun setOutputIfViable(setting: DaqcQuantity<Frequency>): SettingViability =
+    override fun setOutputIfViable(setting: DaqcQuantity<Frequency>): SettingViability =
         digitalOutput.sustainTransitionFrequency(setting)
 
 

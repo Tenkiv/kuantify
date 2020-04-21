@@ -15,24 +15,32 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.fs.gate.control
+package org.tenkiv.kuantify.fs.gate.acquire
 
+import kotlinx.coroutines.channels.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.fs.hardware.device.*
+import org.tenkiv.kuantify.fs.gate.*
 import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.gate.control.*
+import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.networking.configuration.*
 
-public interface LocalControlGate<T : DaqcData, out D : LocalDevice> : ControlChannel<T>, DeviceGate<T, D>,
-    NetworkBoundSide<String> {
+public abstract class FSRemoteAcquireChannel<T : DaqcData>(uid: String) : FSRemoteDaqcGate(uid), AcquireChannel<T> {
+    private val startSamplingChannel = Channel<Ping>(Channel.RENDEZVOUS)
+    public final override fun startSampling() =
+        modifyConfiguration {
+            command {
+                startSamplingChannel.offer(Ping)
+            }
+            return@modifyConfiguration
+        }
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        routing.addToThisPath {
-            bind<Ping>(RC.STOP_TRANSCEIVING) {
-                receive {
-                    stopTransceiving()
-                }
+    public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
+        route.add {
+            bindPing(RC.START_SAMPLING) {
+                send(source = startSamplingChannel)
             }
         }
     }

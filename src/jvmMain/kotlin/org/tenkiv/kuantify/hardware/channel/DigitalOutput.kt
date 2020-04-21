@@ -37,7 +37,7 @@ public interface DigitalOutput : DeviceDigitalGate {
     public val lastTransitionFrequencySetting: ValueInstant<DaqcQuantity<Frequency>>?
 
 
-    public suspend fun setOutputState(
+    public fun setOutputState(
         state: BinaryState
     ): SettingViability
 
@@ -46,7 +46,7 @@ public interface DigitalOutput : DeviceDigitalGate {
      *
      * @param percent The percentage of the time the output is supposed to be active.
      */
-    public suspend fun pulseWidthModulate(
+    public fun pulseWidthModulate(
         percent: Quantity<Dimensionless>
     ): SettingViability
 
@@ -55,11 +55,11 @@ public interface DigitalOutput : DeviceDigitalGate {
      *
      * @param freq The frequency of state change.
      */
-    public suspend fun sustainTransitionFrequency(
+    public fun sustainTransitionFrequency(
         freq: Quantity<Frequency>
     ): SettingViability
 
-    public override suspend fun stopTransceiving() {
+    public override fun stopTransceiving() {
         setOutputState(BinaryState.Low)
     }
 

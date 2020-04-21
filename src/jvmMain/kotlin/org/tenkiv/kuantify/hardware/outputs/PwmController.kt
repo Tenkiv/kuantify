@@ -43,14 +43,14 @@ public abstract class PwmController<QT : Quantity<QT>>(
     public val avgPeriod: UpdatableQuantity<Time>
         get() = digitalOutput.avgPeriod
 
-    public final override val isTransceiving: InitializedTrackable<Boolean>
+    public final override val isTransceiving: Trackable<Boolean>
         get() = digitalOutput.isTransceivingFrequency
 
     init {
         initCoroutines()
     }
 
-    public final override suspend fun setParentOutput(setting: DaqcQuantity<Dimensionless>): SettingViability =
+    public final override fun setParentOutput(setting: DaqcQuantity<Dimensionless>): SettingViability =
         digitalOutput.pulseWidthModulate(setting)
 
     protected final override fun openParentSubscription():

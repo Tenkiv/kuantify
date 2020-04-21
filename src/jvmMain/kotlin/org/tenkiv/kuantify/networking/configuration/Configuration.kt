@@ -15,32 +15,28 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.fs.gate.acquire
+package org.tenkiv.kuantify.networking.configuration
 
-import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.fs.hardware.device.*
-import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.gate.acquire.*
-import org.tenkiv.kuantify.hardware.channel.*
-import org.tenkiv.kuantify.networking.configuration.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.kuantify.networking.communication.*
 
-public interface LocalAcquireGate<T : DaqcData, out D : LocalDevice> : AcquireChannel<T>, DeviceGate<T, D>,
-    NetworkBoundSide<String> {
+public typealias Path = List<String>
+public typealias Ping = Unit
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        routing.addToThisPath {
-            bind<Ping>(RC.START_SAMPLING) {
-                receive {
-                    startSampling()
-                }
-            }
+@DslMarker
+internal annotation class NetworkingDsl
 
-            bind<Ping>(RC.STOP_TRANSCEIVING) {
-                receive {
-                    stopTransceiving()
-                }
-            }
-        }
-    }
+public data class NetworkMessageReceiver<SerialT>(
+    val channel: Channel<SerialT>,
+    val receiveOp: MessageReceiver<SerialT>
+)
 
-}
+public data class LocalUpdateSender<MessageT, SerialT>(
+    val channel: ReceiveChannel<MessageT>,
+    val serialize: MessageSerializer<MessageT, SerialT>
+)
+
+public data class NetworkPingReceiver(
+    val channel: Channel<Ping>,
+    val receiveOp: PingReceiver
+)

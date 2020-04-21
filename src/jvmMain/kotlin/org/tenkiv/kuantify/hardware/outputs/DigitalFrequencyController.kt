@@ -42,14 +42,14 @@ public abstract class DigitalFrequencyController<QT : Quantity<QT>>(
     public val avgPeriod: UpdatableQuantity<Time>
         get() = digitalOutput.avgPeriod
 
-    public final override val isTransceiving: InitializedTrackable<Boolean>
+    public final override val isTransceiving: Trackable<Boolean>
         get() = digitalOutput.isTransceivingFrequency
 
     init {
         initCoroutines()
     }
 
-    public final override suspend fun setParentOutput(setting: DaqcQuantity<Frequency>): SettingViability =
+    public final override fun setParentOutput(setting: DaqcQuantity<Frequency>): SettingViability =
         digitalOutput.sustainTransitionFrequency(setting)
 
     protected final override fun openParentSubscription():

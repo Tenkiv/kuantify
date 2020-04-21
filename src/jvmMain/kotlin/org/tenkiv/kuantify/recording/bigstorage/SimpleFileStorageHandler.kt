@@ -59,7 +59,7 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcChannel<DT>>(
 
             val bufferJob = launch(Dispatchers.Daqc) {
                 fileCreationBroadcaster.openSubscription().receive()
-                channel.updateBroadcaster.consumeEach { value ->
+                channel.onEachUpdate { value ->
                     buffer += value
                 }
             }
@@ -104,7 +104,7 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcChannel<DT>>(
             val fileExpiresIn = (numSamples + numSamples / 9) + 1
 
             files += RecorderFile(fileExpiresIn)
-            val receiveChannel = channel.updateBroadcaster.openSubscription()
+            val receiveChannel = channel.openSubscription()
             while (isActive) {
                 val newRecorderFile = RecorderFile(fileExpiresIn)
                 if (files.last().samplesSinceCreation == fileCreationInterval) files += newRecorderFile
@@ -188,7 +188,7 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcChannel<DT>>(
         internal constructor(expiresAfterNumSamples: Int?) {
             if (expiresAfterNumSamples != null) {
                 launch(Dispatchers.Daqc) {
-                    val receiveChannel = channel.updateBroadcaster.openSubscription()
+                    val receiveChannel = channel.openSubscription()
 
                     while (samplesSinceCreation < expiresAfterNumSamples) {
                         receiveChannel.receive()

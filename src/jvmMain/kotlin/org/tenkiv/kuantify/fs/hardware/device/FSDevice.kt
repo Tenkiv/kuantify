@@ -21,7 +21,6 @@ import io.ktor.client.request.*
 import io.ktor.utils.io.errors.IOException
 import kotlinx.coroutines.*
 import kotlinx.serialization.builtins.*
-import kotlinx.serialization.json.*
 import mu.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.networking.*
@@ -52,11 +51,11 @@ public interface FSDevice : Device, NetworkBoundCombined {
  * [FSBaseDevice]s but not all [RemoteDevice]s are.
  */
 public sealed class FSBaseDevice(final override val coroutineContext: CoroutineContext) : FSDevice,
-    NetworkBoundSide<String> {
+    NetworkBound<String> {
 
     public final override val basePath: Path = emptyList()
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
+    public override fun routing(route: NetworkRoute<String>) {
 
     }
 

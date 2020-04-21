@@ -38,10 +38,10 @@ public abstract class ProcessedAcquireGate<T : DaqcData, ParentT : DaqcData>(
     private val broadcastChannel = BroadcastChannel<ValueInstant<T>>(capacity = Channel.BUFFERED)
     protected open val failureBroadcastChannel: BroadcastChannel<FailedMeasurement>? = BroadcastChannel(capacity = 5)
 
-    public override val isTransceiving: InitializedTrackable<Boolean>
+    public override val isTransceiving: Trackable<Boolean>
         get() = parentGate.isTransceiving
 
-    public override val isFinalized: InitializedTrackable<Boolean>
+    public override val isFinalized: Boolean
         get() = parentGate.isFinalized
 
     public override fun openSubscription(): ReceiveChannel<ValueInstant<T>> = broadcastChannel.openSubscription()
@@ -49,7 +49,7 @@ public abstract class ProcessedAcquireGate<T : DaqcData, ParentT : DaqcData>(
     public override fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>? =
         failureBroadcastChannel?.openSubscription()
 
-    public override suspend fun stopTransceiving() {
+    public override fun stopTransceiving() {
         parentGate.stopTransceiving()
     }
 

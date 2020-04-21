@@ -20,160 +20,108 @@ package org.tenkiv.kuantify.networking.communication
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import mu.*
-import org.tenkiv.coral.*
-import org.tenkiv.kuantify.hardware.device.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.lib.*
-import java.util.concurrent.atomic.*
-import kotlin.coroutines.*
+import org.tenkiv.kuantify.networking.configuration.*
 
-public typealias UpdateReceiver<ST> = suspend (update: ST) -> Unit
-public typealias MessageSerializer<MT, ST> = (update: MT) -> ST
+public typealias MessageReceiver<SerialT> = suspend (update: SerialT) -> Unit
+public typealias PingReceiver = suspend () -> Unit
+public typealias MessageSerializer<BoundT, SerialT> = (update: BoundT) -> SerialT
 
 private val logger = KotlinLogging.logger {}
 
-public abstract class NetworkRouteBinding<MT, ST>(
-    protected val networkCommunicator: NetworkCommunicator<ST>,
-    internal val networkUpdateChannel: Channel<ST>?
-) : CoroutineScope {
+//TODO: Should this be sealed class?
+public interface NetworkRouteBinding<SerialT> {
 
-    public final override val coroutineContext: CoroutineContext
-        get() = networkCommunicator.coroutineContext
+    public fun start()
 
-    public abstract fun start()
+    public suspend fun messageFromNetwork(message: SerialT)
 
-    public companion object {
-
-        internal fun throwIllegalStateSend(route: String, device: Device): Nothing {
-            throw IllegalStateException(
-                """Network binding for route: $route on device${device.uid} 
-                |is configured to send but has no local update channel.""".trimToSingleLine()
-            )
-        }
-
-        internal fun throwIllegalStateReceive(route: String, device: Device): Nothing {
-            throw IllegalStateException(
-                """Network binding for route: $route on device${device.uid} 
-                |is configured to receive but has no network update channel.""".trimToSingleLine()
-            )
-        }
-
-    }
-
-
-    public data class Properties<MT, ST>(
-        public val networkCommunicator: NetworkCommunicator<ST>,
-        public val route: String,
-        public val localUpdateChannel: ReceiveChannel<MT>?,
-        public val networkUpdateChannel: Channel<ST>?,
-        public val serializeMessage: MessageSerializer<MT, ST>?,
-        public val sendUpdates: Boolean,
-        public val receiveUpdate: UpdateReceiver<ST>?,
-        public val serializedPing: ST
-    )
 }
 
-public class RecursionPreventingRouteBinding<MT, ST>(
-    networkCommunicator: NetworkCommunicator<ST>,
+public class NetworkMessageBinding<BoundT, SerialT>(
+    private val networkCommunicator: NetworkCommunicator<SerialT>,
     private val route: String,
-    private val localUpdateChannel: ReceiveChannel<MT>?,
-    networkUpdateChannel: Channel<ST>?,
-    private val serializeMessage: MessageSerializer<MT, ST>?,
-    private val sendUpdates: Boolean,
-    private val receiveUpdate: UpdateReceiver<ST>?,
-    private val serializedPing: ST
-) : NetworkRouteBinding<MT, ST>(networkCommunicator, networkUpdateChannel) {
-
-    public constructor(props: Properties<MT, ST>) :
-            this(
-                props.networkCommunicator,
-                props.route,
-                props.localUpdateChannel,
-                props.networkUpdateChannel,
-                props.serializeMessage,
-                props.sendUpdates,
-                props.receiveUpdate,
-                props.serializedPing
-            )
-
-    private val ignoreNextUpdate = AtomicBoolean(false)
+    private val localUpdateSender: LocalUpdateSender<BoundT, SerialT>?,
+    private val networkMessageReceiver: NetworkMessageReceiver<SerialT>?
+) : NetworkRouteBinding<SerialT>, CoroutineScope by networkCommunicator {
 
     public override fun start() {
         // Send
-        if (sendUpdates) {
+        if (localUpdateSender != null) {
             launch {
-                localUpdateChannel?.consumingOnEach {
-                    if (!ignoreNextUpdate.get()) {
-                        val message = serializeMessage?.invoke(it) ?: serializedPing
-                        networkCommunicator._sendMessage(route, message)
-                    } else {
-                        ignoreNextUpdate.set(false)
-                    }
-                } ?: throwIllegalStateSend(route, networkCommunicator.device)
-            }
-        }
-
-        // Receive
-        if (receiveUpdate != null) {
-            launch {
-                networkUpdateChannel?.consumingOnEach {
-                    ignoreNextUpdate.set(true)
-                    receiveUpdate.invoke(it)
-                } ?: throwIllegalStateReceive(route, networkCommunicator.device)
-            }
-        }
-    }
-
-    public override fun toString(): String = """
-        RecursionPreventingNetworkCommunicator(route=$route, serializedPing=$serializedPing)
-    """.trimIndent()
-}
-
-public class StandardRouteBinding<MT, ST>(
-    networkCommunicator: NetworkCommunicator<ST>,
-    private val route: String,
-    private val localUpdateChannel: ReceiveChannel<MT>?,
-    networkUpdateChannel: Channel<ST>?,
-    private val serializeMessage: MessageSerializer<MT, ST>?,
-    private val sendUpdates: Boolean,
-    private val receiveUpdate: UpdateReceiver<ST>?,
-    private val serializedPing: ST
-) : NetworkRouteBinding<MT, ST>(networkCommunicator, networkUpdateChannel) {
-
-    public constructor(props: Properties<MT, ST>) :
-            this(
-                props.networkCommunicator,
-                props.route,
-                props.localUpdateChannel,
-                props.networkUpdateChannel,
-                props.serializeMessage,
-                props.sendUpdates,
-                props.receiveUpdate,
-                props.serializedPing
-            )
-
-    public override fun start() {
-        // Send
-        if (sendUpdates) {
-            launch {
-                localUpdateChannel?.consumeEach {
-                    val message = serializeMessage?.invoke(it) ?: serializedPing
+                localUpdateSender.channel.consumingOnEach {
+                    val message = localUpdateSender.serialize.invoke(it)
                     networkCommunicator._sendMessage(route, message)
-                } ?: throwIllegalStateSend(route, networkCommunicator.device)
+                }
             }
         }
 
         // Receive
-        if (receiveUpdate != null) {
+        if (networkMessageReceiver != null) {
             launch {
-                networkUpdateChannel?.consumeEach {
-                    receiveUpdate.invoke(it)
-                } ?: throwIllegalStateReceive(route, networkCommunicator.device)
+                networkMessageReceiver.channel.consumingOnEach {
+                    networkMessageReceiver.receiveOp(it)
+                }
             }
         }
     }
 
-    public override fun toString(): String = """
-        StandardRouteBinding(route=$route, serializedPing=$serializedPing)
-    """.trimIndent()
+    public override suspend fun messageFromNetwork(message: SerialT) {
+        networkMessageReceiver?.channel?.send(message) ?: cantReceiveError(message)
+    }
 
+    private suspend fun cantReceiveError(message: SerialT) {
+        logger.error { "Received message - $message - on route: $route with no receive functionality." }
+        alertCriticalError( CriticalDaqcError.FailedMajorCommand(
+            networkCommunicator.device,
+            "Unable to receive on route of incoming message."
+        ))
+    }
+
+    public override fun toString(): String = "NetworkMessageBinding(route=$route)"
+
+}
+
+public class NetworkPingBinding<SerialT>(
+    private val networkCommunicator: NetworkCommunicator<SerialT>,
+    private val route: String,
+    private val localUpdateChannel: ReceiveChannel<Ping>?,
+    private val networkPingReceiver: NetworkPingReceiver?,
+    private val serializedPing: SerialT
+) : NetworkRouteBinding<SerialT>, CoroutineScope by networkCommunicator {
+
+    public override fun start() {
+        // Send
+        if (localUpdateChannel != null) {
+            launch {
+                localUpdateChannel.consumingOnEach {
+                    networkCommunicator._sendMessage(route, serializedPing)
+                }
+            }
+        }
+
+        // Receive
+        if (networkPingReceiver != null) {
+            launch {
+                networkPingReceiver.channel.consumingOnEach {
+                    networkPingReceiver.receiveOp()
+                }
+            }
+        }
+    }
+
+    public override suspend fun messageFromNetwork(message: SerialT) {
+        networkPingReceiver?.channel?.offer(Ping) ?: cantReceiveError()
+    }
+
+    private suspend fun cantReceiveError() {
+        logger.error { "Received ping on route: $route with no receive functionality." }
+        alertCriticalError( CriticalDaqcError.FailedMajorCommand(
+            networkCommunicator.device,
+            "Unable to receive on route of incoming ping."
+        ))
+    }
+
+    public override fun toString(): String = "NetworkPingBinding(route=$route)"
 }

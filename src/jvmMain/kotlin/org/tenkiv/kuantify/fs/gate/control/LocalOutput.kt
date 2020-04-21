@@ -17,58 +17,43 @@
 
 package org.tenkiv.kuantify.fs.gate.control
 
-import kotlinx.serialization.builtins.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.fs.hardware.device.*
+import org.tenkiv.kuantify.fs.gate.*
 import org.tenkiv.kuantify.fs.networking.*
+import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
+import org.tenkiv.kuantify.gate.control.output.setOutput
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.configuration.*
 import physikal.*
-import kotlin.reflect.*
 
-public interface LocalOutput<T : DaqcValue, out D : LocalDevice> : LocalControlGate<T, D>, Output<T> {
+public abstract class LocalOutput<T : DaqcValue>(uid: String) : LocalDaqcGate(uid), Output<T> {
+    internal val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<T>>()
+    public override val valueOrNull: ValueInstant<T>?
+        get() = broadcastChannel.valueOrNull
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        super.sideRouting(routing)
-
-        routing.addToThisPath {
-            bind<Boolean>(RC.IS_TRANSCEIVING) {
-                serializeMessage {
-                    Serialization.json.stringify(Boolean.serializer(), it)
-                }
-
-                setLocalUpdateChannel(isTransceiving.updateBroadcaster.openSubscription()) withUpdateChannel {
-                    send()
-                }
-            }
-
-        }
-    }
+    public override fun openSubscription(): ReceiveChannel<ValueInstant<T>> =
+        broadcastChannel.openSubscription()
 }
 
-public interface LocalQuantityOutput<QT : Quantity<QT>, out D : LocalDevice> : LocalOutput<DaqcQuantity<QT>, D>,
+public abstract class LocalQuantityOutput<QT : Quantity<QT>>(uid: String) : LocalOutput<DaqcQuantity<QT>>(uid),
     QuantityOutput<QT> {
 
-    public val quantityType: KClass<QT>
-
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        super.sideRouting(routing)
-        routing.addToThisPath {
+    public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
+        route.add {
             bind<QuantityMeasurement<QT>>(RC.VALUE) {
-                serializeMessage {
-                    Serialization.json.stringify(Measurement.quantitySerializer(), it)
+                send(source = openSubscription()) {
+                    Serialization.json.stringify(QuantityMeasurement.quantitySerializer(), it)
                 }
-
-                setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
-                    send()
-                }
-
+            }
+            bind<Quantity<QT>>(RC.CONTROL_SETTING) {
                 receive {
                     val setting = Serialization.json.parse(Quantity.serializer<QT>(), it)
-
-                    setOutputIfViable(setting)
+                    setOutput(setting)
                 }
             }
         }
@@ -76,27 +61,23 @@ public interface LocalQuantityOutput<QT : Quantity<QT>, out D : LocalDevice> : L
 
 }
 
-public interface LocalBinaryStateOutput<out D : LocalDevice> : LocalOutput<BinaryState, D>, BinaryStateOutput {
+public abstract class LocalBinaryStateOutput(uid: String) : LocalOutput<BinaryState>(uid), BinaryStateOutput {
 
-    public override fun sideRouting(routing: SideNetworkRouting<String>) {
-        super.sideRouting(routing)
-
-        routing.addToThisPath {
+    public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
+        route.add {
             bind<BinaryStateMeasurement>(RC.VALUE) {
-                serializeMessage {
-                    Serialization.json.stringify(ValueInstantSerializer(BinaryState.serializer()), it)
+                send(source = openSubscription()) {
+                    Serialization.json.stringify(BinaryStateMeasurement.binaryStateSerializer(), it)
                 }
-
-                setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
-                    send()
-                }
-
+            }
+            bind<BinaryState>(RC.CONTROL_SETTING) {
                 receive {
                     val setting = Serialization.json.parse(BinaryState.serializer(), it)
-
-                    setOutputIfViable(setting)
+                    setOutput(setting)
                 }
             }
         }
     }
+
 }

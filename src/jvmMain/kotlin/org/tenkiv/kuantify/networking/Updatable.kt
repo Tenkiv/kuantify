@@ -15,29 +15,27 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.fs.networking.configuration
+package org.tenkiv.kuantify.networking
 
-import org.tenkiv.kuantify.networking.configuration.*
+import kotlinx.coroutines.channels.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.trackable.*
 
-public typealias CombinedRouting = (CombinedNetworkRouting) -> Unit
+/**
+ * An [Updatable] meant to keep sync both ways between a remote client and a host on the remote side.
+ * It's value will not be updated immediately when set, only once it receives confirmation of the updated from the host.
+ */
+@KuantifyComponentBuilder
+public class RemoteSyncUpdatable<T : Any> : Updatable<T> {
+    private val broadcastChannel = ConflatedBroadcastChannel<T>()
+    public val localSetChannel: Channel<T> = Channel(capacity = Channel.CONFLATED)
 
-public interface NetworkBoundCombined {
-
-    public val basePath: Path
-
-    public fun combinedRouting(routing: CombinedNetworkRouting)
-
-    public fun CombinedNetworkRouting.addToThisPath(build: CombinedNetworkRouting.() -> Unit) {
-        route(basePath) {
-            build()
-        }
+    public override fun set(value: T) {
+        localSetChannel.offer(value)
     }
 
-}
+    public override val valueOrNull: T?
+        get() = broadcastChannel.valueOrNull
 
-public fun Iterable<NetworkBoundCombined>.addCombinedRoutingTo(routing: CombinedNetworkRouting) {
-    forEach {
-        it.combinedRouting(routing)
-    }
+    public override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
 }
-

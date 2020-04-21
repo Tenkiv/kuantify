@@ -17,7 +17,6 @@
 
 package org.tenkiv.kuantify.trackable
 
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import physikal.*
 
@@ -38,7 +37,7 @@ public interface InitializedUpdatable<T : Any> : Updatable<T>, InitializedTracka
     public override val valueOrNull: T? get() = value
 }
 
-private class UpdatableImpl<T : Any>(scope: CoroutineScope) : Updatable<T>, CoroutineScope by scope {
+private class UpdatableImpl<T : Any> : Updatable<T> {
     private val broadcastChannel = ConflatedBroadcastChannel<T>()
     override val valueOrNull: T?
         get() = broadcastChannel.valueOrNull
@@ -51,9 +50,8 @@ private class UpdatableImpl<T : Any>(scope: CoroutineScope) : Updatable<T>, Coro
 }
 
 private class InitializedUpdatableImpl<T : Any>(
-    scope: CoroutineScope,
     initialValue: T
-) : InitializedUpdatable<T>, CoroutineScope by scope {
+) : InitializedUpdatable<T> {
     private val broadcastChannel = ConflatedBroadcastChannel(initialValue)
     override var value: T
         get() = broadcastChannel.value
@@ -66,8 +64,8 @@ private class InitializedUpdatableImpl<T : Any>(
     }
 }
 
-public fun <T : Any> CoroutineScope.Updatable(): Updatable<T> =
-    UpdatableImpl(this)
+public fun <T : Any> Updatable(): Updatable<T> =
+    UpdatableImpl()
 
-public fun <T : Any> CoroutineScope.Updatable(initialValue: T): InitializedUpdatable<T> =
-    InitializedUpdatableImpl(this, initialValue)
+public fun <T : Any> Updatable(initialValue: T): InitializedUpdatable<T> =
+    InitializedUpdatableImpl(initialValue)
