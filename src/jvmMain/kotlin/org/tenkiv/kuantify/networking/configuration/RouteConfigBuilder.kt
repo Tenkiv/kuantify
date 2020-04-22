@@ -18,18 +18,20 @@
 package org.tenkiv.kuantify.networking.configuration
 
 import kotlinx.coroutines.channels.*
+import kotlinx.serialization.*
 import mu.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.networking.communication.*
 
 @PublishedApi
 internal val routeConfigBuilderLogger = KotlinLogging.logger {}
 
+@KuantifyComponentBuilder
 public class RouteConfig<SerialT>(
     @PublishedApi internal val networkCommunicator: NetworkCommunicator<SerialT>,
     @PublishedApi internal val serializedPing: SerialT,
     @PublishedApi internal val formatPath: (Path) -> String
 ) {
-
     public val networkRouteBindingMap: HashMap<String, NetworkRouteBinding<SerialT>> = HashMap()
 
     public val baseRoute: NetworkRoute<SerialT>
@@ -41,17 +43,15 @@ public class RouteConfig<SerialT>(
 
     @Suppress("NAME_SHADOWING")
     @PublishedApi
-    internal inline fun <BoundT> addMessageBinding(
+    internal fun <BoundT> addMessageBinding(
         path: Path,
-        build: MessageBindingBuilder<BoundT, SerialT>.() -> Unit
+        routeBindingBuilder: MessageBindingBuilder<BoundT, SerialT>
     ) {
         val path = formatPath(path)
 
-        val routeBindingBuilder = MessageBindingBuilder<BoundT, SerialT>()
-        routeBindingBuilder.build()
-
         val currentBinding = networkRouteBindingMap[path]
         if (currentBinding != null) {
+            //TODO: Consider throwing exception here instead of just warning.
             routeConfigBuilderLogger.warn { "Overriding side route binding for route $path." }
         }
 
@@ -65,14 +65,11 @@ public class RouteConfig<SerialT>(
 
     @Suppress("NAME_SHADOWING")
     @PublishedApi
-    internal inline fun addPingBinding(
+    internal fun addPingBinding(
         path: Path,
-        build: PingBindingBuilder.() -> Unit
+        routeBindingBuilder: PingBindingBuilder
     ) {
         val path = formatPath(path)
-
-        val routeBindingBuilder = PingBindingBuilder()
-        routeBindingBuilder.build()
 
         val currentBinding = networkRouteBindingMap[path]
         if (currentBinding != null) {
@@ -126,11 +123,9 @@ public class NetworkRoute<SerialT> @PublishedApi internal constructor(
         build: MessageBindingBuilder<BoundT, SerialT>.() -> Unit
     ) {
         val path = this.path + path
+        val builder = MessageBindingBuilder<BoundT, SerialT>().apply(build)
 
-        config.addMessageBinding(
-            path,
-            build
-        )
+        config.addMessageBinding(path, builder)
     }
 
     @NetworkingDsl
@@ -139,11 +134,9 @@ public class NetworkRoute<SerialT> @PublishedApi internal constructor(
         build: PingBindingBuilder.() -> Unit
     ) {
         val path = this.path + path
+        val builder = PingBindingBuilder().apply(build)
 
-        config.addPingBinding(
-            path,
-            build
-        )
+        config.addPingBinding(path, builder)
     }
 
     @NetworkingDsl
@@ -163,6 +156,7 @@ public class NetworkRoute<SerialT> @PublishedApi internal constructor(
 public class MessageBindingBuilder<BoundT, SerialT> @PublishedApi internal constructor() {
     @PublishedApi
     internal var send: LocalUpdateSender<BoundT, SerialT>? = null
+
     @PublishedApi
     internal var receive: NetworkMessageReceiver<SerialT>? = null
 
@@ -181,9 +175,113 @@ public class MessageBindingBuilder<BoundT, SerialT> @PublishedApi internal const
 
 }
 
+@NetworkingDsl
+public class StringSerializingMbb<BoundT> @PublishedApi internal constructor(
+    @PublishedApi internal val formatter: StringFormat,
+    @PublishedApi internal val serializer: KSerializer<BoundT>
+) {
+    @PublishedApi
+    internal val parent = MessageBindingBuilder<BoundT, String>()
+
+    @NetworkingDsl
+    public fun send(source: ReceiveChannel<BoundT>) {
+        parent.send = LocalUpdateSender(source) { value ->
+            formatter.stringify(serializer, value)
+        }
+    }
+
+    @NetworkingDsl
+    public inline fun receive(
+        networkChannelCapacity: Int = Channel.BUFFERED,
+        crossinline receiveOp: suspend (BoundT) -> Unit
+    ) {
+        parent.receive = NetworkMessageReceiver(Channel(networkChannelCapacity)) { value ->
+            receiveOp(formatter.parse(serializer, value))
+        }
+    }
+
+}
+
+@Suppress("NAME_SHADOWING")
+@NetworkingDsl
+public inline fun <BoundT> NetworkRoute<String>.bindAutoSerialized(
+    formatter: StringFormat,
+    serializer: KSerializer<BoundT>,
+    path: Path,
+    build: StringSerializingMbb<BoundT>.() -> Unit
+) {
+    val path = this.path + path
+    val builder = StringSerializingMbb(formatter, serializer).apply(build).parent
+
+    config.addMessageBinding(path, builder)
+}
+
+@NetworkingDsl
+public inline fun <BoundT> NetworkRoute<String>.bindAutoSerialized(
+    formatter: StringFormat,
+    serializer: KSerializer<BoundT>,
+    vararg path: String,
+    build: StringSerializingMbb<BoundT>.() -> Unit
+) {
+    bindAutoSerialized(formatter, serializer, path.toList(), build)
+}
+
+@NetworkingDsl
+public class BinarySerializingMbb<BoundT> @PublishedApi internal constructor(
+    @PublishedApi internal val formatter: BinaryFormat,
+    @PublishedApi internal val serializer: KSerializer<BoundT>
+) {
+    @PublishedApi
+    internal val parent = MessageBindingBuilder<BoundT, ByteArray>()
+
+    @NetworkingDsl
+    public fun send(source: ReceiveChannel<BoundT>) {
+        parent.send = LocalUpdateSender(source) { value ->
+            formatter.dump(serializer, value)
+        }
+    }
+
+    @NetworkingDsl
+    public inline fun receive(
+        networkChannelCapacity: Int = Channel.BUFFERED,
+        crossinline receiveOp: suspend (BoundT) -> Unit
+    ) {
+        parent.receive = NetworkMessageReceiver(Channel(networkChannelCapacity)) { value ->
+            receiveOp(formatter.load(serializer, value))
+        }
+    }
+
+}
+
+@Suppress("NAME_SHADOWING")
+@NetworkingDsl
+public inline fun <BoundT> NetworkRoute<ByteArray>.bindAutoSerialized(
+    formatter: BinaryFormat,
+    serializer: KSerializer<BoundT>,
+    path: Path,
+    build: BinarySerializingMbb<BoundT>.() -> Unit
+) {
+    val path = this.path + path
+    val builder = BinarySerializingMbb(formatter, serializer).apply(build).parent
+
+    config.addMessageBinding(path, builder)
+}
+
+@NetworkingDsl
+public inline fun <BoundT> NetworkRoute<ByteArray>.bindAutoSerialized(
+    formatter: BinaryFormat,
+    serializer: KSerializer<BoundT>,
+    vararg path: String,
+    build: BinarySerializingMbb<BoundT>.() -> Unit
+) {
+    bindAutoSerialized(formatter, serializer, path.toList(), build)
+}
+
+@NetworkingDsl
 public class PingBindingBuilder @PublishedApi internal constructor() {
     @PublishedApi
     internal var localUpdateChannel: ReceiveChannel<Ping>? = null
+
     @PublishedApi
     internal var receiveOp: PingReceiver? = null
 

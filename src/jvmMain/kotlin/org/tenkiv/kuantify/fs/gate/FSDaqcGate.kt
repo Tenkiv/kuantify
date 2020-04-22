@@ -95,6 +95,7 @@ public abstract class FSRemoteDaqcGate(
     public override val isFinalized: Boolean
         get() = _isFinalized.get()
     private val finalizeChannel = Channel<Ping>(Channel.RENDEZVOUS)
+
     // Not a command, it's ok if there is no connection when finalize is called.
     public final override fun finalize() {
         if (!isFinalized) {
@@ -116,10 +117,9 @@ public abstract class FSRemoteDaqcGate(
                 send(source = stopTransceivingChannel)
             }
 
-            bind<Boolean>(RC.IS_TRANSCEIVING) {
-                receive(networkChannelCapacity = Channel.CONFLATED) {
+            bindAutoSerializedFS(Boolean.serializer(), RC.IS_TRANSCEIVING) {
+                receive(networkChannelCapacity = Channel.CONFLATED) { value ->
                     modifyConfiguration {
-                        val value = Serialization.json.parse(Boolean.serializer(), it)
                         _isTransceiving.value = value
                     }
                 }

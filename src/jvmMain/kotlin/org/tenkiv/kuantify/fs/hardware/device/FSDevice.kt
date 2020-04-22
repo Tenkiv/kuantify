@@ -26,7 +26,6 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.client.*
 import org.tenkiv.kuantify.fs.networking.communication.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.fs.networking.server.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.configuration.*
@@ -35,10 +34,7 @@ import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
 
-public interface FSDevice : Device, NetworkBoundCombined {
-    public override fun combinedRouting(routing: CombinedNetworkRouting) {
-
-    }
+public interface FSDevice : Device {
 
     public companion object {
         @PublishedApi
