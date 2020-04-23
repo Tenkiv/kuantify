@@ -18,12 +18,12 @@
 package org.tenkiv.kuantify.fs.hardware.channel
 
 import kotlinx.coroutines.channels.*
+import kotlinx.serialization.builtins.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.gate.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
@@ -31,88 +31,42 @@ import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
+import org.tenkiv.kuantify.lib.serializer
 import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.kuantify.trackable.*
 import physikal.*
 import physikal.types.*
 
-private inline fun NetworkRoute<String>.startSamplingLocal(rc: String, crossinline start: () -> Unit) {
-    bind<Ping>(rc) {
-        receive {
-            start()
-        }
-    }
-}
 
-private fun NetworkRoute<String>.startSamplingRemote(rc: String, channel: ReceiveChannel<Ping>) {
-    bind<Ping>(rc) {
-        setLocalUpdateChannel(channel) withUpdateChannel {
-            send()
-        }
-    }
-}
-
-@Suppress("LeakingThis")
-public abstract class LocalDigitalInput<out D> : DigitalInput<D>, NetworkBound<String>, NetworkBoundCombined
-        where D : LocalDevice, D : DigitalDaqDevice {
-
-    private val thisAsBinaryStateSensor = SimpleBinaryStateSensor(this)
-
-    private val thisAsTransitionFrequencyInput = SimpleDigitalFrequencySensor(this)
-
-    private val thisAsPwmSensor = SimplePwmSensor(this)
-
-    private val _isTransceiving: InitializedUpdatable<Boolean> = Updatable(false)
-    public override val isTransceiving: InitializedTrackable<Boolean>
-        get() = _isTransceiving
-
-    init {
-        onAnyTransceivingChange {
-            _isTransceiving.value = it
-        }
-    }
-
-    public override fun asBinaryStateSensor(): BinaryStateInput = thisAsBinaryStateSensor
-
-    public override fun asTransitionFrequencySensor(avgFrequency: Quantity<Frequency>):
-            QuantityInput<Frequency> {
-        this.avgFrequency.set(avgFrequency)
-        return thisAsTransitionFrequencyInput
-    }
-
-    public override fun asPwmSensor(avgFrequency: Quantity<Frequency>): QuantityInput<Dimensionless> {
-        this.avgFrequency.set(avgFrequency)
-        return thisAsPwmSensor
-
-    }
-
-    public override fun combinedRouting(routing: CombinedNetworkRouting) {
-        routing.addToThisPath {
-            digitalGateRouting(this@LocalDigitalInput)
-        }
-    }
+public abstract class LocalDigitalInput<out DeviceT>(uid: String) : LocalDigitalGate(uid), DigitalInput
+        where DeviceT : LocalDevice, DeviceT : DigitalDaqDevice {
+    public abstract override val device: DeviceT
 
     public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
         route.add {
-            digitalGateIsTransceivingLocal(isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
-            digitalGateIsTransceivingLocal(isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
-            digitalGateIsTransceivingLocal(isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
-
-            startSamplingLocal(RC.START_SAMPLING_BINARY_STATE, ::startSamplingBinaryState)
-            startSamplingLocal(RC.START_SAMPLING_PWM, ::startSamplingPwm)
-            startSamplingLocal(RC.START_SAMPLING_TRANSITION_FREQUENCY, ::startSamplingTransitionFrequency)
-
-            bind<ValueInstant<DigitalValue>>(RC.VALUE) {
-                serializeMessage {
-                    Serialization.json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
+            bindFS(BinaryStateMeasurement.binaryStateSerializer(), RC.BIN_STATE_VALUE) {
+                send(source = openBinaryStateSubscription())
+            }
+            //TODO: Think about whether or not to bundle transition frequency and pwm.
+            bindPing(RC.START_SAMPLING_BINARY_STATE) {
+                receive {
+                    startSamplingBinaryState()
                 }
-
-                setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
-                    send()
+            }
+            bindPing(RC.START_SAMPLING_TRANSITION_FREQUENCY) {
+                receive {
+                    startSamplingTransitionFrequency()
+                }
+            }
+            bindPing(RC.START_SAMPLING_PWM) {
+                receive {
+                    startSamplingPwm()
                 }
             }
         }
     }
+
 }
 
 @Suppress("LeakingThis")
@@ -165,22 +119,22 @@ public abstract class FSRemoteDigitalInput<out D> : DigitalInput<D>, NetworkBoun
 
     public val avgPeriod: UpdatableQuantity<Frequency> = device.RemoteUpdatable()
 
-    private val startSamplingTransitionFrequencyChannel = Channel<Ping>(Channel.CONFLATED)
+    private val startSamplingTransitionFrequencyChannel = Channel<Ping>(Channel.RENDEZVOUS)
     public override fun startSamplingTransitionFrequency() {
         startSamplingTransitionFrequencyChannel.offer(Ping)
     }
 
-    private val startSamplingPwmChannel = Channel<Ping>(Channel.CONFLATED)
+    private val startSamplingPwmChannel = Channel<Ping>(Channel.RENDEZVOUS)
     public override fun startSamplingPwm() {
         startSamplingPwmChannel.offer(Ping)
     }
 
-    private val startSamplingBinaryStateChannel = Channel<Ping>(Channel.CONFLATED)
+    private val startSamplingBinaryStateChannel = Channel<Ping>(Channel.RENDEZVOUS)
     public override fun startSamplingBinaryState() {
         startSamplingBinaryStateChannel.offer(Ping)
     }
 
-    private val stopTransceivingChannel = Channel<Ping>(Channel.CONFLATED)
+    private val stopTransceivingChannel = Channel<Ping>(Channel.RENDEZVOUS)
     public override fun stopTransceiving() {
         stopTransceivingChannel.offer(Ping)
     }
@@ -230,4 +184,5 @@ public abstract class FSRemoteDigitalInput<out D> : DigitalInput<D>, NetworkBoun
             }
         }
     }
+
 }

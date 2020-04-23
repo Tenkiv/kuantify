@@ -22,7 +22,6 @@ import org.tenkiv.kuantify.lib.*
 import physikal.*
 
 public typealias TrackableQuantity<QT> = Trackable<Quantity<QT>>
-public typealias InitializedTrackableQuantity<Q> = InitializedTrackable<Quantity<Q>>
 
 /**
  * The base interface which defines objects which have the ability to update their value.
@@ -45,13 +44,9 @@ public interface Trackable<out T : Any> {
 public suspend inline fun <T : Any> Trackable<T>.onEachUpdate(action: (update: T) -> Unit) =
     openSubscription().consumingOnEach(action)
 
-public interface InitializedTrackable<out T : Any> : Trackable<T> {
-    val value: T
-}
-
 /**
  * Gets the current value or suspends and waits for one to exist.
  *
  * @return The current value.
  */
-public suspend fun <T : Any> Trackable<T>.getValue(): T = valueOrNull ?: openSubscription().consume { receive() }
+public suspend fun <T : Any> Trackable<T>.get(): T = valueOrNull ?: openSubscription().consume { receive() }

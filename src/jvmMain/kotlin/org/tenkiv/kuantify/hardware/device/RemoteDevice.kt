@@ -29,8 +29,12 @@ public interface RemoteDevice : Device {
 
     /**
      * Value representing if the Device is connected.
+     *
+     * If you need to take an action upon unexpected connection disruption set up
+     * [org.tenkiv.kuantify.handleCriticalDaqcErrors].
+     * Otherwise, the only possible way for connection to be lost is by explicitly calling [disconnect].
      */
-    public val isConnected: InitializedTrackable<Boolean>
+    public val isConnected: Boolean
 
     public suspend fun connect()
 

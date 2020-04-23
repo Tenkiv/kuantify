@@ -30,12 +30,22 @@ public class RemoteSyncUpdatable<T : Any> : Updatable<T> {
     private val broadcastChannel = ConflatedBroadcastChannel<T>()
     public val localSetChannel: Channel<T> = Channel(capacity = Channel.CONFLATED)
 
+    public override val valueOrNull: T?
+        get() = broadcastChannel.valueOrNull
+
+    /**
+     * Set just sends the new value over the network the host.
+     */
     public override fun set(value: T) {
         localSetChannel.offer(value)
     }
 
-    public override val valueOrNull: T?
-        get() = broadcastChannel.valueOrNull
+    /**
+     * Updates actually updates the value of this Updatable to the value received from the host.
+     */
+    public fun update(value: T) {
+        broadcastChannel.offer(value)
+    }
 
     public override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
 }

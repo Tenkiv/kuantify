@@ -50,27 +50,27 @@ public inline fun DigitalGate.onAnyTransceivingChange(
     launch {
         isTransceivingBinaryState.onEachUpdate {
             block(
-                isTransceivingBinaryState.getValue() ||
-                        isTransceivingFrequency.getValue() ||
-                        isTransceivingFrequency.getValue()
+                isTransceivingBinaryState.get() ||
+                        isTransceivingFrequency.get() ||
+                        isTransceivingFrequency.get()
             )
         }
     }
     launch {
         isTransceivingPwm.onEachUpdate {
             block(
-                isTransceivingBinaryState.getValue() ||
-                        isTransceivingFrequency.getValue() ||
-                        isTransceivingFrequency.getValue()
+                isTransceivingBinaryState.get() ||
+                        isTransceivingFrequency.get() ||
+                        isTransceivingFrequency.get()
             )
         }
     }
     launch {
         isTransceivingFrequency.onEachUpdate {
             block(
-                isTransceivingBinaryState.getValue() ||
-                        isTransceivingFrequency.getValue() ||
-                        isTransceivingFrequency.getValue()
+                isTransceivingBinaryState.get() ||
+                        isTransceivingFrequency.get() ||
+                        isTransceivingFrequency.get()
             )
         }
     }

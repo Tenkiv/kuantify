@@ -28,8 +28,6 @@ import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.inputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
-import org.tenkiv.kuantify.trackable.*
-import org.tenkiv.kuantify.trackable.getValue
 import physikal.*
 import physikal.types.*
 import kotlin.math.*

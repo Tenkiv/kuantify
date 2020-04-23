@@ -56,17 +56,14 @@ public abstract class FSRemoteQuantityOutput<QT : Quantity<QT>>(
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
-            bind<QuantityMeasurement<QT>>(RC.VALUE) {
+            bindFS<QuantityMeasurement<QT>>(QuantityMeasurement.quantitySerializer(), RC.VALUE) {
                 receive {
-                    val value = Serialization.json.parse(QuantityMeasurement.quantitySerializer<QT>(), it)
-                    _valueOrNull = value
-                    broadcastChannel.send(value)
+                    _valueOrNull = it
+                    broadcastChannel.send(it)
                 }
             }
-            bind<Quantity<QT>>(RC.CONTROL_SETTING) {
-                send(source = settingChannel) {
-                    Serialization.json.stringify(Quantity.serializer(), it)
-                }
+            bindFS<Quantity<QT>>(Quantity.serializer(), RC.CONTROL_SETTING) {
+                send(source = settingChannel)
             }
         }
     }
@@ -83,17 +80,14 @@ public abstract class FSRemoteBinaryStateOutput(uid: String) :
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
-            bind<BinaryStateMeasurement>(RC.VALUE) {
+            bindFS(BinaryStateMeasurement.binaryStateSerializer(), RC.VALUE) {
                 receive {
-                    val value = Serialization.json.parse(BinaryStateMeasurement.binaryStateSerializer(), it)
-                    _valueOrNull = value
-                    broadcastChannel.send(value)
+                    _valueOrNull = it
+                    broadcastChannel.send(it)
                 }
             }
-            bind<BinaryState>(RC.CONTROL_SETTING) {
-                send(source = settingChannel) {
-                    Serialization.json.stringify(BinaryState.serializer(), it)
-                }
+            bindFS(BinaryState.serializer(), RC.CONTROL_SETTING) {
+                send(source = settingChannel)
             }
         }
     }

@@ -19,13 +19,11 @@ package org.tenkiv.kuantify.fs.gate.control
 
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.gate.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
-import org.tenkiv.kuantify.gate.control.output.setOutput
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.networking.configuration.*
 import physikal.*
@@ -45,14 +43,11 @@ public abstract class LocalQuantityOutput<QT : Quantity<QT>>(uid: String) : Loca
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
-            bind<QuantityMeasurement<QT>>(RC.VALUE) {
-                send(source = openSubscription()) {
-                    Serialization.json.stringify(QuantityMeasurement.quantitySerializer(), it)
-                }
+            bindFS<QuantityMeasurement<QT>>(QuantityMeasurement.quantitySerializer(), RC.VALUE) {
+                send(source = openSubscription())
             }
-            bind<Quantity<QT>>(RC.CONTROL_SETTING) {
-                receive {
-                    val setting = Serialization.json.parse(Quantity.serializer<QT>(), it)
+            bindFS<Quantity<QT>>(Quantity.serializer(), RC.CONTROL_SETTING) {
+                receive { setting ->
                     setOutput(setting)
                 }
             }
@@ -66,14 +61,11 @@ public abstract class LocalBinaryStateOutput(uid: String) : LocalOutput<BinarySt
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
-            bind<BinaryStateMeasurement>(RC.VALUE) {
-                send(source = openSubscription()) {
-                    Serialization.json.stringify(BinaryStateMeasurement.binaryStateSerializer(), it)
-                }
+            bindFS(BinaryStateMeasurement.binaryStateSerializer(), RC.VALUE) {
+                send(source = openSubscription())
             }
-            bind<BinaryState>(RC.CONTROL_SETTING) {
-                receive {
-                    val setting = Serialization.json.parse(BinaryState.serializer(), it)
+            bindFS(BinaryState.serializer(), RC.CONTROL_SETTING) {
+                receive { setting ->
                     setOutput(setting)
                 }
             }

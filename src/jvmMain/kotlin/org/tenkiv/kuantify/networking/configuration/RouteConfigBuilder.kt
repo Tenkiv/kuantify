@@ -204,7 +204,7 @@ public class StringSerializingMbb<BoundT> @PublishedApi internal constructor(
 
 @Suppress("NAME_SHADOWING")
 @NetworkingDsl
-public inline fun <BoundT> NetworkRoute<String>.bindAutoSerialized(
+public inline fun <BoundT> NetworkRoute<String>.bind(
     formatter: StringFormat,
     serializer: KSerializer<BoundT>,
     path: Path,
@@ -217,13 +217,13 @@ public inline fun <BoundT> NetworkRoute<String>.bindAutoSerialized(
 }
 
 @NetworkingDsl
-public inline fun <BoundT> NetworkRoute<String>.bindAutoSerialized(
+public inline fun <BoundT> NetworkRoute<String>.bind(
     formatter: StringFormat,
     serializer: KSerializer<BoundT>,
     vararg path: String,
     build: StringSerializingMbb<BoundT>.() -> Unit
 ) {
-    bindAutoSerialized(formatter, serializer, path.toList(), build)
+    bind(formatter, serializer, path.toList(), build)
 }
 
 @NetworkingDsl
@@ -255,7 +255,7 @@ public class BinarySerializingMbb<BoundT> @PublishedApi internal constructor(
 
 @Suppress("NAME_SHADOWING")
 @NetworkingDsl
-public inline fun <BoundT> NetworkRoute<ByteArray>.bindAutoSerialized(
+public inline fun <BoundT> NetworkRoute<ByteArray>.bind(
     formatter: BinaryFormat,
     serializer: KSerializer<BoundT>,
     path: Path,
@@ -268,13 +268,13 @@ public inline fun <BoundT> NetworkRoute<ByteArray>.bindAutoSerialized(
 }
 
 @NetworkingDsl
-public inline fun <BoundT> NetworkRoute<ByteArray>.bindAutoSerialized(
+public inline fun <BoundT> NetworkRoute<ByteArray>.bind(
     formatter: BinaryFormat,
     serializer: KSerializer<BoundT>,
     vararg path: String,
     build: BinarySerializingMbb<BoundT>.() -> Unit
 ) {
-    bindAutoSerialized(formatter, serializer, path.toList(), build)
+    bind(formatter, serializer, path.toList(), build)
 }
 
 @NetworkingDsl

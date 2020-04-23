@@ -17,75 +17,87 @@
 
 package org.tenkiv.kuantify.fs.hardware.channel
 
+import kotlinx.coroutines.channels.*
 import kotlinx.serialization.builtins.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.gate.acquire.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.lib.physikal.*
+import org.tenkiv.kuantify.networking.*
+import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.trackable.*
 import physikal.*
 
-internal fun CombinedNetworkRouting.combinedAnalogInputRouting(analogInput: AnalogInput<*>) {
-    bind<Boolean>(RC.BUFFER, recursiveSynchronizer = true) {
-        serializeMessage {
-            Serialization.json.stringify(Boolean.serializer(), it)
-        } withSerializer {
-            receiveMessageOnEither {
-                val setting = Serialization.json.parse(Boolean.serializer(), it)
-                analogInput.buffer.set(setting)
-            }
-        }
-
-        setLocalUpdateChannel(analogInput.buffer.updateBroadcaster.openSubscription()) withUpdateChannel {
-            sendFromHost()
-            sendFromRemote()
-        }
-    }
-
-    bind<Quantity<Voltage>>(RC.MAX_ACCEPTABLE_ERROR, recursiveSynchronizer = true) {
-        serializeMessage {
-            Serialization.json.stringify(Quantity.serializer(), it)
-        } withSerializer {
-            receiveMessageOnEither {
-                val setting = Serialization.json.parse(Quantity.serializer<Voltage>(), it)
-                analogInput.maxAcceptableError.set(setting)
-            }
-        }
-
-        setLocalUpdateChannel(analogInput.maxAcceptableError.updateBroadcaster.openSubscription()) withUpdateChannel {
-            sendFromRemote()
-            sendFromHost()
-        }
-    }
-
-    bind<Quantity<Voltage>>(RC.MAX_ELECTRIC_POTENTIAL, recursiveSynchronizer = true) {
-        serializeMessage {
-            Serialization.json.stringify(Quantity.serializer(), it)
-        } withSerializer {
-            receiveMessageOnEither {
-                val setting = Serialization.json.parse(Quantity.serializer<Voltage>(), it)
-                analogInput.maxVoltage.set(setting)
-            }
-        }
-
-        setLocalUpdateChannel(analogInput.maxVoltage.updateBroadcaster.openSubscription()) withUpdateChannel {
-            sendFromRemote()
-            sendFromHost()
-        }
-    }
-
-}
-
-public abstract class LocalAnalogInput<DeviceT>(uid: String) : LocalQuantityInput<Voltage>(uid), AnalogInput
+public abstract class LocalAnalogInput<out DeviceT>(uid: String) : LocalQuantityInput<Voltage>(uid), AnalogInput
         where DeviceT : LocalDevice, DeviceT : AnalogDaqDevice {
     public abstract override val device: DeviceT
 
+    public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
+        route.add {
+            bindFS(Boolean.serializer(), RC.BUFFER) {
+                send(source = buffer.openSubscription())
+                receive(networkChannelCapacity = Channel.CONFLATED) {
+                    buffer.set(it)
+                }
+            }
+            bindFS<Quantity<Voltage>>(Quantity.serializer(), RC.MAX_ACCEPTABLE_ERROR) {
+                send(source = maxAcceptableError.openSubscription())
+                receive(networkChannelCapacity = Channel.CONFLATED) {
+                    maxAcceptableError.set(it)
+                }
+            }
+            bindFS<Quantity<Voltage>>(Quantity.serializer(), RC.MAX_VOLTAGE) {
+                send(source = maxVoltage.openSubscription())
+                receive(networkChannelCapacity = Channel.CONFLATED) {
+                    maxVoltage.set(it)
+                }
+            }
+        }
+    }
+
 }
 
-public abstract class FSRemoteAnalogInput<DeviceT>(uid: String) : FSRemoteQuantityInput<Voltage>(uid), AnalogInput
+public abstract class FSRemoteAnalogInput<out DeviceT>(uid: String) : FSRemoteQuantityInput<Voltage>(uid), AnalogInput
         where DeviceT : AnalogDaqDevice, DeviceT : FSRemoteDevice {
     public abstract override val device: DeviceT
+
+    private val _buffer = RemoteSyncUpdatable<Boolean>()
+    public override val buffer: Updatable<Boolean>
+        get() = _buffer
+
+    private val _maxAcceptableError = RemoteSyncUpdatable<Quantity<Voltage>>()
+    public override val maxAcceptableError: UpdatableQuantity<Voltage>
+        get() = _maxAcceptableError
+
+    private val _maxVoltage = RemoteSyncUpdatable<Quantity<Voltage>>()
+    public override val maxVoltage: UpdatableQuantity<Voltage>
+        get() = _maxVoltage
+
+    public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
+        route.add {
+            bindFS(Boolean.serializer(), RC.BUFFER) {
+                send(source = _buffer.localSetChannel)
+                receive(networkChannelCapacity = Channel.CONFLATED) {
+                    _buffer.update(it)
+                }
+            }
+            bindFS<Quantity<Voltage>>(Quantity.serializer(), RC.MAX_ACCEPTABLE_ERROR) {
+                send(source = _maxAcceptableError.localSetChannel)
+                receive(networkChannelCapacity = Channel.CONFLATED) {
+                    _maxAcceptableError.update(it)
+                }
+            }
+            bindFS<Quantity<Voltage>>(Quantity.serializer(), RC.MAX_VOLTAGE) {
+                send(source = _maxVoltage.localSetChannel)
+                receive(networkChannelCapacity = Channel.CONFLATED) {
+                    _maxVoltage.update(it)
+                }
+            }
+        }
+    }
 
 }

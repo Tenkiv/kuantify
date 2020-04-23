@@ -17,7 +17,6 @@
 
 package org.tenkiv.kuantify.fs.gate.acquire
 
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.acquire.input.*
@@ -33,10 +32,8 @@ public abstract class LocalQuantityInput<QT : Quantity<QT>>(uid: String) : Local
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
-            bind<QuantityMeasurement<QT>>(RC.VALUE) {
-                send(source = openSubscription()) {
-                    Serialization.json.stringify(QuantityMeasurement.quantitySerializer(), it)
-                }
+            bindFS<QuantityMeasurement<QT>>(QuantityMeasurement.quantitySerializer(), RC.VALUE) {
+                send(source = openSubscription())
             }
         }
     }
@@ -48,10 +45,8 @@ public abstract class LocalBinaryStateInput(uid: String) : LocalInput<BinaryStat
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
-            bind<BinaryStateMeasurement>(RC.VALUE) {
-                send(source = openSubscription()) {
-                    Serialization.json.stringify(BinaryStateMeasurement.binaryStateSerializer(), it)
-                }
+            bindFS(BinaryStateMeasurement.binaryStateSerializer(), RC.VALUE) {
+                send(source = openSubscription())
             }
         }
     }

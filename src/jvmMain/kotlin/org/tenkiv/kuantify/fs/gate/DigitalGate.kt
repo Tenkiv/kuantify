@@ -19,7 +19,6 @@ package org.tenkiv.kuantify.fs.gate
 
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.builtins.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.networking.*
@@ -34,29 +33,20 @@ public abstract class LocalDigitalGate(uid: String) : LocalDaqcGate(uid), Digita
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
-            bind<Quantity<Time>>(RC.AVG_PERIOD) {
-                send(source = avgPeriod.openSubscription()) {
-                    Serialization.json.stringify(Quantity.serializer(), it)
-                }
+            bindFS<Quantity<Time>>(Quantity.serializer(), RC.AVG_PERIOD) {
+                send(source = avgPeriod.openSubscription())
                 receive(networkChannelCapacity = Channel.CONFLATED) {
-                    val value = Serialization.json.parse(Quantity.serializer<Time>(), it)
-                    avgPeriod.set(value)
+                    avgPeriod.set(it)
                 }
             }
-            bind<Boolean>(RC.IS_TRANSCEIVING_BIN_STATE) {
-                send(source = isTransceivingBinaryState.openSubscription()) {
-                    Serialization.json.stringify(Boolean.serializer(), it)
-                }
+            bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING_BIN_STATE) {
+                send(source = isTransceivingBinaryState.openSubscription())
             }
-            bind<Boolean>(RC.IS_TRANSCEIVING_FREQUENCY) {
-                send(source = isTransceivingFrequency.openSubscription()) {
-                    Serialization.json.stringify(Boolean.serializer(), it)
-                }
+            bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING_FREQUENCY) {
+                send(source = isTransceivingFrequency.openSubscription())
             }
-            bind<Boolean>(RC.IS_TRANSCEIVING_PWM) {
-                send(source = isTransceivingPwm.openSubscription()) {
-                    Serialization.json.stringify(Boolean.serializer(), it)
-                }
+            bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING_PWM) {
+                send(source = isTransceivingPwm.openSubscription())
             }
         }
     }
@@ -66,7 +56,7 @@ public abstract class LocalDigitalGate(uid: String) : LocalDaqcGate(uid), Digita
 public abstract class FSRemoteDigitalGate(uid: String) : FSRemoteDaqcGate(uid), DigitalGate {
     private val _avgPeriod = RemoteSyncUpdatable<Quantity<Time>>()
     public override val avgPeriod: UpdatableQuantity<Time> get() = _avgPeriod
-    
+
     private val _isTransceivingBinaryState = Updatable<Boolean>()
     public override val isTransceivingBinaryState: Trackable<Boolean>
         get() = _isTransceivingBinaryState
@@ -82,31 +72,25 @@ public abstract class FSRemoteDigitalGate(uid: String) : FSRemoteDaqcGate(uid), 
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
-            bind<Quantity<Time>>(RC.AVG_PERIOD) {
-                send(source = _avgPeriod.localSetChannel) {
-                    Serialization.json.stringify(Quantity.serializer(), it)
-                }
+            bindFS<Quantity<Time>>(Quantity.serializer(), RC.AVG_PERIOD) {
+                send(source = _avgPeriod.localSetChannel)
                 receive(networkChannelCapacity = Channel.CONFLATED) {
-                    val value = Serialization.json.parse(Quantity.serializer<Time>(), it)
-                    avgPeriod.set(value)
+                    _avgPeriod.update(it)
                 }
             }
-            bind<Boolean>(RC.IS_TRANSCEIVING_BIN_STATE) {
-                receive {
-                    val value = Serialization.json.parse(Boolean.serializer(), it)
-                    _isTransceivingBinaryState.set(value)
+            bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING_BIN_STATE) {
+                receive(networkChannelCapacity = Channel.CONFLATED) {
+                    _isTransceivingBinaryState.set(it)
                 }
             }
-            bind<Boolean>(RC.IS_TRANSCEIVING_FREQUENCY) {
-                receive {
-                    val value = Serialization.json.parse(Boolean.serializer(), it)
-                    _isTransceivingFrequency.set(value)
+            bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING_FREQUENCY) {
+                receive(networkChannelCapacity = Channel.CONFLATED) {
+                    _isTransceivingFrequency.set(it)
                 }
             }
-            bind<Boolean>(RC.IS_TRANSCEIVING_PWM) {
-                receive {
-                    val value = Serialization.json.parse(Boolean.serializer(), it)
-                    _isTransceivingPwm.set(value)
+            bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING_PWM) {
+                receive(networkChannelCapacity = Channel.CONFLATED) {
+                    _isTransceivingPwm.set(it)
                 }
             }
         }

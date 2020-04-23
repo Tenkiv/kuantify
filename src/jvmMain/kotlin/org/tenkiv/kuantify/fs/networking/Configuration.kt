@@ -22,15 +22,15 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.networking.configuration.*
 
 @NetworkingDsl
-internal inline fun <BoundT> NetworkRoute<String>.bindAutoSerializedFS(
+internal inline fun <BoundT> NetworkRoute<String>.bindFS(
     serializer: KSerializer<BoundT>,
     path: Path,
     build: StringSerializingMbb<BoundT>.() -> Unit
-) = bindAutoSerialized(Serialization.json, serializer, path, build)
+) = bind(Serialization.json, serializer, path, build)
 
 @NetworkingDsl
-internal inline fun <BoundT> NetworkRoute<String>.bindAutoSerializedFS(
+internal inline fun <BoundT> NetworkRoute<String>.bindFS(
     serializer: KSerializer<BoundT>,
     vararg path: String,
     build: StringSerializingMbb<BoundT>.() -> Unit
-) = bindAutoSerialized(Serialization.json, serializer, path.toList(), build)
+) = bind(Serialization.json, serializer, path.toList(), build)

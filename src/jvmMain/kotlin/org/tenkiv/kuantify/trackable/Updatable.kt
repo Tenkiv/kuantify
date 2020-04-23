@@ -21,20 +21,15 @@ import kotlinx.coroutines.channels.*
 import physikal.*
 
 public typealias UpdatableQuantity<QT> = Updatable<Quantity<QT>>
-public typealias InitializedUpdatableQuantity<QT> = InitializedUpdatable<Quantity<QT>>
 
 /**
  * Same as [Trackable] but allows setting.
  * Buffer is always [Channel.CONFLATED].
  */
 public interface Updatable<T : Any> : Trackable<T> {
+
     public fun set(value: T)
-}
 
-public interface InitializedUpdatable<T : Any> : Updatable<T>, InitializedTrackable<T> {
-    public override var value: T
-
-    public override val valueOrNull: T? get() = value
 }
 
 private class UpdatableImpl<T : Any> : Updatable<T> {
@@ -49,23 +44,5 @@ private class UpdatableImpl<T : Any> : Updatable<T> {
     }
 }
 
-private class InitializedUpdatableImpl<T : Any>(
-    initialValue: T
-) : InitializedUpdatable<T> {
-    private val broadcastChannel = ConflatedBroadcastChannel(initialValue)
-    override var value: T
-        get() = broadcastChannel.value
-        set(value) = set(value)
-
-    override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
-
-    override fun set(value: T) {
-        broadcastChannel.offer(value)
-    }
-}
-
 public fun <T : Any> Updatable(): Updatable<T> =
     UpdatableImpl()
-
-public fun <T : Any> Updatable(initialValue: T): InitializedUpdatable<T> =
-    InitializedUpdatableImpl(initialValue)

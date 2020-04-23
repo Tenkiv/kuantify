@@ -19,7 +19,6 @@ package org.tenkiv.kuantify.fs.gate.acquire
 
 import kotlinx.coroutines.channels.*
 import org.tenkiv.coral.*
-import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.acquire.input.*
@@ -35,6 +34,8 @@ public sealed class FSRemoteInput<T : DaqcValue>(uid: String) : FSRemoteAcquireC
 
     internal val broadcastChannel =
         BroadcastChannel<ValueInstant<T>>(capacity = Channel.BUFFERED)
+
+    public override fun openSubscription(): ReceiveChannel<ValueInstant<T>> = broadcastChannel.openSubscription()
 }
 
 public abstract class FSRemoteQuantityInput<QT : Quantity<QT>>(
@@ -44,9 +45,8 @@ public abstract class FSRemoteQuantityInput<QT : Quantity<QT>>(
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
-            bind<QuantityMeasurement<QT>>(RC.VALUE) {
-                receive {
-                    val measurement = Serialization.json.parse(Measurement.quantitySerializer<QT>(), it)
+            bindFS<QuantityMeasurement<QT>>(QuantityMeasurement.quantitySerializer(), RC.VALUE) {
+                receive { measurement ->
                     _valueOrNull = measurement
                     broadcastChannel.send(measurement)
                 }
@@ -61,9 +61,8 @@ public abstract class FSRemoteBinaryStateInput(uid: String) : FSRemoteInput<Bina
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
-            bind<BinaryStateMeasurement>(RC.VALUE) {
-                receive {
-                    val measurement = Serialization.json.parse(Measurement.binaryStateSerializer(), it)
+            bindFS(BinaryStateMeasurement.binaryStateSerializer(), RC.VALUE) {
+                receive { measurement ->
                     _valueOrNull = measurement
                     broadcastChannel.send(measurement)
                 }

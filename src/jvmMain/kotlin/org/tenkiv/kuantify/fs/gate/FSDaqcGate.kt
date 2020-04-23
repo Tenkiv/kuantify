@@ -117,7 +117,7 @@ public abstract class FSRemoteDaqcGate(
                 send(source = stopTransceivingChannel)
             }
 
-            bindAutoSerializedFS(Boolean.serializer(), RC.IS_TRANSCEIVING) {
+            bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING) {
                 receive(networkChannelCapacity = Channel.CONFLATED) { value ->
                     modifyConfiguration {
                         _isTransceiving.value = value
