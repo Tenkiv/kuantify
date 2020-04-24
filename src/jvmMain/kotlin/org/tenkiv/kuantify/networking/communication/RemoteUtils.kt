@@ -27,9 +27,9 @@ import org.tenkiv.kuantify.trackable.*
 @PublishedApi
 internal val _privateRemoteUtilsLogger = KotlinLogging.logger {}
 
-@PublishedApi
-internal inline fun remoteDeviceCommand(device: RemoteDevice, op: () -> Unit) =
-    if (device.isConnected.value) {
+@KuantifyComponentBuilder
+public inline fun remoteDeviceCommand(device: RemoteDevice, op: () -> Unit) =
+    if (device.isConnected) {
         op()
         true
     } else {
@@ -42,12 +42,10 @@ internal inline fun remoteDeviceCommand(device: RemoteDevice, op: () -> Unit) =
         false
     }
 
-public fun <T: Any> RemoteDevice.RemoteUpdatable(): Updatable<T> = RemoteUpdatable(device = this)
+@KuantifyComponentBuilder
+public fun <T : Any> RemoteDevice.RemoteUpdatable(): Updatable<T> = RemoteUpdatable(device = this)
 
-public fun <T: Any> RemoteDevice.RemoteUpdatable(initialValue: T): InitializedUpdatable<T> =
-    InitializedRemoteUpdatable(this, initialValue)
-
-private class RemoteUpdatable<T: Any>(private val device: RemoteDevice) : Updatable<T> {
+private class RemoteUpdatable<T : Any>(private val device: RemoteDevice) : Updatable<T> {
     override val valueOrNull: T?
         get() = broadcastChannel.valueOrNull
 
@@ -63,20 +61,84 @@ private class RemoteUpdatable<T: Any>(private val device: RemoteDevice) : Updata
 
 }
 
-private class InitializedRemoteUpdatable<T : Any>(private val device: RemoteDevice, initialValue: T) :
-    InitializedUpdatable<T> {
-    override var value: T
-        get() = broadcastChannel.value
-        set(value) = set(value)
+/**
+ * An [Updatable] meant to keep sync both ways between a remote client and a host on the remote side.
+ * It's value will not be updated immediately when set, only once it receives confirmation of the updated from the host.
+ *
+ * [set] acts as a [Device] command so it will cause a critical error if set is attempted when there is no
+ * connection.
+ */
+@KuantifyComponentBuilder
+public interface RemoteSyncUpdatable<T : Any> : Updatable<T> {
+    public val localSetChannel: Channel<T>
 
-    private val broadcastChannel = ConflatedBroadcastChannel(initialValue)
+    /**
+     * Updates actually updates the value of this Updatable to the value received from the host.
+     */
+    public fun update(value: T)
+}
 
-    override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
+private class RemoteSyncUpdatableImpl<T : Any> : RemoteSyncUpdatable<T> {
+    private val broadcastChannel = ConflatedBroadcastChannel<T>()
+    override val localSetChannel: Channel<T> = Channel(capacity = Channel.CONFLATED)
 
+    override val valueOrNull: T?
+        get() = broadcastChannel.valueOrNull
+
+    /**
+     * Set just sends the new value over the network the host.
+     */
     override fun set(value: T) {
-        remoteDeviceCommand(device) {
-            broadcastChannel.offer(value)
+        localSetChannel.offer(value)
+    }
+
+    /**
+     * Updates actually updates the value of this Updatable to the value received from the host.
+     */
+    override fun update(value: T) {
+        broadcastChannel.offer(value)
+    }
+
+    public override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
+
+}
+
+private class CustomSetRemoteSyncUpdatable<T : Any>(
+    private val customSetter: UpdatableSetter<T>
+) : RemoteSyncUpdatable<T> {
+    private val broadcastChannel = ConflatedBroadcastChannel<T>()
+    override val localSetChannel: Channel<T> = Channel(capacity = Channel.CONFLATED)
+
+    private val setValue = object : Updatable.ValueSetter<T> {
+        override fun setValue(value: T) {
+            localSetChannel.offer(value)
         }
     }
 
+    override val valueOrNull: T?
+        get() = broadcastChannel.valueOrNull
+
+    /**
+     * Set just sends the new value over the network the host.
+     */
+    override fun set(value: T) {
+        setValue.customSetter(value)
+    }
+
+    /**
+     * Updates actually updates the value of this Updatable to the value received from the host.
+     */
+    override fun update(value: T) {
+        broadcastChannel.offer(value)
+    }
+
+    public override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
+
 }
+
+@KuantifyComponentBuilder
+public fun <T : Any> RemoteSyncUpdatable(): RemoteSyncUpdatable<T> = RemoteSyncUpdatableImpl()
+
+@KuantifyComponentBuilder
+public fun <T : Any> RemoteSyncUpdatable(setter: UpdatableSetter<T>): RemoteSyncUpdatable<T> =
+    CustomSetRemoteSyncUpdatable(setter)

@@ -19,16 +19,22 @@ package org.tenkiv.kuantify.fs.gate
 
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.builtins.*
+import org.tenkiv.kuantify.*
+import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.gate.*
-import org.tenkiv.kuantify.networking.*
+import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.kuantify.trackable.*
 import physikal.*
 import physikal.types.*
 
 public abstract class LocalDigitalGate(uid: String) : LocalDaqcGate(uid), DigitalGate {
-    public override val avgPeriod: UpdatableQuantity<Time> = Updatable()
+    public override val avgPeriod: UpdatableQuantity<Time> = Updatable {
+        modifyConfiguration {
+            setValue(it)
+        }
+    }
 
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
@@ -53,8 +59,14 @@ public abstract class LocalDigitalGate(uid: String) : LocalDaqcGate(uid), Digita
 
 }
 
-public abstract class FSRemoteDigitalGate(uid: String) : FSRemoteDaqcGate(uid), DigitalGate {
-    private val _avgPeriod = RemoteSyncUpdatable<Quantity<Time>>()
+public abstract class FSRemoteDigitalGate(uid: String, device: FSRemoteDevice) : FSRemoteDaqcGate(uid), DigitalGate {
+    private val _avgPeriod = RemoteSyncUpdatable<Quantity<Time>> {
+        modifyConfiguration {
+            remoteDeviceCommand(device) {
+                setValue(it)
+            }
+        }
+    }
     public override val avgPeriod: UpdatableQuantity<Time> get() = _avgPeriod
 
     private val _isTransceivingBinaryState = Updatable<Boolean>()
@@ -75,22 +87,30 @@ public abstract class FSRemoteDigitalGate(uid: String) : FSRemoteDaqcGate(uid), 
             bindFS<Quantity<Time>>(Quantity.serializer(), RC.AVG_PERIOD) {
                 send(source = _avgPeriod.localSetChannel)
                 receive(networkChannelCapacity = Channel.CONFLATED) {
-                    _avgPeriod.update(it)
+                    modifyConfiguration {
+                        _avgPeriod.update(it)
+                    }
                 }
             }
             bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING_BIN_STATE) {
                 receive(networkChannelCapacity = Channel.CONFLATED) {
-                    _isTransceivingBinaryState.set(it)
+                    modifyConfiguration {
+                        _isTransceivingBinaryState.set(it)
+                    }
                 }
             }
             bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING_FREQUENCY) {
                 receive(networkChannelCapacity = Channel.CONFLATED) {
-                    _isTransceivingFrequency.set(it)
+                    modifyConfiguration {
+                        _isTransceivingFrequency.set(it)
+                    }
                 }
             }
             bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING_PWM) {
                 receive(networkChannelCapacity = Channel.CONFLATED) {
-                    _isTransceivingPwm.set(it)
+                    modifyConfiguration {
+                        _isTransceivingPwm.set(it)
+                    }
                 }
             }
         }

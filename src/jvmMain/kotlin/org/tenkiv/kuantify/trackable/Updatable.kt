@@ -21,6 +21,7 @@ import kotlinx.coroutines.channels.*
 import physikal.*
 
 public typealias UpdatableQuantity<QT> = Updatable<Quantity<QT>>
+public typealias UpdatableSetter<T> = Updatable.ValueSetter<T>.(value: T) -> Unit
 
 /**
  * Same as [Trackable] but allows setting.
@@ -30,6 +31,12 @@ public interface Updatable<T : Any> : Trackable<T> {
 
     public fun set(value: T)
 
+    //TODO: Make fun interface in kotlin 1.4
+    public interface ValueSetter<T> {
+
+        public fun setValue(value: T)
+
+    }
 }
 
 private class UpdatableImpl<T : Any> : Updatable<T> {
@@ -44,5 +51,24 @@ private class UpdatableImpl<T : Any> : Updatable<T> {
     }
 }
 
-public fun <T : Any> Updatable(): Updatable<T> =
-    UpdatableImpl()
+private class CustomSetUpdatable<T : Any>(private val customSetter: UpdatableSetter<T>) : Updatable<T> {
+    private val broadcastChannel = ConflatedBroadcastChannel<T>()
+    override val valueOrNull: T?
+        get() = broadcastChannel.valueOrNull
+
+    private val setValue = object : Updatable.ValueSetter<T> {
+        override fun setValue(value: T) {
+            broadcastChannel.offer(value)
+        }
+    }
+
+    override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
+
+    override fun set(value: T) {
+        setValue.customSetter(value)
+    }
+}
+
+public fun <T : Any> Updatable(): Updatable<T> = UpdatableImpl()
+
+public fun <T : Any> Updatable(setter: UpdatableSetter<T>): Updatable<T> = CustomSetUpdatable(setter)

@@ -26,25 +26,11 @@ import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.trackable.*
 
 
-public interface DaqcGate : CoroutineScope {
+public interface DaqcGate : Finalizable, CoroutineScope {
     public val isTransceiving: Trackable<Boolean>
-
-    /**
-     * Backed by atomic.
-     */
-    public val isFinalized: Boolean
 
     public fun stopTransceiving()
 
-    /**
-     * Finalize the configuration of this [DaqcChannel] so nothing can be changed for the remainder of its existence.
-     * This will also finalize any [DaqcChannel]s this [DaqcChannel]s data is derived from.
-     *
-     * Attempts to modify the configuration of a [DaqcChannel] after [finalize] is called will fail.
-     *
-     * This is an idempotent operation - subsequent calls to this function have no effect.
-     */
-    public fun finalize()
 }
 
 public interface DaqcChannel<out T : DaqcData> : DaqcGate {
@@ -77,25 +63,6 @@ public suspend inline fun <T : DaqcData> DaqcChannel<T>.onEachUpdate(action: (up
  */
 public suspend fun <T : DaqcData> DaqcChannel<T>.getValue(): ValueInstant<T> =
     valueOrNull ?: openSubscription().consume { receive() }
-
-/**
- * Convenience function to wrap [DaqcChannel] configuration modification calls in for automatic handling of
- * [DaqcChannel.isFinalized]. This function should only be use when creating a new type of [DaqcChannel].
- */
-@KuantifyComponentBuilder
-public inline fun <R> DaqcGate.modifyConfiguration(block: () -> R): R = if (!isFinalized) {
-    block()
-} else {
-    throw IllegalStateException("Cannot modify configuration of DaqcGate that has been finalized.")
-}
-
-public fun Iterable<DaqcChannel<*>>.finalizeAll() {
-    forEach { it.finalize() }
-}
-
-public fun Array<out DaqcChannel<*>>.finalizeAll() {
-    forEach { it.finalize() }
-}
 
 /**
  * A [DaqcChannel] which only has a single data parameter.

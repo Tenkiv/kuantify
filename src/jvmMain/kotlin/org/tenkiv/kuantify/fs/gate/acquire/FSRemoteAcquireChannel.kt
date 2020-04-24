@@ -18,10 +18,10 @@
 package org.tenkiv.kuantify.fs.gate.acquire
 
 import kotlinx.coroutines.channels.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.gate.*
 import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.networking.configuration.*

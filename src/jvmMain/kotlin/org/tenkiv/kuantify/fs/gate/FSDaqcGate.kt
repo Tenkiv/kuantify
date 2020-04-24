@@ -40,6 +40,7 @@ public abstract class LocalDaqcGate(
         get() = _isFinalized.get()
     private val finalizeChannel = Channel<Ping>(capacity = Channel.RENDEZVOUS)
     public override fun finalize() {
+        //TODO: Should be atomic compare and set
         if (!isFinalized) {
             _isFinalized.set(true)
             finalizeChannel.offer(Ping)
@@ -61,10 +62,8 @@ public abstract class LocalDaqcGate(
                 }
             }
 
-            bind<Boolean>(RC.IS_TRANSCEIVING) {
-                send(source = isTransceiving.openSubscription()) {
-                    Serialization.json.stringify(Boolean.serializer(), it)
-                }
+            bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING) {
+                send(source = isTransceiving.openSubscription())
             }
         }
 
@@ -76,7 +75,7 @@ public abstract class FSRemoteDaqcGate(
     public abstract override val device: FSRemoteDevice
     public final override val basePath: Path = listOf(RC.DAQC_GATE, uid)
 
-    private val _isTransceiving = Updatable(false)
+    private val _isTransceiving = Updatable<Boolean>()
     public final override val isTransceiving: Trackable<Boolean>
         get() = _isTransceiving
 
@@ -120,7 +119,7 @@ public abstract class FSRemoteDaqcGate(
             bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING) {
                 receive(networkChannelCapacity = Channel.CONFLATED) { value ->
                     modifyConfiguration {
-                        _isTransceiving.value = value
+                        _isTransceiving.set(value)
                     }
                 }
             }

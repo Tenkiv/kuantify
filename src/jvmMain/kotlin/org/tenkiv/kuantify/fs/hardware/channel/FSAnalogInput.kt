@@ -19,6 +19,7 @@ package org.tenkiv.kuantify.fs.hardware.channel
 
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.builtins.*
+import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.gate.acquire.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
@@ -26,13 +27,15 @@ import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.networking.*
+import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
 import org.tenkiv.kuantify.trackable.*
 import physikal.*
 
-public abstract class LocalAnalogInput<out DeviceT>(uid: String) : LocalQuantityInput<Voltage>(uid), AnalogInput
-        where DeviceT : LocalDevice, DeviceT : AnalogDaqDevice {
-    public abstract override val device: DeviceT
+public abstract class LocalAnalogInput<out DeviceT>(
+    uid: String,
+    public final override val device: DeviceT
+) : LocalQuantityInput<Voltage>(uid), AnalogInput where DeviceT : LocalDevice, DeviceT : AnalogDaqDevice {
 
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
@@ -60,19 +63,37 @@ public abstract class LocalAnalogInput<out DeviceT>(uid: String) : LocalQuantity
 
 }
 
-public abstract class FSRemoteAnalogInput<out DeviceT>(uid: String) : FSRemoteQuantityInput<Voltage>(uid), AnalogInput
-        where DeviceT : AnalogDaqDevice, DeviceT : FSRemoteDevice {
-    public abstract override val device: DeviceT
-
-    private val _buffer = RemoteSyncUpdatable<Boolean>()
+public abstract class FSRemoteAnalogInput<out DeviceT>(
+    uid: String,
+    public final override val device: DeviceT
+) : FSRemoteQuantityInput<Voltage>(uid), AnalogInput where DeviceT : AnalogDaqDevice, DeviceT : FSRemoteDevice {
+    private val _buffer = RemoteSyncUpdatable<Boolean> {
+        modifyConfiguration {
+            command {
+                setValue(it)
+            }
+        }
+    }
     public override val buffer: Updatable<Boolean>
         get() = _buffer
 
-    private val _maxAcceptableError = RemoteSyncUpdatable<Quantity<Voltage>>()
+    private val _maxAcceptableError = RemoteSyncUpdatable<Quantity<Voltage>> {
+        modifyConfiguration {
+            command {
+                setValue(it)
+            }
+        }
+    }
     public override val maxAcceptableError: UpdatableQuantity<Voltage>
         get() = _maxAcceptableError
 
-    private val _maxVoltage = RemoteSyncUpdatable<Quantity<Voltage>>()
+    private val _maxVoltage = RemoteSyncUpdatable<Quantity<Voltage>> {
+        modifyConfiguration {
+            command {
+                setValue(it)
+            }
+        }
+    }
     public override val maxVoltage: UpdatableQuantity<Voltage>
         get() = _maxVoltage
 
@@ -82,19 +103,25 @@ public abstract class FSRemoteAnalogInput<out DeviceT>(uid: String) : FSRemoteQu
             bindFS(Boolean.serializer(), RC.BUFFER) {
                 send(source = _buffer.localSetChannel)
                 receive(networkChannelCapacity = Channel.CONFLATED) {
-                    _buffer.update(it)
+                    modifyConfiguration {
+                        _buffer.update(it)
+                    }
                 }
             }
             bindFS<Quantity<Voltage>>(Quantity.serializer(), RC.MAX_ACCEPTABLE_ERROR) {
                 send(source = _maxAcceptableError.localSetChannel)
                 receive(networkChannelCapacity = Channel.CONFLATED) {
-                    _maxAcceptableError.update(it)
+                    modifyConfiguration {
+                        _maxAcceptableError.update(it)
+                    }
                 }
             }
             bindFS<Quantity<Voltage>>(Quantity.serializer(), RC.MAX_VOLTAGE) {
                 send(source = _maxVoltage.localSetChannel)
                 receive(networkChannelCapacity = Channel.CONFLATED) {
-                    _maxVoltage.update(it)
+                    modifyConfiguration {
+                        _maxVoltage.update(it)
+                    }
                 }
             }
         }
