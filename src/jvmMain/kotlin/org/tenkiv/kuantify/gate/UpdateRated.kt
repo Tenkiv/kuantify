@@ -27,8 +27,7 @@ import java.time.*
 import kotlin.properties.*
 import kotlin.reflect.*
 
-public interface UpdateRatedGate<out T : DaqcData> :
-    DaqcChannel<T> {
+public interface UpdateRatedGate<out T : DaqcData> : DaqcChannel<T> {
     public val updateRate: UpdateRate
 }
 

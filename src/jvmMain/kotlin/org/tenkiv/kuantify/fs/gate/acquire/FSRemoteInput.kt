@@ -32,8 +32,7 @@ public sealed class FSRemoteInput<T : DaqcValue>(uid: String) : FSRemoteAcquireC
     public override val valueOrNull: ValueInstant<T>?
         get() = _valueOrNull
 
-    internal val broadcastChannel =
-        BroadcastChannel<ValueInstant<T>>(capacity = Channel.BUFFERED)
+    internal val broadcastChannel = BroadcastChannel<ValueInstant<T>>(capacity = Channel.BUFFERED)
 
     public override fun openSubscription(): ReceiveChannel<ValueInstant<T>> = broadcastChannel.openSubscription()
 }

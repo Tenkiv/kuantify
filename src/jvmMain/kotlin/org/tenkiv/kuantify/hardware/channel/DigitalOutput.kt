@@ -19,7 +19,6 @@ package org.tenkiv.kuantify.hardware.channel
 
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
-import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.device.*
@@ -32,11 +31,14 @@ import physikal.types.*
  * Class defining the basic features of an output which sends binary signals.
  */
 public interface DigitalOutput : DeviceDigitalGate {
+    public override val device: DigitalOutputDevice
+
     public val lastStateSetting: ValueInstant<BinaryState>?
     public val lastPwmSetting: ValueInstant<DaqcQuantity<Dimensionless>>?
     public val lastTransitionFrequencySetting: ValueInstant<DaqcQuantity<Frequency>>?
 
 
+    //TODO: Switch to having both setIfViable version and normal version.
     public fun setOutputState(
         state: BinaryState
     ): SettingViability
@@ -59,29 +61,32 @@ public interface DigitalOutput : DeviceDigitalGate {
         freq: Quantity<Frequency>
     ): SettingViability
 
-    public override fun stopTransceiving() {
-        setOutputState(BinaryState.Low)
-    }
+}
 
-    /**
-     * Ease of use function to create a [SimpleBinaryStateController] from this [DigitalOutput].
-     *
-     * @param inverted Denotes if [BinaryState.ON] is Low as well as the inverse. By default false.
-     * @return A [SimpleBinaryStateController] with this [DigitalOutput] as the controlled output.
-     */
-    public fun asBinaryStateController(): BinaryStateOutput
+/**
+ * Ease of use function to create a [SimpleBinaryStateController] from this [DigitalOutput].
+ *
+ * @param inverted Denotes if [BinaryState.ON] is Low as well as the inverse. By default false.
+ * @return A [SimpleBinaryStateController] with this [DigitalOutput] as the controlled output.
+ */
+public fun DigitalOutput.asBinaryStateController(): BinaryStateOutput = SimpleBinaryStateController(this)
 
-    /**
-     * Ease of use function to create a [SimplePwmController] from this [DigitalOutput].
-     *
-     * @return A [SimplePwmController] with this [DigitalOutput] as the controlled output.
-     */
-    public fun asPwmController(avgFrequency: Quantity<Frequency>): QuantityOutput<Dimensionless>
+/**
+ * Ease of use function to create a [SimplePwmController] from this [DigitalOutput].
+ *
+ * @return A [SimplePwmController] with this [DigitalOutput] as the controlled output.
+ */
+public fun DigitalOutput.asPwmController(avgPeriod: Quantity<Time>): QuantityOutput<Dimensionless> {
+    this.avgPeriod.set(avgPeriod)
+    return SimplePwmController(this)
+}
 
-    /**
-     * Ease of use function to create a [SimpleFrequencyController] from this [DigitalOutput].
-     *
-     * @return A [SimpleFrequencyController] with this [DigitalOutput] as the controlled output.
-     */
-    public fun asFrequencyController(avgFrequency: Quantity<Frequency>): QuantityOutput<Frequency>
+/**
+ * Ease of use function to create a [SimpleFrequencyController] from this [DigitalOutput].
+ *
+ * @return A [SimpleFrequencyController] with this [DigitalOutput] as the controlled output.
+ */
+public fun DigitalOutput.asFrequencyController(avgPeriod: Quantity<Time>): QuantityOutput<Frequency> {
+    this.avgPeriod.set(avgPeriod)
+    return SimpleFrequencyController(this)
 }

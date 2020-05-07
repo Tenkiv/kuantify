@@ -29,7 +29,7 @@ import physikal.types.*
 /**
  * Class defining the basic features of an input which reads binary signals.
  */
-public interface DigitalInput : DeviceDigitalGate, UpdateRatedGate<DigitalValue> {
+public interface DigitalInput : DeviceDigitalGate {
     public override val device: DigitalDaqDevice
 
     public val lastStateMeasurement: BinaryStateMeasurement?

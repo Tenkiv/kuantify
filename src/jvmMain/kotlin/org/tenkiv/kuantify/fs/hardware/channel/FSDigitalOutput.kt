@@ -18,190 +18,159 @@
 package org.tenkiv.kuantify.fs.hardware.channel
 
 import kotlinx.coroutines.channels.*
-import kotlinx.serialization.json.*
-import org.tenkiv.coral.*
+import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.fs.gate.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
-import org.tenkiv.kuantify.gate.*
-import org.tenkiv.kuantify.gate.control.output.*
+import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.hardware.device.*
-import org.tenkiv.kuantify.hardware.outputs.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.kuantify.trackable.*
 import physikal.*
 import physikal.types.*
 
-@Suppress("LeakingThis")
-public abstract class LocalDigitalOutput<out D> : DigitalOutput<D>, NetworkBound<String>, NetworkBoundCombined
-        where D : LocalDevice, D : DigitalOutputDevice {
-
-    private val thisAsBinaryStateController = SimpleBinaryStateController(this)
-
-    private val thisAsPwmController = SimplePwmController(this)
-
-    private val thisAsFrequencyController = SimpleFrequencyController(this)
-
-    private val _isTransceiving: InitializedUpdatable<Boolean> = Updatable(false)
-    public override val isTransceiving: InitializedTrackable<Boolean>
-        get() = _isTransceiving
-
-    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalValue>>()
-    public override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalValue>>
-        get() = _updateBroadcaster
-
-    init {
-        onAnyTransceivingChange {
-            _isTransceiving.value = it
-        }
-    }
-
-    public override fun asBinaryStateController(): BinaryStateOutput = thisAsBinaryStateController
-
-    public override fun asPwmController(avgFrequency: Quantity<Frequency>): QuantityOutput<Dimensionless> {
-        this.avgFrequency.set(avgFrequency)
-        return thisAsPwmController
-    }
-
-    public override fun asFrequencyController(avgFrequency: Quantity<Frequency>): QuantityOutput<Frequency> {
-        this.avgFrequency.set(avgFrequency)
-        return thisAsFrequencyController
-    }
-
-    public override fun combinedRouting(routing: CombinedNetworkRouting) {
-        routing.addToThisPath {
-            digitalGateRouting(this@LocalDigitalOutput)
-        }
-    }
+public abstract class LocalDigitalOutput<out DeviceT>(
+    uid: String,
+    public final override val device: DeviceT
+) : LocalDigitalGate(uid), DigitalOutput where DeviceT : LocalDevice, DeviceT : DigitalOutputDevice {
 
     public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
         route.add {
-            digitalGateIsTransceivingLocal(isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
-            digitalGateIsTransceivingLocal(isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
-            digitalGateIsTransceivingLocal(isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
-
-            bind<ValueInstant<DigitalValue>>(RC.VALUE) {
-                serializeMessage {
-                    Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
-                }
-
+            bindFS(BinaryStateMeasurement.binaryStateSerializer(), RC.BIN_STATE_VALUE) {
+                send(source = openBinaryStateSubscription())
+            }
+            bindFS(BinaryState.serializer(), RC.BIN_STATE_CONTROL_SETTING) {
                 receive {
-                    val setting = Json.parse(ValueInstantSerializer(DigitalValue.serializer()), it)
-                    val (value, _) = setting
-                    when (value) {
-                        is DigitalValue.BinaryState -> setOutputState(value.state)
-                        is DigitalValue.Percentage -> pulseWidthModulate(value.percent)
-                        is DigitalValue.Frequency -> sustainTransitionFrequency(value.frequency)
-                    }
-                    _updateBroadcaster.send(setting)
+                    setOutputState(it)
                 }
-
-                setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
-                    send()
+            }
+            bindFS<QuantityMeasurement<Frequency>>(
+                QuantityMeasurement.quantitySerializer(),
+                RC.TRANSITION_FREQUENCY_VALUE
+            ) {
+                send(source = openTransitionFrequencySubscription())
+            }
+            bindFS<Quantity<Frequency>>(Quantity.serializer(), RC.TRANSITION_FREQUENCY_CONTROL_SETTING) {
+                receive {
+                    sustainTransitionFrequency(it)
+                }
+            }
+            bindFS<QuantityMeasurement<Dimensionless>>(QuantityMeasurement.quantitySerializer(), RC.PWM_VALUE) {
+                send(source = openPwmSubscription())
+            }
+            bindFS<Quantity<Dimensionless>>(Quantity.serializer(), RC.TRANSITION_FREQUENCY_CONTROL_SETTING) {
+                receive {
+                    pulseWidthModulate(it)
                 }
             }
         }
     }
 }
 
-@Suppress("LeakingThis")
-public abstract class FSRemoteDigitalOutput<out D> : DigitalOutput<D>, NetworkBound<String>, NetworkBoundCombined
-        where D : DigitalOutputDevice, D : FSRemoteDevice {
+public abstract class FSRemoteDigitalOutput<out DeviceT>(
+    uid: String,
+    public final override val device: DeviceT
+) : FSRemoteDigitalGate(uid, device), DigitalOutput where DeviceT : DigitalOutputDevice, DeviceT : FSRemoteDevice {
 
-    private val thisAsBinaryStateController = SimpleBinaryStateController(this)
+    @Volatile
+    private var _lastStateSetting: BinaryStateMeasurement? = null
+    public override val lastStateSetting: BinaryStateMeasurement?
+        get() = _lastStateSetting
 
-    private val thisAsPwmController = SimplePwmController(this)
+    @Volatile
+    private var _lastPwmSetting: QuantityMeasurement<Dimensionless>? = null
+    public override val lastPwmSetting: QuantityMeasurement<Dimensionless>?
+        get() = _lastPwmSetting
 
-    private val thisAsFrequencyController = SimpleFrequencyController(this)
+    @Volatile
+    private var _lastTransitionFrequencySetting: QuantityMeasurement<Frequency>? = null
+    override val lastTransitionFrequencySetting: QuantityMeasurement<Frequency>?
+        get() = _lastTransitionFrequencySetting
 
-    private val _updateBroadcaster = ConflatedBroadcastChannel<ValueInstant<DigitalValue>>()
-    public override val updateBroadcaster: ConflatedBroadcastChannel<out ValueInstant<DigitalValue>>
-        get() = _updateBroadcaster
+    private val binaryStateBroadcastChannel = BroadcastChannel<BinaryStateMeasurement>(capacity = Channel.BUFFERED)
+    private val pwmBroadcastChannel = BroadcastChannel<QuantityMeasurement<Dimensionless>>(capacity = Channel.BUFFERED)
+    private val transitionFrequencyBroadcastChannel =
+        BroadcastChannel<QuantityMeasurement<Frequency>>(capacity = Channel.BUFFERED)
 
-    private val _binaryStateBroadcaster = ConflatedBroadcastChannel<BinaryStateMeasurement>()
-    public override val binaryStateBroadcaster: ConflatedBroadcastChannel<out BinaryStateMeasurement>
-        get() = _binaryStateBroadcaster
+    public override fun openBinaryStateSubscription(): ReceiveChannel<BinaryStateMeasurement> =
+        binaryStateBroadcastChannel.openSubscription()
 
-    private val _pwmBroadcaster = ConflatedBroadcastChannel<QuantityMeasurement<Dimensionless>>()
-    override val pwmBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Dimensionless>>
-        get() = _pwmBroadcaster
+    public override fun openPwmSubscription(): ReceiveChannel<QuantityMeasurement<Dimensionless>> =
+        pwmBroadcastChannel.openSubscription()
 
-    private val _transitionFrequencyBroadcaster = ConflatedBroadcastChannel<QuantityMeasurement<Frequency>>()
-    public override val transitionFrequencyBroadcaster: ConflatedBroadcastChannel<out QuantityMeasurement<Frequency>>
-        get() = _transitionFrequencyBroadcaster
+    public override fun openTransitionFrequencySubscription(): ReceiveChannel<QuantityMeasurement<Frequency>> =
+        transitionFrequencyBroadcastChannel.openSubscription()
 
-    private val _isTransceiving = Updatable(false)
-    public override val isTransceiving: InitializedTrackable<Boolean>
-        get() = _isTransceiving
-
-    private val _isTransceivingBinaryState = Updatable(false)
-    public override val isTransceivingBinaryState: InitializedTrackable<Boolean>
-        get() = _isTransceivingBinaryState
-
-    private val _isTransceivingPwm = Updatable(false)
-    public override val isTransceivingPwm: InitializedTrackable<Boolean>
-        get() = _isTransceivingPwm
-
-    private val _isTransceivingFrequency = Updatable(false)
-    public override val isTransceivingFrequency: InitializedTrackable<Boolean>
-        get() = _isTransceivingFrequency
-
-    init {
-
-        onAnyTransceivingChange {
-            _isTransceiving.value = it
-        }
+    private suspend fun updateBinaryState(update: BinaryStateMeasurement) {
+        _lastStateSetting = update
+        binaryStateBroadcastChannel.send(update)
     }
 
-    public override fun asBinaryStateController(): BinaryStateOutput = thisAsBinaryStateController
-
-    public override fun asPwmController(avgFrequency: Quantity<Frequency>): QuantityOutput<Dimensionless> {
-        this.avgFrequency.set(avgFrequency)
-        return thisAsPwmController
+    private suspend fun updatePwm(update: QuantityMeasurement<Dimensionless>) {
+        _lastPwmSetting = update
+        pwmBroadcastChannel.send(update)
     }
 
-    public override fun asFrequencyController(avgFrequency: Quantity<Frequency>): QuantityOutput<Frequency> {
-        this.avgFrequency.set(avgFrequency)
-        return thisAsFrequencyController
+    private suspend fun updateTransitionFrequency(update: QuantityMeasurement<Frequency>) {
+        _lastTransitionFrequencySetting = update
+        transitionFrequencyBroadcastChannel.send(update)
     }
 
-    public override fun combinedRouting(routing: CombinedNetworkRouting) {
-        routing.addToThisPath {
-            digitalGateRouting(this@FSRemoteDigitalOutput)
-        }
+    private val binaryStateSettingChannel = Channel<BinaryState>(capacity = Channel.CONFLATED)
+    public override fun setOutputState(state: BinaryState): SettingViability {
+        command { binaryStateSettingChannel.offer(state) }
+        return SettingViability.Viable
+    }
+
+    private val pwmSettingChannel = Channel<Quantity<Dimensionless>>(capacity = Channel.CONFLATED)
+    public override fun pulseWidthModulate(percent: Quantity<Dimensionless>): SettingViability {
+        command { pwmSettingChannel.offer(percent) }
+        return SettingViability.Viable
+    }
+
+    private val transitionFrequencySettingChannel = Channel<Quantity<Frequency>>(capacity = Channel.CONFLATED)
+    public override fun sustainTransitionFrequency(freq: Quantity<Frequency>): SettingViability {
+        command { transitionFrequencySettingChannel.offer(freq) }
+        return SettingViability.Viable
     }
 
     public override fun routing(route: NetworkRoute<String>) {
+        super.routing(route)
         route.add {
-            digitalGateIsTransceivingRemote(_isTransceivingBinaryState, RC.IS_TRANSCEIVING_BIN_STATE)
-            digitalGateIsTransceivingRemote(_isTransceivingPwm, RC.IS_TRANSCEIVING_PWM)
-            digitalGateIsTransceivingRemote(_isTransceivingFrequency, RC.IS_TRANSCEIVING_FREQUENCY)
-
-            bind<ValueInstant<DigitalValue>>(RC.VALUE) {
-                serializeMessage {
-                    Json.stringify(ValueInstantSerializer(DigitalValue.serializer()), it)
-                }
-
+            bindFS(BinaryStateMeasurement.binaryStateSerializer(), RC.BIN_STATE_VALUE) {
                 receive {
-                    val setting = Json.parse(ValueInstantSerializer(DigitalValue.serializer()), it)
-                    val (value, instant) = setting
-                    when (value) {
-                        is DigitalValue.BinaryState -> _binaryStateBroadcaster.send(value.state at instant)
-                        is DigitalValue.Percentage -> _pwmBroadcaster.send(value.percent at instant)
-                        is DigitalValue.Frequency ->
-                            _transitionFrequencyBroadcaster.send(value.frequency at instant)
-                    }
-                    _updateBroadcaster.send(setting)
+                    updateBinaryState(it)
                 }
-
-                setLocalUpdateChannel(updateBroadcaster.openSubscription()) withUpdateChannel {
-                    send()
+            }
+            bindFS<QuantityMeasurement<Frequency>>(
+                QuantityMeasurement.quantitySerializer(),
+                RC.TRANSITION_FREQUENCY_VALUE
+            ) {
+                receive {
+                    updateTransitionFrequency(it)
                 }
+            }
+            bindFS<QuantityMeasurement<Dimensionless>>(
+                QuantityMeasurement.quantitySerializer(),
+                RC.TRANSITION_FREQUENCY_CONTROL_SETTING
+            ) {
+                receive {
+                    updatePwm(it)
+                }
+            }
+            bindFS(BinaryState.serializer(), RC.BIN_STATE_CONTROL_SETTING) {
+                send(source = binaryStateSettingChannel)
+            }
+            bindFS<Quantity<Frequency>>(Quantity.serializer(), RC.TRANSITION_FREQUENCY_VALUE) {
+                send(source = transitionFrequencySettingChannel)
+            }
+            bindFS<Quantity<Dimensionless>>(Quantity.serializer(), RC.PWM_CONTROL_SETTING) {
+                send(source = pwmSettingChannel)
             }
         }
     }
+
 }
