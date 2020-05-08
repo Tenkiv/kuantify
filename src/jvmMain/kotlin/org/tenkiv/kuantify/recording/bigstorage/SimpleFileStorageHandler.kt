@@ -36,10 +36,10 @@ import java.nio.charset.*
 import java.nio.file.*
 import java.time.*
 
-public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcChannel<DT>>(
-    recorder: Recorder<DT, GT>,
-    serializer: KSerializer<DT>
-) : BigStorageHandler<DT, GT>(recorder, serializer) {
+public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<DataT>>(
+    recorder: Recorder<DataT, ChannelT>,
+    serializer: KSerializer<DataT>
+) : BigStorageHandler<DataT, ChannelT>(recorder, serializer) {
     private val uid = GlobalScope.async(Dispatchers.Daqc) { getRecorderUid() }
     private val directoryPath = GlobalScope.async(Dispatchers.Daqc) { "$RECORDERS_PATH/${uid.await()}" }
     private val directoryFile = GlobalScope.async(Dispatchers.Daqc) { File(directoryPath.await()).apply { mkdir() } }
@@ -50,12 +50,12 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcChannel<DT>>(
         createRecordJob()
     }
 
-    public override suspend fun getData(filter: StorageFilter<DT>): List<ValueInstant<DT>> =
+    public override suspend fun getData(filter: StorageFilter<DataT>): List<ValueInstant<DataT>> =
         withContext(Dispatchers.Daqc) {
             //TODO: Change to immutable list using builder
-            val result = ArrayList<ValueInstant<DT>>()
+            val result = ArrayList<ValueInstant<DataT>>()
             val currentFiles: List<RecorderFile> = ArrayList(files)
-            val buffer = ArrayList<ValueInstant<DT>>()
+            val buffer = ArrayList<ValueInstant<DataT>>()
 
             val bufferJob = launch(Dispatchers.Daqc) {
                 fileCreationBroadcaster.openSubscription().receive()
@@ -75,7 +75,7 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcChannel<DT>>(
             result
         }
 
-    public override suspend fun recordUpdate(update: ValueInstant<DT>) {
+    public override suspend fun recordUpdate(update: ValueInstant<DataT>) {
         files.lastOrNull()?.writeEntry(update) ?: TODO("throw exception")
 
         if (storageLength is StorageSamples.Number) files.forEach { it.samplesSinceCreation++ }
@@ -141,10 +141,10 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcChannel<DT>>(
         stoppingFiles.joinAll()
     }
 
-    private fun ValueInstant<DT>.toBase64(valueSerializer: KSerializer<DT>): String =
+    private fun ValueInstant<DataT>.toBase64(valueSerializer: KSerializer<DataT>): String =
         Serialization.cbor.dump(ValueInstantSerializer(valueSerializer), this).encodeBase64()
 
-    private fun ByteArray.toValueInstant(valueSerializer: KSerializer<DT>): ValueInstant<DT> =
+    private fun ByteArray.toValueInstant(valueSerializer: KSerializer<DataT>): ValueInstant<DataT> =
         Serialization.cbor.load(ValueInstantSerializer(valueSerializer), this.decodeToString().decodeBase64Bytes())
 
     //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
@@ -199,7 +199,7 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcChannel<DT>>(
             }
         }
 
-        internal suspend fun writeEntry(entry: ValueInstant<DT>) {
+        internal suspend fun writeEntry(entry: ValueInstant<DataT>) {
             writeJsonBuffer("\"${entry.toBase64(serializer)}\"")
         }
 
@@ -242,11 +242,11 @@ public class SimpleFileStorageHandler<DT : DaqcData, GT : DaqcChannel<DT>>(
             }
         }
 
-        internal suspend fun readFromDisk(filter: (ValueInstant<DT>) -> Boolean): List<ValueInstant<DT>> {
+        internal suspend fun readFromDisk(filter: (ValueInstant<DataT>) -> Boolean): List<ValueInstant<DataT>> {
 
             val channel = fileChannel.await()
             val currentObjectBytes = ByteArrayOutputStream()
-            val complyingObjects = ArrayList<ValueInstant<DT>>()
+            val complyingObjects = ArrayList<ValueInstant<DataT>>()
             val buffer = ByteBuffer.allocate(100)
             var position = 0L
 

@@ -53,4 +53,6 @@ public interface AnalogInput : QuantityInput<Voltage>, DeviceGate {
      */
     public val maxVoltage: UpdatableQuantity<Voltage>
 
+    public val updateRate: TrackableQuantity<Frequency>
+
 }

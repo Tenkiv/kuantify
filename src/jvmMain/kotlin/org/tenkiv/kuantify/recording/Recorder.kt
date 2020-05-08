@@ -25,33 +25,33 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.recording.bigstorage.*
 import java.time.*
 
-public typealias RecordingFilter<DT, GT> = Recorder<DT, GT>.(ValueInstant<DT>) -> Boolean
-internal typealias StorageFilter<DT> = (ValueInstant<DT>) -> Boolean
+public typealias RecordingFilter<DataT, ChannelT> = Recorder<DataT, ChannelT>.(ValueInstant<DataT>) -> Boolean
+internal typealias StorageFilter<DataT> = (ValueInstant<DataT>) -> Boolean
 
-public fun <DT : DaqcData, GT : DaqcChannel<DT>> CoroutineScope.Recorder(
-    gate: GT,
+public fun <DataT : DaqcData, ChannelT : DaqcChannel<DataT>> CoroutineScope.Recorder(
+    gate: ChannelT,
     storageFrequency: StorageFrequency,
     memoryStorageLength: StorageLength,
-    filterOnRecord: RecordingFilter<DT, GT> = { true }
-): MemoryRecorder<DT, GT> = MemoryRecorder(this, gate, storageFrequency, memoryStorageLength, filterOnRecord)
+    filterOnRecord: RecordingFilter<DataT, ChannelT> = { true }
+): MemoryRecorder<DataT, ChannelT> = MemoryRecorder(this, gate, storageFrequency, memoryStorageLength, filterOnRecord)
 
-public fun <DT : DaqcData, GT : DaqcChannel<DT>> CoroutineScope.Recorder(
-    gate: GT,
+public fun <DataT : DaqcData, ChannelT : DaqcChannel<DataT>> CoroutineScope.Recorder(
+    gate: ChannelT,
     storageFrequency: StorageFrequency,
     bigStorageLength: StorageLength,
-    bigStorageHandlerCreator: BigStorageHandlerCreator<DT, GT>,
-    filterOnRecord: RecordingFilter<DT, GT> = { true }
-): BigStorageRecorder<DT, GT> =
+    bigStorageHandlerCreator: BigStorageHandlerCreator<DataT, ChannelT>,
+    filterOnRecord: RecordingFilter<DataT, ChannelT> = { true }
+): BigStorageRecorder<DataT, ChannelT> =
     BigStorageRecorder(this, gate, storageFrequency, bigStorageLength, bigStorageHandlerCreator, filterOnRecord)
 
-public fun <DT : DaqcData, GT : DaqcChannel<DT>> CoroutineScope.Recorder(
-    gate: GT,
+public fun <DataT : DaqcData, ChannelT : DaqcChannel<DataT>> CoroutineScope.Recorder(
+    gate: ChannelT,
     storageFrequency: StorageFrequency,
     memoryStorageLength: StorageSamples,
     bigStorageLength: StorageSamples,
-    bigStorageHandlerCreator: BigStorageHandlerCreator<DT, GT>,
-    filterOnRecord: RecordingFilter<DT, GT> = { true }
-): CombinedRecorder<DT, GT> = CombinedRecorder(
+    bigStorageHandlerCreator: BigStorageHandlerCreator<DataT, ChannelT>,
+    filterOnRecord: RecordingFilter<DataT, ChannelT> = { true }
+): CombinedRecorder<DataT, ChannelT> = CombinedRecorder(
     this,
     gate,
     storageFrequency,
@@ -61,14 +61,14 @@ public fun <DT : DaqcData, GT : DaqcChannel<DT>> CoroutineScope.Recorder(
     filterOnRecord
 )
 
-public fun <DT : DaqcData, GT : DaqcChannel<DT>> CoroutineScope.Recorder(
-    gate: GT,
+public fun <DataT : DaqcData, ChannelT : DaqcChannel<DataT>> CoroutineScope.Recorder(
+    gate: ChannelT,
     storageFrequency: StorageFrequency,
     memoryStorageLength: StorageDuration,
     bigStorageLength: StorageDuration,
-    bigStorageHandlerCreator: BigStorageHandlerCreator<DT, GT>,
-    filterOnRecord: RecordingFilter<DT, GT> = { true }
-): CombinedRecorder<DT, GT> = CombinedRecorder(
+    bigStorageHandlerCreator: BigStorageHandlerCreator<DataT, ChannelT>,
+    filterOnRecord: RecordingFilter<DataT, ChannelT> = { true }
+): CombinedRecorder<DataT, ChannelT> = CombinedRecorder(
     this,
     gate,
     storageFrequency,
@@ -175,25 +175,25 @@ public sealed class StorageDuration : StorageLength(), Comparable<StorageDuratio
     }
 }
 
-public interface Recorder<out DT : DaqcData, out GT : DaqcChannel<DT>> : CoroutineScope {
-    public val gate: GT
+public interface Recorder<out DataT : DaqcData, out ChannelT : DaqcChannel<DataT>> : CoroutineScope {
+    public val gate: ChannelT
     public val storageFrequency: StorageFrequency
     public val memoryStorageLength: StorageLength?
     public val bigStorageLength: StorageLength?
 
-    public fun getDataInMemory(): List<ValueInstant<DT>>
+    public fun getDataInMemory(): List<ValueInstant<DataT>>
 
-    public suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<DT>>
+    public suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<DataT>>
 
-    public suspend fun getAllData(): List<ValueInstant<DT>>
+    public suspend fun getAllData(): List<ValueInstant<DataT>>
 
     public suspend fun cancel(deleteBigStorage: Boolean = false)
 }
 
-internal fun <DT : DaqcData, GT : DaqcChannel<DT>> Recorder<DT, GT>.createRecordJob(
-    memoryHandler: MemoryHandler<DT>?,
-    bigStorageHandler: BigStorageHandler<DT, GT>?,
-    filterOnRecord: RecordingFilter<DT, GT>
+internal fun <DataT : DaqcData, ChannelT : DaqcChannel<DataT>> Recorder<DataT, ChannelT>.createRecordJob(
+    memoryHandler: MemoryHandler<DataT>?,
+    bigStorageHandler: BigStorageHandler<DataT, ChannelT>?,
+    filterOnRecord: RecordingFilter<DataT, ChannelT>
 ) = launch {
     when (val storageFrequency = storageFrequency) {
         StorageFrequency.All -> gate.onEachUpdate { update ->
@@ -216,11 +216,11 @@ internal fun <DT : DaqcData, GT : DaqcChannel<DT>> Recorder<DT, GT>.createRecord
     }
 }
 
-private suspend fun <DT : DaqcData, GT : DaqcChannel<DT>> Recorder<DT, GT>.recordUpdate(
-    update: ValueInstant<DT>,
-    memoryHandler: MemoryHandler<DT>?,
-    bigStorageHandler: BigStorageHandler<DT, GT>?,
-    filter: RecordingFilter<DT, GT>
+private suspend fun <DataT : DaqcData, ChannelT : DaqcChannel<DataT>> Recorder<DataT, ChannelT>.recordUpdate(
+    update: ValueInstant<DataT>,
+    memoryHandler: MemoryHandler<DataT>?,
+    bigStorageHandler: BigStorageHandler<DataT, ChannelT>?,
+    filter: RecordingFilter<DataT, ChannelT>
 ) {
     if (filter(update)) {
         memoryHandler?.recordUpdate(update)

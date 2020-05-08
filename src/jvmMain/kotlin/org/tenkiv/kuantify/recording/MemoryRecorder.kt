@@ -24,14 +24,14 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.*
 import java.time.*
 
-public class MemoryRecorder<DT : DaqcData, GT : DaqcChannel<DT>> internal constructor(
+public class MemoryRecorder<DataT : DaqcData, ChannelT : DaqcChannel<DataT>> internal constructor(
     scope: CoroutineScope,
-    public override val gate: GT,
+    public override val gate: ChannelT,
     public override val storageFrequency: StorageFrequency,
     public override val memoryStorageLength: StorageLength,
-    filterOnRecord: RecordingFilter<DT, GT>
-) : Recorder<DT, GT>, CoroutineScope by scope.withNewChildJob() {
-    private val memoryHandler = MemoryHandler<DT>(this, memoryStorageLength)
+    filterOnRecord: RecordingFilter<DataT, ChannelT>
+) : Recorder<DataT, ChannelT>, CoroutineScope by scope.withNewChildJob() {
+    private val memoryHandler = MemoryHandler<DataT>(this, memoryStorageLength)
 
     public override val bigStorageLength: StorageLength? get() = null
 
@@ -39,12 +39,12 @@ public class MemoryRecorder<DT : DaqcData, GT : DaqcChannel<DT>> internal constr
         createRecordJob(memoryHandler = memoryHandler, bigStorageHandler = null, filterOnRecord = filterOnRecord)
     }
 
-    public override fun getDataInMemory(): List<ValueInstant<DT>> = memoryHandler.getData()
+    public override fun getDataInMemory(): List<ValueInstant<DataT>> = memoryHandler.getData()
 
-    public override suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<DT>> =
+    public override suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<DataT>> =
         memoryHandler.getData().filter { it.instant in instantRange }
 
-    public override suspend fun getAllData(): List<ValueInstant<DT>> = getDataInMemory()
+    public override suspend fun getAllData(): List<ValueInstant<DataT>> = getDataInMemory()
 
     public override suspend fun cancel(deleteBigStorage: Boolean) = cancel()
 

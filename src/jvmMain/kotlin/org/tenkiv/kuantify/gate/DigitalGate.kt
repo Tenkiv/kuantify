@@ -75,37 +75,3 @@ public inline fun DigitalGate.onAnyTransceivingChange(
         }
     }
 }
-
-@Serializable
-public sealed class DigitalValue : DaqcData {
-
-    override val size: Int
-        get() = 1
-
-    @Serializable
-    public data class BinaryState(val state: org.tenkiv.kuantify.data.BinaryState) : DigitalValue() {
-
-        override fun toDaqcValues(): List<DaqcValue> = listOf(state)
-
-    }
-
-    @Serializable
-    public data class Frequency(
-        @Serializable(with = DaqcQuantitySerializer::class)
-        val frequency: DaqcQuantity<org.tenkiv.kuantify.lib.physikal.Frequency>
-    ) : DigitalValue() {
-
-        override fun toDaqcValues(): List<DaqcValue> = listOf(frequency)
-
-    }
-
-    @Serializable
-    public data class Percentage(
-        @Serializable(with = DaqcQuantitySerializer::class)
-        val percent: DaqcQuantity<Dimensionless>
-    ) : DigitalValue() {
-
-        override fun toDaqcValues(): List<DaqcValue> = listOf(percent)
-
-    }
-}

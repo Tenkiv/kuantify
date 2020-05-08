@@ -25,6 +25,7 @@ import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
 import org.tenkiv.kuantify.lib.physikal.*
+import org.tenkiv.kuantify.trackable.*
 import physikal.*
 
 private val logger = KotlinLogging.logger {}
@@ -41,7 +42,7 @@ public abstract class AnalogSensor<QT : Quantity<QT>>(
     maxVoltage: Quantity<Voltage>,
     acceptableError: Quantity<Voltage>
 ) : ProcessedAcquireChannel<DaqcQuantity<QT>, DaqcQuantity<Voltage>>(), QuantityInput<QT> {
-    public override val updateRate: UpdateRate
+    public val updateRate: TrackableQuantity<Frequency>
         get() = analogInput.updateRate
 
     protected final override val parentGate: AcquireChannel<DaqcQuantity<Voltage>>

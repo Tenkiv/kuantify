@@ -17,7 +17,6 @@
 
 package org.tenkiv.kuantify.hardware.channel
 
-import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.hardware.inputs.*

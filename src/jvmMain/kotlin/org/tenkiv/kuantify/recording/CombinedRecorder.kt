@@ -25,24 +25,24 @@ import org.tenkiv.kuantify.recording.bigstorage.*
 import java.time.*
 import kotlin.coroutines.*
 
-public class CombinedRecorder<DT : DaqcData, GT : DaqcChannel<DT>> : Recorder<DT, GT> {
+public class CombinedRecorder<DataT : DaqcData, ChannelT : DaqcChannel<DataT>> : Recorder<DataT, ChannelT> {
     public override val coroutineContext: CoroutineContext
-    public override val gate: GT
+    public override val gate: ChannelT
     public override val storageFrequency: StorageFrequency
     public override val memoryStorageLength: StorageLength
     public override val bigStorageLength: StorageLength
 
-    private val memoryHandler: MemoryHandler<DT>
-    private val bigStorageHandler: BigStorageHandler<DT, GT>
+    private val memoryHandler: MemoryHandler<DataT>
+    private val bigStorageHandler: BigStorageHandler<DataT, ChannelT>
 
     internal constructor(
         scope: CoroutineScope,
-        gate: GT,
+        gate: ChannelT,
         storageFrequency: StorageFrequency,
         memoryStorageDuration: StorageDuration,
         bigStorageDuration: StorageDuration,
-        bigStorageHandlerCreator: BigStorageHandlerCreator<DT, GT>,
-        filterOnRecord: RecordingFilter<DT, GT>
+        bigStorageHandlerCreator: BigStorageHandlerCreator<DataT, ChannelT>,
+        filterOnRecord: RecordingFilter<DataT, ChannelT>
     ) {
         this.coroutineContext = scope.coroutineContext + Job(scope.coroutineContext[Job])
         this.gate = gate
@@ -57,12 +57,12 @@ public class CombinedRecorder<DT : DaqcData, GT : DaqcChannel<DT>> : Recorder<DT
 
     internal constructor(
         scope: CoroutineScope,
-        gate: GT,
+        gate: ChannelT,
         storageFrequency: StorageFrequency,
         numSamplesMemory: StorageSamples,
         numSamplesBigStorage: StorageSamples,
-        bigStorageHandlerCreator: BigStorageHandlerCreator<DT, GT>,
-        filterOnRecord: RecordingFilter<DT, GT>
+        bigStorageHandlerCreator: BigStorageHandlerCreator<DataT, ChannelT>,
+        filterOnRecord: RecordingFilter<DataT, ChannelT>
     ) {
         this.coroutineContext = scope.coroutineContext + Job(scope.coroutineContext[Job])
         this.gate = gate
@@ -75,10 +75,10 @@ public class CombinedRecorder<DT : DaqcData, GT : DaqcChannel<DT>> : Recorder<DT
         createRecordJob(memoryHandler, bigStorageHandler, filterOnRecord)
     }
 
-    public override fun getDataInMemory(): List<ValueInstant<DT>> = memoryHandler.getData()
+    public override fun getDataInMemory(): List<ValueInstant<DataT>> = memoryHandler.getData()
 
-    public override suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<DT>> {
-        val filterFun: StorageFilter<DT> = { it.instant in instantRange }
+    public override suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<DataT>> {
+        val filterFun: StorageFilter<DataT> = { it.instant in instantRange }
         val dataInMemory = memoryHandler.getData()
         val oldestRequested = instantRange.start
         val oldestMemory = dataInMemory.firstOrNull()
@@ -92,7 +92,7 @@ public class CombinedRecorder<DT : DaqcData, GT : DaqcChannel<DT>> : Recorder<DT
         }
     }
 
-    public override suspend fun getAllData(): List<ValueInstant<DT>> =
+    public override suspend fun getAllData(): List<ValueInstant<DataT>> =
         if (memoryStorageLength >= bigStorageLength) {
             getDataInMemory()
         } else {

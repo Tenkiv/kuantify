@@ -24,19 +24,20 @@ import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.recording.*
 
-public typealias BigStorageHandlerCreator<DT, GT> = (Recorder<DT, GT>) -> BigStorageHandler<DT, GT>
+public typealias BigStorageHandlerCreator<DataT, ChannelT> =
+            (Recorder<DataT, ChannelT>) -> BigStorageHandler<DataT, ChannelT>
 
-public abstract class BigStorageHandler<DT : DaqcData, GT : DaqcChannel<DT>>(
-    protected val recorder: Recorder<DT, GT>,
-    protected val serializer: KSerializer<DT>
+public abstract class BigStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<DataT>>(
+    protected val recorder: Recorder<DataT, ChannelT>,
+    protected val serializer: KSerializer<DataT>
 ) : CoroutineScope by recorder {
-    protected val channel: DaqcChannel<DT> get() = recorder.gate
+    protected val channel: DaqcChannel<DataT> get() = recorder.gate
     protected val storageFrequency: StorageFrequency get() = recorder.storageFrequency
     protected val storageLength: StorageLength = requireNotNull(recorder.bigStorageLength)
 
-    public abstract suspend fun getData(filter: StorageFilter<DT>): List<ValueInstant<DT>>
+    public abstract suspend fun getData(filter: StorageFilter<DataT>): List<ValueInstant<DataT>>
 
-    public abstract suspend fun recordUpdate(update: ValueInstant<DT>)
+    public abstract suspend fun recordUpdate(update: ValueInstant<DataT>)
 
     /**
      * If there is any special shutdown code that needs to be run when the owning [Recorder] is canceled put it here.

@@ -25,14 +25,14 @@ import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.recording.bigstorage.*
 import java.time.*
 
-public class BigStorageRecorder<DT : DaqcData, GT : DaqcChannel<DT>> internal constructor(
+public class BigStorageRecorder<DataT : DaqcData, ChannelT : DaqcChannel<DataT>> internal constructor(
     scope: CoroutineScope,
-    public override val gate: GT,
+    public override val gate: ChannelT,
     public override val storageFrequency: StorageFrequency,
     public override val bigStorageLength: StorageLength,
-    bigStorageHandlerCreator: BigStorageHandlerCreator<DT, GT>,
-    filterOnRecord: RecordingFilter<DT, GT>
-) : Recorder<DT, GT>, CoroutineScope by scope.withNewChildJob() {
+    bigStorageHandlerCreator: BigStorageHandlerCreator<DataT, ChannelT>,
+    filterOnRecord: RecordingFilter<DataT, ChannelT>
+) : Recorder<DataT, ChannelT>, CoroutineScope by scope.withNewChildJob() {
     private val bigStorageHandler = bigStorageHandlerCreator(this)
 
     public override val memoryStorageLength: StorageLength? get() = null
@@ -41,12 +41,12 @@ public class BigStorageRecorder<DT : DaqcData, GT : DaqcChannel<DT>> internal co
         createRecordJob(memoryHandler = null, bigStorageHandler = bigStorageHandler, filterOnRecord = filterOnRecord)
     }
 
-    public override fun getDataInMemory(): List<ValueInstant<DT>> = emptyList()
+    public override fun getDataInMemory(): List<ValueInstant<DataT>> = emptyList()
 
-    public override suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<DT>> =
+    public override suspend fun getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<DataT>> =
         bigStorageHandler.getData { it.instant in instantRange }
 
-    public override suspend fun getAllData(): List<ValueInstant<DT>> = bigStorageHandler.getData { true }
+    public override suspend fun getAllData(): List<ValueInstant<DataT>> = bigStorageHandler.getData { true }
 
     public override suspend fun cancel(deleteBigStorage: Boolean) {
         bigStorageHandler.cancel(deleteBigStorage)

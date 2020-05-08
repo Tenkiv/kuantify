@@ -19,7 +19,6 @@ package org.tenkiv.kuantify.hardware.inputs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.*
 import org.tenkiv.kuantify.gate.acquire.input.*
 import org.tenkiv.kuantify.hardware.channel.*
@@ -41,7 +40,6 @@ internal class SimplePwmSensor(val digitalInput: DigitalInput) :
     public val avgPeriod: UpdatableQuantity<Time> get() = digitalInput.avgPeriod
 
     override val isTransceiving: Trackable<Boolean> get() = digitalInput.isTransceivingBinaryState
-    override val updateRate: UpdateRate get() = digitalInput.updateRate
     override val isFinalized: Boolean get() = digitalInput.isFinalized
 
     override fun startSampling() {

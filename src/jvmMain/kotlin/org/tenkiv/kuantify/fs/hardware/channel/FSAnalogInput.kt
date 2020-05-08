@@ -58,6 +58,9 @@ public abstract class LocalAnalogInput<out DeviceT>(
                     maxVoltage.set(it)
                 }
             }
+            bindFS<Quantity<Frequency>>(Quantity.serializer(), RC.UPDATE_RATE) {
+                send(source = updateRate.openSubscription())
+            }
         }
     }
 
@@ -97,6 +100,13 @@ public abstract class FSRemoteAnalogInput<out DeviceT>(
     public override val maxVoltage: UpdatableQuantity<Voltage>
         get() = _maxVoltage
 
+    private val _updateRate = Updatable<Quantity<Frequency>> {
+        modifyConfiguration {
+            setValue(it)
+        }
+    }
+    public override val updateRate: TrackableQuantity<Frequency> get() = _updateRate
+
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
@@ -122,6 +132,11 @@ public abstract class FSRemoteAnalogInput<out DeviceT>(
                     modifyConfiguration {
                         _maxVoltage.update(it)
                     }
+                }
+            }
+            bindFS<Quantity<Frequency>>(Quantity.serializer(), RC.UPDATE_RATE) {
+                receive(networkChannelCapacity = Channel.CONFLATED) {
+                    _updateRate.set(it)
                 }
             }
         }

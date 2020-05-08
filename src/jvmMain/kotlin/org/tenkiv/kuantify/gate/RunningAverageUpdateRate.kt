@@ -15,39 +15,40 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.recording
+package org.tenkiv.kuantify.gate
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import org.tenkiv.coral.*
-import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.lib.physikal.*
+import physikal.*
+import java.time.*
+import java.time.Duration
+import kotlin.time.*
 
-internal class MemoryHandler<DataT : DaqcData>(
-    scope: CoroutineScope,
-    private val storageLength: StorageLength
-) : CoroutineScope by scope {
-
-    private val _dataInMemory = ArrayList<ValueInstant<DataT>>()
-
-    //TODO: Make this return truly immutable list.
-    fun getData(): List<ValueInstant<DataT>> = ArrayList(_dataInMemory)
-
-    fun recordUpdate(update: ValueInstant<DataT>) {
-        _dataInMemory += update
-    }
-
-    fun cleanMemory() {
-        if (storageLength is StorageDuration.For) {
-            val iterator = _dataInMemory.iterator()
-            while (iterator.hasNext()) {
-                if (iterator.next().instant.isOlderThan(storageLength.duration)) {
-                    iterator.remove()
-                } else {
-                    break
-                }
+public fun DaqcChannel<*>.runningAverageUpdateRate(
+    avgPeriod: Duration = 10.seconds.toJavaDuration()
+): Flow<Quantity<Frequency>> {
+    fun clean(sampleInstants: MutableList<Instant>) {
+        val iterator = sampleInstants.listIterator()
+        while (iterator.hasNext()) {
+            val instant = iterator.next()
+            if (instant.isOlderThan(avgPeriod)) {
+                iterator.remove()
+            } else {
+                break
             }
         }
-        if (storageLength is StorageSamples.Number) {
-            if (_dataInMemory.size > storageLength.numSamples) _dataInMemory.remove(_dataInMemory.first())
+    }
+
+    return flow {
+        val sampleInstants = ArrayList<Instant>()
+
+        onEachUpdate {
+            sampleInstants += it.instant
+            clean(sampleInstants)
+
+            val sps = sampleInstants.size / (avgPeriod.toMillis() * 1_000.0)
+            emit(sps.hertz)
         }
     }
 

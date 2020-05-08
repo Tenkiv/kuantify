@@ -28,7 +28,7 @@ public typealias FailedMeasurement = ValueInstant<ProcessFailure>
 public typealias SuccesfulProcessResult<T> = Result.Success<ValueInstant<T>>
 public typealias ProcessResult<ST> = Result<ValueInstant<ST>, FailedMeasurement>
 
-public interface AcquireChannel<out T : DaqcData> : DaqcChannel<T>, UpdateRatedGate<T> {
+public interface AcquireChannel<out T : DaqcData> : DaqcChannel<T> {
     /**
      * Activates the input alerting it to begin collecting and sending data.
      */
