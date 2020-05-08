@@ -18,7 +18,7 @@
 package org.tenkiv.kuantify.fs.hardware.device
 
 import io.ktor.client.request.*
-import io.ktor.utils.io.errors.IOException
+import io.ktor.utils.io.errors.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.builtins.*
 import mu.*
@@ -29,7 +29,7 @@ import org.tenkiv.kuantify.fs.networking.communication.*
 import org.tenkiv.kuantify.fs.networking.server.*
 import org.tenkiv.kuantify.hardware.device.*
 import org.tenkiv.kuantify.networking.configuration.*
-import org.tenkiv.kuantify.trackable.*
+import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
 private val logger = KotlinLogging.logger {}
@@ -104,18 +104,18 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
     @Volatile
     protected var networkCommunicator: FSRemoteNetworkCommunictor? = null
 
-    private val _isConnected = Updatable(false)
-    public override val isConnected: InitializedTrackable<Boolean> get() = _isConnected
+    private val _isConnected = AtomicBoolean(false)
+    public final override val isConnected: Boolean get() = _isConnected.get()
 
     public final override suspend fun connect() {
-        if (!isConnected.value) {
+        val isConnected = _isConnected.getAndSet(true)
+        if (!isConnected) {
             networkCommunicator = FSRemoteWebsocketCommunicator(
                 this,
                 this::onCommunicatorCanceled
             ).apply {
                 init()
             }
-            _isConnected.value = true
         }
     }
 
@@ -128,7 +128,7 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
     }
 
     private fun onCommunicatorCanceled() {
-        _isConnected.value = false
+        _isConnected.set(false)
         networkCommunicator = null
     }
 

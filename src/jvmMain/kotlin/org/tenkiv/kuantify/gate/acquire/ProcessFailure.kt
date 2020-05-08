@@ -51,7 +51,8 @@ public fun AcquireChannel<*>.OutOfRange(
 public fun ProcessFailure.throwException(): Nothing = throw ProcessFailureException(
     this
 )
-public class ProcessFailureException(processFailure: ProcessFailure) : Exception(
+
+public class ProcessFailureException(processFailure: ProcessFailure) : Throwable(
     cause = processFailure.cause,
     message = processFailure.message
 )

@@ -79,6 +79,8 @@ public abstract class ProcessedAcquireGate<T : DaqcData, ParentT : DaqcData>(
                 }
             }
         }
+
+        val parentGate = this.parentGate
         if (parentGate is AcquireChannel<*>) {
             parentGate.processFailureHandler {
                 failureBroadcastChannel?.send(it) ?: throw IllegalStateException(

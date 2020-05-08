@@ -37,10 +37,6 @@ public class RouteConfig<SerialT>(
     public val baseRoute: NetworkRoute<SerialT>
         get() = NetworkRoute(this, emptyList())
 
-    @PublishedApi
-    internal val remoteConnectionCommunicator: Boolean =
-        (networkCommunicator as? RemoteNetworkCommunicator)?.communicationMode != CommunicationMode.NO_CONNECTION
-
     @Suppress("NAME_SHADOWING")
     @PublishedApi
     internal fun <BoundT> addMessageBinding(
@@ -90,6 +86,19 @@ public class RouteConfig<SerialT>(
             networkPingReceiver,
             serializedPing
         )
+    }
+
+    companion object {
+
+        public fun formatPathStandard(path: Path): String {
+            var result = ""
+            path.forEachIndexed { index, value ->
+                val append = if (index != path.lastIndex) "/" else ""
+                result += "$value$append"
+            }
+            return result
+        }
+
     }
 
 }

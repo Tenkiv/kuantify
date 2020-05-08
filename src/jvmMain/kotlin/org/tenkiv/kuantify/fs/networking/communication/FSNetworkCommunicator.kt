@@ -28,44 +28,31 @@ import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.fs.hardware.device.*
 import org.tenkiv.kuantify.fs.networking.*
 import org.tenkiv.kuantify.fs.networking.client.*
-import org.tenkiv.kuantify.fs.networking.configuration.*
 import org.tenkiv.kuantify.fs.networking.server.*
 import org.tenkiv.kuantify.networking.communication.*
 import org.tenkiv.kuantify.networking.configuration.*
+import org.tenkiv.kuantify.networking.configuration.RouteConfig.Companion.formatPathStandard
 
 private val logger = KotlinLogging.logger {}
 
 private fun NetworkCommunicator<String>.buildFSRouteBindingMap(
     device: FSBaseDevice
-): Map<String, NetworkMessageBinding<*, String>> {
-    val combinedNetworkConfig = CombinedRouteConfig(this)
-    device.combinedRouting(combinedNetworkConfig.baseRoute)
-
-    val sideRouteConfig = RouteConfig(
+): Map<String, NetworkRouteBinding<String>> {
+    val routeConfig = RouteConfig(
         networkCommunicator = this,
         serializedPing = FSDevice.serializedPing,
         formatPath = ::formatPathStandard
     )
-    device.routing(sideRouteConfig.baseRoute)
+    device.routing(routeConfig.baseRoute)
 
-    val resultRouteBindingMap = combinedNetworkConfig.networkRouteBindingMap
-
-    sideRouteConfig.networkRouteBindingMap.forEach { path, binding ->
-        val currentBinding = resultRouteBindingMap[path]
-        if (currentBinding != null) {
-            logger.warn { "Overriding combined route binding for route $path with side specific binding." }
-        }
-        resultRouteBindingMap[path] = binding
-    }
-
-    return resultRouteBindingMap
+    return routeConfig.networkRouteBindingMap
 }
 
 public class LocalNetworkCommunicator internal constructor(
     override val device: LocalDevice
 ) : NetworkCommunicator<String>(device) {
 
-    protected override val networkRouteBindingMap: Map<String, NetworkMessageBinding<*, String>> =
+    protected override val networkRouteBindingMap: Map<String, NetworkRouteBinding<String>> =
         buildFSRouteBindingMap(device)
 
     protected override suspend fun sendMessage(route: String, message: String) {
@@ -86,7 +73,7 @@ public class LocalNetworkCommunicator internal constructor(
 public abstract class FSRemoteNetworkCommunictor(final override val device: FSRemoteDevice) :
     RemoteNetworkCommunicator<String>(device) {
 
-    protected final override val networkRouteBindingMap: Map<String, NetworkMessageBinding<*, String>> =
+    protected final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<String>> =
         buildFSRouteBindingMap(device)
 
     internal abstract suspend fun cancel()
