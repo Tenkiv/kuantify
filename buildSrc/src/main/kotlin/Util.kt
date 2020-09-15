@@ -62,41 +62,17 @@ fun Project.createPropertiesFromLocal(): Properties {
  *
  * @see <a href="https://docs.gradle.org/current/userguide/signing_plugin.html#sec:signatory_credentials">Signatory Credentials</a>
  */
-
 fun Project.setSigningExtrasFromProperties(properties: Properties) {
-    project.extra["signing.keyId"] = properties.getProperty("SIGNING_KEYID")
-    project.extra["signing.secretKeyRingFile"] = properties.getProperty("SIGNING_SECRETKEYRINGFILE")
-    project.extra["signing.password"] = properties.getProperty("SIGNING_KEYPASSWORD")
-}
-
-/**
- * Registers common tasks.
- *
- * Sets universal `Test` task to use Spek2 platform.
- *
- * Registers task named `javadocJar` from `dokka` task.
- */
-
-fun TaskContainerScope.registerCommonTasks() {
-    withType<Test> {
-        outputs.upToDateWhen { false }
-        useJUnitPlatform {
-            includeEngines("spek2")
-        }
-        testLogging.showStandardStreams = true
-        maxHeapSize = "1g"
-    }
-
-    register<Jar>("javadocJar") {
-        archiveClassifier.set("javadoc")
-        from(getByName("dokka"))
+    project.apply {
+        extra["signing.keyId"] = properties.getProperty("SIGNING_KEYID")
+        extra["signing.secretKeyRingFile"] = properties.getProperty("SIGNING_SECRETKEYRINGFILE")
+        extra["signing.password"] = properties.getProperty("SIGNING_KEYPASSWORD")
     }
 }
 
 /**
  * Sets up POM for Tenkiv specific projects.
  */
-
 fun MavenPublication.configureMavenPom(isRelease: Boolean, project: Project) {
     version = if (isRelease) project.version.toString() else "${project.version}-SNAPSHOT"
 
@@ -139,8 +115,16 @@ fun PublishingExtension.setMavenRepositories(isRelease: Boolean, properties: Pro
             url = URI(if (isRelease) Info.sonatypeReleaseRepoUrl else Info.sonatypeSnapshotRepoUrl)
 
             credentials {
-                username = if (isRelease) properties.getProperty("MAVEN_USER") else System.getenv("MAVEN_REPO_USER")
-                password = if (isRelease) properties.getProperty("MAVEN_PASSWORD") else System.getenv("MAVEN_REPO_PASSWORD")
+                username = if (isRelease) {
+                    properties.getProperty("MAVEN_USER")
+                } else {
+                    System.getenv("MAVEN_REPO_USER")
+                }
+                password = if (isRelease) {
+                    properties.getProperty("MAVEN_PASSWORD")
+                } else {
+                    System.getenv("MAVEN_REPO_PASSWORD")
+                }
             }
         }
     }
