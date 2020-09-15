@@ -50,8 +50,8 @@ plugins {
 
 kotlin {
     jvm {
-        compilations.forEach {
-            it.kotlinOptions {
+        compilations.all {
+            kotlinOptions {
                 jvmTarget = "1.8"
             }
         }
@@ -60,11 +60,8 @@ kotlin {
     sourceSets {
         all {
             languageSettings.enableLanguageFeature("InlineClasses")
-
             languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
-
             languageSettings.useExperimentalAnnotation("org.tenkiv.kuantify.KuantifyComponentBuilder")
-
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
             languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
             languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
@@ -73,12 +70,8 @@ kotlin {
             languageSettings.useExperimentalAnnotation("io.ktor.util.InternalAPI")
         }
 
-        /**
-         * commonMain == core-common artifact
-         */
         val commonMain by getting {
             dependencies {
-                implementation(kotlin("stdlib-common"))
                 implementation("org.tenkiv.physikal:physikal:${Vof.physikal}")
             }
         }
@@ -90,17 +83,12 @@ kotlin {
             }
         }
 
-        /**
-         * jvmMain == core-jvm artifact
-         */
-
         val jvmMain by getting {
             dependencies {
-                implementation(kotlin("stdlib-jdk8", Vof.kotlin))
-
                 //General kotlin utilities
                 api("org.tenkiv.coral:coral-jvm:${Vof.coral}")
                 implementation(kotlin("reflect", Vof.kotlin))
+                implementation("org.jetbrains.kotlinx:atomicfu:${Vof.atomicfu}")
 
                 //Coroutines
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Vof.coroutinesX}")
@@ -118,7 +106,6 @@ kotlin {
                 implementation("io.ktor:ktor-server-core:${Vof.ktor}")
                 implementation("io.ktor:ktor-websockets:${Vof.ktor}")
                 implementation("io.ktor:ktor-server-sessions:${Vof.ktor}")
-
                 implementation("io.ktor:ktor-client-core-jvm:${Vof.ktor}")
                 implementation("io.ktor:ktor-client-websockets-jvm:${Vof.ktor}")
             }
@@ -126,31 +113,26 @@ kotlin {
 
         val jvmTest by getting {
             dependencies {
-                implementation(kotlin("reflect"))
-                implementation(kotlin("test"))
-                implementation("org.spekframework.spek2:spek-dsl-jvm:${Vof.spek}")
+                implementation(kotlin("reflect", Vof.kotlin))
+                implementation(kotlin("test", Vof.kotlin))
                 implementation("io.mockk:mockk:${Vof.mockk}")
                 implementation("io.ktor:ktor-server-test-host:${Vof.ktor}")
                 implementation("io.ktor:ktor-client-cio:${Vof.ktor}")
-                runtimeOnly("org.spekframework.spek2:spek-runner-junit5:${Vof.spek}")
-                runtimeOnly("org.junit.platform:junit-platform-launcher:${Vof.junitPlatform}")
             }
         }
 
         tasks {
-            registerCommonTasks()
+            register<Jar>("javadocJar") {
+                archiveClassifier.set("javadoc")
+                from(dokkaJavadoc)
+            }
         }
     }
 
     publishing {
         publications.withType<MavenPublication>().apply {
             val jvm by getting {
-                artifactId = "core-jvm"
                 artifact(tasks.getByName("javadocJar"))
-            }
-
-            val metadata by getting {
-                artifactId = "core-common"
             }
         }.forEach {
             it.configureMavenPom(isRelease, project)

@@ -16,4 +16,3 @@
  */
 
 rootProject.name = "kuantify"
-enableFeaturePreview("GRADLE_METADATA")
