@@ -20,7 +20,7 @@ object Vof {
 
     // Kotlin extensions
     const val coroutinesX = "1.3.9"
-    const val serializationX = "1.0-M1-1.4.0-rc"
+    const val serializationX = "1.0.0-RC"
 
     // Jetbrains
     const val ktor = "1.4.0"
@@ -30,7 +30,7 @@ object Vof {
 
     // Tenkiv
     const val coral = "2.6.1-dev-1-SNAPSHOT"
-    const val physikal = "3.0.7-dev-1-SNAPSHOT"
+    const val physikal = "3.0.7-dev-2-SNAPSHOT"
 
     // Test
     const val mockk = "1.10.0"
