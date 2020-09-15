@@ -99,7 +99,7 @@ kotlin {
                 implementation("io.github.microutils:kotlin-logging:${Vof.kotlinLogging}")
 
                 //Serialization
-                api("org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Vof.serializationX}")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-core:${Vof.serializationX}")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:${Vof.serializationX}")
 
                 //ktor
