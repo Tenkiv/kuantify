@@ -18,6 +18,7 @@
 package org.tenkiv.kuantify.lib
 
 import kotlinx.coroutines.*
+import org.tenkiv.coral.*
 import java.net.*
 import java.nio.*
 import java.nio.channels.*
@@ -43,8 +44,8 @@ public suspend fun AsynchronousFileChannel.aLock(): FileLock = suspendCancellabl
  * *closes the underlying channel* and immediately resumes with [CancellationException].
  */
 public suspend fun AsynchronousFileChannel.aLock(
-    position: Long,
-    size: Long,
+    position: Int64,
+    size: Int64,
     shared: Boolean
 ): FileLock = suspendCancellableCoroutine<FileLock> { cont ->
     lock(position, size, shared, cont, asyncIOHandler())
@@ -59,8 +60,8 @@ public suspend fun AsynchronousFileChannel.aLock(
  */
 public suspend fun AsynchronousFileChannel.aRead(
     buf: ByteBuffer,
-    position: Long
-): Int = suspendCancellableCoroutine<Int> { cont ->
+    position: Int64
+): Int32 = suspendCancellableCoroutine<Int32> { cont ->
     read(buf, position, cont, asyncIOHandler())
     closeOnCancel(cont)
 }
@@ -73,8 +74,8 @@ public suspend fun AsynchronousFileChannel.aRead(
  */
 public suspend fun AsynchronousFileChannel.aWrite(
     buf: ByteBuffer,
-    position: Long
-): Int = suspendCancellableCoroutine<Int> { cont ->
+    position: Int64
+): Int32 = suspendCancellableCoroutine<Int32> { cont ->
     write(buf, position, cont, asyncIOHandler())
     closeOnCancel(cont)
 }
@@ -112,9 +113,9 @@ public suspend fun AsynchronousSocketChannel.aConnect(
  */
 public suspend fun AsynchronousSocketChannel.aRead(
     buf: ByteBuffer,
-    timeout: Long = 0L,
+    timeout: Int64 = 0L,
     timeUnit: TimeUnit = TimeUnit.MILLISECONDS
-): Int = suspendCancellableCoroutine<Int> { cont ->
+): Int32 = suspendCancellableCoroutine<Int32> { cont ->
     read(buf, timeout, timeUnit, cont, asyncIOHandler())
     closeOnCancel(cont)
 }
@@ -127,9 +128,9 @@ public suspend fun AsynchronousSocketChannel.aRead(
  */
 public suspend fun AsynchronousSocketChannel.aWrite(
     buf: ByteBuffer,
-    timeout: Long = 0L,
+    timeout: Int64 = 0L,
     timeUnit: TimeUnit = TimeUnit.MILLISECONDS
-): Int = suspendCancellableCoroutine<Int> { cont ->
+): Int32 = suspendCancellableCoroutine<Int32> { cont ->
     write(buf, timeout, timeUnit, cont, asyncIOHandler())
     closeOnCancel(cont)
 }

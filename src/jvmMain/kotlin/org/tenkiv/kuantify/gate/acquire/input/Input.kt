@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.gate.acquire.input
 
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.acquire.*
@@ -56,7 +57,7 @@ private class RangedQuantityInputBox<QT : Quantity<QT>>(
     override val valueRange: ClosedFloatingPointRange<DaqcQuantity<QT>>
 ) : RangedQuantityInput<QT>, QuantityInput<QT> by input {
 
-    override val daqcDataSize: Int
+    override val daqcDataSize: Int32
         get() = input.daqcDataSize
 
 }

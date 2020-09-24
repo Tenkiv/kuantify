@@ -17,9 +17,11 @@
 
 package org.tenkiv.kuantify.fs.networking
 
+import org.tenkiv.coral.*
+
 public object RC {
     public const val HTTP: String = "http://"
-    public const val DEFAULT_PORT: Int = 8080
+    public const val DEFAULT_PORT: Int32 = 8080
 
     //HTTP routes
     public const val WEBSOCKET: String = "/ws"

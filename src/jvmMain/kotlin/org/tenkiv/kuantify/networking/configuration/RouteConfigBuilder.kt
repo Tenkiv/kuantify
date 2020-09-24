@@ -20,6 +20,7 @@ package org.tenkiv.kuantify.networking.configuration
 import kotlinx.coroutines.channels.*
 import kotlinx.serialization.*
 import mu.*
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.*
 import org.tenkiv.kuantify.networking.communication.*
 
@@ -176,7 +177,7 @@ public class MessageBindingBuilder<BoundT, SerialT> @PublishedApi internal const
 
     @NetworkingDsl
     public fun receive(
-        networkChannelCapacity: Int = Channel.BUFFERED,
+        networkChannelCapacity: Int32 = Channel.BUFFERED,
         receiveOp: MessageReceiver<SerialT>
     ) {
         receive = NetworkMessageReceiver(Channel(networkChannelCapacity), receiveOp)
@@ -201,7 +202,7 @@ public class StringSerializingMbb<BoundT> @PublishedApi internal constructor(
 
     @NetworkingDsl
     public inline fun receive(
-        networkChannelCapacity: Int = Channel.BUFFERED,
+        networkChannelCapacity: Int32 = Channel.BUFFERED,
         crossinline receiveOp: suspend (BoundT) -> Unit
     ) {
         parent.receive = NetworkMessageReceiver(Channel(networkChannelCapacity)) { value ->
@@ -252,7 +253,7 @@ public class BinarySerializingMbb<BoundT> @PublishedApi internal constructor(
 
     @NetworkingDsl
     public inline fun receive(
-        networkChannelCapacity: Int = Channel.BUFFERED,
+        networkChannelCapacity: Int32 = Channel.BUFFERED,
         crossinline receiveOp: suspend (BoundT) -> Unit
     ) {
         parent.receive = NetworkMessageReceiver(Channel(networkChannelCapacity)) { value ->

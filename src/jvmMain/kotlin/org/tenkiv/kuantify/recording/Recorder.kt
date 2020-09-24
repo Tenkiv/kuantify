@@ -20,6 +20,7 @@ package org.tenkiv.kuantify.recording
 import kotlinx.coroutines.*
 import kotlinx.coroutines.time.*
 import kotlinx.datetime.*
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.*
@@ -101,7 +102,7 @@ public sealed class StorageFrequency {
      *
      * @param number The interval of samples at which to store a new sample.
      */
-    public data class PerNumMeasurements(val number: Int) : StorageFrequency()
+    public data class PerNumMeasurements(val number: Int32) : StorageFrequency()
 }
 
 /**
@@ -132,9 +133,9 @@ public sealed class StorageSamples : StorageLength(), Comparable<StorageSamples>
      *
      * @param numSamples The number of samples to keep in memory or on disk.
      */
-    public data class Number(val numSamples: Int) : StorageSamples() {
+    public data class Number(val numSamples: Int32) : StorageSamples() {
 
-        public override fun compareTo(other: StorageSamples): Int =
+        public override fun compareTo(other: StorageSamples): Int32 =
             when (other) {
                 is All -> -1
                 is Number -> numSamples.compareTo(other.numSamples)
@@ -153,7 +154,7 @@ public sealed class StorageDuration : StorageLength(), Comparable<StorageDuratio
      */
     public object Forever : StorageDuration() {
 
-        public override fun compareTo(other: StorageDuration): Int =
+        public override fun compareTo(other: StorageDuration): Int32 =
             when (other) {
                 is Forever -> 0
                 else -> 1

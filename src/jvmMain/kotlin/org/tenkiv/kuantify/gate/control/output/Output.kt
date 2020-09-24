@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.gate.control.output
 
+import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.gate.control.*
@@ -43,7 +44,7 @@ public interface QuantityOutput<QT : Quantity<QT>> : Output<DaqcQuantity<QT>> {
      * for this [Output]
      */
     public fun adjustOutputIfInitialized(
-        adjustment: (Double) -> Double
+        adjustment: (Float64) -> Float64
     ): SettingViability {
         val setting = valueOrNull
         return if (setting != null) {
@@ -59,7 +60,7 @@ public interface QuantityOutput<QT : Quantity<QT>> : Output<DaqcQuantity<QT>> {
      * If there hasn't yet been a setting provided for this output, this function will suspend until there is one.
      */
     public suspend fun adjustOutput(
-        adjustment: (Double) -> Double
+        adjustment: (Float64) -> Float64
     ): SettingViability {
         val quantity = getValue().value
         return setOutputIfViable(adjustment(quantity.inOwnUnit).toQuantity(quantity.unit))
@@ -97,7 +98,7 @@ public interface BinaryStateOutput : RangedOutput<BinaryState> {
 public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuantity<Q>>, QuantityOutput<Q> {
 
     public fun increaseByRatioOfRange(
-        ratioIncrease: Double
+        ratioIncrease: Float64
     ): SettingViability {
         val setting = valueOrNull
 
@@ -114,7 +115,7 @@ public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuanti
     }
 
     public fun decreaseByRatioOfRange(
-        ratioDecrease: Double
+        ratioDecrease: Float64
     ): SettingViability = increaseByRatioOfRange(-ratioDecrease)
 
     /**
@@ -136,7 +137,7 @@ public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuanti
     ): SettingViability = setOutputToRatioMaximum(percent.toFloat64In(Percent) / 100)
 
     public fun setOutputToRatioMaximum(
-        ratio: Double
+        ratio: Float64
     ): SettingViability = setOutputIfViable(ratioOfRange(ratio))
 
     /**
@@ -150,7 +151,7 @@ public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuanti
         return setOutputIfViable(setting)
     }
 
-    private fun ratioOfRange(ratio: Double): Quantity<Q> {
+    private fun ratioOfRange(ratio: Float64): Quantity<Q> {
         val min = valueRange.start.toFloat64InDefaultUnit()
         val max = valueRange.endInclusive.toFloat64InDefaultUnit()
 

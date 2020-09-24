@@ -37,7 +37,7 @@ public interface DaqcChannel<out T : DaqcData> : DaqcGate {
     /**
      * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcChannel]
      */
-    public val daqcDataSize: Int
+    public val daqcDataSize: Int32
 
     /**
      * Gets the current value or returns null.
@@ -73,7 +73,7 @@ public interface IOStrand<out T : DaqcValue> : DaqcChannel<T> {
      *
      * [IOStrand]s only work with [DaqcValue] so this is always 1 in all [IOStrand]s
      */
-    public override val daqcDataSize: Int get() = 1
+    public override val daqcDataSize: Int32 get() = 1
 }
 
 public interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Comparable<T> {
@@ -86,17 +86,17 @@ public interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Compar
 
 //TODO: Add more versions of this function, like one that suspends until it has a value.
 /**
- * @return a [Double] representation of the current value normalised to be between 0 and 1 based on the
+ * @return a [Float64] representation of the current value normalised to be between 0 and 1 based on the
  * [valueRange], null if the updatable does not yet have a value or the value is outside the [valueRange].
  */
-public fun RangedIOStrand<*>.getNormalisedDoubleOrNull(): Double? {
+public fun RangedIOStrand<*>.getNormalisedFloat64OrNull(): Float64? {
     val value = valueOrNull?.value
 
-    if (value is BinaryState?) return value?.toDouble()
+    if (value is BinaryState?) return value?.toFloat64()
 
     val min = valueRange.start.toFloat64InDefaultUnit()
     val max = valueRange.endInclusive.toFloat64InDefaultUnit()
-    val valueDouble = value?.toFloat64InDefaultUnit()
+    val valueFloat64 = value?.toFloat64InDefaultUnit()
 
-    return valueDouble?.normalToOrNull(min..max)
+    return valueFloat64?.normalToOrNull(min..max)
 }

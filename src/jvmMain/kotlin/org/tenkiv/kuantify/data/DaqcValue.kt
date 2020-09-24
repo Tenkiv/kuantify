@@ -28,9 +28,9 @@ public interface DaqcValue : DaqcData {
     public override val size: UInt32 get() = 1u
 
     /**
-     * Gets the value of the [DaqcValue] as a [Int] in the default unit representation.
+     * Gets the value of the [DaqcValue] as a [Int32] in the default unit representation.
      *
-     * @return The value of this [DaqcValue] as a [Int].
+     * @return The value of this [DaqcValue] as a [Int32].
      */
     public fun toInt32InDefaultUnit(): Int32
 
@@ -42,16 +42,16 @@ public interface DaqcValue : DaqcData {
     public fun toInt64InDefaultUnit(): Int64
 
     /**
-     * Gets the value of the [DaqcValue] as a [Float] in the default unit representation.
+     * Gets the value of the [DaqcValue] as a [Float32] in the default unit representation.
      *
-     * @return The value of this [DaqcValue] as a [Float].
+     * @return The value of this [DaqcValue] as a [Float32].
      */
     public fun toFloat32InDefaultUnit(): Float32
 
     /**
-     * Gets the value of the [DaqcValue] as a [Double] in the default unit representation.
+     * Gets the value of the [DaqcValue] as a [Float64] in the default unit representation.
      *
-     * @return The value of this [DaqcValue] as a [Double].
+     * @return The value of this [DaqcValue] as a [Float64].
      */
     public fun toFloat64InDefaultUnit(): Float64
 
@@ -80,39 +80,39 @@ public sealed class BinaryState : DaqcValue, Comparable<BinaryState> {
     public abstract fun toShort(): Short
 
     /**
-     * Returns the binary value as a [Int]. This will always return a value 1 or 0.
+     * Returns the binary value as a [Int32]. This will always return a value 1 or 0.
      *
-     * @return The binary value as a [Int]
+     * @return The binary value as a [Int32]
      */
-    public abstract fun toInt(): Int
+    public abstract fun toInt32(): Int32
 
     /**
-     * Returns the binary value as a [Long]. This will always return a value 1 or 0.
+     * Returns the binary value as a [Int64]. This will always return a value 1 or 0.
      *
-     * @return The binary value as a [Long]
+     * @return The binary value as a [Int64]
      */
-    public abstract fun toLong(): Long
+    public abstract fun toInt64(): Int64
 
     /**
-     * Returns the binary value as a [Byte]. This will always return a value 1 or 0.
+     * Returns the binary value as a [Int8]. This will always return a value 1 or 0.
      *
-     * @return The binary value as a [Byte]
+     * @return The binary value as a [Int8]
      */
-    public abstract fun toByte(): Byte
+    public abstract fun toInt8(): Int8
 
     /**
-     * Returns the binary value as a [Float]. This will always return a value 1 or 0.
+     * Returns the binary value as a [Float32]. This will always return a value 1 or 0.
      *
-     * @return The binary value as a [Float]
+     * @return The binary value as a [Float32]
      */
-    public abstract fun toFloat(): Float
+    public abstract fun toFloat32(): Float32
 
     /**
-     * Returns the binary value as a [Double]. This will always return a value 1 or 0.
+     * Returns the binary value as a [Float64]. This will always return a value 1 or 0.
      *
-     * @return The binary value as a [Double]
+     * @return The binary value as a [Float64]
      */
-    public abstract fun toDouble(): Double
+    public abstract fun toFloat64(): Float64
 
     /**
      * Returns a range of [BinaryState]s. There are only two binary states.
@@ -133,7 +133,7 @@ public sealed class BinaryState : DaqcValue, Comparable<BinaryState> {
     public object High : BinaryState() {
 
         public const val SHORT_REPRESENTATION: Short = 1
-        public const val BYTE_REPRESENTATION: Byte = 1
+        public const val BYTE_REPRESENTATION: Int8 = 1
 
         public override fun compareTo(other: BinaryState): Int =
             when (other) {
@@ -145,25 +145,25 @@ public sealed class BinaryState : DaqcValue, Comparable<BinaryState> {
 
         public override fun toShort(): Short = SHORT_REPRESENTATION
 
-        public override fun toInt(): Int = 1
+        public override fun toInt32(): Int32 = 1
 
-        public override fun toLong(): Long = 1L
+        public override fun toInt64(): Int64 = 1L
 
-        public override fun toByte(): Byte = BYTE_REPRESENTATION
+        public override fun toInt8(): Int8 = BYTE_REPRESENTATION
 
-        public override fun toFloat(): Float = 1f
+        public override fun toFloat32(): Float32 = 1f
 
-        public override fun toDouble(): Double = 1.0
+        public override fun toFloat64(): Float64 = 1.0
 
         public override fun toString(): String = "BinaryState.HIGH"
 
-        override fun toInt32InDefaultUnit(): Int32 = toInt()
+        override fun toInt32InDefaultUnit(): Int32 = toInt32()
 
-        override fun toInt64InDefaultUnit(): Int64 = toLong()
+        override fun toInt64InDefaultUnit(): Int64 = toInt64()
 
-        override fun toFloat32InDefaultUnit(): Float32 = toFloat()
+        override fun toFloat32InDefaultUnit(): Float32 = toFloat32()
 
-        override fun toFloat64InDefaultUnit(): Float64 = toDouble()
+        override fun toFloat64InDefaultUnit(): Float64 = toFloat64()
     }
 
     /**
@@ -174,7 +174,7 @@ public sealed class BinaryState : DaqcValue, Comparable<BinaryState> {
     public object Low : BinaryState() {
 
         public const val SHORT_REPRESENTATION: Short = 0
-        public const val BYTE_REPRESENTATION: Byte = 0
+        public const val BYTE_REPRESENTATION: Int8 = 0
 
         public override fun compareTo(other: BinaryState): Int =
             when (other) {
@@ -186,25 +186,25 @@ public sealed class BinaryState : DaqcValue, Comparable<BinaryState> {
 
         public override fun toShort(): Short = SHORT_REPRESENTATION
 
-        public override fun toInt(): Int = 0
+        public override fun toInt32(): Int32 = 0
 
-        public override fun toLong(): Long = 0L
+        public override fun toInt64(): Int64 = 0L
 
-        public override fun toByte(): Byte = BYTE_REPRESENTATION
+        public override fun toInt8(): Int8 = BYTE_REPRESENTATION
 
-        public override fun toFloat(): Float = 0f
+        public override fun toFloat32(): Float32 = 0f
 
-        public override fun toDouble(): Double = 0.0
+        public override fun toFloat64(): Float64 = 0.0
 
         public override fun toString(): String = "BinaryState.LOW"
 
-        override fun toInt32InDefaultUnit(): Int32 = toInt()
+        override fun toInt32InDefaultUnit(): Int32 = toInt32()
 
-        override fun toInt64InDefaultUnit(): Int64 = toLong()
+        override fun toInt64InDefaultUnit(): Int64 = toInt64()
 
-        override fun toFloat32InDefaultUnit(): Float32 = toFloat()
+        override fun toFloat32InDefaultUnit(): Float32 = toFloat32()
 
-        override fun toFloat64InDefaultUnit(): Float64 = toDouble()
+        override fun toFloat64InDefaultUnit(): Float64 = toFloat64()
     }
 
     public companion object {

@@ -18,6 +18,7 @@
 package org.tenkiv.kuantify.lib.physikal
 
 import kotlinx.serialization.*
+import org.tenkiv.coral.*
 import physikal.*
 import physikal.types.*
 import kotlin.reflect.*
@@ -26,7 +27,7 @@ public interface Frequency : Quantity<Frequency>
 
 @Serializable
 @SerialName(Hertz.SYMBOL)
-public class HertzQuantity(override val inOwnUnit: Double) : Quantity<Frequency> {
+public class HertzQuantity(override val inOwnUnit: Float64) : Quantity<Frequency> {
     override val unit: PhysicalUnit<Frequency> get() = Hertz
 
     override fun convertToDefaultUnit(): Quantity<Frequency> = this
@@ -34,7 +35,7 @@ public class HertzQuantity(override val inOwnUnit: Double) : Quantity<Frequency>
     override fun toString(): String = "$inOwnUnit ${unit.symbol}"
 }
 
-public val Double.hertz: Quantity<Frequency> get() = HertzQuantity(this)
+public val Float64.hertz: Quantity<Frequency> get() = HertzQuantity(this)
 
 @Serializable
 @SerialName(Hertz.SYMBOL)
@@ -45,9 +46,9 @@ public object Hertz : PhysicalUnit<Frequency> {
     public override val quantityType: KClass<Frequency> get() = Frequency::class
     public override val symbol: String get() = SYMBOL
 
-    public override fun quantityOf(amount: Double): Quantity<Frequency> = amount.hertz
+    public override fun quantityOf(amount: Float64): Quantity<Frequency> = amount.hertz
 
-    public override fun quantityOfInDefaultUnit(amount: Double): Quantity<Frequency> = amount.hertz
+    public override fun quantityOfInDefaultUnit(amount: Float64): Quantity<Frequency> = amount.hertz
 
     public override fun toString(): String = Second.SYMBOL
 }

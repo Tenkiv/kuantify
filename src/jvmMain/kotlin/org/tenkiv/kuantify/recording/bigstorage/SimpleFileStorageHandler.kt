@@ -98,7 +98,7 @@ public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<D
         }
     }
 
-    private fun storeForNumSamplesInit(numSamples: Int) {
+    private fun storeForNumSamplesInit(numSamples: Int32) {
         launch {
             val fileCreationInterval = numSamples / 10
             val fileExpiresIn = (numSamples + numSamples / 9) + 1
@@ -188,7 +188,7 @@ public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<D
             }
         }
 
-        internal constructor(expiresAfterNumSamples: Int?) {
+        internal constructor(expiresAfterNumSamples: Int32?) {
             if (expiresAfterNumSamples != null) {
                 launch(Dispatchers.Daqc) {
                     val receiveChannel = channel.openSubscription()
@@ -263,7 +263,7 @@ public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<D
                         if (filter(valueInstant)) complyingObjects += valueInstant
                         currentObjectBytes.reset()
                     } else {
-                        currentObjectBytes.write(byte.toInt())
+                        currentObjectBytes.write(byte.toInt32())
                     }
                 }
                 position += 100
@@ -288,13 +288,13 @@ public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<D
 
         //TODO: Change to ReadWriteMutex
         private val recorderUidMutex = Mutex()
-        private var recorderUid: Long? = null
+        private var recorderUid: Int64? = null
 
         private suspend fun getRecorderUid(): String =
             recorderUidMutex.withLock {
                 val lastUid =
                     recorderUid
-                val thisUid: Long
+                val thisUid: Int64
 
                 if (lastUid != null) {
                     thisUid = lastUid + 1

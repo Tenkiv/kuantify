@@ -80,16 +80,16 @@ public class ThermocoupleK internal constructor(
         }
 
         fun calculate(
-            c0: Double,
-            c1: Double,
-            c2: Double,
-            c3: Double,
-            c4: Double,
-            c5: Double,
-            c6: Double,
-            c7: Double,
-            c8: Double,
-            c9: Double
+            c0: Float64,
+            c1: Float64,
+            c2: Float64,
+            c3: Float64,
+            c4: Float64,
+            c5: Float64,
+            c6: Float64,
+            c7: Float64,
+            c8: Float64,
+            c9: Float64
         ) = ((c0 +
                 (c1 * mv) +
                 (c2 * mv.pow(2.0)) +
