@@ -29,7 +29,7 @@ private val logger = KotlinLogging.logger {}
 public abstract class NetworkCommunicator<SerialT>(
     device: Device
 ) : CoroutineScope {
-    protected val job = Job(device.coroutineContext[Job])
+    protected val job: Job = Job(device.coroutineContext[Job])
 
     public final override val coroutineContext: CoroutineContext = device.coroutineContext + job
 

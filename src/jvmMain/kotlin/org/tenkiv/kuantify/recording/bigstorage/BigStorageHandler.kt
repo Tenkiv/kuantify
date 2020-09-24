@@ -22,6 +22,7 @@ import kotlinx.serialization.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
+import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.recording.*
 
 public typealias BigStorageHandlerCreator<DataT, ChannelT> =

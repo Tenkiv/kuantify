@@ -36,7 +36,7 @@ public sealed class SettingViability {
 
     public object Viable : SettingViability()
 
-    public class Unviable(val problem: SettingProblem) : SettingViability() {
+    public class Unviable(public val problem: SettingProblem) : SettingViability() {
 
         init {
             logger.warn {

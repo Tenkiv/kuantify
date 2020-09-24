@@ -20,17 +20,18 @@ object Vof {
 
     // Kotlin extensions
     const val coroutinesX = "1.3.9"
-    const val serializationX = "1.0.0-RC"
+    const val serializationX = "1.0.0-RC2"
+    const val datetimeX = "0.1.0"
 
     // Jetbrains
     const val ktor = "1.4.0"
     const val dokka = "1.4.0"
-    const val kotlinLogging = "1.11.3"
+    const val kotlinLogging = "2.0.3"
     const val atomicfu = "0.14.4"
 
     // Tenkiv
-    const val coral = "2.6.1-dev-1-SNAPSHOT"
-    const val physikal = "3.0.7-dev-2-SNAPSHOT"
+    const val coral = "2.7.1-dev-1-SNAPSHOT"
+    const val physikal = "3.0.8-dev-1-SNAPSHOT"
 
     // Test
     const val mockk = "1.10.0"

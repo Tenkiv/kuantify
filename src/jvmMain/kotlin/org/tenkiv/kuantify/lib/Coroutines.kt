@@ -27,7 +27,7 @@ import kotlinx.coroutines.sync.*
  * many situation can be handled by simply taking an action on every element of a channel and this function provides
  * a convenient, safe way to do that.
  */
-public suspend inline fun <E> ReceiveChannel<E>.consumingOnEach(action: (element: E) -> Unit) = consume {
+public suspend inline fun <E> ReceiveChannel<E>.consumingOnEach(action: (element: E) -> Unit): Unit = consume {
     for (element in this) {
         action(element)
     }

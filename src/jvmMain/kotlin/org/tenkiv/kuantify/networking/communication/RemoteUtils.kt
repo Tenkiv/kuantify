@@ -28,7 +28,7 @@ import org.tenkiv.kuantify.trackable.*
 internal val _privateRemoteUtilsLogger = KotlinLogging.logger {}
 
 @KuantifyComponentBuilder
-public inline fun remoteDeviceCommand(device: RemoteDevice, op: () -> Unit) =
+public inline fun remoteDeviceCommand(device: RemoteDevice, op: () -> Unit): Boolean =
     if (device.isConnected) {
         op()
         true

@@ -47,7 +47,7 @@ public class ThermocoupleK internal constructor(
 ) : AnalogSensor<Temperature>(
     channel,
     maxVoltage = 55.0.millivolts,
-    acceptableError = 18.0.microvolts * acceptableError.toDoubleIn(Kelvin)
+    acceptableError = 18.0.microvolts * acceptableError.toFloat64In(Kelvin)
 ), RangedQuantityInput<Temperature>, CoroutineScope by scope.withNewChildJob() {
     public override val valueRange: ClosedFloatingPointRange<DaqcQuantity<Temperature>> =
         ((-200.0).degreesCelsius..1350.0.degreesCelsius).toDaqc()
@@ -66,7 +66,7 @@ public class ThermocoupleK internal constructor(
 
     protected override suspend fun transformInput(input: DaqcQuantity<Voltage>):
             Result<DaqcQuantity<Temperature>, ProcessFailure> {
-        val mv = input toDoubleIn Millivolt
+        val mv = input toFloat64In Millivolt
         val temperatureReferenceMeasurement = if (waitForTRefValue) {
                 analogInput.device.temperatureReference.getValue()
             } else {
@@ -75,7 +75,7 @@ public class ThermocoupleK internal constructor(
             }
         val temperatureReferenceValue = temperatureReferenceMeasurement.value
 
-        if (temperatureReferenceMeasurement.instant.isOlderThan(oldestTRefValueAge.toJavaDuration())) {
+        if (temperatureReferenceMeasurement.instant.isOlderThan(oldestTRefValueAge)) {
             return Result.Failure(IllegalDependencyState(tRefValueTooOldMsg))
         }
 
@@ -104,11 +104,11 @@ public class ThermocoupleK internal constructor(
                 ).toDaqc()
 
         return if (mv >= -5.891 && mv < 0) {
-                Result.Success(calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0))
+                Result.OK(calculate(0.0, low1, low2, low3, low4, low5, low6, low7, low8, 0.0))
             } else if (mv >= 0 && mv < 20.644) {
-                Result.Success(calculate(0.0, mid1, mid2, mid3, mid4, mid5, mid6, mid7, mid8, mid9))
+                Result.OK(calculate(0.0, mid1, mid2, mid3, mid4, mid5, mid6, mid7, mid8, mid9))
             } else if (mv >= 20.644 && mv < 54.886) {
-                Result.Success(calculate(hi0, hi1, hi2, hi3, hi4, hi5, hi6, 0.0, 0.0, 0.0))
+                Result.OK(calculate(hi0, hi1, hi2, hi3, hi4, hi5, hi6, 0.0, 0.0, 0.0))
             } else {
                 Result.Failure(OutOfRange(valueOutOfRangeMsg(input)))
             }
@@ -148,4 +148,4 @@ public class ThermocoupleK internal constructor(
 public fun CoroutineScope.ThermocoupleK(
     channel: AnalogInput,
     acceptableError: Quantity<Temperature> = 1.0.degreesCelsius
-) = ThermocoupleK(this, channel, acceptableError)
+): ThermocoupleK = ThermocoupleK(this, channel, acceptableError)

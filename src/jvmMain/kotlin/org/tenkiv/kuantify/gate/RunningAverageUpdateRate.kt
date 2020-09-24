@@ -18,15 +18,14 @@
 package org.tenkiv.kuantify.gate
 
 import kotlinx.coroutines.flow.*
-import org.tenkiv.coral.*
+import kotlinx.datetime.*
+import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
 import physikal.*
-import java.time.*
-import java.time.Duration
 import kotlin.time.*
 
 public fun DaqcChannel<*>.runningAverageUpdateRate(
-    avgPeriod: Duration = 10.seconds.toJavaDuration()
+    avgPeriod: Duration = 10.seconds
 ): Flow<Quantity<Frequency>> {
     fun clean(sampleInstants: MutableList<Instant>) {
         val iterator = sampleInstants.listIterator()
@@ -47,7 +46,7 @@ public fun DaqcChannel<*>.runningAverageUpdateRate(
             sampleInstants += it.instant
             clean(sampleInstants)
 
-            val sps = sampleInstants.size / (avgPeriod.toMillis() * 1_000.0)
+            val sps = sampleInstants.size / (avgPeriod.toLongMilliseconds() * 1_000.0)
             emit(sps.hertz)
         }
     }

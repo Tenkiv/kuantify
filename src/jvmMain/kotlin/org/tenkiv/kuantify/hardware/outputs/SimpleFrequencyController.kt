@@ -24,6 +24,7 @@ import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.control.*
 import org.tenkiv.kuantify.gate.control.output.*
 import org.tenkiv.kuantify.hardware.channel.*
+import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.lib.physikal.*
 import org.tenkiv.kuantify.trackable.*
 import physikal.types.*
@@ -34,12 +35,12 @@ import physikal.types.*
  *
  * @param digitalOutput The [DigitalOutput] that is being controlled.
  */
-public class SimpleFrequencyController internal constructor(val digitalOutput: DigitalOutput) :
+public class SimpleFrequencyController internal constructor(public val digitalOutput: DigitalOutput) :
     QuantityOutput<Frequency>, CoroutineScope by digitalOutput {
     override val valueOrNull: ValueInstant<DaqcQuantity<Frequency>>?
         get() = digitalOutput.lastTransitionFrequencySetting
 
-    val avgPeriod: UpdatableQuantity<Time>
+    public val avgPeriod: UpdatableQuantity<Time>
         get() = digitalOutput.avgPeriod
 
     override val isTransceiving: Trackable<Boolean>

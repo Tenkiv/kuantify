@@ -53,7 +53,7 @@ public interface DaqcChannel<out T : DaqcData> : DaqcGate {
     public fun openSubscription(): ReceiveChannel<ValueInstant<T>>
 }
 
-public suspend inline fun <T : DaqcData> DaqcChannel<T>.onEachUpdate(action: (update: ValueInstant<T>) -> Unit) =
+public suspend inline fun <T : DaqcData> DaqcChannel<T>.onEachUpdate(action: (update: ValueInstant<T>) -> Unit): Unit =
     openSubscription().consumingOnEach(action)
 
 /**
@@ -73,7 +73,7 @@ public interface IOStrand<out T : DaqcValue> : DaqcChannel<T> {
      *
      * [IOStrand]s only work with [DaqcValue] so this is always 1 in all [IOStrand]s
      */
-    public override val daqcDataSize get() = 1
+    public override val daqcDataSize: Int get() = 1
 }
 
 public interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Comparable<T> {
@@ -94,9 +94,9 @@ public fun RangedIOStrand<*>.getNormalisedDoubleOrNull(): Double? {
 
     if (value is BinaryState?) return value?.toDouble()
 
-    val min = valueRange.start.toDoubleInDefaultUnit()
-    val max = valueRange.endInclusive.toDoubleInDefaultUnit()
-    val valueDouble = value?.toDoubleInDefaultUnit()
+    val min = valueRange.start.toFloat64InDefaultUnit()
+    val max = valueRange.endInclusive.toFloat64InDefaultUnit()
+    val valueDouble = value?.toFloat64InDefaultUnit()
 
     return valueDouble?.normalToOrNull(min..max)
 }

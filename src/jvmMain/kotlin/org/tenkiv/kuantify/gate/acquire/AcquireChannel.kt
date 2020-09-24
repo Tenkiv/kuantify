@@ -25,7 +25,7 @@ import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.*
 
 public typealias FailedMeasurement = ValueInstant<ProcessFailure>
-public typealias SuccesfulProcessResult<T> = Result.Success<ValueInstant<T>>
+public typealias SuccesfulProcessResult<T> = Result.OK<ValueInstant<T>>
 public typealias ProcessResult<ST> = Result<ValueInstant<ST>, FailedMeasurement>
 
 public interface AcquireChannel<out T : DaqcData> : DaqcChannel<T> {

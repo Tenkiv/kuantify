@@ -74,7 +74,7 @@ public abstract class ProcessedAcquireGate<T : DaqcData, ParentT : DaqcData>(
         launch {
             openParentSubscription().consumingOnEach { measurement ->
                 when (val convertedResult = transformInput(measurement.value)) {
-                    is Result.Success -> update(convertedResult.value at measurement.instant)
+                    is Result.OK -> update(convertedResult.value at measurement.instant)
                     is Result.Failure -> transformationFailure(convertedResult.error at measurement.instant)
                 }
             }

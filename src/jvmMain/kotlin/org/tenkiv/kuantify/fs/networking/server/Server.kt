@@ -27,6 +27,7 @@ import io.ktor.util.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.sync.*
+import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 import mu.*
 import org.tenkiv.coral.*
@@ -125,7 +126,7 @@ internal object KuantifyHost {
 
     @Suppress("NAME_SHADOWING")
     private suspend fun receiveMessage(clientId: ClientId, message: String) {
-        val (route, message) = Serialization.json.parse(NetworkMessage.serializer(), message)
+        val (route, message) = Serialization.json.decodeFromString(NetworkMessage.serializer(), message)
 
         hostedDevice?.receiveNetworkMessage(route, message) ?: deviceNotHosted(clientId, message)
     }

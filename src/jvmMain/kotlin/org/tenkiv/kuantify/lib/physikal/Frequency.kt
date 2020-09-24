@@ -26,7 +26,7 @@ public interface Frequency : Quantity<Frequency>
 
 @Serializable
 @SerialName(Hertz.SYMBOL)
-internal class HertzQuantity(override val inOwnUnit: Double) : Quantity<Frequency> {
+public class HertzQuantity(override val inOwnUnit: Double) : Quantity<Frequency> {
     override val unit: PhysicalUnit<Frequency> get() = Hertz
 
     override fun convertToDefaultUnit(): Quantity<Frequency> = this

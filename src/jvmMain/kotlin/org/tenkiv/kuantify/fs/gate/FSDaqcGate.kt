@@ -47,7 +47,7 @@ public abstract class LocalDaqcGate(
         }
     }
 
-    public override fun routing(route: NetworkRoute<String>) =
+    public override fun routing(route: NetworkRoute<String>): Unit =
         route.add {
             bindPing(RC.FINALIZE) {
                 send(source = finalizeChannel)
@@ -81,7 +81,7 @@ public abstract class FSRemoteDaqcGate(
 
     // stop transceiving
     private val stopTransceivingChannel = Channel<Ping>(Channel.RENDEZVOUS)
-    public final override fun stopTransceiving() =
+    public final override fun stopTransceiving(): Unit =
         modifyConfiguration {
             command {
                 stopTransceivingChannel.offer(Ping)
@@ -103,7 +103,7 @@ public abstract class FSRemoteDaqcGate(
         }
     }
 
-    public override fun routing(route: NetworkRoute<String>) =
+    public override fun routing(route: NetworkRoute<String>): Unit =
         route.add {
             bindPing(RC.FINALIZE) {
                 send(source = finalizeChannel)

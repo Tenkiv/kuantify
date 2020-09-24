@@ -42,7 +42,7 @@ public interface RangedInput<T> : Input<T>, RangedIOStrand<T> where T : DaqcValu
  */
 public interface BinaryStateInput : RangedInput<BinaryState> {
 
-    public override val valueRange get() = BinaryState.range
+    public override val valueRange: ClosedRange<BinaryState> get() = BinaryState.range
 
 }
 

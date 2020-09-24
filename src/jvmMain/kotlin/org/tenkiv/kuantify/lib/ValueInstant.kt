@@ -17,22 +17,35 @@
 
 package org.tenkiv.kuantify.lib
 
+import kotlinx.datetime.*
 import kotlinx.serialization.*
-import org.tenkiv.coral.*
+import kotlinx.serialization.descriptors.*
+import kotlinx.serialization.encoding.*
 import org.tenkiv.kuantify.data.*
 import physikal.*
-import java.time.*
 
 public typealias Measurement = ValueInstant<DaqcValue>
 public typealias BinaryStateMeasurement = ValueInstant<BinaryState>
 public typealias QuantityMeasurement<QT> = ValueInstant<DaqcQuantity<QT>>
 
-@Serializer(forClass = ValueInstant::class)
-public class ValueInstantSerializer<T : Any>(val valueSerializer: KSerializer<T>) : KSerializer<ValueInstant<T>> {
+public infix fun <T> T.at(instant: Instant): ValueInstant<T> = ValueInstant(this, instant)
 
-    public override val descriptor: SerialDescriptor = SerialDescriptor("ValueInstantSerializer") {
-            element("value", valueSerializer.descriptor)
-            element("instant", InstantSerializer.descriptor)
+public fun <T> T.now(): ValueInstant<T> = ValueInstant(this, Clock.System.now())
+
+public fun <T> Iterable<ValueInstant<T>>.getDataInRange(instantRange: ClosedRange<Instant>): List<ValueInstant<T>> =
+    this.filter { it.instant in instantRange }
+
+@Serializable(with = ValueInstantSerializer::class)
+public data class ValueInstant<out T>(val value: T, val instant: Instant)
+
+//TODO: Need to look into instant more. Serializing only as milliseconds may actually be losing resolution and we
+// may need that resolution.
+public class ValueInstantSerializer<T : Any>(public val valueSerializer: KSerializer<T>) :
+    KSerializer<ValueInstant<T>> {
+
+    public override val descriptor: SerialDescriptor = buildClassSerialDescriptor("ValueInstantSerializer") {
+        element("value", valueSerializer.descriptor)
+        element("instant", InstantSerializer.descriptor)
     }
 
     public override fun serialize(encoder: Encoder, value: ValueInstant<T>) {
@@ -48,7 +61,7 @@ public class ValueInstantSerializer<T : Any>(val valueSerializer: KSerializer<T>
         lateinit var instant: Instant
         loop@ while (true) {
             when (val i = inp.decodeElementIndex(descriptor)) {
-                CompositeDecoder.READ_DONE -> break@loop
+                CompositeDecoder.DECODE_DONE -> break@loop
                 0 -> value = inp.decodeSerializableElement(descriptor, i, valueSerializer)
                 1 -> instant = inp.decodeSerializableElement(descriptor, i, InstantSerializer)
                 else -> throw SerializationException("Unknown index $i")
@@ -63,24 +76,22 @@ public class ValueInstantSerializer<T : Any>(val valueSerializer: KSerializer<T>
 private val binaryStateMeasurementSerializer: KSerializer<BinaryStateMeasurement> =
     ValueInstantSerializer(BinaryState.serializer())
 
-public fun <T : Any> ValueInstant.Companion.serializer(valueSerializer: KSerializer<T>) =
-    ValueInstantSerializer(valueSerializer)
+public fun ValueInstant.Companion.binaryStateSerializer(): KSerializer<ValueInstant<BinaryState>> =
+    binaryStateMeasurementSerializer
 
-public fun ValueInstant.Companion.binaryStateSerializer() = binaryStateMeasurementSerializer
+public fun <QT : Quantity<QT>> ValueInstant.Companion.quantitySerializer(): KSerializer<ValueInstant<DaqcQuantity<QT>>> =
+    serializer(DaqcQuantity.serializer())
 
-public fun <QT : Quantity<QT>> ValueInstant.Companion.quantitySerializer() = serializer(DaqcQuantity.serializer<QT>())
-
-@Serializer(forClass = Instant::class)
 public object InstantSerializer : KSerializer<Instant> {
 
-    public override val descriptor: SerialDescriptor = PrimitiveDescriptor("Instant", PrimitiveKind.LONG)
+    public override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Instant", PrimitiveKind.LONG)
 
     public override fun deserialize(decoder: Decoder): Instant {
-        return Instant.ofEpochMilli(decoder.decodeLong())
+        return Instant.fromEpochMilliseconds(decoder.decodeLong())
     }
 
     public override fun serialize(encoder: Encoder, value: Instant) {
-        encoder.encodeLong(value.toEpochMilli())
+        encoder.encodeLong(value.toEpochMilliseconds())
     }
 
 }

@@ -27,19 +27,23 @@ internal typealias Serialization = KuantifySerialization
 
 public object KuantifySerialization {
 
-    public val module: SerialModule = SerializersModule {
+    public val module: SerializersModule = SerializersModule {
         include(physikalSerialModule)
 
         polymorphic(Quantity::class) {
-            HertzQuantity::class with HertzQuantity.serializer()
+            subclass(HertzQuantity::class)
         }
 
         polymorphic(PhysicalUnit::class) {
-            Hertz::class with Hertz.serializer()
+            subclass(Hertz::class)
         }
     }
 
-    public val json: Json = Json(context = module)
+    public val json: Json = Json {
+        serializersModule = module
+    }
 
-    public val cbor: Cbor = Cbor(context = module)
+    public val cbor: Cbor = Cbor {
+        serializersModule = module
+    }
 }

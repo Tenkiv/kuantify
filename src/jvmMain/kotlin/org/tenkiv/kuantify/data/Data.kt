@@ -17,6 +17,8 @@
 
 package org.tenkiv.kuantify.data
 
+import org.tenkiv.coral.*
+
 /**
  * Interface for anything that can be accurately represented as a [DaqcValue] or multiple [DaqcValue]s.
  *
@@ -26,7 +28,7 @@ public interface DaqcData {
     /**
      * The number of [DaqcValue]s this DaqcData is represented by.
      */
-    public val size: Int
+    public val size: UInt32
 
     // TODO: Keep looking / waiting for similar data structure that forces immutability
     public fun toDaqcValues(): List<DaqcValue>

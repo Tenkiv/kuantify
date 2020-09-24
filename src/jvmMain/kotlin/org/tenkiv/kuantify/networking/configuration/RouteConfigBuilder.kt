@@ -88,7 +88,7 @@ public class RouteConfig<SerialT>(
         )
     }
 
-    companion object {
+    public companion object {
 
         public fun formatPathStandard(path: Path): String {
             var result = ""
@@ -195,7 +195,7 @@ public class StringSerializingMbb<BoundT> @PublishedApi internal constructor(
     @NetworkingDsl
     public fun send(source: ReceiveChannel<BoundT>) {
         parent.send = LocalUpdateSender(source) { value ->
-            formatter.stringify(serializer, value)
+            formatter.encodeToString(serializer, value)
         }
     }
 
@@ -205,7 +205,7 @@ public class StringSerializingMbb<BoundT> @PublishedApi internal constructor(
         crossinline receiveOp: suspend (BoundT) -> Unit
     ) {
         parent.receive = NetworkMessageReceiver(Channel(networkChannelCapacity)) { value ->
-            receiveOp(formatter.parse(serializer, value))
+            receiveOp(formatter.decodeFromString(serializer, value))
         }
     }
 
@@ -246,7 +246,7 @@ public class BinarySerializingMbb<BoundT> @PublishedApi internal constructor(
     @NetworkingDsl
     public fun send(source: ReceiveChannel<BoundT>) {
         parent.send = LocalUpdateSender(source) { value ->
-            formatter.dump(serializer, value)
+            formatter.encodeToByteArray(serializer, value)
         }
     }
 
@@ -256,7 +256,7 @@ public class BinarySerializingMbb<BoundT> @PublishedApi internal constructor(
         crossinline receiveOp: suspend (BoundT) -> Unit
     ) {
         parent.receive = NetworkMessageReceiver(Channel(networkChannelCapacity)) { value ->
-            receiveOp(formatter.load(serializer, value))
+            receiveOp(formatter.decodeFromByteArray(serializer, value))
         }
     }
 

@@ -45,7 +45,7 @@ public abstract class ProcessedControlGate<T : DaqcData, ParentT: DaqcData>(
 
     public override fun setOutputIfViable(setting: T): SettingViability =
         when(val result = transformToParentType(setting)) {
-            is Result.Success -> setParentOutput(result.value)
+            is Result.OK -> setParentOutput(result.value)
             is Result.Failure -> unviableSetting(result.error)
         }
 

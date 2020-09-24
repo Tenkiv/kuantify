@@ -15,38 +15,13 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.tenkiv.kuantify.trackable
+package org.tenkiv.kuantify.lib
 
-import kotlinx.coroutines.channels.*
-import org.tenkiv.kuantify.lib.*
-import physikal.*
+import kotlinx.datetime.*
+import kotlinx.datetime.Clock
+import kotlin.time.*
 
-public typealias TrackableQuantity<QT> = Trackable<Quantity<QT>>
+//TODO: Check that this is working correctly
+public fun Instant.isOlderThan(age: Duration, clock: Clock = Clock.System): Boolean = (this - clock.now()) > age
 
-/**
- * The base interface which defines objects which have the ability to update their value.
- */
-public interface Trackable<out T : Any> {
-    /**
-     * Gets the current value or returns null.
-     *
-     * @return The value or null.
-     */
-    public val valueOrNull: T?
-
-    /**
-     * Creates a subscription to updates to this [Trackable]. This [Channel] is always [Channel.CONFLATED] so
-     * the current will will be received immediately upon subscription.
-     */
-    public fun openSubscription(): ReceiveChannel<T>
-}
-
-public suspend inline fun <T : Any> Trackable<T>.onEachUpdate(action: (update: T) -> Unit): Unit =
-    openSubscription().consumingOnEach(action)
-
-/**
- * Gets the current value or suspends and waits for one to exist.
- *
- * @return The current value.
- */
-public suspend fun <T : Any> Trackable<T>.get(): T = valueOrNull ?: openSubscription().consume { receive() }
+public infix fun Instant.isBefore(other: Instant): Boolean = this < other

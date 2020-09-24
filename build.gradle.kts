@@ -37,6 +37,7 @@ repositories {
     mavenCentral()
     jcenter()
     google()
+    maven(url = "https://kotlin.bintray.com/kotlinx/")
     maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
 }
 
@@ -49,6 +50,8 @@ plugins {
 }
 
 kotlin {
+    explicitApi()
+
     jvm {
         compilations.all {
             kotlinOptions {
@@ -61,6 +64,8 @@ kotlin {
         all {
             languageSettings.enableLanguageFeature("InlineClasses")
             languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
+            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
+            languageSettings.useExperimentalAnnotation("kotlinx.serialization.ExperimentalSerializationApi")
             languageSettings.useExperimentalAnnotation("org.tenkiv.kuantify.KuantifyComponentBuilder")
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
             languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
@@ -72,7 +77,31 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
+                //General kotlin utilities
+                api("org.tenkiv.coral:coral:${Vof.coral}")
+                implementation("org.jetbrains.kotlinx:atomicfu:${Vof.atomicfu}")
+
+                //Coroutines
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Vof.coroutinesX}")
+
+                //Serialization
+                api("org.jetbrains.kotlinx:kotlinx-serialization-core:${Vof.serializationX}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Vof.serializationX}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:${Vof.serializationX}")
+
+                //ktor
+                implementation("io.ktor:ktor-websockets:${Vof.ktor}")
+                implementation("io.ktor:ktor-client-core:${Vof.ktor}")
+                implementation("io.ktor:ktor-client-websockets:${Vof.ktor}")
+
+                //Logging
+                implementation("io.github.microutils:kotlin-logging:${Vof.kotlinLogging}")
+
+                //Units
                 implementation("org.tenkiv.physikal:physikal:${Vof.physikal}")
+
+                //Time
+                api("org.jetbrains.kotlinx:kotlinx-datetime:${Vof.datetimeX}")
             }
         }
 
@@ -86,28 +115,15 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 //General kotlin utilities
-                api("org.tenkiv.coral:coral-jvm:${Vof.coral}")
                 implementation(kotlin("reflect", Vof.kotlin))
-                implementation("org.jetbrains.kotlinx:atomicfu:${Vof.atomicfu}")
 
                 //Coroutines
-                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Vof.coroutinesX}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Vof.coroutinesX}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:${Vof.coroutinesX}")
 
-                //Logging
-                implementation("io.github.microutils:kotlin-logging:${Vof.kotlinLogging}")
-
-                //Serialization
-                api("org.jetbrains.kotlinx:kotlinx-serialization-core:${Vof.serializationX}")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:${Vof.serializationX}")
-
                 //ktor
                 implementation("io.ktor:ktor-server-core:${Vof.ktor}")
-                implementation("io.ktor:ktor-websockets:${Vof.ktor}")
                 implementation("io.ktor:ktor-server-sessions:${Vof.ktor}")
-                implementation("io.ktor:ktor-client-core-jvm:${Vof.ktor}")
-                implementation("io.ktor:ktor-client-websockets-jvm:${Vof.ktor}")
             }
         }
 

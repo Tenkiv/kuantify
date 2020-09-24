@@ -17,6 +17,7 @@
 
 package org.tenkiv.kuantify.lib.physikal
 
+import kotlinx.serialization.*
 import physikal.*
 import kotlin.reflect.*
 
@@ -24,7 +25,9 @@ public interface Voltage : Quantity<Voltage>
 
 // --- Base --- //
 
-internal class Volts(override val inOwnUnit: Double) : Quantity<Voltage> {
+@Serializable
+@SerialName(Volt.SYMBOL)
+public class Volts(override val inOwnUnit: Double) : Quantity<Voltage> {
     override val unit: PhysicalUnit<Voltage> get() = Volt
 
     override fun convertToDefaultUnit(): Quantity<Voltage> = this
@@ -32,6 +35,8 @@ internal class Volts(override val inOwnUnit: Double) : Quantity<Voltage> {
 
 public val Double.volts: Quantity<Voltage> get() = Volts(this)
 
+@Serializable
+@SerialName(Volt.SYMBOL)
 public object Volt : PhysicalUnit<Voltage> {
     public const val SYMBOL: String = "V"
 
@@ -46,7 +51,9 @@ public object Volt : PhysicalUnit<Voltage> {
 
 // -- Milli -- //
 
-internal class Millivolts(override val inOwnUnit: Double) : Quantity<Voltage> {
+@Serializable
+@SerialName(Millivolt.SYMBOL)
+public class Millivolts(override val inOwnUnit: Double) : Quantity<Voltage> {
     override val unit: PhysicalUnit<Voltage> get() = Millivolt
 
     override fun convertToDefaultUnit(): Quantity<Voltage> = (inOwnUnit * 1000).toQuantity(Volt)
@@ -54,6 +61,8 @@ internal class Millivolts(override val inOwnUnit: Double) : Quantity<Voltage> {
 
 public val Double.millivolts: Quantity<Voltage> get() = Millivolts(this)
 
+@Serializable
+@SerialName(Millivolt.SYMBOL)
 public object Millivolt : PhysicalUnit<Voltage> {
     public const val SYMBOL: String = "mV"
 
@@ -68,7 +77,9 @@ public object Millivolt : PhysicalUnit<Voltage> {
 
 // -- Micro -- //
 
-internal class Microvolts(override val inOwnUnit: Double) : Quantity<Voltage> {
+@Serializable
+@SerialName(Microvolt.SYMBOL)
+public class Microvolts(override val inOwnUnit: Double) : Quantity<Voltage> {
     override val unit: PhysicalUnit<Voltage> get() = Microvolt
 
     override fun convertToDefaultUnit(): Quantity<Voltage> = (inOwnUnit * 1_000_000).toQuantity(Volt)
@@ -76,6 +87,8 @@ internal class Microvolts(override val inOwnUnit: Double) : Quantity<Voltage> {
 
 public val Double.microvolts: Quantity<Voltage> get() = Microvolts(this)
 
+@Serializable
+@SerialName(Microvolt.SYMBOL)
 public object Microvolt : PhysicalUnit<Voltage> {
     public const val SYMBOL: String = "μV"
 

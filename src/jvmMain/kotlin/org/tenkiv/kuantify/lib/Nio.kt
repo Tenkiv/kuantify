@@ -31,7 +31,7 @@ import kotlin.coroutines.*
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
  */
-public suspend fun AsynchronousFileChannel.aLock() = suspendCancellableCoroutine<FileLock> { cont ->
+public suspend fun AsynchronousFileChannel.aLock(): FileLock = suspendCancellableCoroutine<FileLock> { cont ->
     lock(cont, asyncIOHandler())
     closeOnCancel(cont)
 }
@@ -46,7 +46,7 @@ public suspend fun AsynchronousFileChannel.aLock(
     position: Long,
     size: Long,
     shared: Boolean
-) = suspendCancellableCoroutine<FileLock> { cont ->
+): FileLock = suspendCancellableCoroutine<FileLock> { cont ->
     lock(position, size, shared, cont, asyncIOHandler())
     closeOnCancel(cont)
 }
@@ -60,7 +60,7 @@ public suspend fun AsynchronousFileChannel.aLock(
 public suspend fun AsynchronousFileChannel.aRead(
     buf: ByteBuffer,
     position: Long
-) = suspendCancellableCoroutine<Int> { cont ->
+): Int = suspendCancellableCoroutine<Int> { cont ->
     read(buf, position, cont, asyncIOHandler())
     closeOnCancel(cont)
 }
@@ -74,7 +74,7 @@ public suspend fun AsynchronousFileChannel.aRead(
 public suspend fun AsynchronousFileChannel.aWrite(
     buf: ByteBuffer,
     position: Long
-) = suspendCancellableCoroutine<Int> { cont ->
+): Int = suspendCancellableCoroutine<Int> { cont ->
     write(buf, position, cont, asyncIOHandler())
     closeOnCancel(cont)
 }
@@ -85,7 +85,7 @@ public suspend fun AsynchronousFileChannel.aWrite(
  * If the [Job] of the current coroutine is cancelled or completed while this suspending function is waiting, this function
  * *closes the underlying channel* and immediately resumes with [CancellationException].
  */
-public suspend fun AsynchronousServerSocketChannel.aAccept() =
+public suspend fun AsynchronousServerSocketChannel.aAccept(): AsynchronousSocketChannel =
     suspendCancellableCoroutine<AsynchronousSocketChannel> { cont ->
         accept(cont, asyncIOHandler())
         closeOnCancel(cont)
@@ -99,7 +99,7 @@ public suspend fun AsynchronousServerSocketChannel.aAccept() =
  */
 public suspend fun AsynchronousSocketChannel.aConnect(
     socketAddress: SocketAddress
-) = suspendCancellableCoroutine<Unit> { cont ->
+): Unit = suspendCancellableCoroutine { cont ->
     connect(socketAddress, cont, AsyncVoidIOHandler)
     closeOnCancel(cont)
 }
@@ -114,7 +114,7 @@ public suspend fun AsynchronousSocketChannel.aRead(
     buf: ByteBuffer,
     timeout: Long = 0L,
     timeUnit: TimeUnit = TimeUnit.MILLISECONDS
-) = suspendCancellableCoroutine<Int> { cont ->
+): Int = suspendCancellableCoroutine<Int> { cont ->
     read(buf, timeout, timeUnit, cont, asyncIOHandler())
     closeOnCancel(cont)
 }
@@ -129,7 +129,7 @@ public suspend fun AsynchronousSocketChannel.aWrite(
     buf: ByteBuffer,
     timeout: Long = 0L,
     timeUnit: TimeUnit = TimeUnit.MILLISECONDS
-) = suspendCancellableCoroutine<Int> { cont ->
+): Int = suspendCancellableCoroutine<Int> { cont ->
     write(buf, timeout, timeUnit, cont, asyncIOHandler())
     closeOnCancel(cont)
 }

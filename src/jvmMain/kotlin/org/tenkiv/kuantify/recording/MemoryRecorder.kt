@@ -18,11 +18,10 @@
 package org.tenkiv.kuantify.recording
 
 import kotlinx.coroutines.*
-import org.tenkiv.coral.*
+import kotlinx.datetime.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.*
-import java.time.*
 
 public class MemoryRecorder<DataT : DaqcData, ChannelT : DaqcChannel<DataT>> internal constructor(
     scope: CoroutineScope,
@@ -46,7 +45,7 @@ public class MemoryRecorder<DataT : DaqcData, ChannelT : DaqcChannel<DataT>> int
 
     public override suspend fun getAllData(): List<ValueInstant<DataT>> = getDataInMemory()
 
-    public override suspend fun cancel(deleteBigStorage: Boolean) = cancel()
+    public override suspend fun cancel(deleteBigStorage: Boolean): Unit = cancel()
 
     public fun cancel() {
         coroutineContext.cancel()

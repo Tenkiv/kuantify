@@ -28,7 +28,7 @@ import org.tenkiv.kuantify.networking.configuration.*
 
 public abstract class FSRemoteAcquireChannel<T : DaqcData>(uid: String) : FSRemoteDaqcGate(uid), AcquireChannel<T> {
     private val startSamplingChannel = Channel<Ping>(Channel.RENDEZVOUS)
-    public final override fun startSampling() =
+    public final override fun startSampling(): Unit =
         modifyConfiguration {
             command {
                 startSamplingChannel.offer(Ping)

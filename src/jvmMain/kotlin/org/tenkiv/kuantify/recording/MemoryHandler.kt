@@ -20,6 +20,7 @@ package org.tenkiv.kuantify.recording
 import kotlinx.coroutines.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
+import org.tenkiv.kuantify.lib.*
 
 internal class MemoryHandler<DataT : DaqcData>(
     scope: CoroutineScope,

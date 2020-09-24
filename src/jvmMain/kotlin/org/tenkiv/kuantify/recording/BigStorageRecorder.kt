@@ -18,12 +18,12 @@
 package org.tenkiv.kuantify.recording
 
 import kotlinx.coroutines.*
+import kotlinx.datetime.*
 import org.tenkiv.coral.*
 import org.tenkiv.kuantify.data.*
 import org.tenkiv.kuantify.gate.*
 import org.tenkiv.kuantify.lib.*
 import org.tenkiv.kuantify.recording.bigstorage.*
-import java.time.*
 
 public class BigStorageRecorder<DataT : DaqcData, ChannelT : DaqcChannel<DataT>> internal constructor(
     scope: CoroutineScope,

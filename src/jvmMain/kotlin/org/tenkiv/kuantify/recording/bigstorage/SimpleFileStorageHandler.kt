@@ -34,7 +34,7 @@ import java.nio.*
 import java.nio.channels.*
 import java.nio.charset.*
 import java.nio.file.*
-import java.time.*
+import kotlin.time.*
 
 public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<DataT>>(
     recorder: Recorder<DataT, ChannelT>,
@@ -87,8 +87,8 @@ public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<D
 
     private fun storeForDurationInit(duration: Duration) {
         launch {
-            val fileCreationInterval = duration.dividedBy(10)
-            val fileExpiresIn = duration + duration.dividedBy(9)
+            val fileCreationInterval = duration / 10
+            val fileExpiresIn = duration + duration / 9
             while (isActive) {
                 val newRecorderFile = RecorderFile(fileExpiresIn)
                 files += newRecorderFile
@@ -142,10 +142,13 @@ public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<D
     }
 
     private fun ValueInstant<DataT>.toBase64(valueSerializer: KSerializer<DataT>): String =
-        Serialization.cbor.dump(ValueInstantSerializer(valueSerializer), this).encodeBase64()
+        Serialization.cbor.encodeToByteArray(ValueInstantSerializer(valueSerializer), this).encodeBase64()
 
     private fun ByteArray.toValueInstant(valueSerializer: KSerializer<DataT>): ValueInstant<DataT> =
-        Serialization.cbor.load(ValueInstantSerializer(valueSerializer), this.decodeToString().decodeBase64Bytes())
+        Serialization.cbor.decodeFromByteArray(
+            ValueInstantSerializer(valueSerializer),
+            this.decodeToString().decodeBase64Bytes()
+        )
 
     //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
     //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Inner class ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
@@ -300,7 +303,7 @@ public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<D
                     thisUid = recordersDirectory.listFiles()
                         ?.map { it.name.toLongOrNull() }
                         ?.requireNoNulls()
-                        ?.max()?.plus(1) ?: 1L
+                        ?.maxOrNull()?.plus(1) ?: 1L
                     recorderUid = thisUid
                 }
                 thisUid.toString()

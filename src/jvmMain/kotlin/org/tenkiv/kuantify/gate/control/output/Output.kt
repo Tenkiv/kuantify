@@ -90,7 +90,7 @@ public interface RangedOutput<T> : Output<T>, RangedIOStrand<T> where T : DaqcVa
  */
 public interface BinaryStateOutput : RangedOutput<BinaryState> {
 
-    override val valueRange get() = BinaryState.range
+    override val valueRange: ClosedRange<BinaryState> get() = BinaryState.range
 
 }
 
@@ -122,18 +122,18 @@ public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuanti
      */
     public fun increaseByPercentOfRange(
         percentIncrease: Quantity<Dimensionless>
-    ): SettingViability = increaseByRatioOfRange(percentIncrease.toDoubleIn(Percent) / 100)
+    ): SettingViability = increaseByRatioOfRange(percentIncrease.toFloat64In(Percent) / 100)
 
     /**
      * Decrease the setting by a percentage of the allowable range for this output.
      */
     public fun decreaseByPercentOfRange(
         percentDecrease: Quantity<Dimensionless>
-    ): SettingViability = decreaseByRatioOfRange(percentDecrease.toDoubleIn(Percent) / 100)
+    ): SettingViability = decreaseByRatioOfRange(percentDecrease.toFloat64In(Percent) / 100)
 
     public fun setOutputToPercentMaximum(
         percent: Quantity<Dimensionless>
-    ): SettingViability = setOutputToRatioMaximum(percent.toDoubleIn(Percent) / 100)
+    ): SettingViability = setOutputToRatioMaximum(percent.toFloat64In(Percent) / 100)
 
     public fun setOutputToRatioMaximum(
         ratio: Double
@@ -151,8 +151,8 @@ public interface RangedQuantityOutput<Q : Quantity<Q>> : RangedOutput<DaqcQuanti
     }
 
     private fun ratioOfRange(ratio: Double): Quantity<Q> {
-        val min = valueRange.start.toDoubleInDefaultUnit()
-        val max = valueRange.endInclusive.toDoubleInDefaultUnit()
+        val min = valueRange.start.toFloat64InDefaultUnit()
+        val max = valueRange.endInclusive.toFloat64InDefaultUnit()
 
         return (ratio * (max - min) + min).toQuantity(valueRange.start.unit.default)
     }
@@ -179,5 +179,5 @@ public class RqoAdapter<Q : Quantity<Q>> internal constructor(
  *
  * @param valueRange The range of acceptable output values.
  */
-public fun <Q : Quantity<Q>> QuantityOutput<Q>.toRangedOutput(valueRange: ClosedRange<DaqcQuantity<Q>>) =
+public fun <Q : Quantity<Q>> QuantityOutput<Q>.toRangedOutput(valueRange: ClosedRange<DaqcQuantity<Q>>): RqoAdapter<Q> =
     RqoAdapter(this, valueRange)

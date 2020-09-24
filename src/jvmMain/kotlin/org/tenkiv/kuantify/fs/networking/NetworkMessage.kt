@@ -24,6 +24,6 @@ import org.tenkiv.kuantify.fs.hardware.device.*
 @Serializable
 internal data class NetworkMessage(val route: String, val message: String = FSDevice.serializedPing) {
 
-    fun serialize() = Serialization.json.stringify(serializer(), this)
+    fun serialize() = Serialization.json.encodeToString(serializer(), this)
 
 }
