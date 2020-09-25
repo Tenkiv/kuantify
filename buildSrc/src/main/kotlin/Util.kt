@@ -74,7 +74,7 @@ fun Project.setSigningExtrasFromProperties(properties: Properties) {
  * Sets up POM for Tenkiv specific projects.
  */
 fun MavenPublication.configureMavenPom(isRelease: Boolean, project: Project) {
-    version = if (isRelease) project.version.toString() else "${project.version}-SNAPSHOT"
+    version = project.version.toString()
 
     pom {
         name.set(project.name)
