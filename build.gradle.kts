@@ -98,7 +98,7 @@ kotlin {
                 implementation("io.github.microutils:kotlin-logging:${Vof.kotlinLogging}")
 
                 //Units
-                implementation("org.tenkiv.physikal:physikal:${Vof.physikal}")
+                api("org.tenkiv.physikal:physikal:${Vof.physikal}")
 
                 //Time
                 api("org.jetbrains.kotlinx:kotlinx-datetime:${Vof.datetimeX}")
