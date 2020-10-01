@@ -66,7 +66,7 @@ kotlin {
             languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
             languageSettings.useExperimentalAnnotation("kotlinx.serialization.ExperimentalSerializationApi")
-            languageSettings.useExperimentalAnnotation("org.tenkiv.kuantify.KuantifyComponentBuilder")
+            languageSettings.useExperimentalAnnotation("kuantify.KuantifyComponentBuilder")
             languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
             languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
             languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")

@@ -21,10 +21,10 @@ getting a feel for Kuantify and you can actually throw together some fairly inte
 ## Artifacts
 | | Core | Android Core
  ------- | :-----: | :-----:
- JVM | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-core) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-core)
+ JVM | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/kuantify/kuantify-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/kuantify/kuantify-core) | [![Maven Central](https://maven-badges.herokuapp.com/maven-central/kuantify/kuantify-android-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/kuantify/kuantify-android-core)
  
  Local (for adapting OS support for device sensors and controllers to Kuantify):
- * Android Local - [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-local/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tenkiv.kuantify/kuantify-android-local)
+ * Android Local - [![Maven Central](https://maven-badges.herokuapp.com/maven-central/kuantify/kuantify-android-local/badge.svg)](https://maven-badges.herokuapp.com/maven-central/kuantify/kuantify-android-local)
 
 ## Basics
 First of all, in the name of type safety, Kuantify never passes around data as raw numbers. We use `DaqcValue` which is
