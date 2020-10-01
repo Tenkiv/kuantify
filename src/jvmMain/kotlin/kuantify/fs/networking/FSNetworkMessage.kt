@@ -22,8 +22,8 @@ import kuantify.*
 import kuantify.fs.hardware.device.*
 
 @Serializable
-internal data class NetworkMessage(val route: String, val message: String = FSDevice.serializedPing) {
+public data class FSNetworkMessage(val route: String, val message: String = FSDevice.serializedPing) {
 
-    fun serialize() = Serialization.json.encodeToString(serializer(), this)
+    public fun serialize(): String = Serialization.json.encodeToString(serializer(), this)
 
 }

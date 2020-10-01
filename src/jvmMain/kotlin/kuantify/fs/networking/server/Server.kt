@@ -123,7 +123,7 @@ internal object KuantifyHost {
 
     @Suppress("NAME_SHADOWING")
     private suspend fun receiveMessage(clientId: ClientId, message: String) {
-        val (route, message) = Serialization.json.decodeFromString(NetworkMessage.serializer(), message)
+        val (route, message) = Serialization.json.decodeFromString(FSNetworkMessage.serializer(), message)
 
         hostedDevice?.receiveNetworkMessage(route, message) ?: deviceNotHosted(clientId, message)
     }

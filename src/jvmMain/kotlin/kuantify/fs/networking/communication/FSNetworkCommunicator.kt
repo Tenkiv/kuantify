@@ -56,7 +56,7 @@ public class LocalNetworkCommunicator internal constructor(
         buildFSRouteBindingMap(device)
 
     protected override suspend fun sendMessage(route: String, message: String) {
-        ClientHandler.sendToAll(NetworkMessage(route, message).serialize())
+        ClientHandler.sendToAll(FSNetworkMessage(route, message).serialize())
     }
 
     internal fun init() {
@@ -127,14 +127,14 @@ internal class FSRemoteWebsocketCommunicator(
     }
 
     public override suspend fun sendMessage(route: String, message: String) {
-        webSocketSession?.send(Frame.Text(NetworkMessage(route, message).serialize()))?.also {
+        webSocketSession?.send(Frame.Text(FSNetworkMessage(route, message).serialize()))?.also {
             logger.trace { "Sent on route: $route, message - $message - to remote device: ${device.uid}" }
         } ?: attemptMessageWithoutConnection(route, message)
     }
 
     @Suppress("NAME_SHADOWING")
     private suspend fun receiveRawMessage(message: String) {
-        val (route, message) = Serialization.json.decodeFromString(NetworkMessage.serializer(), message)
+        val (route, message) = Serialization.json.decodeFromString(FSNetworkMessage.serializer(), message)
 
         receiveMessage(route, message)
     }
