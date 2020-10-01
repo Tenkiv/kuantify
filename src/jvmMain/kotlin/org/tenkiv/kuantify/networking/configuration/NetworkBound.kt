@@ -19,7 +19,7 @@ package org.tenkiv.kuantify.networking.configuration
 
 public typealias Routing<SerialT> = (NetworkRoute<SerialT>) -> Unit
 
-public interface NetworkBound<SerialT> {
+public interface NetworkBound<SerialT : Any> {
     public val basePath: Path
 
     public fun routing(route: NetworkRoute<SerialT>)
@@ -32,7 +32,7 @@ public interface NetworkBound<SerialT> {
 
 }
 
-public fun <SerialT> Iterable<NetworkBound<SerialT>>.addRoutingTo(route: NetworkRoute<SerialT>) {
+public fun <SerialT : Any> Iterable<NetworkBound<SerialT>>.addRoutingTo(route: NetworkRoute<SerialT>) {
     forEach {
         it.routing(route)
     }

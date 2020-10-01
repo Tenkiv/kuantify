@@ -28,7 +28,7 @@ import org.tenkiv.kuantify.networking.communication.*
 internal val routeConfigBuilderLogger = KotlinLogging.logger {}
 
 @KuantifyComponentBuilder
-public class RouteConfig<SerialT>(
+public class RouteConfig<SerialT : Any>(
     @PublishedApi internal val networkCommunicator: NetworkCommunicator<SerialT>,
     @PublishedApi internal val serializedPing: SerialT,
     @PublishedApi internal val formatPath: (Path) -> String
@@ -106,7 +106,7 @@ public class RouteConfig<SerialT>(
 
 @Suppress("NAME_SHADOWING")
 @NetworkingDsl
-public class NetworkRoute<SerialT> @PublishedApi internal constructor(
+public class NetworkRoute<SerialT : Any> @PublishedApi internal constructor(
     @PublishedApi internal val config: RouteConfig<SerialT>,
     @PublishedApi internal val path: Path
 ) {
