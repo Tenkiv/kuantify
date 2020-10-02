@@ -66,14 +66,14 @@ public abstract class LocalDevice(
 ) : FSBaseDevice(coroutineContext) {
 
     @Volatile
-    private var networkCommunicator: LocalNetworkCommunicator? = null
+    private var networkCommunicator: LocalCommunicator? = null
 
     public val isHosting: Boolean
         get() = KuantifyHost.isHosting && networkCommunicator?.isActive == true
 
     public fun startHosting() {
         if (!isHosting) {
-            networkCommunicator = LocalNetworkCommunicator(this).apply { init() }
+            networkCommunicator = LocalCommunicator(this).apply { init() }
             KuantifyHost.startHosting(this)
         }
     }
@@ -102,7 +102,7 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
     FSBaseDevice(coroutineContext), RemoteDevice {
 
     @Volatile
-    protected var networkCommunicator: FSRemoteNetworkCommunictor? = null
+    protected var networkCommunicator: FSRemoteCommunictor? = null
 
     private val _isConnected = AtomicBoolean(false)
     public final override val isConnected: Boolean get() = _isConnected.get()

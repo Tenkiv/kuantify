@@ -23,10 +23,11 @@ import kuantify.*
 import kuantify.hardware.device.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
+import kotlinx.coroutines.cancel as cancelCoroutineScope
 
 private val logger = KotlinLogging.logger {}
 
-public abstract class NetworkCommunicator<SerialT>(
+public abstract class Communicator<SerialT>(
     device: Device
 ) : CoroutineScope {
     protected val job: Job = Job(device.coroutineContext[Job])
@@ -51,16 +52,22 @@ public abstract class NetworkCommunicator<SerialT>(
     }
 
     protected fun cancelCoroutines() {
-        job.cancel()
+        cancelCoroutineScope()
     }
 
-    internal suspend fun receiveMessage(route: String, message: SerialT) {
+    /**
+     * Cleanly release all associated resources and kill this communicator such that it can never be used again.
+     */
+    @KuantifyComponentBuilder
+    public abstract suspend fun cancel()
+
+    @KuantifyComponentBuilder
+    public suspend fun receiveMessage(route: String, message: SerialT) {
         networkRouteBindingMap[route]?.messageFromNetwork(message) ?: unboundRouteError(route, message)
     }
 
-    protected abstract suspend fun sendMessage(route: String, message: SerialT)
-
-    internal suspend fun _sendMessage(route: String, message: SerialT) = sendMessage(route, message)
+    @KuantifyComponentBuilder
+    public abstract suspend fun sendMessage(route: String, message: SerialT)
 
     private suspend fun unboundRouteError(route: String, message: SerialT) {
         logger.error { "Received message - $message - for unbound route: $route." }
@@ -77,14 +84,13 @@ public abstract class NetworkCommunicator<SerialT>(
 
 }
 
-public abstract class RemoteNetworkCommunicator<SerialT>(device: Device) : NetworkCommunicator<SerialT>(device) {
+public abstract class RemoteCommunicator<SerialT>(device: Device) : Communicator<SerialT>(device) {
 
     public abstract val communicationMode: CommunicationMode
 
 }
 
 public enum class CommunicationMode {
-    NO_CONNECTION,
     /**
      * Means other devices can also be connected to the host.
      */

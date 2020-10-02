@@ -35,11 +35,11 @@ import kuantify.networking.configuration.RouteConfig.Companion.formatPathStandar
 
 private val logger = KotlinLogging.logger {}
 
-private fun NetworkCommunicator<String>.buildFSRouteBindingMap(
+private fun Communicator<String>.buildFSRouteBindingMap(
     device: FSBaseDevice
 ): Map<String, NetworkRouteBinding<String>> {
     val routeConfig = RouteConfig(
-        networkCommunicator = this,
+        communicator = this,
         serializedPing = FSDevice.serializedPing,
         formatPath = ::formatPathStandard
     )
@@ -48,14 +48,14 @@ private fun NetworkCommunicator<String>.buildFSRouteBindingMap(
     return routeConfig.networkRouteBindingMap
 }
 
-public class LocalNetworkCommunicator internal constructor(
+public class LocalCommunicator internal constructor(
     override val device: LocalDevice
-) : NetworkCommunicator<String>(device) {
+) : Communicator<String>(device) {
 
     protected override val networkRouteBindingMap: Map<String, NetworkRouteBinding<String>> =
         buildFSRouteBindingMap(device)
 
-    protected override suspend fun sendMessage(route: String, message: String) {
+    override suspend fun sendMessage(route: String, message: String) {
         ClientHandler.sendToAll(FSNetworkMessage(route, message).serialize())
     }
 
@@ -64,26 +64,24 @@ public class LocalNetworkCommunicator internal constructor(
     }
 
     //TODO: May want to terminate all connections.
-    internal fun cancel() {
+    override suspend fun cancel() {
         cancelCoroutines()
     }
 
 }
 
-public abstract class FSRemoteNetworkCommunictor(final override val device: FSRemoteDevice) :
-    RemoteNetworkCommunicator<String>(device) {
+public abstract class FSRemoteCommunictor(final override val device: FSRemoteDevice) :
+    RemoteCommunicator<String>(device) {
 
     protected final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<String>> =
         buildFSRouteBindingMap(device)
-
-    internal abstract suspend fun cancel()
 
 }
 
 internal class FSRemoteWebsocketCommunicator(
     device: FSRemoteDevice,
     private val onCanceled: () -> Unit
-) : FSRemoteNetworkCommunictor(device) {
+) : FSRemoteCommunictor(device) {
 
     @Volatile
     private var webSocketSession: WebSocketSession? = null
@@ -144,7 +142,7 @@ internal class FSRemoteWebsocketCommunicator(
         startWebsocket()
     }
 
-    internal override suspend fun cancel() {
+    override suspend fun cancel() {
         webSocketSession?.close()
     }
 

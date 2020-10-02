@@ -40,11 +40,11 @@ public interface NetworkRouteBinding<SerialT> {
 }
 
 public class NetworkMessageBinding<BoundT, SerialT>(
-    private val networkCommunicator: NetworkCommunicator<SerialT>,
+    private val communicator: Communicator<SerialT>,
     private val route: String,
     private val localUpdateSender: LocalUpdateSender<BoundT, SerialT>?,
     private val networkMessageReceiver: NetworkMessageReceiver<SerialT>?
-) : NetworkRouteBinding<SerialT>, CoroutineScope by networkCommunicator {
+) : NetworkRouteBinding<SerialT>, CoroutineScope by communicator {
 
     public override fun start() {
         // Send
@@ -52,7 +52,7 @@ public class NetworkMessageBinding<BoundT, SerialT>(
             launch {
                 localUpdateSender.channel.consumingOnEach {
                     val message = localUpdateSender.serialize.invoke(it)
-                    networkCommunicator._sendMessage(route, message)
+                    communicator.sendMessage(route, message)
                 }
             }
         }
@@ -74,7 +74,7 @@ public class NetworkMessageBinding<BoundT, SerialT>(
     private suspend fun cantReceiveError(message: SerialT) {
         logger.error { "Received message - $message - on route: $route with no receive functionality." }
         alertCriticalError( CriticalDaqcError.FailedMajorCommand(
-            networkCommunicator.device,
+            communicator.device,
             "Unable to receive on route of incoming message."
         ))
     }
@@ -84,19 +84,19 @@ public class NetworkMessageBinding<BoundT, SerialT>(
 }
 
 public class NetworkPingBinding<SerialT>(
-    private val networkCommunicator: NetworkCommunicator<SerialT>,
+    private val communicator: Communicator<SerialT>,
     private val route: String,
     private val localUpdateChannel: ReceiveChannel<Ping>?,
     private val networkPingReceiver: NetworkPingReceiver?,
     private val serializedPing: SerialT
-) : NetworkRouteBinding<SerialT>, CoroutineScope by networkCommunicator {
+) : NetworkRouteBinding<SerialT>, CoroutineScope by communicator {
 
     public override fun start() {
         // Send
         if (localUpdateChannel != null) {
             launch {
                 localUpdateChannel.consumingOnEach {
-                    networkCommunicator._sendMessage(route, serializedPing)
+                    communicator.sendMessage(route, serializedPing)
                 }
             }
         }
@@ -118,7 +118,7 @@ public class NetworkPingBinding<SerialT>(
     private suspend fun cantReceiveError() {
         logger.error { "Received ping on route: $route with no receive functionality." }
         alertCriticalError( CriticalDaqcError.FailedMajorCommand(
-            networkCommunicator.device,
+            communicator.device,
             "Unable to receive on route of incoming ping."
         ))
     }

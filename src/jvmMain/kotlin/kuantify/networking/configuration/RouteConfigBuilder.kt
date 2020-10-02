@@ -29,7 +29,7 @@ internal val routeConfigBuilderLogger = KotlinLogging.logger {}
 
 @KuantifyComponentBuilder
 public class RouteConfig<SerialT : Any>(
-    @PublishedApi internal val networkCommunicator: NetworkCommunicator<SerialT>,
+    @PublishedApi internal val communicator: Communicator<SerialT>,
     @PublishedApi internal val serializedPing: SerialT,
     @PublishedApi internal val formatPath: (Path) -> String
 ) {
@@ -53,7 +53,7 @@ public class RouteConfig<SerialT : Any>(
         }
 
         networkRouteBindingMap[path] = NetworkMessageBinding(
-            networkCommunicator,
+            communicator,
             path,
             routeBindingBuilder.send,
             routeBindingBuilder.receive
@@ -81,7 +81,7 @@ public class RouteConfig<SerialT : Any>(
         }
 
         networkRouteBindingMap[path] = NetworkPingBinding(
-            networkCommunicator,
+            communicator,
             path,
             routeBindingBuilder.localUpdateChannel,
             networkPingReceiver,
