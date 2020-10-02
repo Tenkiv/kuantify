@@ -27,7 +27,6 @@ import kotlinx.coroutines.cancel as cancelCoroutineScope
 
 private val logger = KotlinLogging.logger {}
 
-@KuantifyComponentBuilder
 public abstract class Communicator<SerialT>(
     device: Device
 ) : CoroutineScope {
@@ -59,12 +58,15 @@ public abstract class Communicator<SerialT>(
     /**
      * Cleanly release all associated resources and kill this communicator such that it can never be used again.
      */
+    @KuantifyComponentBuilder
     public abstract suspend fun cancel()
 
+    @KuantifyComponentBuilder
     public suspend fun receiveMessage(route: String, message: SerialT) {
         networkRouteBindingMap[route]?.messageFromNetwork(message) ?: unboundRouteError(route, message)
     }
 
+    @KuantifyComponentBuilder
     public abstract suspend fun sendMessage(route: String, message: SerialT)
 
     private suspend fun unboundRouteError(route: String, message: SerialT) {
