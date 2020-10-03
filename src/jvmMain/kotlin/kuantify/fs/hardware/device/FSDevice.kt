@@ -66,14 +66,14 @@ public abstract class LocalDevice(
 ) : FSBaseDevice(coroutineContext) {
 
     @Volatile
-    private var networkCommunicator: LocalCommunicator? = null
+    private var networkCommunicator: LocalWebsocketCommunicator? = null
 
     public val isHosting: Boolean
         get() = KuantifyHost.isHosting && networkCommunicator?.isActive == true
 
     public fun startHosting() {
         if (!isHosting) {
-            networkCommunicator = LocalCommunicator(this).apply { init() }
+            networkCommunicator = LocalWebsocketCommunicator(this).apply { init() }
             KuantifyHost.startHosting(this)
         }
     }

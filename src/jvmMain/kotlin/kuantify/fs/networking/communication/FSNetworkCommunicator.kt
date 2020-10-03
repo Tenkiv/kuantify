@@ -48,12 +48,18 @@ private fun Communicator<String>.buildFSRouteBindingMap(
     return routeConfig.networkRouteBindingMap
 }
 
-public class LocalCommunicator internal constructor(
-    override val device: LocalDevice
+public abstract class LocalCommunicator(
+    final override val device: LocalDevice
 ) : Communicator<String>(device) {
 
-    protected override val networkRouteBindingMap: Map<String, NetworkRouteBinding<String>> =
+    protected final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<String>> =
         buildFSRouteBindingMap(device)
+
+}
+
+public class LocalWebsocketCommunicator internal constructor(
+    device: LocalDevice
+) : LocalCommunicator(device) {
 
     override suspend fun sendMessage(route: String, message: String) {
         ClientHandler.sendToAll(FSNetworkMessage(route, message).serialize())
