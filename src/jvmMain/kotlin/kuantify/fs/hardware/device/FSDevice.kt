@@ -71,6 +71,7 @@ public abstract class LocalDevice(
     public val isHosting: Boolean
         get() = KuantifyHost.isHosting && networkCommunicator?.isActive == true
 
+    //TODO: Takes hostInitializer function parameter
     public fun startHosting() {
         if (!isHosting) {
             networkCommunicator = LocalWebsocketCommunicator(this).apply { init() }

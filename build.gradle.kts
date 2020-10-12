@@ -86,8 +86,8 @@ kotlin {
 
                 //Serialization
                 api("org.jetbrains.kotlinx:kotlinx-serialization-core:${Vof.serializationX}")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Vof.serializationX}")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:${Vof.serializationX}")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-json:${Vof.serializationX}")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-cbor:${Vof.serializationX}")
 
                 //ktor
                 implementation("io.ktor:ktor-websockets:${Vof.ktor}")
