@@ -56,7 +56,7 @@ public abstract class LocalCommunicator(
         buildFSRouteBindingMap(device)
 
     @KuantifyComponentBuilder
-    public abstract fun stopHosting()
+    public abstract suspend fun stopHosting()
 
 }
 
@@ -73,7 +73,7 @@ public class LocalWebsocketCommunicator internal constructor(
     }
 
     @KuantifyComponentBuilder
-    override fun stopHosting() {
+    override suspend fun stopHosting() {
         TODO("not implemented")
     }
 
