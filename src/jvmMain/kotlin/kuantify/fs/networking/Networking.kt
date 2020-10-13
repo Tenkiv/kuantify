@@ -21,4 +21,4 @@ package kuantify.fs.networking
 public object HostCommunicatorInit
 
 // Namespace to add initializer functions for remote communicators to.
-public object RemoteCommunicatorInit
+public object FSRemoteCommunicatorInit
