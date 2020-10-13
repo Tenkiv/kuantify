@@ -55,6 +55,9 @@ public abstract class LocalCommunicator(
     protected final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<String>> =
         buildFSRouteBindingMap(device)
 
+    @KuantifyComponentBuilder
+    public abstract fun stopHosting()
+
 }
 
 public class LocalWebsocketCommunicator internal constructor(
@@ -67,6 +70,11 @@ public class LocalWebsocketCommunicator internal constructor(
 
     internal fun init() {
         initBindings()
+    }
+
+    @KuantifyComponentBuilder
+    override fun stopHosting() {
+        TODO("not implemented")
     }
 
     //TODO: May want to terminate all connections.
