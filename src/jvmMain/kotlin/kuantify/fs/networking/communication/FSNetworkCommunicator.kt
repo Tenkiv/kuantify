@@ -55,6 +55,8 @@ public abstract class LocalCommunicator(
     protected final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<String>> =
         buildFSRouteBindingMap(device)
 
+    public abstract val isHosting: Boolean
+
     @KuantifyComponentBuilder
     public abstract suspend fun stopHosting()
 
@@ -64,12 +66,15 @@ public class LocalWebsocketCommunicator internal constructor(
     device: LocalDevice
 ) : LocalCommunicator(device) {
 
-    override suspend fun sendMessage(route: String, message: String) {
-        ClientHandler.sendToAll(FSNetworkMessage(route, message).serialize())
-    }
+    override val isHosting: Boolean
+        get() = TODO("not implemented")
 
     internal fun init() {
         initBindings()
+    }
+
+    override suspend fun sendMessage(route: String, message: String) {
+        ClientHandler.sendToAll(FSNetworkMessage(route, message).serialize())
     }
 
     @KuantifyComponentBuilder

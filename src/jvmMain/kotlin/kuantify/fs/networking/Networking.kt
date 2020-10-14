@@ -17,8 +17,33 @@
 
 package kuantify.fs.networking
 
+import kuantify.fs.networking.communication.*
+import org.tenkiv.coral.*
+
 // Namespace to add initializer functions for local communicators to.
 public object HostCommunicatorInit
 
 // Namespace to add initializer functions for remote communicators to.
 public object FSRemoteCommunicatorInit
+
+public typealias LocalCommsInitResult = Result<LocalCommunicator, LocalCommsInitErr>
+
+public enum class LocalCommsInitErr(public val description: String) {
+    /**
+     * Means a component this communicator depends on is not initialized. For example, attempt to start hosting using
+     * websocket without first initializing the kuantifyHost application in the http server.
+     */
+    UNINITIALIZED_DEPENDENCY(
+        """
+            |A component this communicator depends on is not initialized, initialize required dependencies before
+            |starting to host device.
+        """.trimToSingleLine()
+    )
+
+}
+
+public typealias FSRemoteCommsInitResult = Result<FSRemoteCommunictor, FSRemoteCommsInitErr>
+
+public enum class FSRemoteCommsInitErr(public val description: String) {
+
+}
