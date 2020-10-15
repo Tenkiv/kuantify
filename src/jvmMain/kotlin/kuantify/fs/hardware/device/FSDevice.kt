@@ -26,9 +26,9 @@ import kuantify.*
 import kuantify.fs.networking.*
 import kuantify.fs.networking.client.*
 import kuantify.fs.networking.communication.*
-import kuantify.fs.networking.server.*
 import kuantify.hardware.device.*
 import kuantify.networking.configuration.*
+import org.tenkiv.coral.Result
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
 
@@ -65,29 +65,33 @@ public abstract class LocalDevice(
     coroutineContext: CoroutineContext = GlobalScope.coroutineContext
 ) : FSBaseDevice(coroutineContext) {
 
+    // Must be internal in order to be publishedApi, actually want it to be private.
+    @PublishedApi
     @Volatile
-    private var networkCommunicator: LocalWebsocketCommunicator? = null
+    internal var communicator: LocalCommunicator? = null
 
     public val isHosting: Boolean
-        get() = KuantifyHost.isHosting && networkCommunicator?.isActive == true
+        get() = communicator?.isHosting ?: false
 
-    //TODO: Takes communicationInit function parameter
-    public fun startHosting() {
-        if (!isHosting) {
-            networkCommunicator = LocalWebsocketCommunicator(this).apply { init() }
-            KuantifyHost.startHosting(this)
+    public inline fun <ErrorT: Any> startHosting(
+        communicationInit: (LocalDevice) -> Result<LocalCommunicator, ErrorT>
+    ) : Result<Unit, ErrorT> {
+        return if (!isHosting) {
+            when(val result = communicationInit(this)) {
+                is Result.OK -> {
+                    communicator = result.value
+                    Result.OK(Unit)
+                }
+                is Result.Failure -> result
+            }
+        } else {
+            Result.OK(Unit)
         }
     }
 
     public suspend fun stopHosting() {
-        KuantifyHost.stopHosting()
-        networkCommunicator?.cancel()
-        networkCommunicator = null
-    }
-
-    internal suspend fun receiveNetworkMessage(route: String, message: String) {
-        networkCommunicator?.receiveMessage(route, message)
-            ?: throw IOException("Attempted to receive message without communicator.")
+        communicator?.stopHosting()
+        communicator = null
     }
 
     public open fun getInfo(): String {

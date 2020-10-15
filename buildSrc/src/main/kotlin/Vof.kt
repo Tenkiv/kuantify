@@ -30,7 +30,7 @@ object Vof {
     const val atomicfu = "0.14.4"
 
     // Tenkiv
-    const val coral = "2.7.1-dev-1-SNAPSHOT"
+    const val coral = "2.7.1-dev2-SNAPSHOT"
     const val physikal = "3.0.8-dev-1-SNAPSHOT"
 
     // Test

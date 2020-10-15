@@ -28,7 +28,6 @@ import kuantify.*
 import kuantify.fs.hardware.device.*
 import kuantify.fs.networking.*
 import kuantify.fs.networking.client.*
-import kuantify.fs.networking.server.*
 import kuantify.networking.communication.*
 import kuantify.networking.configuration.*
 import kuantify.networking.configuration.RouteConfig.Companion.formatPathStandard
@@ -59,33 +58,6 @@ public abstract class LocalCommunicator(
 
     @KuantifyComponentBuilder
     public abstract suspend fun stopHosting()
-
-}
-
-public class LocalWebsocketCommunicator internal constructor(
-    device: LocalDevice
-) : LocalCommunicator(device) {
-
-    override val isHosting: Boolean
-        get() = TODO("not implemented")
-
-    internal fun init() {
-        initBindings()
-    }
-
-    override suspend fun sendMessage(route: String, message: String) {
-        ClientHandler.sendToAll(FSNetworkMessage(route, message).serialize())
-    }
-
-    @KuantifyComponentBuilder
-    override suspend fun stopHosting() {
-        TODO("not implemented")
-    }
-
-    //TODO: May want to terminate all connections.
-    override suspend fun cancel() {
-        cancelCoroutines()
-    }
 
 }
 
