@@ -17,18 +17,18 @@
 
 package kuantify.fs.networking
 
+import kotlinx.serialization.Serializable
+import kuantify.*
+import kuantify.fs.hardware.device.*
 import kuantify.fs.networking.communication.*
+import kuantify.networking.*
 import org.tenkiv.coral.*
 
-// Namespace to add initializer functions for local communicators to.
-public object HostCommunicatorInit
+public typealias FSRemoteCommsInitResult = Result<FSRemoteCommunictor, RemoteCommsInitErr>
 
-// Namespace to add initializer functions for remote communicators to.
-public object FSRemoteCommunicatorInit
+@Serializable
+public data class FSNetworkMessage(val route: String, val message: String = FSDevice.serializedPing) {
 
-public typealias FSRemoteCommsInitResult = Result<FSRemoteCommunictor, FSRemoteCommsInitErr>
-
-public sealed class FSRemoteCommsInitErr {
-    public abstract val description: String
+    public fun serialize(): String = KuantifySerialization.json.encodeToString(serializer(), this)
 
 }

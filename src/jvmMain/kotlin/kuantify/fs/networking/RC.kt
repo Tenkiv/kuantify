@@ -21,7 +21,7 @@ import org.tenkiv.coral.*
 
 public object RC {
     public const val HTTP: String = "http://"
-    public const val DEFAULT_PORT: Int32 = 8080
+    public const val DEFAULT_PORT: UInt16 = 8080u
 
     //HTTP routes
     public const val WEBSOCKET: String = "/ws"

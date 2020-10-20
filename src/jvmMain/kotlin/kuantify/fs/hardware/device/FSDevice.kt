@@ -18,7 +18,6 @@
 package kuantify.fs.hardware.device
 
 import io.ktor.client.request.*
-import io.ktor.utils.io.errors.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.builtins.*
 import mu.*
@@ -27,10 +26,11 @@ import kuantify.fs.networking.*
 import kuantify.fs.networking.client.*
 import kuantify.fs.networking.communication.*
 import kuantify.hardware.device.*
+import kuantify.networking.*
 import kuantify.networking.configuration.*
 import org.tenkiv.coral.Result
-import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
+import kotlin.time.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -73,6 +73,7 @@ public abstract class LocalDevice(
     public val isHosting: Boolean
         get() = communicator?.isHosting ?: false
 
+    @KuantifyComponentBuilder
     public inline fun <ErrorT: Any> startHosting(
         communicationInit: (LocalDevice) -> Result<LocalCommunicator, ErrorT>
     ) : Result<Unit, ErrorT> {
@@ -90,7 +91,7 @@ public abstract class LocalDevice(
     }
 
     public suspend fun stopHosting() {
-        communicator?.stopHosting()
+        communicator?.cancel()
         communicator = null
     }
 
@@ -103,25 +104,52 @@ public abstract class LocalDevice(
 //   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Remote Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
 
+//TODO: Make functional interface if possible in the future.
+@KuantifyComponentBuilder
+public interface FSRemoteCommsInitializer {
+
+    public suspend fun init(
+        device: FSRemoteDevice,
+        timeout: Duration,
+        onCommunicatorCanceled: () -> Unit
+    ): FSRemoteCommsInitResult
+
+}
+
 public abstract class FSRemoteDevice protected constructor(coroutineContext: CoroutineContext) :
     FSBaseDevice(coroutineContext), RemoteDevice {
 
     @Volatile
-    protected var networkCommunicator: FSRemoteCommunictor? = null
+    private var communicatorInitializer: FSRemoteCommsInitializer? = null
 
-    private val _isConnected = AtomicBoolean(false)
-    public final override val isConnected: Boolean get() = _isConnected.get()
+    @Volatile
+    protected var communicator: FSRemoteCommunictor? = null
 
-    public final override suspend fun connect() {
-        val isConnected = _isConnected.getAndSet(true)
-        if (!isConnected) {
-            networkCommunicator = FSRemoteWebsocketCommunicator(
-                this,
-                this::onCommunicatorCanceled
-            ).apply {
-                init()
+    public final override val isConnected: Boolean get() = communicator?.isConnected ?: false
+
+    @KuantifyComponentBuilder
+    public suspend fun connect(
+        timeout: Duration,
+        communicatorInitializer: FSRemoteCommsInitializer
+    ): Result<Unit, RemoteCommsInitErr> {
+        return if (!isConnected) {
+            if (this.communicatorInitializer !== communicatorInitializer) {
+                this.communicatorInitializer = communicatorInitializer
             }
+            when(val commsInitResult = communicatorInitializer.init(this, timeout, this::onCommunicatorCanceled)) {
+                is Result.OK -> {
+                    communicator = commsInitResult.value
+                    Result.OK(Unit)
+                }
+                is Result.Failure -> commsInitResult
+            }
+        } else {
+            Result.OK(Unit)
         }
+    }
+
+    override suspend fun reconnect(timeout: Duration): Result<Unit, ReconnectError> {
+        TODO("not implemented")
     }
 
     public final override suspend fun disconnect() {
@@ -129,12 +157,11 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
     }
 
     private suspend fun onDisconnect() {
-        networkCommunicator?.cancel()
+        communicator?.cancel()
     }
 
     private fun onCommunicatorCanceled() {
-        _isConnected.set(false)
-        networkCommunicator = null
+        communicator = null
     }
 
     public companion object {

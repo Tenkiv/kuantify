@@ -15,15 +15,22 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package kuantify.fs.networking
+package kuantify.networking
 
-import kotlinx.serialization.*
-import kuantify.*
-import kuantify.fs.hardware.device.*
+public sealed class RemoteCommsInitErr {
+    public abstract val description: String
 
-@Serializable
-public data class FSNetworkMessage(val route: String, val message: String = FSDevice.serializedPing) {
+}
 
-    public fun serialize(): String = Serialization.json.encodeToString(serializer(), this)
+public sealed class ReconnectError {
+    public abstract val description: String
 
+    public data class InitError(public val e: RemoteCommsInitErr) : ReconnectError() {
+        override val description: String
+            get() = e.description
+    }
+
+    public object NeverConnected : ReconnectError() {
+        override val description: String = "Cannot reconnect to device that has never been connected to before."
+    }
 }

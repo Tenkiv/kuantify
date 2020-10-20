@@ -17,20 +17,11 @@
 
 package kuantify.fs.networking.communication
 
-import io.ktor.client.features.websocket.*
-import io.ktor.http.*
-import io.ktor.http.cio.websocket.*
-import io.ktor.utils.io.errors.IOException
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-import mu.*
-import kuantify.*
 import kuantify.fs.hardware.device.*
-import kuantify.fs.networking.*
-import kuantify.fs.networking.client.*
 import kuantify.networking.communication.*
 import kuantify.networking.configuration.*
 import kuantify.networking.configuration.RouteConfig.Companion.formatPathStandard
+import mu.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -56,97 +47,16 @@ public abstract class LocalCommunicator(
 
     public abstract val isHosting: Boolean
 
-    @KuantifyComponentBuilder
-    public abstract suspend fun stopHosting()
-
 }
 
-public abstract class FSRemoteCommunictor(final override val device: FSRemoteDevice) :
-    RemoteCommunicator<String>(device) {
+public abstract class FSRemoteCommunictor(
+    final override val device: FSRemoteDevice,
+    internal val onCanceled: () -> Unit
+) : RemoteCommunicator<String>(device) {
 
     protected final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<String>> =
         buildFSRouteBindingMap(device)
 
-}
-
-internal class FSRemoteWebsocketCommunicator(
-    device: FSRemoteDevice,
-    private val onCanceled: () -> Unit
-) : FSRemoteCommunictor(device) {
-
-    @Volatile
-    private var webSocketSession: WebSocketSession? = null
-
-    public override val communicationMode: CommunicationMode
-        get() = CommunicationMode.NON_EXCLUSIVE
-
-    private suspend fun startWebsocket() {
-        val initialized = CompletableDeferred<Boolean>()
-
-        launch {
-            httpClient.ws(
-                method = HttpMethod.Get,
-                host = device.hostIp,
-                port = RC.DEFAULT_PORT,
-                path = RC.WEBSOCKET
-            ) {
-                webSocketSession = this
-                logger.debug { "Websocket connection opened for device: ${device.uid}" }
-
-                initialized.complete(true)
-                try {
-                    incoming.consumeEach { frame ->
-                        if (frame is Frame.Text) {
-                            receiveRawMessage(frame.readText())
-                            logger.trace {
-                                "Received message - ${frame.readText()} - from remote device: ${device.uid}"
-                            }
-                        }
-                    }
-                } finally {
-                    logger.debug(
-                        "Websocket connection closed for device: ${device.uid}, reason: ${closeReason.await()}"
-                    )
-                    connectionStopped()
-                }
-            }
-        }
-
-        initialized.await()
-    }
-
-    public override suspend fun sendMessage(route: String, message: String) {
-        webSocketSession?.send(Frame.Text(FSNetworkMessage(route, message).serialize()))?.also {
-            logger.trace { "Sent on route: $route, message - $message - to remote device: ${device.uid}" }
-        } ?: attemptMessageWithoutConnection(route, message)
-    }
-
-    @Suppress("NAME_SHADOWING")
-    private suspend fun receiveRawMessage(message: String) {
-        val (route, message) = Serialization.json.decodeFromString(FSNetworkMessage.serializer(), message)
-
-        receiveMessage(route, message)
-    }
-
-    internal suspend fun init() {
-        initBindings()
-        startWebsocket()
-    }
-
-    override suspend fun cancel() {
-        webSocketSession?.close()
-    }
-
-    private fun connectionStopped() {
-        cancelCoroutines()
-        onCanceled()
-        webSocketSession = null
-    }
-
-    private fun attemptMessageWithoutConnection(route: String, message: String): Nothing {
-        throw IOException(
-            "Attempted to send message -$message- on route $route to device $device but there is no active connection."
-        )
-    }
+    public abstract val isConnected: Boolean
 
 }

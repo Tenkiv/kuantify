@@ -17,13 +17,18 @@
 
 package kuantify.hardware.device
 
+import kuantify.fs.hardware.device.*
+import kuantify.fs.networking.communication.*
+import kuantify.networking.*
+import kuantify.networking.communication.*
+import org.tenkiv.coral.Result
+import kotlin.time.*
+
 /**
  * Interface defining the basic features of a device that can be connected to. This is in most cases a device located
  * across a network or serial connection.
  */
 public interface RemoteDevice : Device {
-
-    public val hostIp: String
 
     /**
      * Value representing if the Device is connected.
@@ -34,7 +39,13 @@ public interface RemoteDevice : Device {
      */
     public val isConnected: Boolean
 
-    public suspend fun connect()
+    /**
+     * Attempts to reconnect using whatever connection method was last used to connect to this device.
+     * If this device was never previously connected to, this returns failure.
+     */
+    public suspend fun reconnect(
+        timeout: Duration
+    ) : Result<Unit, ReconnectError>
 
     public suspend fun disconnect()
 
