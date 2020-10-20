@@ -160,7 +160,7 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
         communicator?.cancel()
     }
 
-    private fun onCommunicatorCanceled() {
+    internal fun onCommunicatorCanceled() {
         communicator = null
     }
 

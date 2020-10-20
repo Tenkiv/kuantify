@@ -50,13 +50,19 @@ public abstract class LocalCommunicator(
 }
 
 public abstract class FSRemoteCommunictor(
-    final override val device: FSRemoteDevice,
-    internal val onCanceled: () -> Unit
+    final override val device: FSRemoteDevice
 ) : RemoteCommunicator<String>(device) {
 
     protected final override val networkRouteBindingMap: Map<String, NetworkRouteBinding<String>> =
         buildFSRouteBindingMap(device)
 
     public abstract val isConnected: Boolean
+
+    /**
+     * Notifies the device associated with this communicator that the communicator has been canceled.
+     */
+    protected fun notifyCanceled() {
+        device.onCommunicatorCanceled()
+    }
 
 }
