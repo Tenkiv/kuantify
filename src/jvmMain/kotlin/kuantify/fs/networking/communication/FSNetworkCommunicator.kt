@@ -59,10 +59,10 @@ public abstract class FSRemoteCommunictor(
     public abstract val isConnected: Boolean
 
     /**
-     * Notifies the device associated with this communicator that the communicator has been canceled.
+     * Notifies the device associated with this communicator that the communicator has been closed.
      */
-    protected fun notifyCanceled() {
-        device.onCommunicatorCanceled()
+    protected fun notifyClosed() {
+        device.onCommunicatorClosed()
     }
 
 }

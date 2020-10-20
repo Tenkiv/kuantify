@@ -91,7 +91,7 @@ public abstract class LocalDevice(
     }
 
     public suspend fun stopHosting() {
-        communicator?.cancel()
+        communicator?.close()
         communicator = null
     }
 
@@ -136,7 +136,7 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
             if (this.communicatorInitializer !== communicatorInitializer) {
                 this.communicatorInitializer = communicatorInitializer
             }
-            when(val commsInitResult = communicatorInitializer.init(this, timeout, this::onCommunicatorCanceled)) {
+            when(val commsInitResult = communicatorInitializer.init(this, timeout, this::onCommunicatorClosed)) {
                 is Result.OK -> {
                     communicator = commsInitResult.value
                     Result.OK(Unit)
@@ -153,14 +153,10 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
     }
 
     public final override suspend fun disconnect() {
-        onDisconnect()
+        communicator?.close()
     }
 
-    private suspend fun onDisconnect() {
-        communicator?.cancel()
-    }
-
-    internal fun onCommunicatorCanceled() {
+    internal fun onCommunicatorClosed() {
         communicator = null
     }
 

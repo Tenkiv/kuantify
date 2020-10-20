@@ -23,7 +23,6 @@ import kuantify.*
 import kuantify.hardware.device.*
 import java.util.concurrent.atomic.*
 import kotlin.coroutines.*
-import kotlinx.coroutines.cancel as cancelCoroutineScope
 
 private val logger = KotlinLogging.logger {}
 
@@ -51,15 +50,11 @@ public abstract class Communicator<SerialT>(
         }
     }
 
-    protected fun cancelCoroutines() {
-        cancelCoroutineScope()
-    }
-
     /**
      * Cleanly release all associated resources and kill this communicator such that it can never be used again.
      */
     @KuantifyComponentBuilder
-    public abstract suspend fun cancel()
+    public abstract suspend fun close()
 
     @KuantifyComponentBuilder
     public suspend fun receiveMessage(route: String, message: SerialT) {
