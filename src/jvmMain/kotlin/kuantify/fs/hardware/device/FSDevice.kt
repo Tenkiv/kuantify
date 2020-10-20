@@ -110,8 +110,7 @@ public interface FSRemoteCommsInitializer {
 
     public suspend fun init(
         device: FSRemoteDevice,
-        timeout: Duration,
-        onCommunicatorCanceled: () -> Unit
+        timeout: Duration
     ): FSRemoteCommsInitResult
 
 }
@@ -136,7 +135,7 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
             if (this.communicatorInitializer !== communicatorInitializer) {
                 this.communicatorInitializer = communicatorInitializer
             }
-            when(val commsInitResult = communicatorInitializer.init(this, timeout, this::onCommunicatorClosed)) {
+            when(val commsInitResult = communicatorInitializer.init(this, timeout)) {
                 is Result.OK -> {
                     communicator = commsInitResult.value
                     Result.OK(Unit)
@@ -148,6 +147,9 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
         }
     }
 
+    /**
+     * If currently connected this function will have no affect.
+     */
     override suspend fun reconnect(timeout: Duration): Result<Unit, ReconnectError> {
         TODO("not implemented")
     }
