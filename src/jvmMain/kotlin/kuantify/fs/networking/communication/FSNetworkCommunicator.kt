@@ -17,6 +17,7 @@
 
 package kuantify.fs.networking.communication
 
+import kuantify.*
 import kuantify.fs.hardware.device.*
 import kuantify.networking.communication.*
 import kuantify.networking.configuration.*
@@ -38,6 +39,7 @@ private fun Communicator<String>.buildFSRouteBindingMap(
     return routeConfig.networkRouteBindingMap
 }
 
+@KuantifyComponentBuilder
 public abstract class LocalCommunicator(
     final override val device: LocalDevice
 ) : Communicator<String>(device) {
@@ -49,6 +51,7 @@ public abstract class LocalCommunicator(
 
 }
 
+@KuantifyComponentBuilder
 public abstract class FSRemoteCommunictor(
     final override val device: FSRemoteDevice
 ) : RemoteCommunicator<String>(device) {

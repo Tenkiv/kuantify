@@ -118,7 +118,7 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
     private var communicatorInitializer: FSRemoteCommsInitializer? = null
 
     @Volatile
-    protected var communicator: FSRemoteCommunictor? = null
+    private var communicator: FSRemoteCommunictor? = null
 
     public final override val isConnected: Boolean get() = communicator?.isConnected ?: false
 
