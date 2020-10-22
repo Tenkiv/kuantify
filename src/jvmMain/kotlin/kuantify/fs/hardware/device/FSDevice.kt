@@ -59,6 +59,14 @@ public sealed class FSBaseDevice(final override val coroutineContext: CoroutineC
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ Local Device ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
+//TODO: Make functional interface if possible in the future.
+@KuantifyComponentBuilder
+public interface LocalCommsInitializer<ErrorT : Any> {
+
+    public suspend fun init(device: LocalDevice): Result<LocalCommunicator, ErrorT>
+
+}
+
 public abstract class LocalDevice(
     coroutineContext: CoroutineContext = GlobalScope.coroutineContext
 ) : FSBaseDevice(coroutineContext) {
@@ -72,11 +80,11 @@ public abstract class LocalDevice(
         get() = communicator?.isHosting ?: false
 
     @KuantifyComponentBuilder
-    public inline fun <ErrorT : Any> startHosting(
-        communicationInit: (LocalDevice) -> Result<LocalCommunicator, ErrorT>
+    public suspend fun <ErrorT : Any> startHosting(
+        communicatorInitializer: LocalCommsInitializer<ErrorT>
     ): Result<Unit, ErrorT> {
         return if (!isHosting) {
-            when (val result = communicationInit(this)) {
+            when (val result = communicatorInitializer.init(this)) {
                 is Result.OK -> {
                     communicator = result.value
                     Result.OK(Unit)
