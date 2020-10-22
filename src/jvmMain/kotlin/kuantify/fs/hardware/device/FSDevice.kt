@@ -20,7 +20,6 @@ package kuantify.fs.hardware.device
 import io.ktor.client.request.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.builtins.*
-import mu.*
 import kuantify.*
 import kuantify.fs.networking.*
 import kuantify.fs.networking.client.*
@@ -28,7 +27,8 @@ import kuantify.fs.networking.communication.*
 import kuantify.hardware.device.*
 import kuantify.networking.*
 import kuantify.networking.configuration.*
-import org.tenkiv.coral.Result
+import mu.*
+import org.tenkiv.coral.*
 import kotlin.coroutines.*
 import kotlin.time.*
 
@@ -57,9 +57,7 @@ public sealed class FSBaseDevice(final override val coroutineContext: CoroutineC
 
 }
 
-//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
-//   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Local Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
-//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ Local Device ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 public abstract class LocalDevice(
     coroutineContext: CoroutineContext = GlobalScope.coroutineContext
@@ -74,11 +72,11 @@ public abstract class LocalDevice(
         get() = communicator?.isHosting ?: false
 
     @KuantifyComponentBuilder
-    public inline fun <ErrorT: Any> startHosting(
+    public inline fun <ErrorT : Any> startHosting(
         communicationInit: (LocalDevice) -> Result<LocalCommunicator, ErrorT>
-    ) : Result<Unit, ErrorT> {
+    ): Result<Unit, ErrorT> {
         return if (!isHosting) {
-            when(val result = communicationInit(this)) {
+            when (val result = communicationInit(this)) {
                 is Result.OK -> {
                     communicator = result.value
                     Result.OK(Unit)
@@ -100,9 +98,7 @@ public abstract class LocalDevice(
     }
 }
 
-//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
-//   ⎍⎍⎍⎍⎍⎍⎍⎍   ஃ Remote Device ஃ   ⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍⎍    //
-//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬//
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ Remote Device ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
 //TODO: Make functional interface if possible in the future.
 @KuantifyComponentBuilder
@@ -126,32 +122,47 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
 
     public final override val isConnected: Boolean get() = communicator?.isConnected ?: false
 
+    /**
+     * @param timeout sets timeout for making connection.
+     */
     @KuantifyComponentBuilder
     public suspend fun connect(
         timeout: Duration,
         communicatorInitializer: FSRemoteCommsInitializer
-    ): Result<Unit, RemoteCommsInitErr> {
-        return if (!isConnected) {
-            if (this.communicatorInitializer !== communicatorInitializer) {
-                this.communicatorInitializer = communicatorInitializer
+    ): Result<Unit, RemoteCommsInitErr> = if (!isConnected) {
+        if (this.communicatorInitializer !== communicatorInitializer) {
+            this.communicatorInitializer = communicatorInitializer
+        }
+        when (val commsInitResult = communicatorInitializer.init(this, timeout)) {
+            is Result.OK -> {
+                communicator = commsInitResult.value
+                Result.OK(Unit)
             }
-            when(val commsInitResult = communicatorInitializer.init(this, timeout)) {
+            is Result.Failure -> commsInitResult
+        }
+    } else {
+        Result.OK(Unit)
+    }
+
+    /**
+     * Connects to device using the most recently used communicatorInitializer.
+     * If currently connected this function will have no affect.
+     */
+    override suspend fun reconnect(timeout: Duration): Result<Unit, ReconnectError> = if (!isConnected) {
+        val communicatorInitializer = this.communicatorInitializer
+        if (communicatorInitializer == null) {
+            Result.Failure(ReconnectError.NeverConnected)
+        } else {
+            when (val commsInitResult = communicatorInitializer.init(this, timeout)) {
                 is Result.OK -> {
                     communicator = commsInitResult.value
                     Result.OK(Unit)
                 }
-                is Result.Failure -> commsInitResult
+                is Result.Failure -> Result.Failure(ReconnectError.InitError(commsInitResult.error))
             }
-        } else {
-            Result.OK(Unit)
         }
-    }
-
-    /**
-     * If currently connected this function will have no affect.
-     */
-    override suspend fun reconnect(timeout: Duration): Result<Unit, ReconnectError> {
-        TODO("not implemented")
+    } else {
+        Result.OK(Unit)
     }
 
     public final override suspend fun disconnect() {
