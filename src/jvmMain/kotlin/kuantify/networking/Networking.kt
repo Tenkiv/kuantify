@@ -20,7 +20,9 @@ package kuantify.networking
 public sealed class RemoteCommsInitErr {
     public abstract val description: String
 
-    public data class Timeout(override val description: String) : RemoteCommsInitErr()
+    public data class Timeout(
+        override val description: String = "Attempt to connect to host timed out."
+    ) : RemoteCommsInitErr()
 
 }
 
