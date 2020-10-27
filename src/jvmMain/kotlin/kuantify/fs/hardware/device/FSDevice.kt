@@ -17,12 +17,10 @@
 
 package kuantify.fs.hardware.device
 
-import io.ktor.client.request.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.builtins.*
 import kuantify.*
 import kuantify.fs.networking.*
-import kuantify.fs.networking.client.*
 import kuantify.fs.networking.communication.*
 import kuantify.hardware.device.*
 import kuantify.networking.*
@@ -181,10 +179,4 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
         communicator = null
     }
 
-    public companion object {
-        public suspend fun getInfo(hostIp: String): String =
-            httpClient.get<String>("${RC.HTTP}$hostIp:${RC.DEFAULT_PORT}${RC.INFO}").also {
-                logger.trace { "Got info for device at IP address $hostIp" }
-            }
-    }
 }

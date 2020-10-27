@@ -90,9 +90,7 @@ kotlin {
                 api("org.jetbrains.kotlinx:kotlinx-serialization-cbor:${Vof.serializationX}")
 
                 //ktor
-                implementation("io.ktor:ktor-websockets:${Vof.ktor}")
-                implementation("io.ktor:ktor-client-core:${Vof.ktor}")
-                implementation("io.ktor:ktor-client-websockets:${Vof.ktor}")
+                implementation("io.ktor:ktor-network:${Vof.ktor}")
 
                 //Logging
                 implementation("io.github.microutils:kotlin-logging:${Vof.kotlinLogging}")
@@ -120,10 +118,6 @@ kotlin {
                 //Coroutines
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:${Vof.coroutinesX}")
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:${Vof.coroutinesX}")
-
-                //ktor
-                implementation("io.ktor:ktor-server-core:${Vof.ktor}")
-                implementation("io.ktor:ktor-server-sessions:${Vof.ktor}")
             }
         }
 
@@ -132,8 +126,6 @@ kotlin {
                 implementation(kotlin("reflect", Vof.kotlin))
                 implementation(kotlin("test", Vof.kotlin))
                 implementation("io.mockk:mockk:${Vof.mockk}")
-                implementation("io.ktor:ktor-server-test-host:${Vof.ktor}")
-                implementation("io.ktor:ktor-client-cio:${Vof.ktor}")
             }
         }
 
