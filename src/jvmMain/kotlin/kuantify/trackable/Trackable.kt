@@ -28,9 +28,7 @@ public typealias TrackableQuantity<QT> = Trackable<Quantity<QT>>
  */
 public interface Trackable<out T : Any> {
     /**
-     * Gets the current value or returns null.
-     *
-     * @return The value or null.
+     * The current value of this Trackable or null if it hasn't been initialized.
      */
     public val valueOrNull: T?
 
