@@ -63,7 +63,7 @@ public abstract class LocalDaqcGate(
             }
 
             bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING) {
-                send(source = isTransceiving.openSubscription())
+                send(source = isTransceiving.flow)
             }
         }
 

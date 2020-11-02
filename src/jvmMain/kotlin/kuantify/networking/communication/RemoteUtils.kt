@@ -19,6 +19,7 @@ package kuantify.networking.communication
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import mu.*
 import kuantify.*
 import kuantify.hardware.device.*
@@ -47,17 +48,20 @@ public fun <T : Any> RemoteDevice.RemoteUpdatable(): Updatable<T> = RemoteUpdata
 
 private class RemoteUpdatable<T : Any>(private val device: RemoteDevice) : Updatable<T> {
     override val valueOrNull: T?
-        get() = broadcastChannel.valueOrNull
+        get() = _flow.replayCache.firstOrNull()
 
-    private val broadcastChannel = ConflatedBroadcastChannel<T>()
+    private val _flow = MutableSharedFlow<T>(
+        replay = 1,
+        extraBufferCapacity = 0,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    override val flow: SharedFlow<T> get() = _flow
 
     override fun set(value: T) {
         remoteDeviceCommand(device) {
-            broadcastChannel.offer(value)
+            _flow.tryEmit(value)
         }
     }
-
-    override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
 
 }
 
@@ -79,11 +83,16 @@ public interface RemoteSyncUpdatable<T : Any> : Updatable<T> {
 }
 
 private class RemoteSyncUpdatableImpl<T : Any> : RemoteSyncUpdatable<T> {
-    private val broadcastChannel = ConflatedBroadcastChannel<T>()
-    override val localSetChannel: Channel<T> = Channel(capacity = Channel.CONFLATED)
-
     override val valueOrNull: T?
-        get() = broadcastChannel.valueOrNull
+        get() = _flow.replayCache.firstOrNull()
+
+    private val _flow = MutableSharedFlow<T>(
+        replay = 1,
+        extraBufferCapacity = 0,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    override val flow: SharedFlow<T> get() = _flow
+    override val localSetChannel: Channel<T> = Channel(capacity = Channel.CONFLATED)
 
     /**
      * Set just sends the new value over the network the host.
@@ -93,30 +102,29 @@ private class RemoteSyncUpdatableImpl<T : Any> : RemoteSyncUpdatable<T> {
     }
 
     /**
-     * Updates actually updates the value of this Updatable to the value received from the host.
+     * Actually updates the value of this Updatable to the value received from the host.
      */
     override fun update(value: T) {
-        broadcastChannel.offer(value)
+        _flow.tryEmit(value)
     }
-
-    public override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
 
 }
 
 private class CustomSetRemoteSyncUpdatable<T : Any>(
     private val customSetter: UpdatableSetter<T>
 ) : RemoteSyncUpdatable<T> {
-    private val broadcastChannel = ConflatedBroadcastChannel<T>()
+    override val valueOrNull: T?
+        get() = _flow.replayCache.firstOrNull()
+
+    private val _flow = MutableSharedFlow<T>(
+        replay = 1,
+        extraBufferCapacity = 0,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    override val flow: SharedFlow<T> get() = _flow
     override val localSetChannel: Channel<T> = Channel(capacity = Channel.CONFLATED)
 
-    private val setValue = object : Updatable.ValueSetter<T> {
-        override fun setValue(value: T) {
-            localSetChannel.offer(value)
-        }
-    }
-
-    override val valueOrNull: T?
-        get() = broadcastChannel.valueOrNull
+    private val setValue = Updatable.ValueSetter<T> { value -> localSetChannel.offer(value) }
 
     /**
      * Set just sends the new value over the network the host.
@@ -129,10 +137,8 @@ private class CustomSetRemoteSyncUpdatable<T : Any>(
      * Updates actually updates the value of this Updatable to the value received from the host.
      */
     override fun update(value: T) {
-        broadcastChannel.offer(value)
+        _flow.tryEmit(value)
     }
-
-    public override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
 
 }
 

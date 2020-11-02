@@ -40,25 +40,25 @@ public abstract class LocalAnalogInput<out DeviceT>(
         super.routing(route)
         route.add {
             bindFS(Boolean.serializer(), RC.BUFFER) {
-                send(source = buffer.openSubscription())
+                send(source = buffer.flow)
                 receive(networkChannelCapacity = Channel.CONFLATED) {
                     buffer.set(it)
                 }
             }
             bindFS<Quantity<Voltage>>(Quantity.serializer(), RC.MAX_ACCEPTABLE_ERROR) {
-                send(source = maxAcceptableError.openSubscription())
+                send(source = maxAcceptableError.flow)
                 receive(networkChannelCapacity = Channel.CONFLATED) {
                     maxAcceptableError.set(it)
                 }
             }
             bindFS<Quantity<Voltage>>(Quantity.serializer(), RC.MAX_VOLTAGE) {
-                send(source = maxVoltage.openSubscription())
+                send(source = maxVoltage.flow)
                 receive(networkChannelCapacity = Channel.CONFLATED) {
                     maxVoltage.set(it)
                 }
             }
             bindFS<Quantity<Frequency>>(Quantity.serializer(), RC.UPDATE_RATE) {
-                send(source = updateRate.openSubscription())
+                send(source = updateRate.flow)
             }
         }
     }

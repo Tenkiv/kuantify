@@ -19,19 +19,17 @@ package kuantify.networking.communication
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import mu.*
 import kuantify.*
 import kuantify.lib.*
 import kuantify.networking.configuration.*
 
-public typealias MessageReceiver<SerialT> = suspend (update: SerialT) -> Unit
-public typealias PingReceiver = suspend () -> Unit
-public typealias MessageSerializer<BoundT, SerialT> = (update: BoundT) -> SerialT
-
 private val logger = KotlinLogging.logger {}
 
 //TODO: Should this be sealed class?
-public interface NetworkRouteBinding<SerialT> {
+@KuantifyComponentBuilder
+public interface NetworkRouteBinding<SerialT : Any> {
 
     public fun start()
 
@@ -39,36 +37,36 @@ public interface NetworkRouteBinding<SerialT> {
 
 }
 
-public class NetworkMessageBinding<BoundT, SerialT>(
+internal class MessageBinding<BoundT, SerialT : Any>(
     private val communicator: Communicator<SerialT>,
     private val route: String,
-    private val localUpdateSender: LocalUpdateSender<BoundT, SerialT>?,
-    private val networkMessageReceiver: NetworkMessageReceiver<SerialT>?
+    private val messageSender: MessageSender<BoundT, SerialT>?,
+    private val messageReceiver: MessageReceiver<SerialT>?
 ) : NetworkRouteBinding<SerialT>, CoroutineScope by communicator {
 
     public override fun start() {
         // Send
-        if (localUpdateSender != null) {
+        if (messageSender != null) {
             launch {
-                localUpdateSender.channel.consumingOnEach {
-                    val message = localUpdateSender.serialize.invoke(it)
+                messageSender.onEachMessage {
+                    val message = messageSender.serialize.invoke(it)
                     communicator.sendMessage(route, message)
                 }
             }
         }
 
         // Receive
-        if (networkMessageReceiver != null) {
+        if (messageReceiver != null) {
             launch {
-                networkMessageReceiver.channel.consumingOnEach {
-                    networkMessageReceiver.receiveOp(it)
+                messageReceiver.channel.consumingOnEach {
+                    messageReceiver.receiveOp(it)
                 }
             }
         }
     }
 
     public override suspend fun messageFromNetwork(message: SerialT) {
-        networkMessageReceiver?.channel?.send(message) ?: cantReceiveError(message)
+        messageReceiver?.channel?.send(message) ?: cantReceiveError(message)
     }
 
     private suspend fun cantReceiveError(message: SerialT) {
@@ -83,11 +81,11 @@ public class NetworkMessageBinding<BoundT, SerialT>(
 
 }
 
-public class NetworkPingBinding<SerialT>(
+internal class PingBinding<SerialT : Any>(
     private val communicator: Communicator<SerialT>,
     private val route: String,
     private val localUpdateChannel: ReceiveChannel<Ping>?,
-    private val networkPingReceiver: NetworkPingReceiver?,
+    private val pingReceiver: PingReceiver?,
     private val serializedPing: SerialT
 ) : NetworkRouteBinding<SerialT>, CoroutineScope by communicator {
 
@@ -102,17 +100,17 @@ public class NetworkPingBinding<SerialT>(
         }
 
         // Receive
-        if (networkPingReceiver != null) {
+        if (pingReceiver != null) {
             launch {
-                networkPingReceiver.channel.consumingOnEach {
-                    networkPingReceiver.receiveOp()
+                pingReceiver.channel.consumingOnEach {
+                    pingReceiver.receiveOp()
                 }
             }
         }
     }
 
     public override suspend fun messageFromNetwork(message: SerialT) {
-        networkPingReceiver?.channel?.offer(Ping) ?: cantReceiveError()
+        pingReceiver?.channel?.offer(Ping) ?: cantReceiveError()
     }
 
     private suspend fun cantReceiveError() {

@@ -18,6 +18,7 @@
 package kuantify.trackable
 
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import physikal.*
 
 public typealias UpdatableQuantity<QT> = Updatable<Quantity<QT>>
@@ -25,44 +26,44 @@ public typealias UpdatableSetter<T> = Updatable.ValueSetter<T>.(value: T) -> Uni
 
 /**
  * Same as [Trackable] but allows setting.
- * Buffer is always [Channel.CONFLATED].
  */
 public interface Updatable<T : Any> : Trackable<T> {
 
     public fun set(value: T)
 
-    //TODO: Make fun interface in kotlin 1.4
-    public interface ValueSetter<T> {
-
+    public fun interface ValueSetter<T> {
         public fun setValue(value: T)
-
     }
 }
 
 private class UpdatableImpl<T : Any> : Updatable<T> {
-    private val broadcastChannel = ConflatedBroadcastChannel<T>()
     override val valueOrNull: T?
-        get() = broadcastChannel.valueOrNull
+        get() = _flow.replayCache.firstOrNull()
 
-    override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
+    private val _flow = MutableSharedFlow<T>(
+        replay = 1,
+        extraBufferCapacity = 0,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    override val flow: SharedFlow<T> get() = _flow
 
     override fun set(value: T) {
-        broadcastChannel.offer(value)
+        _flow.tryEmit(value)
     }
 }
 
 private class CustomSetUpdatable<T : Any>(private val customSetter: UpdatableSetter<T>) : Updatable<T> {
-    private val broadcastChannel = ConflatedBroadcastChannel<T>()
     override val valueOrNull: T?
-        get() = broadcastChannel.valueOrNull
+        get() = _flow.replayCache.firstOrNull()
 
-    private val setValue = object : Updatable.ValueSetter<T> {
-        override fun setValue(value: T) {
-            broadcastChannel.offer(value)
-        }
-    }
+    private val _flow = MutableSharedFlow<T>(
+        replay = 1,
+        extraBufferCapacity = 0,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    override val flow: SharedFlow<T> get() = _flow
 
-    override fun openSubscription(): ReceiveChannel<T> = broadcastChannel.openSubscription()
+    private val setValue = Updatable.ValueSetter<T> { value -> _flow.tryEmit(value) }
 
     override fun set(value: T) {
         setValue.customSetter(value)

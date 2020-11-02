@@ -27,7 +27,7 @@ import kotlin.coroutines.*
 private val logger = KotlinLogging.logger {}
 
 @KuantifyComponentBuilder
-public abstract class Communicator<SerialT>(
+public abstract class Communicator<SerialT : Any>(
     device: Device
 ) : CoroutineScope {
     protected val job: Job = Job(device.coroutineContext[Job])
@@ -78,7 +78,7 @@ public abstract class Communicator<SerialT>(
 }
 
 @KuantifyComponentBuilder
-public abstract class RemoteCommunicator<SerialT>(device: Device) : Communicator<SerialT>(device) {
+public abstract class RemoteCommunicator<SerialT : Any>(device: Device) : Communicator<SerialT>(device) {
 
     public abstract val communicationMode: CommunicationMode
 

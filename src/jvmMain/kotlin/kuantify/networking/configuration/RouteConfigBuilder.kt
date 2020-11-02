@@ -18,6 +18,7 @@
 package kuantify.networking.configuration
 
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.*
 import mu.*
 import org.tenkiv.coral.*
@@ -52,7 +53,7 @@ public class RouteConfig<SerialT : Any>(
             routeConfigBuilderLogger.warn { "Overriding side route binding for route $path." }
         }
 
-        networkRouteBindingMap[path] = NetworkMessageBinding(
+        networkRouteBindingMap[path] = MessageBinding(
             communicator,
             path,
             routeBindingBuilder.send,
@@ -75,12 +76,12 @@ public class RouteConfig<SerialT : Any>(
 
         val receiveOp = routeBindingBuilder.receiveOp
         val networkPingReceiver = if (receiveOp != null) {
-            NetworkPingReceiver(Channel(capacity = Channel.RENDEZVOUS), receiveOp)
+            PingReceiver(Channel(capacity = Channel.RENDEZVOUS), receiveOp)
         } else {
             null
         }
 
-        networkRouteBindingMap[path] = NetworkPingBinding(
+        networkRouteBindingMap[path] = PingBinding(
             communicator,
             path,
             routeBindingBuilder.localUpdateChannel,
@@ -163,24 +164,28 @@ public class NetworkRoute<SerialT : Any> @PublishedApi internal constructor(
 }
 
 @NetworkingDsl
-public class MessageBindingBuilder<BoundT, SerialT> @PublishedApi internal constructor() {
+public class MessageBindingBuilder<BoundT, SerialT : Any> @PublishedApi internal constructor() {
     @PublishedApi
-    internal var send: LocalUpdateSender<BoundT, SerialT>? = null
+    internal var send: MessageSender<BoundT, SerialT>? = null
 
     @PublishedApi
-    internal var receive: NetworkMessageReceiver<SerialT>? = null
+    internal var receive: MessageReceiver<SerialT>? = null
 
     @NetworkingDsl
+    public fun send(source: Flow<BoundT>, serialize: MessageSerializer<BoundT, SerialT>) {
+        send = MessageSender.Flow(source, serialize)
+    }
+
     public fun send(source: ReceiveChannel<BoundT>, serialize: MessageSerializer<BoundT, SerialT>) {
-        send = LocalUpdateSender(source, serialize)
+        send = MessageSender.Channel(source, serialize)
     }
 
     @NetworkingDsl
     public fun receive(
         networkChannelCapacity: Int32 = Channel.BUFFERED,
-        receiveOp: MessageReceiver<SerialT>
+        receiveOp: ReceiveMessage<SerialT>
     ) {
-        receive = NetworkMessageReceiver(Channel(networkChannelCapacity), receiveOp)
+        receive = MessageReceiver(Channel(networkChannelCapacity), receiveOp)
     }
 
 }
@@ -194,8 +199,15 @@ public class StringSerializingMbb<BoundT> @PublishedApi internal constructor(
     internal val parent = MessageBindingBuilder<BoundT, String>()
 
     @NetworkingDsl
+    public fun send(source: Flow<BoundT>) {
+        parent.send = MessageSender.Flow(source) { value ->
+            formatter.encodeToString(serializer, value)
+        }
+    }
+
+    @NetworkingDsl
     public fun send(source: ReceiveChannel<BoundT>) {
-        parent.send = LocalUpdateSender(source) { value ->
+        parent.send = MessageSender.Channel(source) { value ->
             formatter.encodeToString(serializer, value)
         }
     }
@@ -205,7 +217,7 @@ public class StringSerializingMbb<BoundT> @PublishedApi internal constructor(
         networkChannelCapacity: Int32 = Channel.BUFFERED,
         crossinline receiveOp: suspend (BoundT) -> Unit
     ) {
-        parent.receive = NetworkMessageReceiver(Channel(networkChannelCapacity)) { value ->
+        parent.receive = MessageReceiver(Channel(networkChannelCapacity)) { value ->
             receiveOp(formatter.decodeFromString(serializer, value))
         }
     }
@@ -245,8 +257,15 @@ public class BinarySerializingMbb<BoundT> @PublishedApi internal constructor(
     internal val parent = MessageBindingBuilder<BoundT, ByteArray>()
 
     @NetworkingDsl
+    public fun send(source: Flow<BoundT>) {
+        parent.send = MessageSender.Flow(source) { value ->
+            formatter.encodeToByteArray(serializer, value)
+        }
+    }
+
+    @NetworkingDsl
     public fun send(source: ReceiveChannel<BoundT>) {
-        parent.send = LocalUpdateSender(source) { value ->
+        parent.send = MessageSender.Channel(source) { value ->
             formatter.encodeToByteArray(serializer, value)
         }
     }
@@ -256,7 +275,7 @@ public class BinarySerializingMbb<BoundT> @PublishedApi internal constructor(
         networkChannelCapacity: Int32 = Channel.BUFFERED,
         crossinline receiveOp: suspend (BoundT) -> Unit
     ) {
-        parent.receive = NetworkMessageReceiver(Channel(networkChannelCapacity)) { value ->
+        parent.receive = MessageReceiver(Channel(networkChannelCapacity)) { value ->
             receiveOp(formatter.decodeFromByteArray(serializer, value))
         }
     }
@@ -293,7 +312,7 @@ public class PingBindingBuilder @PublishedApi internal constructor() {
     internal var localUpdateChannel: ReceiveChannel<Ping>? = null
 
     @PublishedApi
-    internal var receiveOp: PingReceiver? = null
+    internal var receiveOp: ReceivePing? = null
 
     @NetworkingDsl
     public fun send(source: ReceiveChannel<Ping>) {
@@ -302,7 +321,7 @@ public class PingBindingBuilder @PublishedApi internal constructor() {
 
     @NetworkingDsl
     public fun receive(
-        receiveOp: PingReceiver
+        receiveOp: ReceivePing
     ) {
         this.receiveOp = receiveOp
     }

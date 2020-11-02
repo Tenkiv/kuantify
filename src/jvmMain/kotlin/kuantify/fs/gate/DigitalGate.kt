@@ -40,19 +40,19 @@ public abstract class LocalDigitalGate(uid: String) : LocalDaqcGate(uid), Digita
         super.routing(route)
         route.add {
             bindFS<Quantity<Time>>(Quantity.serializer(), RC.AVG_PERIOD) {
-                send(source = avgPeriod.openSubscription())
+                send(source = avgPeriod.flow)
                 receive(networkChannelCapacity = Channel.CONFLATED) {
                     avgPeriod.set(it)
                 }
             }
             bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING_BIN_STATE) {
-                send(source = isTransceivingBinaryState.openSubscription())
+                send(source = isTransceivingBinaryState.flow)
             }
             bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING_FREQUENCY) {
-                send(source = isTransceivingFrequency.openSubscription())
+                send(source = isTransceivingFrequency.flow)
             }
             bindFS(Boolean.serializer(), RC.IS_TRANSCEIVING_PWM) {
-                send(source = isTransceivingPwm.openSubscription())
+                send(source = isTransceivingPwm.flow)
             }
         }
     }

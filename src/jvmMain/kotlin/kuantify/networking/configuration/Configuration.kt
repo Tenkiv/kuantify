@@ -18,25 +18,53 @@
 package kuantify.networking.configuration
 
 import kotlinx.coroutines.channels.*
-import kuantify.networking.communication.*
+import kotlinx.coroutines.flow.*
+import kuantify.lib.*
 
 public typealias Path = List<String>
 public typealias Ping = Unit
 
+public typealias MessageSerializer<BoundT, SerialT> = (update: BoundT) -> SerialT
+
 @DslMarker
 internal annotation class NetworkingDsl
 
-public data class NetworkMessageReceiver<SerialT>(
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ Send ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+internal sealed class MessageSender<BoundT, SerialT : Any> {
+    abstract val serialize: MessageSerializer<BoundT, SerialT>
+
+    // This function is implemented here instead of in the subclasses to allow it to be inlined.
+    suspend inline fun onEachMessage(crossinline action: suspend (update: BoundT) -> Unit) {
+        when(this) {
+            is Flow -> this.flow.collect(action)
+            is Channel -> this.channel.consumingOnEach { update -> action(update) }
+        }
+    }
+
+    data class Flow<BoundT, SerialT : Any>(
+        val flow: kotlinx.coroutines.flow.Flow<BoundT>,
+        override val serialize: MessageSerializer<BoundT, SerialT>
+    ) : MessageSender<BoundT, SerialT>()
+
+    data class Channel<BoundT, SerialT : Any>(
+        val channel: ReceiveChannel<BoundT>,
+        override val serialize: MessageSerializer<BoundT, SerialT>
+    ) : MessageSender<BoundT, SerialT>()
+
+}
+
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ Receive ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+public typealias ReceiveMessage<SerialT> = suspend (update: SerialT) -> Unit
+public typealias ReceivePing = suspend () -> Unit
+
+@PublishedApi
+internal data class MessageReceiver<SerialT : Any>(
     val channel: Channel<SerialT>,
-    val receiveOp: MessageReceiver<SerialT>
+    val receiveOp: ReceiveMessage<SerialT>
 )
 
-public data class LocalUpdateSender<MessageT, SerialT>(
-    val channel: ReceiveChannel<MessageT>,
-    val serialize: MessageSerializer<MessageT, SerialT>
-)
-
-public data class NetworkPingReceiver(
+@PublishedApi
+internal data class PingReceiver(
     val channel: Channel<Ping>,
-    val receiveOp: PingReceiver
+    val receiveOp: ReceivePing
 )
