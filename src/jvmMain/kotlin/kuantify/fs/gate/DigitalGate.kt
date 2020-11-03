@@ -60,11 +60,9 @@ public abstract class LocalDigitalGate(uid: String) : LocalDaqcGate(uid), Digita
 }
 
 public abstract class FSRemoteDigitalGate(uid: String, device: FSRemoteDevice) : FSRemoteDaqcGate(uid), DigitalGate {
-    private val _avgPeriod = RemoteSyncUpdatable<Quantity<Time>> {
+    private val _avgPeriod = device.RemoteSyncUpdatable<Quantity<Time>> {
         modifyConfiguration {
-            remoteDeviceCommand(device) {
-                setValue(it)
-            }
+            setValue(it)
         }
     }
     public override val avgPeriod: UpdatableQuantity<Time> get() = _avgPeriod

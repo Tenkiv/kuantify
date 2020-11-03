@@ -69,31 +69,25 @@ public abstract class FSRemoteAnalogInput<out DeviceT>(
     uid: String,
     public final override val device: DeviceT
 ) : FSRemoteQuantityInput<Voltage>(uid), AnalogInput where DeviceT : AnalogDaqDevice, DeviceT : FSRemoteDevice {
-    private val _buffer = RemoteSyncUpdatable<Boolean> {
+    private val _buffer = device.RemoteSyncUpdatable<Boolean> {
         modifyConfiguration {
-            command {
-                setValue(it)
-            }
+            setValue(it)
         }
     }
     public override val buffer: Updatable<Boolean>
         get() = _buffer
 
-    private val _maxAcceptableError = RemoteSyncUpdatable<Quantity<Voltage>> {
+    private val _maxAcceptableError = device.RemoteSyncUpdatable<Quantity<Voltage>> {
         modifyConfiguration {
-            command {
-                setValue(it)
-            }
+            setValue(it)
         }
     }
     public override val maxAcceptableError: UpdatableQuantity<Voltage>
         get() = _maxAcceptableError
 
-    private val _maxVoltage = RemoteSyncUpdatable<Quantity<Voltage>> {
+    private val _maxVoltage = device.RemoteSyncUpdatable<Quantity<Voltage>> {
         modifyConfiguration {
-            command {
-                setValue(it)
-            }
+            setValue(it)
         }
     }
     public override val maxVoltage: UpdatableQuantity<Voltage>

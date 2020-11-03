@@ -56,7 +56,6 @@ public sealed class FSBaseDevice(final override val coroutineContext: CoroutineC
 }
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ Local Device ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-
 //TODO: Make functional interface if possible in the future.
 @KuantifyComponentBuilder
 public interface LocalCommsInitializer<ErrorT : Any> {
@@ -105,7 +104,6 @@ public abstract class LocalDevice(
 }
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ Remote Device ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-
 //TODO: Make functional interface if possible in the future.
 @KuantifyComponentBuilder
 public interface FSRemoteCommsInitializer {

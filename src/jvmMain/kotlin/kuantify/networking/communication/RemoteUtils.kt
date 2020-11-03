@@ -82,7 +82,7 @@ public interface RemoteSyncUpdatable<T : Any> : Updatable<T> {
     public fun update(value: T)
 }
 
-private class RemoteSyncUpdatableImpl<T : Any> : RemoteSyncUpdatable<T> {
+private class RemoteSyncUpdatableImpl<T : Any>(private val device: RemoteDevice) : RemoteSyncUpdatable<T> {
     override val valueOrNull: T?
         get() = _flow.replayCache.firstOrNull()
 
@@ -95,14 +95,16 @@ private class RemoteSyncUpdatableImpl<T : Any> : RemoteSyncUpdatable<T> {
     override val localSetChannel: Channel<T> = Channel(capacity = Channel.CONFLATED)
 
     /**
-     * Set just sends the new value over the network the host.
+     * Sends the new value over the network to the host.
      */
     override fun set(value: T) {
-        localSetChannel.offer(value)
+        remoteDeviceCommand(device) {
+            localSetChannel.offer(value)
+        }
     }
 
     /**
-     * Actually updates the value of this Updatable to the value received from the host.
+     * Updates the value of this Updatable to the value received from the host.
      */
     override fun update(value: T) {
         _flow.tryEmit(value)
@@ -111,6 +113,7 @@ private class RemoteSyncUpdatableImpl<T : Any> : RemoteSyncUpdatable<T> {
 }
 
 private class CustomSetRemoteSyncUpdatable<T : Any>(
+    private val device: RemoteDevice,
     private val customSetter: UpdatableSetter<T>
 ) : RemoteSyncUpdatable<T> {
     override val valueOrNull: T?
@@ -127,14 +130,16 @@ private class CustomSetRemoteSyncUpdatable<T : Any>(
     private val setValue = Updatable.ValueSetter<T> { value -> localSetChannel.offer(value) }
 
     /**
-     * Set just sends the new value over the network the host.
+     * Sends the new value over the network to the host.
      */
     override fun set(value: T) {
-        setValue.customSetter(value)
+        remoteDeviceCommand(device) {
+            setValue.customSetter(value)
+        }
     }
 
     /**
-     * Updates actually updates the value of this Updatable to the value received from the host.
+     * Updates the value of this Updatable to the value received from the host.
      */
     override fun update(value: T) {
         _flow.tryEmit(value)
@@ -143,8 +148,8 @@ private class CustomSetRemoteSyncUpdatable<T : Any>(
 }
 
 @KuantifyComponentBuilder
-public fun <T : Any> RemoteSyncUpdatable(): RemoteSyncUpdatable<T> = RemoteSyncUpdatableImpl()
+public fun <T : Any> RemoteDevice.RemoteSyncUpdatable(): RemoteSyncUpdatable<T> = RemoteSyncUpdatableImpl(this)
 
 @KuantifyComponentBuilder
-public fun <T : Any> RemoteSyncUpdatable(setter: UpdatableSetter<T>): RemoteSyncUpdatable<T> =
-    CustomSetRemoteSyncUpdatable(setter)
+public fun <T : Any> RemoteDevice.RemoteSyncUpdatable(setter: UpdatableSetter<T>): RemoteSyncUpdatable<T> =
+    CustomSetRemoteSyncUpdatable(this, setter)

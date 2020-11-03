@@ -17,11 +17,8 @@
 
 package kuantify.hardware.device
 
-import kuantify.fs.hardware.device.*
-import kuantify.fs.networking.communication.*
 import kuantify.networking.*
-import kuantify.networking.communication.*
-import org.tenkiv.coral.Result
+import org.tenkiv.coral.*
 import kotlin.time.*
 
 /**
@@ -45,7 +42,7 @@ public interface RemoteDevice : Device {
      */
     public suspend fun reconnect(
         timeout: Duration
-    ) : Result<Unit, ReconnectError>
+    ): Result<Unit, ReconnectError>
 
     public suspend fun disconnect()
 
