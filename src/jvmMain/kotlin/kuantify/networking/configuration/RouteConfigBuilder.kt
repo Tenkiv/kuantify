@@ -20,10 +20,10 @@ package kuantify.networking.configuration
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.*
-import mu.*
-import org.tenkiv.coral.*
 import kuantify.*
 import kuantify.networking.communication.*
+import mu.*
+import org.tenkiv.coral.*
 
 @PublishedApi
 internal val routeConfigBuilderLogger = KotlinLogging.logger {}
@@ -180,12 +180,30 @@ public class MessageBindingBuilder<BoundT, SerialT : Any> @PublishedApi internal
         send = MessageSender.Channel(source, serialize)
     }
 
+    /**
+     * Receive messages through a dedicated [Channel] on a dedicated coroutine.
+     */
     @NetworkingDsl
     public fun receive(
         networkChannelCapacity: Int32 = Channel.BUFFERED,
         receiveOp: ReceiveMessage<SerialT>
     ) {
-        receive = MessageReceiver(Channel(networkChannelCapacity), receiveOp)
+        receive = MessageReceiver.Dedicated(Channel(networkChannelCapacity), receiveOp)
+    }
+
+    /**
+     * **Warning** -Improper use of this receive method can easily break communication. Default to using regular
+     * [receive] unless you're sure you know what you're doing.
+     *
+     * Receive messages directly in the coroutine(s) pulling messages in from the communication source. This method
+     * should only be used when there is virtually nothing done in the [receiveOp] as any time taken up in the
+     * [receiveOp] will block reception of all messages on all routes.
+     *
+     * [receiveOp] should only suspend as a way of handling backpressure if a buffer is full.
+     */
+    @NetworkingDsl
+    public fun receiveDirect(receiveOp: ReceiveMessage<SerialT>) {
+        receive = MessageReceiver.Direct(receiveOp)
     }
 
 }
@@ -212,12 +230,32 @@ public class StringSerializingMbb<BoundT> @PublishedApi internal constructor(
         }
     }
 
+    /**
+     * Receive messages through a dedicated [Channel] on a dedicated coroutine.
+     */
     @NetworkingDsl
     public inline fun receive(
         networkChannelCapacity: Int32 = Channel.BUFFERED,
         crossinline receiveOp: suspend (BoundT) -> Unit
     ) {
-        parent.receive = MessageReceiver(Channel(networkChannelCapacity)) { value ->
+        parent.receive = MessageReceiver.Dedicated(Channel(networkChannelCapacity)) { value ->
+            receiveOp(formatter.decodeFromString(serializer, value))
+        }
+    }
+
+    /**
+     * **Warning** -Improper use of this receive method can easily break communication. Default to using regular
+     * [receive] unless you're sure you know what you're doing.
+     *
+     * Receive messages directly in the coroutine(s) pulling messages in from the communication source. This method
+     * should only be used when there is virtually nothing done in the [receiveOp] as any time taken up in the
+     * [receiveOp] will block reception of all messages on all routes.
+     *
+     * [receiveOp] should only suspend as a way of handling backpressure if a buffer is full.
+     */
+    @NetworkingDsl
+    public inline fun receiveDirect(crossinline receiveOp: suspend (BoundT) -> Unit) {
+        parent.receive = MessageReceiver.Direct { value ->
             receiveOp(formatter.decodeFromString(serializer, value))
         }
     }
@@ -270,12 +308,32 @@ public class BinarySerializingMbb<BoundT> @PublishedApi internal constructor(
         }
     }
 
+    /**
+     * Receive messages through a dedicated [Channel] on a dedicated coroutine.
+     */
     @NetworkingDsl
     public inline fun receive(
         networkChannelCapacity: Int32 = Channel.BUFFERED,
         crossinline receiveOp: suspend (BoundT) -> Unit
     ) {
-        parent.receive = MessageReceiver(Channel(networkChannelCapacity)) { value ->
+        parent.receive = MessageReceiver.Dedicated(Channel(networkChannelCapacity)) { value ->
+            receiveOp(formatter.decodeFromByteArray(serializer, value))
+        }
+    }
+
+    /**
+     * **Warning** -Improper use of this receive method can easily break communication. Default to using regular
+     * [receive] unless you're sure you know what you're doing.
+     *
+     * Receive messages directly in the coroutine(s) pulling messages in from the communication source. This method
+     * should only be used when there is virtually nothing done in the [receiveOp] as any time taken up in the
+     * [receiveOp] will block reception of all messages on all routes.
+     *
+     * [receiveOp] should only suspend as a way of handling backpressure if a buffer is full.
+     */
+    @NetworkingDsl
+    public inline fun receiveDirect(crossinline receiveOp: suspend (BoundT) -> Unit) {
+        parent.receive = MessageReceiver.Direct { value ->
             receiveOp(formatter.decodeFromByteArray(serializer, value))
         }
     }

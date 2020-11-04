@@ -19,11 +19,10 @@ package kuantify.networking.communication
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.*
-import mu.*
 import kuantify.*
 import kuantify.lib.*
 import kuantify.networking.configuration.*
+import mu.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -56,7 +55,7 @@ internal class MessageBinding<BoundT, SerialT : Any>(
         }
 
         // Receive
-        if (messageReceiver != null) {
+        if (messageReceiver is MessageReceiver.Dedicated) {
             launch {
                 messageReceiver.channel.consumingOnEach {
                     messageReceiver.receiveOp(it)
@@ -65,16 +64,22 @@ internal class MessageBinding<BoundT, SerialT : Any>(
         }
     }
 
+    /**
+     * Calls the receive operation directly if the messageReceiver is Direct type or sends it over the receivers channel
+     * if it is Dedicated type.
+     */
     public override suspend fun messageFromNetwork(message: SerialT) {
-        messageReceiver?.channel?.send(message) ?: cantReceiveError(message)
+        messageReceiver?.receive(message) ?: cantReceiveError(message)
     }
 
     private suspend fun cantReceiveError(message: SerialT) {
         logger.error { "Received message - $message - on route: $route with no receive functionality." }
-        alertCriticalError( CriticalDaqcError.FailedMajorCommand(
-            communicator.device,
-            "Unable to receive on route of incoming message."
-        ))
+        alertCriticalError(
+            CriticalDaqcError.FailedMajorCommand(
+                communicator.device,
+                "Unable to receive on route of incoming message."
+            )
+        )
     }
 
     public override fun toString(): String = "NetworkMessageBinding(route=$route)"
@@ -115,10 +120,12 @@ internal class PingBinding<SerialT : Any>(
 
     private suspend fun cantReceiveError() {
         logger.error { "Received ping on route: $route with no receive functionality." }
-        alertCriticalError( CriticalDaqcError.FailedMajorCommand(
-            communicator.device,
-            "Unable to receive on route of incoming ping."
-        ))
+        alertCriticalError(
+            CriticalDaqcError.FailedMajorCommand(
+                communicator.device,
+                "Unable to receive on route of incoming ping."
+            )
+        )
     }
 
     public override fun toString(): String = "NetworkPingBinding(route=$route)"

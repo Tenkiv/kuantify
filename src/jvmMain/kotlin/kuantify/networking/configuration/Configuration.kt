@@ -24,12 +24,12 @@ import kuantify.lib.*
 public typealias Path = List<String>
 public typealias Ping = Unit
 
-public typealias MessageSerializer<BoundT, SerialT> = (update: BoundT) -> SerialT
-
 @DslMarker
 internal annotation class NetworkingDsl
 
 //▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ Send ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+public typealias MessageSerializer<BoundT, SerialT> = (update: BoundT) -> SerialT
+
 internal sealed class MessageSender<BoundT, SerialT : Any> {
     abstract val serialize: MessageSerializer<BoundT, SerialT>
 
@@ -58,10 +58,30 @@ public typealias ReceiveMessage<SerialT> = suspend (update: SerialT) -> Unit
 public typealias ReceivePing = suspend () -> Unit
 
 @PublishedApi
-internal data class MessageReceiver<SerialT : Any>(
-    val channel: Channel<SerialT>,
-    val receiveOp: ReceiveMessage<SerialT>
-)
+internal sealed class MessageReceiver<SerialT : Any> {
+    abstract val receiveOp: ReceiveMessage<SerialT>
+
+    abstract suspend fun receive(message: SerialT)
+
+    data class Dedicated<SerialT : Any>(
+        val channel: Channel<SerialT>,
+        override val receiveOp: ReceiveMessage<SerialT>
+    ) : MessageReceiver<SerialT>() {
+
+        override suspend fun receive(message: SerialT) {
+            channel.send(message)
+        }
+
+    }
+
+    data class Direct<SerialT : Any>(override val receiveOp: ReceiveMessage<SerialT>) : MessageReceiver<SerialT>() {
+
+        override suspend fun receive(message: SerialT) {
+            receiveOp(message)
+        }
+
+    }
+}
 
 @PublishedApi
 internal data class PingReceiver(
