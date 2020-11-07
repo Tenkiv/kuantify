@@ -37,9 +37,6 @@ public interface Updatable<T : Any> : Trackable<T> {
 }
 
 private class UpdatableImpl<T : Any> : Updatable<T> {
-    override val valueOrNull: T?
-        get() = _flow.replayCache.firstOrNull()
-
     private val _flow = MutableSharedFlow<T>(
         replay = 1,
         extraBufferCapacity = 0,
@@ -53,9 +50,6 @@ private class UpdatableImpl<T : Any> : Updatable<T> {
 }
 
 private class CustomSetUpdatable<T : Any>(private val customSetter: UpdatableSetter<T>) : Updatable<T> {
-    override val valueOrNull: T?
-        get() = _flow.replayCache.firstOrNull()
-
     private val _flow = MutableSharedFlow<T>(
         replay = 1,
         extraBufferCapacity = 0,

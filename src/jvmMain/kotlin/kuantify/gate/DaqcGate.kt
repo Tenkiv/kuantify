@@ -19,6 +19,7 @@ package kuantify.gate
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import org.tenkiv.coral.*
 import kuantify.*
 import kuantify.data.*
@@ -37,24 +38,35 @@ public interface DaqcChannel<out T : DaqcData> : DaqcGate {
     /**
      * Number of [DaqcValue]s in the [DaqcData] handled by this [DaqcChannel]
      */
-    public val daqcDataSize: Int32
+    public val daqcDataSize: UInt32
 
     /**
-     * Gets the current value or returns null.
+     * Flow of all updates to this [DaqcChannel]s value.
      *
-     * @return The value or null.
+     * Replay size will always be 1 so the current value will be immediately received upon collection.
+     * Buffer size is variable.
+     * emit into this flow will always suspend on buffer overflow.
      */
-    public val valueOrNull: ValueInstant<T>?
+    public val valueFlow: SharedFlow<ValueInstant<T>>
 
-    /**
-     * Creates a subscription to updates to this [DaqcChannel]. This [Channel] will receive all future updates but will
-     * not immediately receive the current value of this [DaqcChannel]
-     */
-    public fun openSubscription(): ReceiveChannel<ValueInstant<T>>
 }
 
-public suspend inline fun <T : DaqcData> DaqcChannel<T>.onEachUpdate(action: (update: ValueInstant<T>) -> Unit): Unit =
-    openSubscription().consumingOnEach(action)
+/**
+ * The current value of this [DaqcChannel] or null if the value is unknown because this Trackables value hasn't been
+ * initialized. Once initialized, the value can never be null again.
+ */
+public val <T : DaqcData> DaqcChannel<T>.valueOrNull: ValueInstant<T>? get() = valueFlow.replayCache.firstOrNull()
+
+/**
+ * Function which calls the [action] every time an update to this [DaqcChannel]s value is received.
+ *
+ * This is backed by valueFlow and can be safely run in multiple coroutines simultaneously.
+ */
+public suspend inline fun <T : DaqcData> DaqcChannel<T>.onEachUpdate(
+    crossinline action: suspend (update: ValueInstant<T>) -> Unit
+) {
+    valueFlow.collect(action)
+}
 
 /**
  * Gets the current value or suspends and waits for one to exist.
@@ -62,7 +74,7 @@ public suspend inline fun <T : DaqcData> DaqcChannel<T>.onEachUpdate(action: (up
  * @return The current value.
  */
 public suspend fun <T : DaqcData> DaqcChannel<T>.getValue(): ValueInstant<T> =
-    valueOrNull ?: openSubscription().consume { receive() }
+    valueOrNull ?: valueFlow.first()
 
 /**
  * A [DaqcChannel] which only has a single data parameter.
@@ -73,7 +85,7 @@ public interface IOStrand<out T : DaqcValue> : DaqcChannel<T> {
      *
      * [IOStrand]s only work with [DaqcValue] so this is always 1 in all [IOStrand]s
      */
-    public override val daqcDataSize: Int32 get() = 1
+    public override val daqcDataSize: UInt32 get() = 1u
 }
 
 public interface RangedIOStrand<T> : IOStrand<T> where T : DaqcValue, T : Comparable<T> {

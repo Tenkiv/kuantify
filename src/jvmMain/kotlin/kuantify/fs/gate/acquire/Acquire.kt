@@ -17,38 +17,16 @@
 
 package kuantify.fs.gate.acquire
 
+import kotlinx.serialization.*
 import kuantify.data.*
-import kuantify.fs.networking.*
-import kuantify.gate.acquire.input.*
-import kuantify.lib.*
-import kuantify.networking.configuration.*
-import physikal.*
+import kuantify.gate.acquire.*
 
-public abstract class LocalInput<T : DaqcValue>(uid: String) : LocalAcquireChannel<T>(uid), Input<T>
+public interface FSAcquireChannel<T : DaqcData> : AcquireChannel<T> {
 
-public abstract class LocalQuantityInput<QT : Quantity<QT>>(uid: String) : LocalInput<DaqcQuantity<QT>>(uid),
-    QuantityInput<QT> {
-
-    public override fun routing(route: NetworkRoute<String>) {
-        super.routing(route)
-        route.add {
-            bindFS<QuantityMeasurement<QT>>(QuantityMeasurement.quantitySerializer(), RC.VALUE) {
-                send(source = openSubscription())
-            }
-        }
-    }
-
-}
-
-public abstract class LocalBinaryStateInput(uid: String) : LocalInput<BinaryState>(uid), BinaryStateInput {
-
-    public override fun routing(route: NetworkRoute<String>) {
-        super.routing(route)
-        route.add {
-            bindFS(BinaryStateMeasurement.binaryStateSerializer(), RC.VALUE) {
-                send(source = openSubscription())
-            }
-        }
-    }
+    //TODO: Might want to mark this with KuantifyComponentBuilder annotation
+    /**
+     * Serializer for this [AcquireChannel]s value type.
+     */
+    public fun valueSerializer(): KSerializer<T>
 
 }

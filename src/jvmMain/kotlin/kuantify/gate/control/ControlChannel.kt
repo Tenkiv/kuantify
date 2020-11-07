@@ -18,6 +18,7 @@
 package kuantify.gate.control
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withTimeout
 import kuantify.data.*
 import kuantify.gate.*
@@ -27,40 +28,37 @@ import kotlin.time.*
 public interface ControlChannel<T : DaqcData> : DaqcChannel<T> {
 
     /**
-     * Sets the output if the function does not encounter a [SettingProblem]. Returns [SettingViability.Unviable] if
+     * Sets the output if the function does not encounter a [SettingProblem], returns [SettingViability.Unviable] if
      * it does.
+     *
+     * This function will only suspend if the buffer of the backing channel that sends the setting is full.
      */
-    public fun setOutputIfViable(setting: T): SettingViability
+    public suspend fun setOutputIfViable(setting: T): SettingViability
 
 }
 
 /**
  * Throws exception if not viable.
  */
-public fun <T : DaqcData> ControlChannel<T>.setOutput(setting: T) {
+public suspend fun <T : DaqcData> ControlChannel<T>.setOutput(setting: T) {
     setOutputIfViable(setting).throwIfUnviable()
 }
 
 // Possible other name confirmSetOutputIfViable.
+//TODO: This should return a result that can fail with Unviable or Timeout instead of throwing an exception
+// on timeout.
 /**
  * Sets the output to the specified setting and suspends until the setting is set by the system.
  * If the channel is already set to this setting this function will return immediately.
  *
- * Since output settings are conflated it's possible the target setting will never be reached if a different setting
- * is set immediately following this one.
  */
 public suspend fun <T : DaqcData> ControlChannel<T>.awaitSetOutputIfViable(
     setting: T,
     timeout: Duration = 1.minutes
 ): SettingViability = withTimeout(timeout.toLongMilliseconds()) {
-    val subscription = openSubscription()
     val viability =  async { setOutputIfViable(setting) }
-    subscription.consumingOnEach {
-        if (it.value == setting) {
-            return@withTimeout viability.await()
-        }
-    }
-    throw IllegalStateException("Should be unreachable due to timeout exception being thrown.")
+    valueFlow.first { it.value == setting }
+    return@withTimeout viability.await()
 }
 
 public suspend fun <T : DaqcData> ControlChannel<T>.awaitSetOutput(

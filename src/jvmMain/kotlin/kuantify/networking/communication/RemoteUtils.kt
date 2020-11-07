@@ -47,9 +47,6 @@ public inline fun remoteDeviceCommand(device: RemoteDevice, op: () -> Unit): Boo
 public fun <T : Any> RemoteDevice.RemoteUpdatable(): Updatable<T> = RemoteUpdatable(device = this)
 
 private class RemoteUpdatable<T : Any>(private val device: RemoteDevice) : Updatable<T> {
-    override val valueOrNull: T?
-        get() = _flow.replayCache.firstOrNull()
-
     private val _flow = MutableSharedFlow<T>(
         replay = 1,
         extraBufferCapacity = 0,
@@ -83,9 +80,6 @@ public interface RemoteSyncUpdatable<T : Any> : Updatable<T> {
 }
 
 private class RemoteSyncUpdatableImpl<T : Any>(private val device: RemoteDevice) : RemoteSyncUpdatable<T> {
-    override val valueOrNull: T?
-        get() = _flow.replayCache.firstOrNull()
-
     private val _flow = MutableSharedFlow<T>(
         replay = 1,
         extraBufferCapacity = 0,
@@ -116,9 +110,6 @@ private class CustomSetRemoteSyncUpdatable<T : Any>(
     private val device: RemoteDevice,
     private val customSetter: UpdatableSetter<T>
 ) : RemoteSyncUpdatable<T> {
-    override val valueOrNull: T?
-        get() = _flow.replayCache.firstOrNull()
-
     private val _flow = MutableSharedFlow<T>(
         replay = 1,
         extraBufferCapacity = 0,

@@ -57,7 +57,7 @@ private class RangedQuantityInputBox<QT : Quantity<QT>>(
     override val valueRange: ClosedFloatingPointRange<DaqcQuantity<QT>>
 ) : RangedQuantityInput<QT>, QuantityInput<QT> by input {
 
-    override val daqcDataSize: Int32
+    override val daqcDataSize: UInt32
         get() = input.daqcDataSize
 
 }

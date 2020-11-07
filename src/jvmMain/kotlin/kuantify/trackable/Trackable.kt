@@ -37,12 +37,6 @@ nullable types as opposed to making our own sealed class to represent initialize
  */
 public interface Trackable<out T : Any> {
     /**
-     * The current value of this Trackable or null if the value is unknown because this Trackables value hasn't been
-     * initialized. Once initialized, the value can never be null again.
-     */
-    public val valueOrNull: T?
-
-    /**
      * The flow of all updates to this Trackables value. This flow conflates the value (the flow has no extra buffer and
      * replaces old values with new ones) so it is possible for values set in rapid succession to be skipped and only
      * the most recently set value to be reported. The most recently set value will always be reported which means the
@@ -50,6 +44,12 @@ public interface Trackable<out T : Any> {
      */
     public val flow: SharedFlow<T>
 }
+
+/**
+ * The current value of this Trackable or null if the value is unknown because this Trackables value hasn't been
+ * initialized. Once initialized, the value can never be null again.
+ */
+public val <T : Any> Trackable<T>.valueOrNull: T? get() = flow.replayCache.firstOrNull()
 
 public suspend inline fun <T : Any> Trackable<T>.onEachUpdate(crossinline action: suspend (update: T) -> Unit) {
     flow.collect(action)

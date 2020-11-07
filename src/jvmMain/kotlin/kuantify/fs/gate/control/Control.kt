@@ -15,26 +15,18 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package kuantify.fs.networking
+package kuantify.fs.gate.control
 
 import kotlinx.serialization.*
-import kuantify.*
-import kuantify.networking.configuration.*
+import kuantify.data.*
+import kuantify.gate.control.*
 
-@NetworkingDsl
-internal inline fun <BoundT> NetworkRoute<String>.bindFS(
-    serializer: KSerializer<BoundT>,
-    path: Path,
-    build: StringSerializingMbb<BoundT>.() -> Unit
-) {
-    bind(Serialization.json, serializer, path, build)
-}
+public interface FSControlChannel<T : DaqcData> : ControlChannel<T> {
 
-@NetworkingDsl
-internal inline fun <BoundT> NetworkRoute<String>.bindFS(
-    serializer: KSerializer<BoundT>,
-    vararg path: String,
-    build: StringSerializingMbb<BoundT>.() -> Unit
-) {
-    bind(Serialization.json, serializer, path.toList(), build)
+    //TODO: Might want to mark this with KuantifyComponentBuilder annotation
+    /**
+     * Serializer for this [ControlChannel]s value type.
+     */
+    public fun valueSerializer(): KSerializer<T>
+
 }

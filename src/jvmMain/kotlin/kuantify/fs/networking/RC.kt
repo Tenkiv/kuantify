@@ -23,16 +23,18 @@ public object RC {
     public const val HTTP: String = "http://"
     public const val DEFAULT_PORT: UInt16 = 8080u
 
-    //HTTP routes
+    // HTTP routes
     public const val WEBSOCKET: String = "/ws"
     public const val INFO: String = "/info"
 
-    // Websocket routes
+    public const val DEFAULT_HIGH_LOAD_BUFFER: UInt32 = 64u
+
+    // Communicator routes
     public const val DAQC_GATE: String = "daqc_gate"
     public const val FINALIZE: String = "finalize"
     public const val IS_TRANSCEIVING: String = "is_transceiving"
     public const val VALUE: String = "value"
-    public const val CONTROL_SETTING: String ="control_setting"
+    public const val CONTROL_SETTING: String = "control_setting"
     public const val BUFFER: String = "buffer"
     public const val MAX_ACCEPTABLE_ERROR: String = "max_acceptable_error"
     public const val MAX_VOLTAGE: String = "max_electric_potential"

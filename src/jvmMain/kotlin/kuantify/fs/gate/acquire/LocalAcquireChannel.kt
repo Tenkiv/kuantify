@@ -17,17 +17,54 @@
 
 package kuantify.fs.gate.acquire
 
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
+import kotlinx.datetime.*
+import kotlinx.serialization.*
 import kuantify.data.*
 import kuantify.fs.gate.*
 import kuantify.fs.networking.*
 import kuantify.gate.acquire.*
+import kuantify.gate.acquire.input.*
+import kuantify.lib.*
 import kuantify.networking.configuration.*
+import org.tenkiv.coral.*
+import physikal.*
 
-public abstract class LocalAcquireChannel<T : DaqcData>(uid: String) : LocalDaqcGate(uid), AcquireChannel<T> {
+public abstract class LocalAcquireChannel<T : DaqcData>(
+    uid: String,
+    valueBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER
+) : LocalDaqcGate(uid), FSAcquireChannel<T> {
+    private val _valueFlow: MutableSharedFlow<ValueInstant<T>> =
+        MutableSharedFlow(
+            replay = 1,
+            extraBufferCapacity = valueBufferCapacity.toInt32(),
+            onBufferOverflow = BufferOverflow.SUSPEND
+        )
+    final override val valueFlow: SharedFlow<ValueInstant<T>> get() = _valueFlow
+
+    /**
+     * Updates the value from the specified [valueInstant]. This instant should be as close as possible to when the
+     * updated value was gathered.
+     */
+    protected suspend fun valueUpdate(valueInstant: ValueInstant<T>) {
+        _valueFlow.emit(valueInstant)
+    }
+
+    /**
+     * Updates the value. Specify the [Instant] at which the value was gathered.
+     */
+    protected suspend fun valueUpdate(value: T, instant: Instant = Clock.System.now()) {
+        valueUpdate(value at instant)
+    }
 
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
+            bindFS(ValueInstantSerializer(valueSerializer()), RC.VALUE) {
+                send(source = valueFlow)
+            }
+
             bindPing(RC.START_SAMPLING) {
                 receive {
                     startSampling()
@@ -35,5 +72,23 @@ public abstract class LocalAcquireChannel<T : DaqcData>(uid: String) : LocalDaqc
             }
         }
     }
+
+}
+
+public abstract class LocalQuantityInput<QT : Quantity<QT>>(
+    uid: String,
+    valueBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER
+) : LocalAcquireChannel<DaqcQuantity<QT>>(uid, valueBufferCapacity), QuantityInput<QT> {
+
+    override fun valueSerializer(): KSerializer<DaqcQuantity<QT>> = DaqcQuantity.serializer()
+
+}
+
+public abstract class LocalBinaryStateInput(
+    uid: String,
+    valueBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER
+) : LocalAcquireChannel<BinaryState>(uid, valueBufferCapacity), BinaryStateInput {
+
+    override fun valueSerializer(): KSerializer<BinaryState> = BinaryState.serializer()
 
 }

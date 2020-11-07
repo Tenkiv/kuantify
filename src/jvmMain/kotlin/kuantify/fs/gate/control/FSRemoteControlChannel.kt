@@ -15,27 +15,29 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package kuantify.fs.gate.acquire
+package kuantify.fs.gate.control
 
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.*
-import kuantify.*
+import mu.*
 import kuantify.data.*
 import kuantify.fs.gate.*
 import kuantify.fs.networking.*
-import kuantify.gate.acquire.*
-import kuantify.gate.acquire.input.*
+import kuantify.gate.control.*
+import kuantify.gate.control.output.*
 import kuantify.hardware.channel.*
 import kuantify.lib.*
 import kuantify.networking.configuration.*
 import org.tenkiv.coral.*
 import physikal.*
 
-public abstract class FSRemoteAcquireChannel<T : DaqcData>(
+private val logger = KotlinLogging.logger {}
+
+public sealed class FSRemoteControlChannel<T : DaqcData>(
     uid: String,
     valueBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER
-) : FSRemoteDaqcGate(uid), FSAcquireChannel<T> {
+) : FSRemoteDaqcGate(uid), FSControlChannel<T> {
     private val _valueFlow: MutableSharedFlow<ValueInstant<T>> =
         MutableSharedFlow(
             replay = 1,
@@ -44,45 +46,42 @@ public abstract class FSRemoteAcquireChannel<T : DaqcData>(
         )
     final override val valueFlow: SharedFlow<ValueInstant<T>> get() = _valueFlow
 
-    private val startSamplingChannel = Channel<Ping>(Channel.RENDEZVOUS)
-    public final override fun startSampling() {
-        modifyConfiguration {
-            command {
-                startSamplingChannel.offer(Ping)
-            }
-        }
+    private val settingChannel: Channel<T> = Channel(capacity = valueBufferCapacity.toInt32())
+
+    public override suspend fun setOutputIfViable(setting: T): SettingViability {
+        command { settingChannel.send(setting) }
+        return SettingViability.Viable
     }
 
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
             bindFS(ValueInstantSerializer(valueSerializer()), RC.VALUE) {
-                receiveDirect { measurement ->
-                    _valueFlow.emit(measurement)
+                receiveDirect {
+                    _valueFlow.emit(it)
                 }
             }
-
-            bindPing(RC.START_SAMPLING) {
-                send(source = startSamplingChannel)
+            bindFS(valueSerializer(), RC.CONTROL_SETTING) {
+                send(source = settingChannel)
             }
         }
     }
 
 }
 
-public abstract class FSRemoteQuantityInput<QT : Quantity<QT>>(
+public abstract class FSRemoteQuantityOutput<QT : Quantity<QT>>(
     uid: String,
-    valueBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER
-) : FSRemoteAcquireChannel<DaqcQuantity<QT>>(uid, valueBufferCapacity), QuantityInput<QT> {
+    valueBuffer: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER
+) : FSRemoteControlChannel<DaqcQuantity<QT>>(uid, valueBuffer), QuantityOutput<QT> {
 
     override fun valueSerializer(): KSerializer<DaqcQuantity<QT>> = DaqcQuantity.serializer()
 
 }
 
-public abstract class FSRemoteBinaryStateInput(
+public abstract class FSRemoteBinaryStateOutput(
     uid: String,
     valueBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER
-) : FSRemoteAcquireChannel<BinaryState>(uid, valueBufferCapacity), BinaryStateInput {
+) : FSRemoteControlChannel<BinaryState>(uid, valueBufferCapacity), BinaryStateOutput {
 
     override fun valueSerializer(): KSerializer<BinaryState> = BinaryState.serializer()
 

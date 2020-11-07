@@ -18,6 +18,9 @@
 package kuantify.fs.gate.control
 
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
+import kotlinx.datetime.*
+import kotlinx.serialization.*
 import kuantify.data.*
 import kuantify.fs.gate.*
 import kuantify.fs.networking.*
@@ -25,27 +28,35 @@ import kuantify.gate.control.*
 import kuantify.gate.control.output.*
 import kuantify.lib.*
 import kuantify.networking.configuration.*
+import org.tenkiv.coral.*
 import physikal.*
 
-public abstract class LocalOutput<T : DaqcValue>(uid: String) : LocalDaqcGate(uid), Output<T> {
-    internal val broadcastChannel = ConflatedBroadcastChannel<ValueInstant<T>>()
-    public override val valueOrNull: ValueInstant<T>?
-        get() = broadcastChannel.valueOrNull
+public abstract class LocalControlChannel<T : DaqcData>(
+    uid: String,
+    valueBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER
+) : LocalDaqcGate(uid), FSControlChannel<T> {
+    private val _valueFlow: MutableSharedFlow<ValueInstant<T>> =
+        MutableSharedFlow(
+            replay = 1,
+            extraBufferCapacity = valueBufferCapacity.toInt32(),
+            onBufferOverflow = BufferOverflow.SUSPEND
+        )
+    final override val valueFlow: SharedFlow<ValueInstant<T>> get() = _valueFlow
 
-    public override fun openSubscription(): ReceiveChannel<ValueInstant<T>> =
-        broadcastChannel.openSubscription()
-}
-
-public abstract class LocalQuantityOutput<QT : Quantity<QT>>(uid: String) : LocalOutput<DaqcQuantity<QT>>(uid),
-    QuantityOutput<QT> {
+    /**
+     * Updates the value. Specifies the [Instant] at which the value was gathered.
+     */
+    protected suspend fun valueUpdate(value: T, instant: Instant = Clock.System.now()) {
+        _valueFlow.emit(value at instant)
+    }
 
     public override fun routing(route: NetworkRoute<String>) {
         super.routing(route)
         route.add {
-            bindFS<QuantityMeasurement<QT>>(QuantityMeasurement.quantitySerializer(), RC.VALUE) {
-                send(source = openSubscription())
+            bindFS(ValueInstantSerializer(valueSerializer()), RC.VALUE) {
+                send(source = valueFlow)
             }
-            bindFS<Quantity<QT>>(Quantity.serializer(), RC.CONTROL_SETTING) {
+            bindFS(valueSerializer(), RC.CONTROL_SETTING) {
                 receive { setting ->
                     setOutput(setting)
                 }
@@ -55,20 +66,20 @@ public abstract class LocalQuantityOutput<QT : Quantity<QT>>(uid: String) : Loca
 
 }
 
-public abstract class LocalBinaryStateOutput(uid: String) : LocalOutput<BinaryState>(uid), BinaryStateOutput {
+public abstract class LocalQuantityOutput<QT : Quantity<QT>>(
+    uid: String,
+    valueBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER
+) : LocalControlChannel<DaqcQuantity<QT>>(uid, valueBufferCapacity), QuantityOutput<QT> {
 
-    public override fun routing(route: NetworkRoute<String>) {
-        super.routing(route)
-        route.add {
-            bindFS(BinaryStateMeasurement.binaryStateSerializer(), RC.VALUE) {
-                send(source = openSubscription())
-            }
-            bindFS(BinaryState.serializer(), RC.CONTROL_SETTING) {
-                receive { setting ->
-                    setOutput(setting)
-                }
-            }
-        }
-    }
+    override fun valueSerializer(): KSerializer<DaqcQuantity<QT>> = DaqcQuantity.serializer()
+
+}
+
+public abstract class LocalBinaryStateOutput(
+    uid: String,
+    valueBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER
+) : LocalControlChannel<BinaryState>(uid, valueBufferCapacity), BinaryStateOutput {
+
+    override fun valueSerializer(): KSerializer<BinaryState> = BinaryState.serializer()
 
 }

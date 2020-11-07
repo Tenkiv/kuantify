@@ -28,6 +28,7 @@ import org.tenkiv.coral.*
 @PublishedApi
 internal val routeConfigBuilderLogger = KotlinLogging.logger {}
 
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ Main route config container class ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 @KuantifyComponentBuilder
 public class RouteConfig<SerialT : Any>(
     @PublishedApi internal val communicator: Communicator<SerialT>,
@@ -105,6 +106,7 @@ public class RouteConfig<SerialT : Any>(
 
 }
 
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ Network route builder - plain route and bind ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 @Suppress("NAME_SHADOWING")
 @NetworkingDsl
 public class NetworkRoute<SerialT : Any> @PublishedApi internal constructor(
@@ -163,6 +165,7 @@ public class NetworkRoute<SerialT : Any> @PublishedApi internal constructor(
     }
 }
 
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ Plain binding builders ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 @NetworkingDsl
 public class MessageBindingBuilder<BoundT, SerialT : Any> @PublishedApi internal constructor() {
     @PublishedApi
@@ -208,6 +211,28 @@ public class MessageBindingBuilder<BoundT, SerialT : Any> @PublishedApi internal
 
 }
 
+@NetworkingDsl
+public class PingBindingBuilder @PublishedApi internal constructor() {
+    @PublishedApi
+    internal var localUpdateChannel: ReceiveChannel<Ping>? = null
+
+    @PublishedApi
+    internal var receiveOp: ReceivePing? = null
+
+    @NetworkingDsl
+    public fun send(source: ReceiveChannel<Ping>) {
+        localUpdateChannel = source
+    }
+
+    @NetworkingDsl
+    public fun receive(
+        receiveOp: ReceivePing
+    ) {
+        this.receiveOp = receiveOp
+    }
+}
+
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ String format kotlinx.serialization bindings ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 @NetworkingDsl
 public class StringSerializingMbb<BoundT> @PublishedApi internal constructor(
     @PublishedApi internal val formatter: StringFormat,
@@ -277,6 +302,15 @@ public inline fun <BoundT> NetworkRoute<String>.bind(
 }
 
 @NetworkingDsl
+public inline fun <reified BoundT> NetworkRoute<String>.bind(
+    formatter: StringFormat,
+    path: Path,
+    build: StringSerializingMbb<BoundT>.() -> Unit
+) {
+    bind(formatter, formatter.serializersModule.serializer(), path, build)
+}
+
+@NetworkingDsl
 public inline fun <BoundT> NetworkRoute<String>.bind(
     formatter: StringFormat,
     serializer: KSerializer<BoundT>,
@@ -286,6 +320,16 @@ public inline fun <BoundT> NetworkRoute<String>.bind(
     bind(formatter, serializer, path.toList(), build)
 }
 
+@NetworkingDsl
+public inline fun <reified BoundT> NetworkRoute<String>.bind(
+    formatter: StringFormat,
+    vararg path: String,
+    build: StringSerializingMbb<BoundT>.() -> Unit
+) {
+    bind(formatter, formatter.serializersModule.serializer(), path.toList(), build)
+}
+
+//▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ஃ Binary format kotlinx.serialization bindings ஃ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 @NetworkingDsl
 public class BinarySerializingMbb<BoundT> @PublishedApi internal constructor(
     @PublishedApi internal val formatter: BinaryFormat,
@@ -355,6 +399,15 @@ public inline fun <BoundT> NetworkRoute<ByteArray>.bind(
 }
 
 @NetworkingDsl
+public inline fun <reified BoundT> NetworkRoute<ByteArray>.bind(
+    formatter: BinaryFormat,
+    path: Path,
+    build: BinarySerializingMbb<BoundT>.() -> Unit
+) {
+    bind(formatter, formatter.serializersModule.serializer(), path, build)
+}
+
+@NetworkingDsl
 public inline fun <BoundT> NetworkRoute<ByteArray>.bind(
     formatter: BinaryFormat,
     serializer: KSerializer<BoundT>,
@@ -365,22 +418,10 @@ public inline fun <BoundT> NetworkRoute<ByteArray>.bind(
 }
 
 @NetworkingDsl
-public class PingBindingBuilder @PublishedApi internal constructor() {
-    @PublishedApi
-    internal var localUpdateChannel: ReceiveChannel<Ping>? = null
-
-    @PublishedApi
-    internal var receiveOp: ReceivePing? = null
-
-    @NetworkingDsl
-    public fun send(source: ReceiveChannel<Ping>) {
-        localUpdateChannel = source
-    }
-
-    @NetworkingDsl
-    public fun receive(
-        receiveOp: ReceivePing
-    ) {
-        this.receiveOp = receiveOp
-    }
+public inline fun <reified BoundT> NetworkRoute<ByteArray>.bind(
+    formatter: BinaryFormat,
+    vararg path: String,
+    build: BinarySerializingMbb<BoundT>.() -> Unit
+) {
+    bind(formatter, formatter.serializersModule.serializer(), path.toList(), build)
 }
