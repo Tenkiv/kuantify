@@ -23,6 +23,7 @@ import kotlinx.coroutines.withTimeout
 import kuantify.data.*
 import kuantify.gate.*
 import kuantify.lib.*
+import org.tenkiv.coral.*
 import kotlin.time.*
 
 public interface ControlChannel<T : DaqcData> : DaqcChannel<T> {
@@ -45,25 +46,38 @@ public suspend fun <T : DaqcData> ControlChannel<T>.setOutput(setting: T) {
 }
 
 // Possible other name confirmSetOutputIfViable.
-//TODO: This should return a result that can fail with Unviable or Timeout instead of throwing an exception
-// on timeout.
 /**
  * Sets the output to the specified setting and suspends until the setting is set by the system.
  * If the channel is already set to this setting this function will return immediately.
  *
  */
+@Suppress("NAME_SHADOWING")
 public suspend fun <T : DaqcData> ControlChannel<T>.awaitSetOutputIfViable(
     setting: T,
     timeout: Duration = 1.minutes
-): SettingViability = withTimeout(timeout.toLongMilliseconds()) {
+): Result<Unit, AwaitSetOutputError> = withTimeoutOrNull(timeout.toLongMilliseconds()) {
     val viability =  async { setOutputIfViable(setting) }
     valueFlow.first { it.value == setting }
-    return@withTimeout viability.await()
-}
+    return@withTimeoutOrNull when(val viability = viability.await()) {
+        is SettingViability.Viable -> OK(Unit)
+        is SettingViability.Unviable -> Failure(AwaitSetOutputError.UnviableSetting(viability.problem))
+    }
+} ?: Failure(AwaitSetOutputError.Timeout)
 
 public suspend fun <T : DaqcData> ControlChannel<T>.awaitSetOutput(
     setting: T,
     timeout: Duration = 1.minutes
-) {
-    awaitSetOutputIfViable(setting, timeout).throwIfUnviable()
+) : Result<Unit, AwaitSetOutputError.Timeout> = awaitSetOutputIfViable(setting, timeout).mapError { error ->
+    when(error) {
+        is AwaitSetOutputError.Timeout -> error
+        is AwaitSetOutputError.UnviableSetting -> error.problem.throwException()
+    }
+}
+
+public sealed class AwaitSetOutputError {
+
+    public object Timeout : AwaitSetOutputError()
+
+    public data class UnviableSetting(val problem: SettingProblem) : AwaitSetOutputError()
+
 }

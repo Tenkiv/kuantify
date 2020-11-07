@@ -34,7 +34,7 @@ import physikal.*
 
 private val logger = KotlinLogging.logger {}
 
-public sealed class FSRemoteControlChannel<T : DaqcData>(
+public abstract class FSRemoteControlChannel<T : DaqcData>(
     uid: String,
     valueBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER
 ) : FSRemoteDaqcGate(uid), FSControlChannel<T> {

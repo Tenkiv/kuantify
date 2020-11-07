@@ -55,6 +55,8 @@ public sealed class SettingProblem {
     public abstract val message: String
     public abstract val cause: Throwable?
 
+    public fun throwException(): Nothing = throw UnviableSettingException(this)
+
     public class UninitialisedSetting internal constructor(
         public override val controlGate: ControlChannel<*>,
         public override val cause: Throwable? = null
