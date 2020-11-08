@@ -18,15 +18,14 @@
 package kuantify.gate.acquire
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-import org.tenkiv.coral.*
+import kotlinx.coroutines.flow.*
 import kuantify.data.*
 import kuantify.gate.*
 import kuantify.lib.*
+import org.tenkiv.coral.*
 
 public typealias FailedMeasurement = ValueInstant<ProcessFailure>
-public typealias SuccesfulProcessResult<T> = Result.OK<ValueInstant<T>>
-public typealias ProcessResult<ST> = Result<ValueInstant<ST>, FailedMeasurement>
+public typealias ProcessResult<ST> = Result<Measurement<ST>, FailedMeasurement>
 
 public interface AcquireChannel<out T : DaqcData> : DaqcChannel<T> {
     /**
@@ -35,23 +34,27 @@ public interface AcquireChannel<out T : DaqcData> : DaqcChannel<T> {
     public fun startSampling()
 
     /**
-     * Opens a subscription to a broadcast that reports failures in processing the underlying data for this
-     * [AcquireChannel].
-     *
-     * @return The subscription to the broadcast or null if this [AcquireChannel] does no processing that can fail.
+     * Flow of failures in processing the underlying data for this [AcquireChannel].
+     * Will be null if this [AcquireChannel] does no processing that can fail.
      */
-    public fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>?
+    public val processFailureFlow: SharedFlow<FailedMeasurement>?
 
 }
 
+/**
+ * @return null if the associated [AcquireChannel] does no processing that can fail.
+ */
 public inline fun AcquireChannel<*>.processFailureHandler(
     scope: CoroutineScope = this,
     crossinline onFailure: suspend (failure: FailedMeasurement) -> Unit
-) {
-    val channel = openProcessFailureSubscription()
-    if (channel != null) {
+): Unit? {
+    val flow = processFailureFlow
+    return if (flow != null) {
         scope.launch {
-            channel.consumingOnEach { onFailure(it) }
+            flow.collect { onFailure(it) }
         }
+        Unit
+    } else {
+        null
     }
 }

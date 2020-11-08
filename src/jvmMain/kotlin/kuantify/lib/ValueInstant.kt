@@ -24,7 +24,8 @@ import kotlinx.serialization.encoding.*
 import kuantify.data.*
 import physikal.*
 
-public typealias Measurement = ValueInstant<DaqcValue>
+public typealias AnyMeasurement = ValueInstant<DaqcValue>
+public typealias Measurement<T> = ValueInstant<T>
 public typealias BinaryStateMeasurement = ValueInstant<BinaryState>
 public typealias QuantityMeasurement<QT> = ValueInstant<DaqcQuantity<QT>>
 

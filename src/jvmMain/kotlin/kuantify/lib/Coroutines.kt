@@ -53,20 +53,21 @@ public class MutexValue<V : Any>(@PublishedApi internal val value: V, @Published
  * Combines two flows of any type by transforming all values from either flow to the same type and putting them into a
  * new [Flow].
  */
-public fun <A, B, R> Flow<A>.transformEitherIn(
+public inline fun <A, B, R> transformEitherIn(
     scope: CoroutineScope,
-    other: Flow<B>,
-    transformThis: (A) -> R,
-    transformOther: (B) -> R
+    a: Flow<A>,
+    b: Flow<B>,
+    crossinline transformA: (A) -> R,
+    crossinline transformB: (B) -> R
 ): Flow<R> = channelFlow {
     scope.launch {
-        this@transformEitherIn.collect {
-            send(transformThis(it))
+        a.collect {
+            send(transformA(it))
         }
     }
     scope.launch {
-        other.collect {
-            send(transformOther(it))
+        b.collect {
+            send(transformB(it))
         }
     }
 }

@@ -19,6 +19,7 @@ package kuantify.gate.acquire
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import org.tenkiv.coral.*
 import kuantify.data.*
 import kuantify.gate.*
@@ -26,28 +27,34 @@ import kuantify.lib.*
 import kuantify.trackable.*
 
 public abstract class ProcessedAcquireGate<T : DaqcData, ParentT : DaqcData>(
-    initialMeasurement: ValueInstant<T>? = null
+    valueBufferCapacity: UInt32 = DEFAULT_VALUE_BUFFER_CAPACITY,
+    failureBufferCapacity: UInt32 = DEFAULT_FAILURE_BUFFER_CAPACITY
 ) : AcquireChannel<T> {
     protected abstract val parentGate: DaqcGate
+    protected abstract val parentValueFlow: SharedFlow<ValueInstant<ParentT>>
 
-    @Volatile
-    private var _valueOrNull: ValueInstant<T>? = initialMeasurement
-    public final override val valueOrNull: ValueInstant<T>?
-        get() = _valueOrNull
+    private val _valueFlow: MutableSharedFlow<ValueInstant<T>> =
+        MutableSharedFlow(
+        replay = 1,
+        extraBufferCapacity = valueBufferCapacity.toInt32(),
+        onBufferOverflow = BufferOverflow.SUSPEND
+    )
+    override val valueFlow: SharedFlow<ValueInstant<T>> get() = _valueFlow
 
-    private val broadcastChannel = BroadcastChannel<ValueInstant<T>>(capacity = Channel.BUFFERED)
-    protected open val failureBroadcastChannel: BroadcastChannel<FailedMeasurement>? = BroadcastChannel(capacity = 5)
+    private val _processFailureFlow: MutableSharedFlow<FailedMeasurement> =
+        MutableSharedFlow(
+            replay = 0,
+            extraBufferCapacity = failureBufferCapacity.toInt32(),
+            onBufferOverflow = BufferOverflow.SUSPEND
+    )
+    override val processFailureFlow: SharedFlow<FailedMeasurement>
+        get() = _processFailureFlow
 
     public override val isTransceiving: Trackable<Boolean>
         get() = parentGate.isTransceiving
 
     public override val isFinalized: Boolean
         get() = parentGate.isFinalized
-
-    public override fun openSubscription(): ReceiveChannel<ValueInstant<T>> = broadcastChannel.openSubscription()
-
-    public override fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>? =
-        failureBroadcastChannel?.openSubscription()
 
     public override fun stopTransceiving() {
         parentGate.stopTransceiving()
@@ -59,10 +66,8 @@ public abstract class ProcessedAcquireGate<T : DaqcData, ParentT : DaqcData>(
 
     protected abstract suspend fun transformInput(input: ParentT): Result<T, ProcessFailure>
 
-    protected abstract fun openParentSubscription(): ReceiveChannel<ValueInstant<ParentT>>
-
     protected open suspend fun transformationFailure(failure: FailedMeasurement) {
-        failureBroadcastChannel?.send(failure)
+        _processFailureFlow.emit(failure)
     }
 
     /**
@@ -72,10 +77,10 @@ public abstract class ProcessedAcquireGate<T : DaqcData, ParentT : DaqcData>(
      */
     protected fun initCoroutines() {
         launch {
-            openParentSubscription().consumingOnEach { measurement ->
+            parentValueFlow.collect { measurement ->
                 when (val convertedResult = transformInput(measurement.value)) {
-                    is Result.OK -> update(convertedResult.value at measurement.instant)
-                    is Result.Failure -> transformationFailure(convertedResult.error at measurement.instant)
+                    is OK -> update(convertedResult.value at measurement.instant)
+                    is Failure -> transformationFailure(convertedResult.error at measurement.instant)
                 }
             }
         }
@@ -83,26 +88,40 @@ public abstract class ProcessedAcquireGate<T : DaqcData, ParentT : DaqcData>(
         val parentGate = this.parentGate
         if (parentGate is AcquireChannel<*>) {
             parentGate.processFailureHandler {
-                failureBroadcastChannel?.send(it) ?: throw IllegalStateException(
-                    "If parent gate can have a process failures, child process gate must propagate those failures."
-                )
+                transformationFailure(it)
             }
         }
     }
 
     private suspend fun update(updated: ValueInstant<T>) {
-        _valueOrNull = updated
-        broadcastChannel.send(updated)
+        _valueFlow.emit(updated)
+    }
+
+    public fun createResultFlowIn(
+        scope: CoroutineScope
+    ): Flow<ProcessResult<T>> = transformEitherIn(
+        scope, valueFlow, processFailureFlow,
+        transformA = {
+            OK(it)
+        },
+        transformB = {
+            Failure(it)
+        }
+    )
+
+    public companion object {
+        public const val DEFAULT_VALUE_BUFFER_CAPACITY: UInt32 = 64u
+        public const val DEFAULT_FAILURE_BUFFER_CAPACITY: UInt32 = 8u
     }
 }
 
 public abstract class ProcessedAcquireChannel<T : DaqcData, ParentT : DaqcData>(
-    initialMeasurement: ValueInstant<T>? = null
-) : ProcessedAcquireGate<T, ParentT>(initialMeasurement) {
+    valueBufferCapacity: UInt32 = DEFAULT_VALUE_BUFFER_CAPACITY,
+    failureBufferCapacity: UInt32 = DEFAULT_FAILURE_BUFFER_CAPACITY
+) : ProcessedAcquireGate<T, ParentT>(valueBufferCapacity, failureBufferCapacity) {
     protected abstract override val parentGate: AcquireChannel<ParentT>
 
-    protected final override fun openParentSubscription(): ReceiveChannel<ValueInstant<ParentT>> =
-        parentGate.openSubscription()
+    override val parentValueFlow: SharedFlow<ValueInstant<ParentT>> get() = parentGate.valueFlow
 
     public final override fun startSampling() {
         parentGate.startSampling()
