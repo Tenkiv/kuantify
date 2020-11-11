@@ -33,13 +33,8 @@ import physikal.types.*
 public interface DigitalOutput : DeviceDigitalGate {
     public override val device: DigitalOutputDevice
 
-    public val lastStateSetting: ValueInstant<BinaryState>?
-    public val lastPwmSetting: ValueInstant<DaqcQuantity<Dimensionless>>?
-    public val lastTransitionFrequencySetting: ValueInstant<DaqcQuantity<Frequency>>?
-
-
-    //TODO: Switch to having both setIfViable version and normal version.
-    public fun setOutputState(
+    //TODO: Make non ifViable "IV" version that throws exception if not viable.
+    public suspend fun setOutputStateIV(
         state: BinaryState
     ): SettingViability
 
@@ -48,7 +43,7 @@ public interface DigitalOutput : DeviceDigitalGate {
      *
      * @param percent The percentage of the time the output is supposed to be active.
      */
-    public fun pulseWidthModulate(
+    public suspend fun pulseWidthModulateIV(
         percent: Quantity<Dimensionless>
     ): SettingViability
 
@@ -57,7 +52,7 @@ public interface DigitalOutput : DeviceDigitalGate {
      *
      * @param freq The frequency of state change.
      */
-    public fun sustainTransitionFrequency(
+    public suspend fun sustainTransitionFrequencyIV(
         freq: Quantity<Frequency>
     ): SettingViability
 

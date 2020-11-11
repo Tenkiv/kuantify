@@ -19,6 +19,7 @@ package kuantify.hardware.inputs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kuantify.data.*
 import kuantify.gate.acquire.*
 import kuantify.gate.acquire.input.*
@@ -34,11 +35,15 @@ import kuantify.trackable.*
  */
 internal class SimpleBinaryStateSensor(val digitalInput: DigitalInput) :
     BinaryStateInput, CoroutineScope by digitalInput {
-    override val valueOrNull: BinaryStateMeasurement?
-        get() = digitalInput.lastStateMeasurement
+
+    override val valueFlow: SharedFlow<BinaryStateMeasurement>
+        get() = digitalInput.binaryStateFlow
 
     override val isTransceiving: Trackable<Boolean> get() = digitalInput.isTransceivingBinaryState
+
     override val isFinalized: Boolean get() = digitalInput.isFinalized
+
+    override val processFailureFlow: SharedFlow<FailedMeasurement>? get() = null
 
     override fun startSampling() {
         digitalInput.startSamplingBinaryState()
@@ -47,11 +52,6 @@ internal class SimpleBinaryStateSensor(val digitalInput: DigitalInput) :
     override fun stopTransceiving() {
         digitalInput.stopTransceiving()
     }
-
-    override fun openSubscription(): ReceiveChannel<ValueInstant<BinaryState>> =
-        digitalInput.openBinaryStateSubscription()
-
-    override fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>? = null
 
     override fun finalize() {
         digitalInput.finalize()

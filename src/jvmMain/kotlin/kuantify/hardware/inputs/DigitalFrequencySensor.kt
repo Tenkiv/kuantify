@@ -17,9 +17,7 @@
 
 package kuantify.hardware.inputs
 
-import kotlinx.coroutines.channels.*
-import mu.*
-import org.tenkiv.coral.*
+import kotlinx.coroutines.flow.*
 import kuantify.data.*
 import kuantify.gate.acquire.*
 import kuantify.gate.acquire.input.*
@@ -27,6 +25,8 @@ import kuantify.hardware.channel.*
 import kuantify.lib.*
 import kuantify.lib.physikal.*
 import kuantify.trackable.*
+import mu.*
+import org.tenkiv.coral.*
 import physikal.*
 import physikal.types.*
 
@@ -42,10 +42,10 @@ public abstract class DigitalFrequencySensor<QT : Quantity<QT>>(public val digit
     protected override val parentGate: DigitalInput
         get() = digitalInput
 
-    public val avgPeriod: UpdatableQuantity<Time> get() = digitalInput.avgPeriod
+    override val parentValueFlow: Flow<QuantityMeasurement<Frequency>>
+        get() = parentGate.transitionFrequencyFlow
 
-    protected override fun openParentSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<Frequency>>> =
-        digitalInput.openTransitionFrequencySubscription()
+    public val avgPeriod: UpdatableQuantity<Time> get() = digitalInput.avgPeriod
 
     public override fun startSampling() {
         digitalInput.startSamplingTransitionFrequency()

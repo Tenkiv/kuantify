@@ -31,7 +31,7 @@ public abstract class ProcessedAcquireGate<T : DaqcData, ParentT : DaqcData>(
     failureBufferCapacity: UInt32 = DEFAULT_FAILURE_BUFFER_CAPACITY
 ) : AcquireChannel<T> {
     protected abstract val parentGate: DaqcGate
-    protected abstract val parentValueFlow: SharedFlow<ValueInstant<ParentT>>
+    protected abstract val parentValueFlow: Flow<ValueInstant<ParentT>>
 
     private val _valueFlow: MutableSharedFlow<ValueInstant<T>> =
         MutableSharedFlow(

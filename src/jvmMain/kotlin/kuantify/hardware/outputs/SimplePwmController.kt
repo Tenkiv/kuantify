@@ -19,6 +19,7 @@ package kuantify.hardware.outputs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kuantify.data.*
 import kuantify.gate.control.*
 import kuantify.gate.control.output.*
@@ -35,8 +36,9 @@ import physikal.types.*
  */
 internal class SimplePwmController(val digitalOutput: DigitalOutput) :
     QuantityOutput<Dimensionless>, CoroutineScope by digitalOutput {
-    override val valueOrNull: ValueInstant<DaqcQuantity<Dimensionless>>?
-        get() = digitalOutput.lastPwmSetting
+
+    override val valueFlow: SharedFlow<ValueInstant<DaqcQuantity<Dimensionless>>>
+        get() = digitalOutput.pwmFlow
 
     val avgPeriod: UpdatableQuantity<Time>
         get() = digitalOutput.avgPeriod
@@ -47,15 +49,12 @@ internal class SimplePwmController(val digitalOutput: DigitalOutput) :
     override val isFinalized: Boolean
         get() = digitalOutput.isFinalized
 
-    override fun openSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<Dimensionless>>> =
-        digitalOutput.openPwmSubscription()
-
     override fun stopTransceiving() {
         digitalOutput.stopTransceiving()
     }
 
-    override fun setOutputIfViable(setting: DaqcQuantity<Dimensionless>): SettingViability =
-        digitalOutput.pulseWidthModulate(setting)
+    override suspend fun setOutputIfViable(setting: DaqcQuantity<Dimensionless>): SettingViability =
+        digitalOutput.pulseWidthModulateIV(setting)
 
 
     override fun finalize() {

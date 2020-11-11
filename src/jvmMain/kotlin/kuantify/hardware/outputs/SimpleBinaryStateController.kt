@@ -19,6 +19,7 @@ package kuantify.hardware.outputs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kuantify.data.*
 import kuantify.gate.control.*
 import kuantify.gate.control.output.*
@@ -35,8 +36,9 @@ import physikal.types.*
  */
 internal class SimpleBinaryStateController(val digitalOutput: DigitalOutput) :
     BinaryStateOutput, CoroutineScope by digitalOutput {
-    override val valueOrNull: ValueInstant<BinaryState>?
-        get() = digitalOutput.lastStateSetting
+
+    override val valueFlow: SharedFlow<ValueInstant<BinaryState>>
+        get() = digitalOutput.binaryStateFlow
 
     val avgPeriod: UpdatableQuantity<Time>
         get() = digitalOutput.avgPeriod
@@ -47,15 +49,12 @@ internal class SimpleBinaryStateController(val digitalOutput: DigitalOutput) :
     override val isFinalized: Boolean
         get() = digitalOutput.isFinalized
 
-    override fun openSubscription(): ReceiveChannel<ValueInstant<BinaryState>> =
-        digitalOutput.openBinaryStateSubscription()
-
     override fun stopTransceiving() {
         digitalOutput.stopTransceiving()
     }
 
-    override fun setOutputIfViable(setting: BinaryState): SettingViability =
-        digitalOutput.setOutputState(setting)
+    override suspend fun setOutputIfViable(setting: BinaryState): SettingViability =
+        digitalOutput.setOutputStateIV(setting)
 
 
     override fun finalize() {

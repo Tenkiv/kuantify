@@ -18,6 +18,7 @@
 package kuantify.hardware.outputs
 
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kuantify.data.*
 import kuantify.gate.control.*
 import kuantify.gate.control.output.*
@@ -39,6 +40,9 @@ public abstract class DigitalFrequencyController<QT : Quantity<QT>>(
     protected final override val parentGate: DigitalOutput
         get() = digitalOutput
 
+    override val parentValueFlow: Flow<ValueInstant<DaqcQuantity<Frequency>>>
+        get() = digitalOutput.transitionFrequencyFlow
+
     public val avgPeriod: UpdatableQuantity<Time>
         get() = digitalOutput.avgPeriod
 
@@ -49,11 +53,7 @@ public abstract class DigitalFrequencyController<QT : Quantity<QT>>(
         initCoroutines()
     }
 
-    public final override fun setParentOutput(setting: DaqcQuantity<Frequency>): SettingViability =
-        digitalOutput.sustainTransitionFrequency(setting)
-
-    protected final override fun openParentSubscription():
-            ReceiveChannel<ValueInstant<DaqcQuantity<Frequency>>> =
-        digitalOutput.openTransitionFrequencySubscription()
+    protected final override suspend fun setParentOutput(setting: DaqcQuantity<Frequency>): SettingViability =
+        digitalOutput.sustainTransitionFrequencyIV(setting)
 
 }

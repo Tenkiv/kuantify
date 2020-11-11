@@ -17,7 +17,7 @@
 
 package kuantify.hardware.outputs
 
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kuantify.data.*
 import kuantify.gate.control.*
 import kuantify.gate.control.output.*
@@ -38,6 +38,9 @@ public abstract class PwmController<QT : Quantity<QT>>(
     protected final override val parentGate: DigitalOutput
         get() = digitalOutput
 
+    override val parentValueFlow: Flow<ValueInstant<DaqcQuantity<Dimensionless>>>
+        get() = digitalOutput.pwmFlow
+
     public val avgPeriod: UpdatableQuantity<Time>
         get() = digitalOutput.avgPeriod
 
@@ -48,11 +51,7 @@ public abstract class PwmController<QT : Quantity<QT>>(
         initCoroutines()
     }
 
-    public final override fun setParentOutput(setting: DaqcQuantity<Dimensionless>): SettingViability =
-        digitalOutput.pulseWidthModulate(setting)
-
-    protected final override fun openParentSubscription():
-            ReceiveChannel<ValueInstant<DaqcQuantity<Dimensionless>>> =
-        digitalOutput.openPwmSubscription()
+    protected final override suspend fun setParentOutput(setting: DaqcQuantity<Dimensionless>): SettingViability =
+        digitalOutput.pulseWidthModulateIV(setting)
 
 }

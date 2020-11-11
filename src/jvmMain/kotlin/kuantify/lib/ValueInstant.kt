@@ -28,6 +28,8 @@ public typealias AnyMeasurement = ValueInstant<DaqcValue>
 public typealias Measurement<T> = ValueInstant<T>
 public typealias BinaryStateMeasurement = ValueInstant<BinaryState>
 public typealias QuantityMeasurement<QT> = ValueInstant<DaqcQuantity<QT>>
+public typealias BinaryStateInstant = ValueInstant<BinaryState>
+public typealias QuantityInstant<QT> = ValueInstant<DaqcQuantity<QT>>
 
 public infix fun <T> T.at(instant: Instant): ValueInstant<T> = ValueInstant(this, instant)
 

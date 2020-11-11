@@ -20,7 +20,6 @@ package kuantify.hardware.channel
 import kuantify.gate.acquire.input.*
 import kuantify.hardware.device.*
 import kuantify.hardware.inputs.*
-import kuantify.lib.*
 import kuantify.lib.physikal.*
 import physikal.*
 import physikal.types.*
@@ -30,12 +29,6 @@ import physikal.types.*
  */
 public interface DigitalInput : DeviceDigitalGate {
     public override val device: DigitalDaqDevice
-
-    public val lastStateMeasurement: BinaryStateMeasurement?
-
-    public val lastPwmMeasurement: QuantityMeasurement<Dimensionless>?
-
-    public val lastTransitionFrequencyMeasurement: QuantityMeasurement<Frequency>?
 
     /**
      * Activates this channel to gather data for transition frequency averaged over a certain period of time.

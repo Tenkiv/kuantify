@@ -19,6 +19,7 @@ package kuantify.hardware.outputs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kuantify.data.*
 import kuantify.gate.control.*
 import kuantify.gate.control.output.*
@@ -36,8 +37,9 @@ import physikal.types.*
  */
 public class SimpleFrequencyController internal constructor(public val digitalOutput: DigitalOutput) :
     QuantityOutput<Frequency>, CoroutineScope by digitalOutput {
-    override val valueOrNull: ValueInstant<DaqcQuantity<Frequency>>?
-        get() = digitalOutput.lastTransitionFrequencySetting
+
+    override val valueFlow: SharedFlow<ValueInstant<DaqcQuantity<Frequency>>>
+        get() = digitalOutput.transitionFrequencyFlow
 
     public val avgPeriod: UpdatableQuantity<Time>
         get() = digitalOutput.avgPeriod
@@ -48,15 +50,12 @@ public class SimpleFrequencyController internal constructor(public val digitalOu
     override val isFinalized: Boolean
         get() = digitalOutput.isFinalized
 
-    override fun openSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<Frequency>>> =
-        digitalOutput.openTransitionFrequencySubscription()
-
     override fun stopTransceiving() {
         digitalOutput.stopTransceiving()
     }
 
-    override fun setOutputIfViable(setting: DaqcQuantity<Frequency>): SettingViability =
-        digitalOutput.sustainTransitionFrequency(setting)
+    override suspend fun setOutputIfViable(setting: DaqcQuantity<Frequency>): SettingViability =
+        digitalOutput.sustainTransitionFrequencyIV(setting)
 
 
     override fun finalize() {

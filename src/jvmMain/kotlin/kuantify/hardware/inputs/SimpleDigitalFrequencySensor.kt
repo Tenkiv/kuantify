@@ -19,6 +19,8 @@ package kuantify.hardware.inputs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
+import kuantify.data.*
 import kuantify.gate.acquire.*
 import kuantify.gate.acquire.input.*
 import kuantify.hardware.channel.*
@@ -35,8 +37,11 @@ import physikal.types.*
  */
 internal class SimpleDigitalFrequencySensor(val digitalInput: DigitalInput) :
     QuantityInput<Frequency>, CoroutineScope by digitalInput {
-    override val valueOrNull: QuantityMeasurement<Frequency>?
-        get() = digitalInput.lastTransitionFrequencyMeasurement
+
+    override val valueFlow: SharedFlow<ValueInstant<DaqcQuantity<Frequency>>>
+        get() = digitalInput.transitionFrequencyFlow
+
+    override val processFailureFlow: SharedFlow<FailedMeasurement>? get() = null
 
     public val avgPeriod: UpdatableQuantity<Time> get() = digitalInput.avgPeriod
 
@@ -50,11 +55,6 @@ internal class SimpleDigitalFrequencySensor(val digitalInput: DigitalInput) :
     override fun stopTransceiving() {
         digitalInput.stopTransceiving()
     }
-
-    override fun openSubscription(): ReceiveChannel<QuantityMeasurement<Frequency>> =
-        digitalInput.openTransitionFrequencySubscription()
-
-    override fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>? = null
 
     override fun finalize() {
         digitalInput.finalize()

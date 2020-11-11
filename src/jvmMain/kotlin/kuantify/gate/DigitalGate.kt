@@ -19,7 +19,9 @@ package kuantify.gate
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kuantify.data.*
+import kuantify.hardware.channel.*
 import kuantify.lib.*
 import kuantify.lib.physikal.*
 import kuantify.trackable.*
@@ -36,12 +38,47 @@ public interface DigitalGate : DaqcGate {
     public val isTransceivingPwm: Trackable<Boolean>
     public val isTransceivingFrequency: Trackable<Boolean>
 
-    public fun openBinaryStateSubscription(): ReceiveChannel<BinaryStateMeasurement>
+    public val binaryStateFlow: SharedFlow<BinaryStateInstant>
+    public val pwmFlow: SharedFlow<QuantityInstant<Dimensionless>>
+    public val transitionFrequencyFlow: SharedFlow<QuantityInstant<Frequency>>
 
-    public fun openPwmSubscription(): ReceiveChannel<QuantityMeasurement<Dimensionless>>
-
-    public fun openTransitionFrequencySubscription(): ReceiveChannel<QuantityMeasurement<Frequency>>
 }
+
+/**
+ * The most recent binary state or null if the value is unknown because it was never initialized.
+ * Once initialized, the value can never be null again.
+ *
+ * This is the most recent setting in the case of an Output and the most recent measurement in the case of an Input.
+ */
+public val DigitalGate.lastBinaryStateOrNull: BinaryStateInstant?
+    get() = binaryStateFlow.replayCache.firstOrNull()
+
+public suspend fun DigitalGate.getLastBinaryState(): BinaryStateInstant =
+    lastBinaryStateOrNull ?: binaryStateFlow.first()
+
+/**
+ * The most recent pulse width modulation or null if the value is unknown because it was never initialized.
+ * Once initialized, the value can never be null again.
+ *
+ * This is the most recent setting in the case of an Output and the most recent measurement in the case of an Input.
+ */
+public val DigitalGate.lastPwmOrNull: QuantityInstant<Dimensionless>?
+    get() = pwmFlow.replayCache.firstOrNull()
+
+public suspend fun DigitalGate.getLastPwm(): QuantityInstant<Dimensionless> =
+    lastPwmOrNull ?: pwmFlow.first()
+
+/**
+ * The most recent transition frequency or null if the value is unknown because it was never initialized.
+ * Once initialized, the value can never be null again.
+ *
+ * This is the most recent setting in the case of an Output and the most recent measurement in the case of an Input.
+ */
+public val DigitalGate.lastTransitionFrequencyOrNull: QuantityInstant<Frequency>?
+    get() = transitionFrequencyFlow.replayCache.firstOrNull()
+
+public suspend fun DigitalGate.getLastTransitionFrequency(): QuantityInstant<Frequency> =
+    lastTransitionFrequencyOrNull ?: transitionFrequencyFlow.first()
 
 public inline fun DigitalGate.onAnyTransceivingChange(
     crossinline block: (anyTransceiving: Boolean) -> Unit

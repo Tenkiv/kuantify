@@ -18,6 +18,7 @@
 package kuantify.fs.hardware.channel
 
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kuantify.fs.gate.*
 import kuantify.fs.hardware.device.*
 import kuantify.fs.networking.*
@@ -26,6 +27,7 @@ import kuantify.hardware.device.*
 import kuantify.lib.*
 import kuantify.lib.physikal.*
 import kuantify.networking.configuration.*
+import org.tenkiv.coral.*
 import physikal.types.*
 
 
@@ -38,16 +40,16 @@ public abstract class LocalDigitalInput<out DeviceT>(
         super.routing(route)
         route.add {
             bindFS(BinaryStateMeasurement.binaryStateSerializer(), RC.BIN_STATE_VALUE) {
-                send(source = openBinaryStateSubscription())
+                send(source = binaryStateFlow)
             }
             bindFS<QuantityMeasurement<Frequency>>(
                 QuantityMeasurement.quantitySerializer(),
                 RC.TRANSITION_FREQUENCY_VALUE
             ) {
-                send(source = openTransitionFrequencySubscription())
+                send(source = transitionFrequencyFlow)
             }
             bindFS<QuantityMeasurement<Dimensionless>>(QuantityMeasurement.quantitySerializer(), RC.PWM_VALUE) {
-                send(source = openPwmSubscription())
+                send(source = pwmFlow)
             }
             bindPing(RC.START_SAMPLING_BINARY_STATE) {
                 receive {
@@ -71,50 +73,43 @@ public abstract class LocalDigitalInput<out DeviceT>(
 
 public abstract class FSRemoteDigitalInput<out DeviceT>(
     uid: String,
-    public final override val device: DeviceT
+    public final override val device: DeviceT,
+    binaryStateBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER,
+    pwmBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER / 8u,
+    tfBufferCapacity: UInt32 = RC.DEFAULT_HIGH_LOAD_BUFFER / 8u
 ) : FSRemoteDigitalGate(uid, device), DigitalInput where DeviceT : DigitalDaqDevice, DeviceT : FSRemoteDevice {
 
-    @Volatile
-    private var _lastStateMeasurement: BinaryStateMeasurement? = null
-    public override val lastStateMeasurement: BinaryStateMeasurement?
-        get() = _lastStateMeasurement
+    private val _binaryStateFlow: MutableSharedFlow<BinaryStateMeasurement> = MutableSharedFlow(
+        replay = 1,
+        extraBufferCapacity = binaryStateBufferCapacity.toInt32(),
+        onBufferOverflow = BufferOverflow.SUSPEND
+    )
+    override val binaryStateFlow: SharedFlow<BinaryStateMeasurement> get() = _binaryStateFlow
 
-    @Volatile
-    private var _lastPwmMeasurement: QuantityMeasurement<Dimensionless>? = null
-    public override val lastPwmMeasurement: QuantityMeasurement<Dimensionless>?
-        get() = _lastPwmMeasurement
+    private val _pwmFlow: MutableSharedFlow<QuantityMeasurement<Dimensionless>> = MutableSharedFlow(
+        replay = 1,
+        extraBufferCapacity = pwmBufferCapacity.toInt32(),
+        onBufferOverflow = BufferOverflow.SUSPEND
+    )
+    override val pwmFlow: SharedFlow<QuantityMeasurement<Dimensionless>> get() = _pwmFlow
 
-    @Volatile
-    private var _lastTransitionFrequencyMeasuremnt: QuantityMeasurement<Frequency>? = null
-    override val lastTransitionFrequencyMeasurement: QuantityMeasurement<Frequency>?
-        get() = _lastTransitionFrequencyMeasuremnt
-
-    private val binaryStateBroadcastChannel = BroadcastChannel<BinaryStateMeasurement>(capacity = Channel.BUFFERED)
-    private val pwmBroadcastChannel = BroadcastChannel<QuantityMeasurement<Dimensionless>>(capacity = Channel.BUFFERED)
-    private val transitionFrequencyBroadcastChannel = BroadcastChannel<QuantityMeasurement<Frequency>>(capacity = Channel.BUFFERED)
-
-    public override fun openBinaryStateSubscription(): ReceiveChannel<BinaryStateMeasurement> =
-        binaryStateBroadcastChannel.openSubscription()
-
-    public override fun openPwmSubscription(): ReceiveChannel<QuantityMeasurement<Dimensionless>> =
-        pwmBroadcastChannel.openSubscription()
-
-    public override fun openTransitionFrequencySubscription(): ReceiveChannel<QuantityMeasurement<Frequency>> =
-        transitionFrequencyBroadcastChannel.openSubscription()
+    private val _transitionFrequencyFlow: MutableSharedFlow<QuantityMeasurement<Frequency>> = MutableSharedFlow(
+        replay = 1,
+        extraBufferCapacity = tfBufferCapacity.toInt32(),
+        onBufferOverflow = BufferOverflow.SUSPEND
+    )
+    override val transitionFrequencyFlow: SharedFlow<QuantityMeasurement<Frequency>> get() = _transitionFrequencyFlow
 
     private suspend fun updateBinaryState(update: BinaryStateMeasurement) {
-        _lastStateMeasurement = update
-        binaryStateBroadcastChannel.send(update)
+        _binaryStateFlow.emit(update)
     }
 
     private suspend fun updatePwm(update: QuantityMeasurement<Dimensionless>) {
-        _lastPwmMeasurement = update
-        pwmBroadcastChannel.send(update)
+        _pwmFlow.emit(update)
     }
 
     private suspend fun updateTransitionFrequency(update: QuantityMeasurement<Frequency>) {
-        _lastTransitionFrequencyMeasuremnt = update
-        transitionFrequencyBroadcastChannel.send(update)
+        _transitionFrequencyFlow.emit(update)
     }
 
     private val startSamplingBinaryStateChannel = Channel<Ping>(capacity = Channel.RENDEZVOUS)

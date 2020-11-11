@@ -19,6 +19,8 @@ package kuantify.hardware.inputs
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
+import kuantify.data.*
 import kuantify.gate.acquire.*
 import kuantify.gate.acquire.input.*
 import kuantify.hardware.channel.*
@@ -34,8 +36,11 @@ import physikal.types.*
  */
 internal class SimplePwmSensor(val digitalInput: DigitalInput) :
     QuantityInput<Dimensionless>, CoroutineScope by digitalInput {
-    override val valueOrNull: QuantityMeasurement<Dimensionless>?
-        get() = digitalInput.lastPwmMeasurement
+
+    override val valueFlow: SharedFlow<QuantityMeasurement<Dimensionless>>
+        get() = digitalInput.pwmFlow
+
+    override val processFailureFlow: SharedFlow<FailedMeasurement>? get() = null
 
     public val avgPeriod: UpdatableQuantity<Time> get() = digitalInput.avgPeriod
 
@@ -49,11 +54,6 @@ internal class SimplePwmSensor(val digitalInput: DigitalInput) :
     override fun stopTransceiving() {
         digitalInput.stopTransceiving()
     }
-
-    override fun openSubscription(): ReceiveChannel<QuantityMeasurement<Dimensionless>> =
-        digitalInput.openPwmSubscription()
-
-    override fun openProcessFailureSubscription(): ReceiveChannel<FailedMeasurement>? = null
 
     override fun finalize() {
         digitalInput.finalize()

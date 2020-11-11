@@ -17,15 +17,15 @@
 
 package kuantify.hardware.inputs
 
-import kotlinx.coroutines.channels.*
-import mu.*
-import org.tenkiv.coral.*
+import kotlinx.coroutines.flow.*
 import kuantify.data.*
 import kuantify.gate.acquire.*
 import kuantify.gate.acquire.input.*
 import kuantify.hardware.channel.*
 import kuantify.lib.*
 import kuantify.trackable.*
+import mu.*
+import org.tenkiv.coral.*
 import physikal.*
 import physikal.types.*
 
@@ -44,8 +44,8 @@ public abstract class PwmSensor<QT : Quantity<QT>>(
 
     public val avgPeriod: UpdatableQuantity<Time> get() = digitalInput.avgPeriod
 
-    protected override fun openParentSubscription(): ReceiveChannel<ValueInstant<DaqcQuantity<Dimensionless>>> =
-        digitalInput.openPwmSubscription()
+    override val parentValueFlow: Flow<QuantityMeasurement<Dimensionless>>
+        get() = parentGate.pwmFlow
 
     public override fun startSampling() {
         digitalInput.startSamplingPwm()
