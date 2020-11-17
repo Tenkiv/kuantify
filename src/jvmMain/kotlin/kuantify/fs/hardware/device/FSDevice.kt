@@ -177,4 +177,7 @@ public abstract class FSRemoteDevice protected constructor(coroutineContext: Cor
         communicator = null
     }
 
+    // We just need this as a namespace for extensions.
+    public companion object
+
 }
