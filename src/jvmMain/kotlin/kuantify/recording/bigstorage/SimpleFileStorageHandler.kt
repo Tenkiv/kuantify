@@ -20,6 +20,7 @@ package kuantify.recording.bigstorage
 import io.ktor.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.*
 import kotlinx.serialization.*
 import org.tenkiv.coral.*
@@ -43,7 +44,7 @@ public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<D
     private val directoryPath = GlobalScope.async(Dispatchers.Daqc) { "$RECORDERS_PATH/${uid.await()}" }
     private val directoryFile = GlobalScope.async(Dispatchers.Daqc) { File(directoryPath.await()).apply { mkdir() } }
     private val files = ArrayList<RecorderFile>()
-    private val fileCreationBroadcaster = ConflatedBroadcastChannel<RecorderFile>()
+    private val newFileNotifier = Channel<Unit>()
 
     init {
         createRecordJob()
@@ -57,7 +58,7 @@ public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<D
             val buffer = ArrayList<ValueInstant<DataT>>()
 
             val bufferJob = launch(Dispatchers.Daqc) {
-                fileCreationBroadcaster.openSubscription().receive()
+                newFileNotifier.receive()
                 channel.onEachUpdate { value ->
                     buffer += value
                 }
@@ -69,13 +70,12 @@ public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<D
 
             result.addAll(buffer.filter(filter))
 
-
             bufferJob.cancel()
             result
         }
 
     public override suspend fun recordUpdate(update: ValueInstant<DataT>) {
-        files.lastOrNull()?.writeEntry(update) ?: TODO("throw exception")
+        files.lastOrNull()?.writeEntry(update) ?: throw IllegalStateException("Cannot record update without a file.")
 
         if (storageLength is StorageSamples.Number) files.forEach { it.samplesSinceCreation++ }
     }
@@ -84,32 +84,33 @@ public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<D
         files += RecorderFile(expiresIn = null)
     }
 
-    private fun storeForDurationInit(duration: Duration) {
+    private fun CoroutineScope.storeForDurationInit(duration: Duration) {
         launch {
             val fileCreationInterval = duration / 10
             val fileExpiresIn = duration + duration / 9
             while (isActive) {
                 val newRecorderFile = RecorderFile(fileExpiresIn)
                 files += newRecorderFile
-                fileCreationBroadcaster.send(newRecorderFile)
+                newFileNotifier.send(Unit)
                 delay(fileCreationInterval)
             }
         }
     }
 
-    private fun storeForNumSamplesInit(numSamples: Int32) {
+    private fun CoroutineScope.storeForNumSamplesInit(numSamples: Int32) {
         launch {
             val fileCreationInterval = numSamples / 10
             val fileExpiresIn = (numSamples + numSamples / 9) + 1
 
             files += RecorderFile(fileExpiresIn)
-            val receiveChannel = channel.openSubscription()
-            while (isActive) {
-                val newRecorderFile = RecorderFile(fileExpiresIn)
-                if (files.last().samplesSinceCreation == fileCreationInterval) files += newRecorderFile
-                fileCreationBroadcaster.send(newRecorderFile)
-                receiveChannel.receive()
+
+            channel.onEachUpdate {
+                if (files.last().samplesSinceCreation == fileCreationInterval) {
+                    files += RecorderFile(fileExpiresIn)
+                    newFileNotifier.send(Unit)
+                }
             }
+
         }
     }
 
@@ -188,11 +189,10 @@ public class SimpleFileStorageHandler<DataT : DaqcData, ChannelT : DaqcChannel<D
         internal constructor(expiresAfterNumSamples: Int32?) {
             if (expiresAfterNumSamples != null) {
                 launch(Dispatchers.Daqc) {
-                    val receiveChannel = channel.openSubscription()
 
-                    while (samplesSinceCreation < expiresAfterNumSamples) {
-                        receiveChannel.receive()
-                    }
+                    channel.valueFlow.takeWhile {
+                        samplesSinceCreation < expiresAfterNumSamples
+                    }.collect()
 
                     suicide()
                 }
