@@ -15,29 +15,11 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-buildscript {
-    repositories {
-        mavenCentral()
-        google()
-        jcenter()
-    }
+package kuantify.fs.web.remote
 
-    dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-serialization:${Vof.kotlin}")
-    }
-}
+import io.ktor.client.*
+import io.ktor.client.features.websocket.*
 
-plugins {
-    kotlin("multiplatform") version Vof.kotlin apply false
-    id("org.jetbrains.dokka") version Vof.dokka apply false
-    id("org.jetbrains.kotlin.plugin.serialization") version Vof.kotlin apply false
-}
-
-allprojects {
-    repositories {
-        jcenter()
-        mavenCentral()
-        maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
-        maven(url = "https://kotlin.bintray.com/kotlinx/")
-    }
+internal val httpClient = HttpClient {
+    install(WebSockets)
 }
