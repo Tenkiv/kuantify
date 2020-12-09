@@ -15,29 +15,43 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-buildscript {
-    repositories {
-        mavenCentral()
-        google()
-        jcenter()
+package kuantify.hardware.inputs
+
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import kuantify.gate.acquire.*
+import kuantify.gate.acquire.input.*
+import kuantify.hardware.channel.*
+import kuantify.lib.*
+import kuantify.trackable.*
+
+//TODO: inline
+/**
+ * A simple simple implementation of a binary sensor
+ *
+ * @param digitalInput The [DigitalInput] that is being read from.
+ */
+internal class SimpleBinaryStateSensor(val digitalInput: DigitalInput) :
+    BinaryStateInput, CoroutineScope by digitalInput {
+
+    override val valueFlow: SharedFlow<BinaryStateMeasurement>
+        get() = digitalInput.binaryStateFlow
+
+    override val isTransceiving: Trackable<Boolean> get() = digitalInput.isTransceivingBinaryState
+
+    override val isFinalized: Boolean get() = digitalInput.isFinalized
+
+    override val processFailureFlow: SharedFlow<FailedMeasurement>? get() = null
+
+    override fun startSampling() {
+        digitalInput.startSamplingBinaryState()
     }
 
-    dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-serialization:${Vof.kotlin}")
+    override fun stopTransceiving() {
+        digitalInput.stopTransceiving()
     }
-}
 
-plugins {
-    kotlin("multiplatform") version Vof.kotlin apply false
-    id("org.jetbrains.dokka") version Vof.dokka apply false
-    id("org.jetbrains.kotlin.plugin.serialization") version Vof.kotlin apply false
-}
-
-allprojects {
-    repositories {
-        jcenter()
-        mavenCentral()
-        maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
-        maven(url = "https://kotlin.bintray.com/kotlinx/")
+    override fun finalize() {
+        digitalInput.finalize()
     }
 }

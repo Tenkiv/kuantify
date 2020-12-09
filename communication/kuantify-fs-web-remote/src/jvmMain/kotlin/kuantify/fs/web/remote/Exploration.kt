@@ -15,29 +15,16 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-buildscript {
-    repositories {
-        mavenCentral()
-        google()
-        jcenter()
-    }
+package kuantify.fs.web.remote
 
-    dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-serialization:${Vof.kotlin}")
-    }
-}
+import io.ktor.client.request.*
+import kuantify.fs.hardware.device.*
+import kuantify.fs.networking.*
+import mu.*
 
-plugins {
-    kotlin("multiplatform") version Vof.kotlin apply false
-    id("org.jetbrains.dokka") version Vof.dokka apply false
-    id("org.jetbrains.kotlin.plugin.serialization") version Vof.kotlin apply false
-}
+private val logger = KotlinLogging.logger {}
 
-allprojects {
-    repositories {
-        jcenter()
-        mavenCentral()
-        maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
-        maven(url = "https://kotlin.bintray.com/kotlinx/")
+public suspend fun FSRemoteDevice.Companion.getInfo(hostIp: String): String =
+    httpClient.get<String>("${RC.HTTP}$hostIp:${RC.DEFAULT_PORT}${RC.INFO}").also {
+        logger.trace { "Got info for device at IP address $hostIp" }
     }
-}

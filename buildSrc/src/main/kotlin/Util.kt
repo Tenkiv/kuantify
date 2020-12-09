@@ -33,7 +33,8 @@ import java.util.*
  * Check if the project is release based on version name. If it has "SNAPSHOT", it is not a release version.
  */
 
-fun Project.isRelease() = !version.toString().endsWith("SNAPSHOT")
+val Project.isRelease: Boolean
+    get() = !version.toString().endsWith("SNAPSHOT")
 
 /**
  * Creates a properties object from local.properties file.

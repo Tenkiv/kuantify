@@ -1,24 +1,48 @@
 image: openjdk:8-jdk
 
 stages:
-  - build
-  - test
-  - deploy
+  - build_kuantify
+  - test_kuantify
+  - publish_kuantify
+  - build_kuantify_communication
+  - test_kuantify_communication
+  - publish_kuantify_communication
 
-assembleDebug:
-  stage: build
+assembleKuantify:
+  stage: build_kuantify
   script:
-    - ./gradlew assemble
+    - ./gradlew :core:assemble
   artifacts:
     paths:
       - /build/outputs/
 
-debugTests:
-  stage: test
+testKuantify:
+  stage: test_kuantify
   script:
-    - ./gradlew -Pci --console=plain allTests
+    - ./gradlew -Pci --console=plain :core:allTests
 
-mavenDeploy:
-  stage: deploy
+publishKuantify:
+  stage: publish_kuantify
   script:
-    - if grep -q "SNAPSHOT" gradle.properties; then ./gradlew :publish; fi
+    - if grep -q "SNAPSHOT" gradle.properties; then ./gradlew :core:publish; fi
+
+assembleKuantifyCommunication:
+  stage: build_kuantify_communication
+  script:
+    - ./gradlew :communication:kuantify-fs-web-remote:assemble
+    - ./gradlew :communication:kuantify-web-host:assemble
+  artifacts:
+    paths:
+      - /build/outputs
+
+testKuantifyCommunication:
+  stage: test_kuantify_communication
+  script:
+    - ./gradlew -Pci --console=plain :communication:kuantify-fs-web-remote:allTests
+    - ./gradlew -Pci --console=plain :communication:kuantify-web-host:allTests
+
+publishKuantifyCommunication:
+  stage: publish_kuantify_communication
+  script:
+    - if grep -q "SNAPSHOT" gradle.properties; then ./gradlew :communication:kuantify-fs-web-remote:publish; fi
+    - if grep -q "SNAPSHOT" gradle.properties; then ./gradlew :communication:kuantify-web-host:publish; fi
