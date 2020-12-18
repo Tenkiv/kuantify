@@ -15,7 +15,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package kuantify.fs.web.host
+package kuantify.communication.web.host
 
 import io.ktor.application.*
 import io.ktor.features.*
@@ -28,9 +28,9 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.sync.*
 import kuantify.*
+import kuantify.communication.web.host.*
 import kuantify.fs.hardware.device.*
 import kuantify.fs.networking.*
-import kuantify.fs.web.host.*
 import kuantify.lib.*
 import mu.*
 import kotlin.time.*

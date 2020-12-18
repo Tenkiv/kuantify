@@ -15,7 +15,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package kuantify.fs.web.remote
+package kuantify.communication.web.fsRemote
 
 import io.ktor.client.*
 import io.ktor.client.features.websocket.*

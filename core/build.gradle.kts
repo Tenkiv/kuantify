@@ -108,32 +108,24 @@ kotlin {
                 implementation("io.mockk:mockk:${Vof.mockk}")
             }
         }
-
-        tasks {
-            register<Jar>("javadocJar") {
-                archiveClassifier.set("javadoc")
-                from(dokkaJavadoc)
-            }
-        }
     }
 
     publishing {
         publications.withType<MavenPublication>().apply {
-            println(this.names)
-            val jvm by getting {
-                artifact(tasks.getByName("javadocJar"))
+            val kotlinMultiplatform by getting {
+                artifactId = "kuantify"
+                artifact(tasks.getByName("metadataSourcesJar")) {
+                    classifier = "sources"
+                }
             }
             val metadata by getting {
                 artifactId = "kuantify-metadata"
             }
-            val kotlinMultiplatform by getting {
-                artifactId = "kuantify"
-            }
-        }.forEach {
-            it.configureMavenPom(isRelease, project)
-            signing { if (isRelease) sign(it) }
+        }.all {
+            configureMavenPom(project)
+            signing { if (isRelease) sign(this@all) }
         }
 
-        setMavenRepositories(isRelease, properties)
+        setMavenRepositories()
     }
 }

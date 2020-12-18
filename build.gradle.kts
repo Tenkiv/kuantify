@@ -37,7 +37,9 @@ allprojects {
     repositories {
         jcenter()
         mavenCentral()
-        maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
         maven(url = "https://kotlin.bintray.com/kotlinx/")
+        maven(url ="https://maven.pkg.jetbrains.space/tenkiv/p/coral/coral-maven-repo")
+        maven(url = "https://maven.pkg.jetbrains.space/tenkiv/p/physikal/physikal-maven-repo")
+        maven(url = "https://maven.pkg.jetbrains.space/tenkiv/p/kuantify/kuantify-maven-repo")
     }
 }

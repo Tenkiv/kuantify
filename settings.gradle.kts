@@ -16,4 +16,4 @@
  */
 
 rootProject.name = "kuantify"
-include(":core", ":communication:kuantify-fs-web-remote", ":communication:kuantify-web-host")
+include(":core", ":communication:web:fsRemote", ":communication:web:host")
